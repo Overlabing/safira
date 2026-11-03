@@ -11,6 +11,7 @@ import Testing
 private final class LoadingPage: WebPageHandle {
     var state = PageState()
     var onStateChange: (@MainActor (PageState) -> Void)?
+    var onNewTab: (@MainActor (NewTabRequest) -> Void)?
 
     func load(_ url: URL) {
         state = PageState(url: url, isLoading: true)
