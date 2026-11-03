@@ -1,12 +1,15 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # Copyright (c) 2026 Antonin Carlin
 #
-# Runs scripts/check.sh, the same gate as on a developer's Mac. Manual trigger only: macOS minutes are billed while
-# the repository is private. `xcode-27` is GitHub's standard Xcode 27 image (public preview, arm64); the
-# `xcode-27-xlarge` variant is billed even for public repositories.
+# Runs scripts/check.sh, the same gate as on a developer's Mac. The repository is public, so the standard runner is
+# free. `xcode-27` is GitHub's standard Xcode 27 image (public preview, arm64); the `xcode-27-xlarge` variant is billed
+# even for public repositories.
 name: check
 
 on:
+  pull_request:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:

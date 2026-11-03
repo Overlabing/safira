@@ -34,9 +34,9 @@ and its rules are in `docs/architecture-v1.md` §2.
 ## Continuous integration
 
 `.github/workflows/check.yml` runs `scripts/check.sh` on GitHub's `xcode-27` runner image (macOS 27, Xcode 27.1),
-without any secret. It starts only by hand (`workflow_dispatch`). That image is a public preview, not generally
-available, so a green local `scripts/check.sh` remains the gate. The standard `xcode-27` runner is free for a public
-repository; a private repository pays macOS minutes, and the `xcode-27-xlarge` runner is always billed.
+without any secret. It runs on every pull request, on every push to `main`, and by hand (`workflow_dispatch`). That
+image is a public preview, not generally available, so a green local `scripts/check.sh` remains the gate. The standard
+`xcode-27` runner is free for a public repository, and the `xcode-27-xlarge` runner is always billed.
 
 ## Releases and updates
 
