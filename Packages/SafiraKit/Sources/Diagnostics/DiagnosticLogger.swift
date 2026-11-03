@@ -3,13 +3,13 @@
 
 import Dispatch
 import Foundation
-import OSLog
 import Synchronization
 
-/// Writes typed diagnostic events to os_log and, only while Debug mode is on, to rotating files.
+/// Writes typed diagnostic events to rotating files while Debug mode is on, and to os_log unless they carry site
+/// information while Debug mode is off.
 /// It takes events, never strings or URLs, so what it can write is fixed by `DiagnosticEvent`.
 public final class DiagnosticLogger: Sendable {
-    private let osLogger: Logger
+    private let systemLog: any SystemLog
     private let isOn: Mutex<Bool>
     private let files: Mutex<LogFileStore>
     private let queue = DispatchQueue(label: "diagnostics.log-writer")
@@ -19,9 +19,10 @@ public final class DiagnosticLogger: Sendable {
     /// - Parameters:
     ///   - subsystem: the os_log subsystem, the bundle identifier.
     ///   - logsDirectory: not created until the first line is written.
+    ///   - systemLog: where os_log lines go; the unified system log under `subsystem` when nil.
     public init(subsystem: String, logsDirectory: URL, limits: LogLimits = .standard, isEnabled: Bool = false,
-                clock: @escaping @Sendable () -> Date = { Date() }) {
-        osLogger = Logger(subsystem: subsystem, category: "diagnostics")
+                systemLog: (any SystemLog)? = nil, clock: @escaping @Sendable () -> Date = { Date() }) {
+        self.systemLog = systemLog ?? OSLogSystemLog(subsystem: subsystem)
         isOn = Mutex(isEnabled)
         files = Mutex(LogFileStore(directory: logsDirectory, limits: limits))
         self.logsDirectory = logsDirectory
@@ -45,8 +46,15 @@ public final class DiagnosticLogger: Sendable {
     }
 
     public func record(_ event: DiagnosticEvent) {
-        osLogger.log(level: event.level.osLogType, "\(event.message, privacy: .public)")
-        guard isEnabled else { return }
+        let enabled = isEnabled
+        // macOS keeps notice-level lines on disk, so with Debug mode off a host or a page timing must not reach it at
+        // all; with it on, they reach it private.
+        if !event.carriesSiteInformation {
+            systemLog.write(event.message, level: event.level.osLogType, isPrivate: false)
+        } else if enabled {
+            systemLog.write(event.message, level: event.level.osLogType, isPrivate: true)
+        }
+        guard enabled else { return }
         let now = clock()
         let line = "\(now.formatted(Self.timestampStyle)) \(event.level.rawValue) \(event.message)\n"
         queue.async {
