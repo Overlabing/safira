@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: GPL-3.0-only
+# Copyright (c) 2026 Antonin Carlin
+#
+# Runs scripts/check.sh, the same gate as on a developer's Mac. Manual trigger only: macOS minutes are billed while
+# the repository is private. `xcode-27` is GitHub's standard Xcode 27 image (public preview, arm64); the
+# `xcode-27-xlarge` variant is billed even for public repositories.
+name: check
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: xcode-27
+    timeout-minutes: 45
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_27.1.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Check
+        run: scripts/check.sh
