@@ -8,6 +8,8 @@ import SafiraWeb
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    let updates = UpdateController()
+
     /// The single default Profile until Profiles can be created; a fixed identifier keeps its data store across
     /// launches before anything else is persisted.
     private static let defaultProfile = Profile(
@@ -15,11 +17,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         name: "Default"
     )
 
+    let diagnostics = DiagnosticsController()
     private var mainWindow: MainWindowController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         let context = ProfileWebContext(profileID: Self.defaultProfile.id)
+        context.diagnostics = diagnostics.logger
         let session = ProfileSession(profile: Self.defaultProfile) { context.makePage(for: $0) }
+        diagnostics.attach(to: session)
         let controller = MainWindowController(session: session, webContext: context)
         controller.showWindow(nil)
         controller.focusCommandBar(nil)

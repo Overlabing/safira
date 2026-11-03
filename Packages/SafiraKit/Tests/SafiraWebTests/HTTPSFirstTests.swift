@@ -57,8 +57,8 @@ import WebKit
             session = ProfileSession(profile: Profile(id: profileID, name: "Test")) { id in
                 let page = context.makePage(for: id)
                 windows.show(page.webView)
-                page.navigationHandler.httpsFirstPolicy = policy
-                if trustingCertificates { page.navigationHandler.trustsServer = { _ in true } }
+                page.httpsFirstPolicy = policy
+                if trustingCertificates { page.trustsServer = { _ in true } }
                 pages.byTab[id] = page
                 return page
             }

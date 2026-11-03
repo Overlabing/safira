@@ -5,7 +5,7 @@ import Foundation
 import Observation
 import SafiraCore
 
-/// One open web page. Its page is created on the first load, never on selection.
+/// One open web page. Its page is created on the first load, never on selection, unless the web engine built it.
 @MainActor
 @Observable
 public final class Tab: Identifiable {
@@ -17,16 +17,22 @@ public final class Tab: Identifiable {
     /// The address of the last HTTPS-first navigation: only its failure may lead to a warning.
     @ObservationIgnored private var httpsFirstAddress: URL?
     @ObservationIgnored private let makePage: @MainActor (TabID) -> any WebPageHandle
+    @ObservationIgnored private let onNewTab: @MainActor (NewTabRequest) -> Void
 
-    init(id: TabID, makePage: @escaping @MainActor (TabID) -> any WebPageHandle) {
+    init(id: TabID, page: (any WebPageHandle)? = nil, makePage: @escaping @MainActor (TabID) -> any WebPageHandle,
+         onNewTab: @escaping @MainActor (NewTabRequest) -> Void) {
         self.id = id
         self.makePage = makePage
+        self.onNewTab = onNewTab
+        if let page {
+            attach(page)
+        }
     }
 
     public var address: URL? { state.url }
 
     func load(_ url: URL, httpsFirst: Bool = false) {
-        let page = page ?? attachPage()
+        let page = page ?? attach(makePage(id))
         insecureConnectionWarning = nil
         httpsFirstAddress = httpsFirst ? url : nil
         page.load(url, httpsFirst: httpsFirst)
@@ -62,15 +68,17 @@ public final class Tab: Identifiable {
 
     func close() {
         page?.onStateChange = nil
+        page?.onNewTab = nil
         page?.onLoadFailure = nil
         page?.onContinueOverHTTP = nil
         page?.close()
         page = nil
     }
 
-    private func attachPage() -> any WebPageHandle {
-        let page = makePage(id)
+    @discardableResult
+    private func attach(_ page: any WebPageHandle) -> any WebPageHandle {
         page.onStateChange = { [weak self] state in self?.state = state }
+        page.onNewTab = { [onNewTab] request in onNewTab(request) }
         page.onLoadFailure = { [weak self] failure in self?.pageFailed(failure) }
         page.onContinueOverHTTP = { [weak self] in self?.continueOverHTTP() }
         state = page.state

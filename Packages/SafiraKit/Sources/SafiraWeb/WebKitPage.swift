@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Antonin Carlin
 
+import Diagnostics
 import Foundation
 import SafiraCore
 import SafiraSession
@@ -9,20 +10,38 @@ import WebKit
 /// A Tab's page backed by a `WKWebView`. Its view is owned here, never by the views that show it, so taking it out
 /// of the window and putting it back does not reload it.
 @MainActor
-public final class WebKitPage: WebPageHandle {
+public final class WebKitPage: NSObject, WebPageHandle {
     public let webView: WKWebView
     public var onStateChange: (@MainActor (PageState) -> Void)?
+    public var onNewTab: (@MainActor (NewTabRequest) -> Void)?
     public var onLoadFailure: (@MainActor (LoadFailure) -> Void)?
     public var onContinueOverHTTP: (@MainActor () -> Void)?
-    let navigationHandler = PageNavigationDelegate()
+    private var isPlayingMedia = false
+    /// The warning the page currently shows; only its own "Continue over HTTP" link is intercepted.
+    private var showing: InsecureConnectionWarning?
+    private var httpsFirstAddress: URL?
+    /// What to ask WebKit for on an HTTPS-first navigation. Tests set `.keepAsRequested` to stand for the cases where
+    /// WebKit ignores the preference (system configuration, known hosts), which is when Safira's own page takes over.
+    var httpsFirstPolicy: WKWebpagePreferences.UpgradeToHTTPSPolicy = .userMediatedFallbackToHTTP
+    /// Lets tests trust a throwaway certificate; nil in the app, where the system decides.
+    var trustsServer: (@MainActor (SecTrust) -> Bool)?
     private var observations: [NSKeyValueObservation] = []
+    private let makeNewTabPage: @MainActor (WKWebViewConfiguration) -> (TabID, WebKitPage)?
     private let onClose: @MainActor () -> Void
+    private let navigationDiagnostics: NavigationDiagnostics?
 
-    init(configuration: WKWebViewConfiguration, onClose: @escaping @MainActor () -> Void) {
+    init(configuration: WKWebViewConfiguration, diagnostics: DiagnosticLogger? = nil,
+         makeNewTabPage: @escaping @MainActor (WKWebViewConfiguration) -> (TabID, WebKitPage)?,
+         onClose: @escaping @MainActor () -> Void) {
         webView = WKWebView(frame: .zero, configuration: configuration)
+        self.makeNewTabPage = makeNewTabPage
+        // Public API: the page shows in Safari's Develop menu. Safira has no in-app inspector (ADR 0001).
+        webView.isInspectable = true
         self.onClose = onClose
-        navigationHandler.page = self
-        webView.navigationDelegate = navigationHandler
+        navigationDiagnostics = diagnostics.map(NavigationDiagnostics.init)
+        super.init()
+        webView.navigationDelegate = self
+        webView.uiDelegate = self
         observations = [
             observe(\.url), observe(\.title), observe(\.canGoBack), observe(\.canGoForward), observe(\.isLoading),
         ]
@@ -30,16 +49,17 @@ public final class WebKitPage: WebPageHandle {
 
     public var state: PageState {
         PageState(url: webView.url, title: webView.title, canGoBack: webView.canGoBack,
-                  canGoForward: webView.canGoForward, isLoading: webView.isLoading)
+                  canGoForward: webView.canGoForward, isLoading: webView.isLoading, isPlayingMedia: isPlayingMedia)
     }
 
     public func load(_ url: URL, httpsFirst: Bool) {
-        navigationHandler.expectHTTPSFirst(url, enabled: httpsFirst)
+        httpsFirstAddress = httpsFirst ? url : nil
+        showing = nil
         webView.load(URLRequest(url: url))
     }
 
     public func showInsecureConnectionWarning(_ warning: InsecureConnectionWarning) {
-        navigationHandler.showing = warning
+        showing = warning
         // The failed address stays the page's address, so the Command bar and reload still name the site.
         webView.loadHTMLString(InsecureConnectionPage.html(for: warning), baseURL: warning.failedURL)
     }
@@ -60,50 +80,51 @@ public final class WebKitPage: WebPageHandle {
         observations.forEach { $0.invalidate() }
         observations = []
         onStateChange = nil
+        onNewTab = nil
         onLoadFailure = nil
         onContinueOverHTTP = nil
         webView.stopLoading()
         webView.removeFromSuperview()
-        webView.configuration.userContentController.removeAllScriptMessageHandlers()
         webView.navigationDelegate = nil
         webView.uiDelegate = nil
         onClose()
     }
 
+    func refreshMediaState() {
+        webView.requestMediaPlaybackState { [weak self] playback in
+            guard let self, isPlayingMedia != (playback == .playing) else { return }
+            isPlayingMedia = playback == .playing
+            onStateChange?(state)
+        }
+    }
+
     private func observe<Value>(_ keyPath: KeyPath<WKWebView, Value>) -> NSKeyValueObservation {
-        webView.observe(keyPath) { [weak self] _, _ in
+        let isAddress = keyPath == \WKWebView.url
+        return webView.observe(keyPath) { [weak self] _, _ in
             // WebKit reports its key-value changes on the main thread.
             MainActor.assumeIsolated {
                 guard let self else { return }
+                // A new document starts with no media, and stopping media by leaving the page sends no event.
+                if isAddress, self.isPlayingMedia {
+                    self.refreshMediaState()
+                }
                 self.onStateChange?(self.state)
             }
         }
     }
 }
 
-/// Keeps the navigation delegate out of `WebKitPage`'s public surface.
-@MainActor
-final class PageNavigationDelegate: NSObject, WKNavigationDelegate {
-    weak var page: WebKitPage?
-    /// The warning the page currently shows; only its own "Continue over HTTP" link is intercepted.
-    var showing: InsecureConnectionWarning?
-    private var httpsFirstAddress: URL?
-    /// What to ask WebKit for on an HTTPS-first navigation. Tests set `.keepAsRequested` to stand for the cases where
-    /// WebKit ignores the preference (system configuration, known hosts), which is when Safira's own page takes over.
-    var httpsFirstPolicy: WKWebpagePreferences.UpgradeToHTTPSPolicy = .userMediatedFallbackToHTTP
-    /// Lets tests trust a throwaway certificate; nil in the app, where the system decides.
-    var trustsServer: (@MainActor (SecTrust) -> Bool)?
-
-    func expectHTTPSFirst(_ url: URL, enabled: Bool) {
-        httpsFirstAddress = enabled ? url : nil
-        showing = nil
-    }
-
-    func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction,
-                 preferences: WKWebpagePreferences) async -> (WKNavigationActionPolicy, WKWebpagePreferences) {
+extension WebKitPage: WKNavigationDelegate {
+    public func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction,
+                        preferences: WKWebpagePreferences) async -> (WKNavigationActionPolicy, WKWebpagePreferences) {
+        if navigationAction.navigationType == .linkActivated, navigationAction.modifierFlags.contains(.command),
+           let url = navigationAction.request.url, let onNewTab {
+            onNewTab(.address(url))
+            return (.cancel, preferences)
+        }
         if navigationAction.navigationType == .linkActivated, let warning = showing,
            navigationAction.request.url == warning.httpURL {
-            page?.onContinueOverHTTP?()
+            onContinueOverHTTP?()
             return (.cancel, preferences)
         }
         if navigationAction.targetFrame?.isMainFrame == true, let url = navigationAction.request.url,
@@ -113,7 +134,7 @@ final class PageNavigationDelegate: NSObject, WKNavigationDelegate {
         return (.allow, preferences)
     }
 
-    func webView(_ webView: WKWebView, respondTo challenge: URLAuthenticationChallenge) async
+    public func webView(_ webView: WKWebView, respondTo challenge: URLAuthenticationChallenge) async
         -> (URLSession.AuthChallengeDisposition, URLCredential?) {
         guard let trustsServer, challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
               let trust = challenge.protectionSpace.serverTrust, trustsServer(trust)
@@ -121,9 +142,36 @@ final class PageNavigationDelegate: NSObject, WKNavigationDelegate {
         return (.useCredential, URLCredential(trust: trust))
     }
 
-    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: any Error) {
+    // WebKit holds one navigation delegate per web view, so this page is it and hands the load events to the
+    // diagnostics, which only observe.
+    public func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
+        navigationDiagnostics?.webView(webView, didCommit: navigation)
+    }
+
+    public func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        navigationDiagnostics?.webView(webView, didFinish: navigation)
+    }
+
+    public func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: any Error) {
+        navigationDiagnostics?.webView(webView, didFail: navigation, withError: error)
+    }
+
+    public func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!,
+                        withError error: any Error) {
+        navigationDiagnostics?.webView(webView, didFailProvisionalNavigation: navigation, withError: error)
         let error = error as NSError
         guard let url = error.userInfo[NSURLErrorFailingURLErrorKey] as? URL else { return }
-        page?.onLoadFailure?(LoadFailure(url: url, domain: error.domain, code: error.code))
+        onLoadFailure?(LoadFailure(url: url, domain: error.domain, code: error.code))
+    }
+}
+
+extension WebKitPage: WKUIDelegate {
+    /// WebKit requires the returned view to be built from `configuration`, a copy of this page's: the new Tab keeps
+    /// the Profile's data store.
+    public func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration,
+                        for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
+        guard let onNewTab, let (id, page) = makeNewTabPage(configuration) else { return nil }
+        onNewTab(.page(id, page))
+        return page.webView
     }
 }

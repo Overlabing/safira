@@ -11,15 +11,26 @@ public struct PageState: Hashable, Sendable {
     public var canGoBack: Bool
     public var canGoForward: Bool
     public var isLoading: Bool
+    /// Audio or video is playing in the page. WebKit reports media playback as a whole, not sound alone.
+    public var isPlayingMedia: Bool
 
     public init(url: URL? = nil, title: String? = nil, canGoBack: Bool = false, canGoForward: Bool = false,
-                isLoading: Bool = false) {
+                isLoading: Bool = false, isPlayingMedia: Bool = false) {
         self.url = url
         self.title = title
         self.canGoBack = canGoBack
         self.canGoForward = canGoForward
         self.isLoading = isLoading
+        self.isPlayingMedia = isPlayingMedia
     }
+}
+
+/// A page asking for a link to open in a new background Tab of the same Profile.
+public enum NewTabRequest {
+    /// A link opened with ⌘: the session builds the Tab's page like any other page of the Profile.
+    case address(URL)
+    /// A page the web engine built itself for a `target=_blank` link, already registered under this Tab identifier.
+    case page(TabID, any WebPageHandle)
 }
 
 /// The web page behind a Tab. SafiraWeb backs it with a `WKWebView`; tests use a simulated page.
@@ -28,6 +39,8 @@ public protocol WebPageHandle: AnyObject {
     var state: PageState { get }
     /// Called whenever the page's state changes, including navigations the page starts itself (a clicked link).
     var onStateChange: (@MainActor (PageState) -> Void)? { get set }
+    /// Called when the page opens a link in a new Tab.
+    var onNewTab: (@MainActor (NewTabRequest) -> Void)? { get set }
     /// Called when a top-level navigation fails before any content arrives, unless the page handled the failure itself.
     var onLoadFailure: (@MainActor (LoadFailure) -> Void)? { get set }
     /// Called when the user chooses, on the page shown by `showInsecureConnectionWarning`, to continue over HTTP.
