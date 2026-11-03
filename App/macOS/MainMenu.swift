@@ -6,7 +6,7 @@ import SafiraCore
 
 @MainActor
 enum MainMenu {
-    static func make(updates: UpdateController) -> NSMenu {
+    static func make(updates: UpdateController, diagnostics: DiagnosticsController) -> NSMenu {
         let menu = NSMenu()
         menu.addItem(submenu(title: "Safira", items: [
             NSMenuItem(title: "About Safira", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: ""),
@@ -68,6 +68,15 @@ enum MainMenu {
         ])
         menu.addItem(window)
         NSApplication.shared.windowsMenu = window.submenu
+        let help = submenu(title: "Help", items: [
+            target(diagnostics, NSMenuItem(title: "Debug Mode", action: #selector(DiagnosticsController.toggleDebugMode(_:)),
+                                           keyEquivalent: "")),
+            target(diagnostics, NSMenuItem(title: "Export Diagnostic Logs…",
+                                           action: #selector(DiagnosticsController.exportDiagnosticLogs(_:)),
+                                           keyEquivalent: "")),
+        ])
+        menu.addItem(help)
+        NSApplication.shared.helpMenu = help.submenu
         return menu
     }
 

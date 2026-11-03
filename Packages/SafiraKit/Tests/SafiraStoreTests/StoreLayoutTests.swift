@@ -13,3 +13,9 @@ import Testing
     #expect(layout.profileDirectory(for: profile).path(percentEncoded: false)
         == "/tmp/safira-support/Profiles/6F9619FF-8B86-D011-B42D-00C04FC964FF/")
 }
+
+@Test func debugModeLogsLiveInALogsFolderOfTheAppSupportRoot() {
+    let layout = StoreLayout(root: URL(filePath: "/tmp/safira-support/", directoryHint: .isDirectory))
+
+    #expect(layout.logsDirectory.path(percentEncoded: false) == "/tmp/safira-support/Logs/")
+}

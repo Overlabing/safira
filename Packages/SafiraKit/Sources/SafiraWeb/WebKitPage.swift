@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Antonin Carlin
 
+import Diagnostics
 import Foundation
 import SafiraCore
 import SafiraSession
@@ -17,8 +18,9 @@ public final class WebKitPage: NSObject, WebPageHandle {
     private var observations: [NSKeyValueObservation] = []
     private let makeNewTabPage: @MainActor (WKWebViewConfiguration) -> (TabID, WebKitPage)?
     private let onClose: @MainActor () -> Void
+    private let navigationDiagnostics: NavigationDiagnostics?
 
-    init(configuration: WKWebViewConfiguration,
+    init(configuration: WKWebViewConfiguration, diagnostics: DiagnosticLogger? = nil,
          makeNewTabPage: @escaping @MainActor (WKWebViewConfiguration) -> (TabID, WebKitPage)?,
          onClose: @escaping @MainActor () -> Void) {
         webView = WKWebView(frame: .zero, configuration: configuration)
@@ -26,6 +28,7 @@ public final class WebKitPage: NSObject, WebPageHandle {
         // Public API: the page shows in Safari's Develop menu. Safira has no in-app inspector (ADR 0001).
         webView.isInspectable = true
         self.onClose = onClose
+        navigationDiagnostics = diagnostics.map(NavigationDiagnostics.init)
         super.init()
         webView.navigationDelegate = self
         webView.uiDelegate = self
@@ -101,6 +104,25 @@ extension WebKitPage: WKNavigationDelegate {
             return
         }
         decisionHandler(.allow)
+    }
+
+    // WebKit holds one navigation delegate per web view, so this page is it and hands the load events to the
+    // diagnostics, which only observe.
+    public func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
+        navigationDiagnostics?.webView(webView, didCommit: navigation)
+    }
+
+    public func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        navigationDiagnostics?.webView(webView, didFinish: navigation)
+    }
+
+    public func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: any Error) {
+        navigationDiagnostics?.webView(webView, didFail: navigation, withError: error)
+    }
+
+    public func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!,
+                        withError error: any Error) {
+        navigationDiagnostics?.webView(webView, didFailProvisionalNavigation: navigation, withError: error)
     }
 }
 

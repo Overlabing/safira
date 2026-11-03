@@ -12,6 +12,11 @@ public struct StoreLayout: Sendable {
         self.root = root
     }
 
+    /// Debug mode's rotating log files; the folder does not exist until Debug mode writes its first line.
+    public var logsDirectory: URL {
+        root.appending(path: "Logs", directoryHint: .isDirectory)
+    }
+
     public func profileDirectory(for profile: ProfileID) -> URL {
         root
             .appending(path: "Profiles", directoryHint: .isDirectory)

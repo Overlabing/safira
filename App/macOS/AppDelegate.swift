@@ -17,11 +17,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         name: "Default"
     )
 
+    let diagnostics = DiagnosticsController()
     private var mainWindow: MainWindowController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         let context = ProfileWebContext(profileID: Self.defaultProfile.id)
+        context.diagnostics = diagnostics.logger
         let session = ProfileSession(profile: Self.defaultProfile) { context.makePage(for: $0) }
+        diagnostics.attach(to: session)
         let controller = MainWindowController(session: session, webContext: context)
         controller.showWindow(nil)
         controller.focusCommandBar(nil)
