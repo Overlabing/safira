@@ -73,9 +73,9 @@ private final class Atomic: @unchecked Sendable {
             context.diagnostics = DiagnosticLogger(subsystem: "test", logsDirectory: logs, isEnabled: true)
             let page = context.makePage(for: TabID())
 
-            page.load(try #require(URL(string: "http://127.0.0.1:\(server.port)/private/path?token=abc123#frag")))
+            page.load(try #require(URL(string: "http://127.0.0.1:\(server.port)/private/path?token=abc123#frag")), httpsFirst: false)
             let loaded = try await waitForLine(containing: "page-loaded", in: context, logs: logs)
-            page.load(try #require(URL(string: "http://127.0.0.1:1/secret-failing-path?q=1")))
+            page.load(try #require(URL(string: "http://127.0.0.1:1/secret-failing-path?q=1")), httpsFirst: false)
             let failed = try await waitForLine(containing: "load-failed", in: context, logs: logs)
 
             #expect(loaded.contains("notice page-loaded host=127.0.0.1 ms="))
