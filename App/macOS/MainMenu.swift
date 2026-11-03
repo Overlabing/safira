@@ -17,7 +17,12 @@ enum MainMenu {
             NSMenuItem(title: "Quit Safira", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"),
         ]))
         menu.addItem(submenu(title: "File", items: [
-            NSMenuItem(title: "Close Window", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w"),
+            NSMenuItem(title: "New Tab", action: #selector(MainWindowController.newTab(_:)), keyEquivalent: "t"),
+            NSMenuItem(title: "Open Command Bar", action: #selector(MainWindowController.focusCommandBar(_:)),
+                       keyEquivalent: "l"),
+            .separator(),
+            NSMenuItem(title: "Close Tab", action: #selector(MainWindowController.closeTab(_:)), keyEquivalent: "w"),
+            NSMenuItem(title: "Close Window", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "W"),
         ]))
         menu.addItem(submenu(title: "Edit", items: [
             NSMenuItem(title: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x"),
@@ -25,9 +30,21 @@ enum MainMenu {
             NSMenuItem(title: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v"),
             NSMenuItem(title: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a"),
         ]))
+        menu.addItem(submenu(title: "View", items: [
+            NSMenuItem(title: "Reload Page", action: #selector(MainWindowController.reload(_:)), keyEquivalent: "r"),
+        ]))
+        menu.addItem(submenu(title: "History", items: [
+            NSMenuItem(title: "Back", action: #selector(MainWindowController.goBack(_:)), keyEquivalent: "["),
+            NSMenuItem(title: "Forward", action: #selector(MainWindowController.goForward(_:)), keyEquivalent: "]"),
+        ]))
         let window = submenu(title: "Window", items: [
             NSMenuItem(title: "Minimize", action: #selector(NSWindow.performMiniaturize(_:)), keyEquivalent: "m"),
             NSMenuItem(title: "Zoom", action: #selector(NSWindow.performZoom(_:)), keyEquivalent: ""),
+            .separator(),
+            NSMenuItem(title: "Show Previous Tab", action: #selector(MainWindowController.showPreviousTab(_:)),
+                       keyEquivalent: "{"),
+            NSMenuItem(title: "Show Next Tab", action: #selector(MainWindowController.showNextTab(_:)),
+                       keyEquivalent: "}"),
         ])
         menu.addItem(window)
         NSApplication.shared.windowsMenu = window.submenu
