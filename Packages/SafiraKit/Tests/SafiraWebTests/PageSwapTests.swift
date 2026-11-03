@@ -43,7 +43,7 @@ private final class NavigationCounter: NSObject, WKNavigationDelegate {
                 let page = context.makePage(for: TabID())
                 let counter = NavigationCounter()
                 page.webView.navigationDelegate = counter
-                try page.load(#require(URL(string: "data:text/html,<title>\(number)</title>")))
+                try page.load(#require(URL(string: "data:text/html,<title>\(number)</title>")), httpsFirst: false)
                 await counter.nextFinish()
                 _ = try await page.webView.evaluateJavaScript("window.marker = \(number)")
                 pages.append((page, counter))

@@ -11,18 +11,38 @@ final class SimulatedPage: WebPageHandle {
     private(set) var loadCount = 0
     private(set) var reloadCount = 0
     private(set) var isClosed = false
+    /// Every load the session asked for, in order, with the policy it asked for.
+    private(set) var loads: [(url: URL, httpsFirst: Bool)] = []
+    private(set) var shownWarnings: [InsecureConnectionWarning] = []
     private var history: [URL] = []
     private var index = -1
     var onStateChange: (@MainActor (PageState) -> Void)?
+    var onLoadFailure: (@MainActor (LoadFailure) -> Void)?
+    var onContinueOverHTTP: (@MainActor () -> Void)?
 
     var state: PageState {
         PageState(url: history.indices.contains(index) ? history[index] : nil,
                   canGoBack: index > 0, canGoForward: index < history.count - 1)
     }
 
-    func load(_ url: URL) {
+    func load(_ url: URL, httpsFirst: Bool) {
         loadCount += 1
+        loads.append((url, httpsFirst))
         navigate(to: url)
+    }
+
+    func showInsecureConnectionWarning(_ warning: InsecureConnectionWarning) {
+        shownWarnings.append(warning)
+    }
+
+    /// The platform reports that the navigation to `url` failed with the given NSURLError code.
+    func failLoad(of url: URL, code: URLError.Code) {
+        onLoadFailure?(LoadFailure(url: url, domain: NSURLErrorDomain, code: code.rawValue))
+    }
+
+    /// The user presses "Continue over HTTP" on the warning page.
+    func pressContinueOverHTTP() {
+        onContinueOverHTTP?()
     }
 
     /// A navigation the page starts itself, as when the user clicks a link.

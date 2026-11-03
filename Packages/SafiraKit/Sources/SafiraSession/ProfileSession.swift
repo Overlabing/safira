@@ -60,8 +60,8 @@ public final class ProfileSession {
         switch CommandBarInput(text) {
         case nil:
             return
-        case .address(let url):
-            open(url)
+        case .address(let url, let scheme):
+            open(url, httpsFirst: scheme == .defaultedToHTTPS)
         case .search(let query):
             if let engine = profile.searchEngine {
                 open(engine.searchURL(for: query))
@@ -95,10 +95,10 @@ public final class ProfileSession {
         selectedTab?.reload()
     }
 
-    private func open(_ url: URL) {
+    private func open(_ url: URL, httpsFirst: Bool = false) {
         if selectedTab == nil {
             openNewTab()
         }
-        selectedTab?.load(url)
+        selectedTab?.load(url, httpsFirst: httpsFirst)
     }
 }

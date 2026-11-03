@@ -35,6 +35,9 @@ targets:
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         NSPrincipalClass: NSApplication
         LSApplicationCategoryType: public.app-category.productivity
+        # A browser loads the HTTP pages the user chose to continue to; the system does not stop web content for lack of TLS.
+        NSAppTransportSecurity:
+          NSAllowsArbitraryLoadsInWebContent: true
     entitlements:
       # xcodegen rewrites this file from `properties` on every generate: every key lives here, never only in the file.
       path: App/macOS/Safira.entitlements

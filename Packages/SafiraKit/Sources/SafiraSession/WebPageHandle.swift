@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Antonin Carlin
 
 import Foundation
+import SafiraCore
 
 /// What a web page reports about itself; a Tab mirrors it.
 public struct PageState: Hashable, Sendable {
@@ -27,7 +28,14 @@ public protocol WebPageHandle: AnyObject {
     var state: PageState { get }
     /// Called whenever the page's state changes, including navigations the page starts itself (a clicked link).
     var onStateChange: (@MainActor (PageState) -> Void)? { get set }
-    func load(_ url: URL)
+    /// Called when a top-level navigation fails before any content arrives, unless the page handled the failure itself.
+    var onLoadFailure: (@MainActor (LoadFailure) -> Void)? { get set }
+    /// Called when the user chooses, on the page shown by `showInsecureConnectionWarning`, to continue over HTTP.
+    var onContinueOverHTTP: (@MainActor () -> Void)? { get set }
+    /// - Parameter httpsFirst: the address was typed without a scheme; the page asks the platform to try HTTPS first.
+    func load(_ url: URL, httpsFirst: Bool)
+    /// Replaces the page with a warning that offers to continue over HTTP, without touching the network.
+    func showInsecureConnectionWarning(_ warning: InsecureConnectionWarning)
     func goBack()
     func goForward()
     func reload()

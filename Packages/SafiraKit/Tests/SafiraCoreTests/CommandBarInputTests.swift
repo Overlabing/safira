@@ -7,7 +7,7 @@ import Testing
 
 private func resolved(_ text: String) -> String? {
     switch CommandBarInput(text) {
-    case .address(let url): "address \(url.absoluteString)"
+    case .address(let url, _): "address \(url.absoluteString)"
     case .search(let query): "search \(query)"
     case nil: nil
     }
@@ -47,4 +47,19 @@ func anythingElseIsASearch(text: String, expected: String) {
 @Test func blankTextOpensNothing() {
     #expect(resolved("") == nil)
     #expect(resolved("   \n") == nil)
+}
+
+@Test(arguments: [
+    ("example.com", true),
+    ("localhost:8080/admin", true),
+    ("192.168.1.1", true),
+    ("https://example.com", false),
+    ("http://example.com", false),
+])
+func onlyAnAddressTypedWithoutASchemeIsOpenedHTTPSFirst(text: String, httpsFirst: Bool) {
+    guard case .address(_, let scheme)? = CommandBarInput(text) else {
+        Issue.record("\(text) was not read as an address")
+        return
+    }
+    #expect((scheme == .defaultedToHTTPS) == httpsFirst)
 }
