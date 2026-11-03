@@ -370,9 +370,9 @@ Canaux écartés :
 - permissions `nativeMessaging`, `storage`, `activeTab`, `alarms` ;
 - SW `type: "module"` ;
 - 3 content scripts, dont `passkey-codec.js` et `passkey-page.js` en **`world: "MAIN"` à `document_start`** ;
-- `key`, qui fixe l'ID Chrome `pmdlgnpbjfdnmpeadbecmgfoojmocibg`.
+- `key`, qui fixe l'ID Chrome `<ID fixe de l'extension>`.
 
-**Dépendance** : l'hôte natif `app.verrou.bridge` (stdio) n'autorise que `chrome-extension://pmdlgnpbjfdnmpeadbecmgfoojmocibg/` [É, `~/Library/Application Support/Google/Chrome/NativeMessagingHosts/app.verrou.bridge.json`]. Safira doit donc présenter cette origine à l'hôte (§3.2).
+**Dépendance** : l'hôte natif `app.verrou.bridge` (stdio) n'autorise que `chrome-extension://<ID fixe de l'extension>/` [É, manifeste local de l'hôte natif]. Safira doit donc présenter cette origine à l'hôte (§3.2).
 
 **Scénarios :**
 
