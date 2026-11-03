@@ -178,21 +178,22 @@ public final class ProfileSession {
         selectedTab?.load(url)
     }
 
-    /// A page opened a link in a new Tab: it goes to the end of the list, in the background.
-    private func openBackgroundTab(_ request: NewTabRequest) {
+    /// A page opened a link in a new Tab: it goes right after the Tab that opened it, in the background.
+    private func openBackgroundTab(_ request: NewTabRequest, after opener: TabID) {
+        let position = tabs.firstIndex { $0.id == opener }.map { $0 + 1 } ?? tabs.count
         switch request {
         case .address(let url):
             let tab = makeTab(id: TabID())
-            tabs.append(tab)
+            tabs.insert(tab, at: position)
             tab.load(url)
         case .page(let id, let page):
-            tabs.append(makeTab(id: id, page: page))
+            tabs.insert(makeTab(id: id, page: page), at: position)
         }
     }
 
     private func makeTab(id: TabID, page: (any WebPageHandle)? = nil) -> Tab {
         Tab(id: id, page: page, makePage: makePage) { [weak self] request in
-            self?.openBackgroundTab(request)
+            self?.openBackgroundTab(request, after: id)
         }
     }
 }

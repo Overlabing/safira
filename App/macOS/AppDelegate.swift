@@ -8,6 +8,8 @@ import SafiraWeb
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    let updates = UpdateController()
+
     /// The single default Profile until Profiles can be created; a fixed identifier keeps its data store across
     /// launches before anything else is persisted.
     private static let defaultProfile = Profile(

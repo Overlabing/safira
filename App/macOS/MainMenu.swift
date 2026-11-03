@@ -2,13 +2,17 @@
 // Copyright (c) 2026 Antonin Carlin
 
 import AppKit
+import SafiraCore
 
 @MainActor
 enum MainMenu {
-    static func make() -> NSMenu {
+    static func make(updates: UpdateController) -> NSMenu {
         let menu = NSMenu()
         menu.addItem(submenu(title: "Safira", items: [
             NSMenuItem(title: "About Safira", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: ""),
+            .separator(),
+            target(updates, NSMenuItem(title: "Check for Updates…", action: #selector(UpdateController.checkForUpdates(_:)), keyEquivalent: "")),
+            target(updates, NSMenuItem(title: "Check for Updates Automatically", action: #selector(UpdateController.toggleAutomaticChecks(_:)), keyEquivalent: "")),
             .separator(),
             NSMenuItem(title: "Hide Safira", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h"),
             hideOthers(),
@@ -34,6 +38,14 @@ enum MainMenu {
         ]))
         menu.addItem(submenu(title: "View", items: [
             NSMenuItem(title: "Reload Page", action: #selector(MainWindowController.reload(_:)), keyEquivalent: "r"),
+            .separator(),
+            webContentItem(title: WebContentSettings.fraudulentSiteWarningTitle,
+                           explanation: WebContentSettings.fraudulentSiteWarningExplanation,
+                           action: #selector(MainWindowController.toggleFraudulentSiteWarning(_:))),
+            webContentItem(title: WebContentSettings.autoplayingSoundTitle,
+                           explanation: WebContentSettings.autoplayingSoundExplanation,
+                           action: #selector(MainWindowController.toggleAutoplayingSound(_:))),
+            .separator(),
             NSMenuItem(title: "Focus Tab List", action: #selector(MainWindowController.focusTabList(_:)),
                        keyEquivalent: ""),
         ]))
@@ -71,6 +83,17 @@ enum MainMenu {
     private static func arrowItem(title: String, action: Selector, arrow: Int) -> NSMenuItem {
         let item = NSMenuItem(title: title, action: action, keyEquivalent: String(Character(UnicodeScalar(arrow)!)))
         item.keyEquivalentModifierMask = [.command, .option]
+        return item
+    }
+
+    private static func target(_ target: AnyObject, _ item: NSMenuItem) -> NSMenuItem {
+        item.target = target
+        return item
+    }
+
+    private static func webContentItem(title: String, explanation: String, action: Selector) -> NSMenuItem {
+        let item = NSMenuItem(title: title, action: action, keyEquivalent: "")
+        item.toolTip = explanation
         return item
     }
 

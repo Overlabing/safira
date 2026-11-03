@@ -285,14 +285,14 @@ private func openTabs(_ fixture: SessionFixture, _ addresses: [String]) -> [TabI
 
 @MainActor
 @Suite struct BackgroundTabTests {
-    @Test func aCommandClickedLinkOpensABackgroundTabAtTheEnd() throws {
+    @Test func aCommandClickedLinkOpensABackgroundTabRightAfterItsOpener() throws {
         let fixture = SessionFixture()
         let ids = openTabs(fixture, ["example.com", "example.net"])
         fixture.session.select(ids[0])
 
         try fixture.selectedPage?.commandClickLink(to: #require(URL(string: "https://example.com/about")))
 
-        #expect(fixture.addresses == ["https://example.com", "https://example.net", "https://example.com/about"])
+        #expect(fixture.addresses == ["https://example.com", "https://example.com/about", "https://example.net"])
         #expect(fixture.session.selectedTabID == ids[0])
         #expect(fixture.selectedPage?.loadCount == 1)
         #expect(fixture.createdPageCount == 3)
@@ -300,17 +300,40 @@ private func openTabs(_ fixture: SessionFixture, _ addresses: [String]) -> [TabI
 
     @Test func aTargetBlankLinkOpensABackgroundTabWithThePageTheEngineBuilt() throws {
         let fixture = SessionFixture()
-        let opener = openTabs(fixture, ["example.com"])[0]
+        let opener = openTabs(fixture, ["example.com", "example.net"])[0]
+        fixture.session.select(opener)
 
         let id = try fixture.clickTargetBlankLink(in: fixture.selectedPage,
                                                   to: #require(URL(string: "https://example.org")))
 
-        #expect(fixture.session.tabs.map(\.id) == [opener, id])
-        #expect(fixture.addresses == ["https://example.com", "https://example.org"])
+        #expect(Array(fixture.session.tabs.map(\.id).prefix(2)) == [opener, id])
+        #expect(fixture.addresses == ["https://example.com", "https://example.org", "https://example.net"])
         #expect(fixture.session.selectedTabID == opener)
         // The session neither built nor loaded that page: the engine did.
-        #expect(fixture.createdPageCount == 1)
+        #expect(fixture.createdPageCount == 2)
         #expect(fixture.pages[id]?.loadCount == 0)
+    }
+
+    @Test func aLinkOpenedFromTheLastTabLandsAtTheEnd() throws {
+        let fixture = SessionFixture()
+        _ = openTabs(fixture, ["example.com", "example.net"])
+
+        try fixture.selectedPage?.commandClickLink(to: #require(URL(string: "https://example.com/about")))
+
+        #expect(fixture.addresses == ["https://example.com", "https://example.net", "https://example.com/about"])
+    }
+
+    @Test func aLinkOpenedFromAMiddleTabLandsRightAfterIt() throws {
+        let fixture = SessionFixture()
+        let ids = openTabs(fixture, ["a.com", "b.com", "c.com"])
+        fixture.session.select(ids[1])
+
+        try fixture.clickTargetBlankLink(in: fixture.selectedPage, to: #require(URL(string: "https://b.com/child")))
+        fixture.session.select(ids[0])
+        try fixture.selectedPage?.commandClickLink(to: #require(URL(string: "https://a.com/child")))
+
+        #expect(fixture.addresses == ["https://a.com", "https://a.com/child", "https://b.com", "https://b.com/child",
+                                      "https://c.com"])
     }
 
     @Test func aBackgroundTabIsAPlainTabThatClosesAndReopens() throws {

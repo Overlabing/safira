@@ -23,6 +23,8 @@ public final class WebKitPage: NSObject, WebPageHandle {
          onClose: @escaping @MainActor () -> Void) {
         webView = WKWebView(frame: .zero, configuration: configuration)
         self.makeNewTabPage = makeNewTabPage
+        // Public API: the page shows in Safari's Develop menu. Safira has no in-app inspector (ADR 0001).
+        webView.isInspectable = true
         self.onClose = onClose
         super.init()
         webView.navigationDelegate = self
