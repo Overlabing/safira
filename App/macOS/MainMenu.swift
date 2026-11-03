@@ -5,7 +5,7 @@ import AppKit
 
 @MainActor
 enum MainMenu {
-    static func make() -> NSMenu {
+    static func make(diagnostics: DiagnosticsController) -> NSMenu {
         let menu = NSMenu()
         menu.addItem(submenu(title: "Safira", items: [
             NSMenuItem(title: "About Safira", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: ""),
@@ -48,6 +48,14 @@ enum MainMenu {
         ])
         menu.addItem(window)
         NSApplication.shared.windowsMenu = window.submenu
+        let help = submenu(title: "Help", items: [
+            diagnosticsItem(title: "Debug Mode", action: #selector(DiagnosticsController.toggleDebugMode(_:)),
+                            target: diagnostics),
+            diagnosticsItem(title: "Export Diagnostic Logs…",
+                            action: #selector(DiagnosticsController.exportDiagnosticLogs(_:)), target: diagnostics),
+        ])
+        menu.addItem(help)
+        NSApplication.shared.helpMenu = help.submenu
         return menu
     }
 
@@ -56,6 +64,12 @@ enum MainMenu {
         let submenu = NSMenu(title: title)
         items.forEach(submenu.addItem)
         item.submenu = submenu
+        return item
+    }
+
+    private static func diagnosticsItem(title: String, action: Selector, target: AnyObject) -> NSMenuItem {
+        let item = NSMenuItem(title: title, action: action, keyEquivalent: "")
+        item.target = target
         return item
     }
 
