@@ -5,10 +5,13 @@ import AppKit
 
 @MainActor
 enum MainMenu {
-    static func make() -> NSMenu {
+    static func make(updates: UpdateController) -> NSMenu {
         let menu = NSMenu()
         menu.addItem(submenu(title: "Safira", items: [
             NSMenuItem(title: "About Safira", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: ""),
+            .separator(),
+            target(updates, NSMenuItem(title: "Check for Updates…", action: #selector(UpdateController.checkForUpdates(_:)), keyEquivalent: "")),
+            target(updates, NSMenuItem(title: "Check for Updates Automatically", action: #selector(UpdateController.toggleAutomaticChecks(_:)), keyEquivalent: "")),
             .separator(),
             NSMenuItem(title: "Hide Safira", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h"),
             hideOthers(),
@@ -39,6 +42,11 @@ enum MainMenu {
         let submenu = NSMenu(title: title)
         items.forEach(submenu.addItem)
         item.submenu = submenu
+        return item
+    }
+
+    private static func target(_ target: AnyObject, _ item: NSMenuItem) -> NSMenuItem {
+        item.target = target
         return item
     }
 

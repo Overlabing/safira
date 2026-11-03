@@ -38,6 +38,34 @@ without any secret. It starts only by hand (`workflow_dispatch`). That image is 
 available, so a green local `scripts/check.sh` remains the gate. The standard `xcode-27` runner is free for a public
 repository; a private repository pays macOS minutes, and the `xcode-27-xlarge` runner is always billed.
 
+## Releases and updates
+
+Safira is released from the maintainer's Mac, never from CI, so no signing or notarization secret exists in a workflow
+or in this repository. `scripts/release.sh` archives the Release build, exports it with the Developer ID certificate,
+checks the signature (hardened runtime, App Sandbox, no `get-task-allow`) and the Sparkle keys of the archived
+`Info.plist`, builds a DMG with `hdiutil`, notarizes it with `notarytool`, staples the ticket, runs `spctl` on the DMG
+and the app inside it, and writes the SHA-256. It prints one `OK:` or `FAILED:` line per step and stops at the first
+failure. Nothing is uploaded: the files land in `.build/release/`.
+
+One-time setup on the release Mac:
+
+1. Install a *Developer ID Application* certificate in the login keychain.
+2. Store notarization credentials in the login keychain: `xcrun notarytool store-credentials <profile name>`.
+3. Copy `Config/Release.local.xcconfig.example` to `Config/Release.local.xcconfig` (git-ignored) and set
+   `DEVELOPER_ID_TEAM_ID` and `NOTARY_KEYCHAIN_PROFILE`.
+4. The Sparkle EdDSA key pair is made once with Sparkle's `generate_keys`; the private half stays in the login
+   keychain and the public half is `SUPublicEDKey` in `project.yml`. Keep an encrypted backup of the private key
+   (`generate_keys -x`), because updates signed by another key are refused.
+
+`scripts/release.sh --no-notarize` stops after the signed DMG, to rehearse everything except Apple's service; that DMG
+is named `-unnotarized` and must not be distributed.
+
+Updates use [Sparkle](https://sparkle-project.org), pinned to an exact version. Automatic checks are off
+(`SUEnableAutomaticChecks` is explicitly `NO`), so Safira sends no update request until the user chooses
+Safira > Check for Updates… or turns on Safira > Check for Updates Automatically. No system profile is ever sent, and an
+update never installs without a click. A Debug build only can read a local test feed from the `SAFIRA_UPDATE_FEED_URL`
+environment variable.
+
 ## Licence
 
 Safira is free software under the GNU General Public License, version 3 only (`GPL-3.0-only`); see `LICENSE`.

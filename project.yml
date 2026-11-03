@@ -12,6 +12,9 @@ options:
 packages:
   SafiraKit:
     path: Packages/SafiraKit
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    exactVersion: 2.10.1
 settings:
   base:
     SWIFT_VERSION: "6.0"
@@ -28,6 +31,11 @@ targets:
     dependencies:
       - package: SafiraKit
         products: [SafiraCore, SafiraStore, SafiraSession, SafiraWeb, Commands, LinkRouting, LinkPickerUI, Diagnostics, Onboarding]
+      - package: Sparkle
+        product: Sparkle
+        # Re-signs Sparkle.framework with the app's identity on copy: an ad hoc app refuses a framework that keeps
+        # Sparkle's own Team ID (library validation), and the release export needs the copy re-signed anyway.
+        codeSign: true
     info:
       path: App/macOS/Info.plist
       properties:
@@ -35,18 +43,35 @@ targets:
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         NSPrincipalClass: NSApplication
         LSApplicationCategoryType: public.app-category.productivity
+        # Sparkle, opt-in (docs/architecture-v1.md §8.4). A missing SUEnableAutomaticChecks makes Sparkle ask the user on
+        # the second launch, which would be an unrequested update prompt, so it is explicit. SUEnableSystemProfiling is
+        # deliberately absent (off by default) and an update never installs without the user's click.
+        SUFeedURL: https://overlabing.github.io/safira/appcast.xml
+        SUPublicEDKey: CZ4T8RIDmlDLTZkEEQ0Dmvi6Z1kLEHAjvKsVeoYFVZg=
+        SUEnableAutomaticChecks: false
+        SUAutomaticallyUpdate: false
+        # Required by Sparkle under the App Sandbox: the Installer XPC service installs updates outside the sandbox.
+        SUEnableInstallerLauncherService: true
     entitlements:
       # xcodegen rewrites this file from `properties` on every generate: every key lives here, never only in the file.
       path: App/macOS/Safira.entitlements
       properties:
         com.apple.security.app-sandbox: true
         com.apple.security.network.client: true
+        # Sparkle's installer launcher and status connections (Sparkle sandboxing guide); the only entitlements added for updates.
+        com.apple.security.temporary-exception.mach-lookup.global-name:
+          - $(PRODUCT_BUNDLE_IDENTIFIER)-spks
+          - $(PRODUCT_BUNDLE_IDENTIFIER)-spki
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.overlabing.safira
         PRODUCT_NAME: Safira
         GENERATE_INFOPLIST_FILE: YES
         CODE_SIGN_ENTITLEMENTS: App/macOS/Safira.entitlements
+        # Ad hoc signatures carry no Team ID, so library validation rejects the embedded Sparkle.framework. Debug builds
+        # add disable-library-validation through a hand-kept copy of the entitlements; Release (Developer ID, one Team
+        # ID for the app and Sparkle) uses the generated file and keeps library validation on.
+        "CODE_SIGN_ENTITLEMENTS[config=Debug]": App/macOS/Safira.Debug.entitlements
         ENABLE_HARDENED_RUNTIME: YES
         # Ad hoc signing needs no certificate or secret, so the same build runs signed and sandboxed locally and in CI.
         # Developer ID signing for distribution belongs to the release script (docs/architecture-v1.md §8.3).

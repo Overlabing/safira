@@ -22,5 +22,15 @@
 	<string>public.app-category.productivity</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>SUAutomaticallyUpdate</key>
+	<false/>
+	<key>SUEnableAutomaticChecks</key>
+	<false/>
+	<key>SUEnableInstallerLauncherService</key>
+	<true/>
+	<key>SUFeedURL</key>
+	<string>https://overlabing.github.io/safira/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>CZ4T8RIDmlDLTZkEEQ0Dmvi6Z1kLEHAjvKsVeoYFVZg=</string>
 </dict>
 </plist>

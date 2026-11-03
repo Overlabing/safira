@@ -1,0 +1,8 @@
+// Copy to Config/Release.local.xcconfig (git-ignored) and fill in. scripts/release.sh reads these two values; nothing
+// here is a secret, but the Team ID and the profile name stay out of the public repository.
+
+// Apple Developer Team ID of the Developer ID Application certificate in the login keychain (ten characters).
+DEVELOPER_ID_TEAM_ID = XXXXXXXXXX
+
+// Name given to `xcrun notarytool store-credentials <name>`; the credentials live in the login keychain, not in a file.
+NOTARY_KEYCHAIN_PROFILE = safira-notary

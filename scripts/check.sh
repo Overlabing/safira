@@ -25,6 +25,14 @@ step() { # <label> <command...>
 }
 
 app=.build/dd/Build/Products/Debug/Safira.app
+updates_opt_in() {
+    plist="$app/Contents/Info.plist"
+    [ "$(/usr/libexec/PlistBuddy -c 'Print :SUEnableAutomaticChecks' "$plist")" = "false" ] || { echo "SUEnableAutomaticChecks is not explicitly false"; return 1; }
+    [ "$(/usr/libexec/PlistBuddy -c 'Print :SUAutomaticallyUpdate' "$plist")" = "false" ] || { echo "SUAutomaticallyUpdate is not false"; return 1; }
+    /usr/libexec/PlistBuddy -c 'Print :SUEnableSystemProfiling' "$plist" > /dev/null 2>&1 && { echo "SUEnableSystemProfiling must be absent"; return 1; }
+    return 0
+}
+
 allowed=Packages/SafiraKit/Sources/SafiraWeb/ProfileWebContext.swift
 
 signed_and_sandboxed() {
@@ -45,4 +53,5 @@ step "swift test (SafiraKit)" swift test --package-path Packages/SafiraKit
 step "xcodebuild Safira (Debug)" \
     xcodebuild -project Safira.xcodeproj -scheme Safira -configuration Debug -derivedDataPath .build/dd build
 step "Safira.app signed, hardened runtime, sandboxed" signed_and_sandboxed
+step "Sparkle opt-in: automatic checks off, no system profiling" updates_opt_in
 echo "OK: all checks passed"
