@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Antonin Carlin
 
+import Diagnostics
 import Foundation
 import SafiraSession
 import WebKit
@@ -13,12 +14,16 @@ public final class WebKitPage: WebPageHandle {
     public var onStateChange: (@MainActor (PageState) -> Void)?
     private var observations: [NSKeyValueObservation] = []
     private let onClose: @MainActor () -> Void
+    private let navigationDiagnostics: NavigationDiagnostics?
 
-    init(configuration: WKWebViewConfiguration, onClose: @escaping @MainActor () -> Void) {
+    init(configuration: WKWebViewConfiguration, diagnostics: DiagnosticLogger? = nil,
+         onClose: @escaping @MainActor () -> Void) {
         webView = WKWebView(frame: .zero, configuration: configuration)
         // Public API: the page shows in Safari's Develop menu. Safira has no in-app inspector (ADR 0001).
         webView.isInspectable = true
         self.onClose = onClose
+        navigationDiagnostics = diagnostics.map(NavigationDiagnostics.init)
+        webView.navigationDelegate = navigationDiagnostics
         observations = [
             observe(\.url), observe(\.title), observe(\.canGoBack), observe(\.canGoForward), observe(\.isLoading),
         ]

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Antonin Carlin
 
+import Diagnostics
 import SafiraCore
 import WebKit
 
@@ -10,6 +11,8 @@ import WebKit
 public final class ProfileWebContext {
     public let profileID: ProfileID
     public let dataStore: WKWebsiteDataStore
+    /// Receives the navigation events of the pages made after it is set.
+    public var diagnostics: DiagnosticLogger?
     /// Read each time a page is built: a change reaches the pages created after it, never the ones already open.
     public var webContentSettings: WebContentSettings
     /// The live pages of this Profile's Tabs. They live here, outside the views, until their Tab closes.
@@ -33,7 +36,7 @@ public final class ProfileWebContext {
 
     /// Builds the page of a Tab with this Profile's configuration. It stays registered until it is closed.
     public func makePage(for tabID: TabID) -> WebKitPage {
-        let page = WebKitPage(configuration: makeConfiguration()) { [weak self] in
+        let page = WebKitPage(configuration: makeConfiguration(), diagnostics: diagnostics) { [weak self] in
             self?.pages[tabID] = nil
         }
         pages[tabID] = page
