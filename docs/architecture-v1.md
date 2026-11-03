@@ -15,8 +15,8 @@ Légende :
 Conventions de sources :
 
 - « SDK 27 » = en-têtes et interfaces Swift du SDK macOS 27.0 d'Xcode 27.1, lus en local (`MacOSX27.0.sdk/System/Library/Frameworks/WebKit.framework/Headers/` et `…/Modules/WebKit.swiftmodule/arm64e-apple-macos.swiftinterface`, `_WebKit_SwiftUI.framework`).
-- « Oisillon » = `/Users/antonincarlin/projects/poste`, commit `4d2428c` (2026-11-03).
-- « ZenPicker » = `/Users/antonincarlin/projects/homelabing/zen-profiles/picker/ZenPicker.swift`.
+- « Oisillon » = le dépôt privé de l'app mail de l'auteur, commit `4d2428c` (2026-11-03).
+- « ZenPicker » = le prototype de picker de l'auteur (`ZenPicker.swift`, hors de ce dépôt).
 - « Recherche » = `docs/research-tab-discarding.md` ; « Banc » = `docs/conformance-bench-plan.md`.
 - Ora et Re-Arc ont été lus par l'API GitHub et des pages brutes, à travers un outil qui résume les fichiers. Ces affirmations sont [É] pour l'existence du fichier cité, mais le détail d'implémentation peut être approximatif. Aucun code n'en a été copié.
 
@@ -359,7 +359,7 @@ Chaque permission demande aussi le TCC système une fois pour l'app : clés `NSC
 | Journal des choix sans requête ni fragment (`record`) | 59-83 | Portable, mais **en opt-in** (§5.5) |
 | Réécriture vers les apps natives Linear, Notion, Figma (`nativeLink`) | 92-133 | **Portable.** Formats génériques, exclusion des pages de connexion et d'OAuth, vérification que l'app est installée (`urlForApplication`) |
 | Slack : identifiant d'équipe lu dans `~/Library/Application Support/Slack/storage/root-state.json` | 113-126, 150-156 | **Générique** (marche pour tout utilisateur de Slack) mais **incompatible avec le bac à sable** [D]. Options : dossier accordé par l'utilisateur (signet à portée de sécurité), ou abandon du cas Slack (Q1) |
-| Heuristique des artifacts Claude (`artifactGuess`, transcripts, `macadam`) | 158-204 | **Propre au setup d'Antonin : sort du dépôt** (scope §4) |
+| Heuristique des artifacts Claude (`artifactGuess`) | 158-204 | **Propre au setup d'Antonin : sort du dépôt** (scope §4) |
 | `--stats`, `--resolve` | 206-230, 544-567 | Utile : à porter en commande de diagnostic (« Où irait ce lien ? » dans les réglages) [D] |
 | Forme du notch, vue, `KeyPanel` | 234-375 | **Portable.** Géométrie du notch via `safeAreaInsets` et `auxiliaryTopLeftArea`/`TopRightArea` (l. 444-448) |
 | Cibles codées en dur (`Zen Pro.app`, `Zen Personal.app`) | 33-36 | Remplacées par la liste des profils |
@@ -385,7 +385,7 @@ Chaque permission demande aussi le TCC système une fois pour l'app : clés `NSC
 {
   "version": 1,
   "rules": [
-    {"host": "github.com", "path": "/Moment-App", "profile": "Pro", "space": "Dev"},
+    {"host": "github.com", "path": "/example-org", "profile": "Pro", "space": "Dev"},
     {"host": "meet.google.com", "profile": "Pro"},
     {"opener": "com.tinyspeck.slackmacgap", "profile": "Pro"}
   ],
@@ -522,7 +522,7 @@ Inventaire proposé, tiré de scope-v1.md et de ce document. Il est **à complé
 Le pipeline est **local**, sur le Mac d'Antonin. Les secrets ne vont pas dans la CI d'un dépôt public. Script `scripts/release.sh`, au format `OK:/FAILED:` d'Oisillon (`scripts/check.sh`, `scripts/archive.sh`) [É] :
 
 1. `xcodegen generate` ; contrôle de version (`MARKETING_VERSION`, `CURRENT_PROJECT_VERSION` dans `project.yml`, comme Oisillon) [É].
-2. `xcodebuild archive` (Release, `arm64` comme Oisillon, équipe 39TMVBW2CY), puis export Developer ID. L'export d'Xcode re-signe correctement Sparkle ; à la main, on signe chaque composant avec `-o runtime` et sans `--deep` ([doc Sparkle](https://sparkle-project.org/documentation/sandboxing/)) [É].
+2. `xcodebuild archive` (Release, `arm64` comme Oisillon, équipe Developer ID lue depuis une configuration locale hors git), puis export Developer ID. L'export d'Xcode re-signe correctement Sparkle ; à la main, on signe chaque composant avec `-o runtime` et sans `--deep` ([doc Sparkle](https://sparkle-project.org/documentation/sandboxing/)) [É].
 3. Contrôles : `codesign --verify --strict` ; absence de `get-task-allow` (exigé par la notarisation [É, doc Apple]) ; `Info.plist` archivé relu (schémas, version).
 4. DMG avec `hdiutil` (pas de dépendance), puis signature du DMG.
 5. `xcrun notarytool submit Safira.dmg --keychain-profile <profil> --wait`, puis `xcrun stapler staple Safira.dmg` ([doc Apple](https://developer.apple.com/documentation/security/customizing-the-notarization-workflow)) [É]. Limite : 75 notarisations par jour [É, même page].
