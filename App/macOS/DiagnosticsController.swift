@@ -46,7 +46,7 @@ final class DiagnosticsController: NSObject, NSMenuItemValidation {
         }
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.zip]
-        panel.nameFieldStringValue = "Safira Diagnostics \(Date.now.formatted(.iso8601.year().month().day())).zip"
+        panel.nameFieldStringValue = "Safira Diagnostics \(Date.now.formatted(Date.ISO8601FormatStyle(timeZone: .current).year().month().day())).zip"
         panel.message = "The archive holds Safira's local diagnostic logs: site hosts, error codes, load times and memory. "
             + "Nothing is sent anywhere."
         guard panel.runModal() == .OK, let destination = panel.url else { return }
