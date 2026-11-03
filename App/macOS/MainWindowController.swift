@@ -88,6 +88,15 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         selectTab(offset: -1)
     }
 
+    /// These change the Profile's settings: pages created from now on follow them, open pages keep theirs.
+    @objc func toggleFraudulentSiteWarning(_ sender: Any?) {
+        webContext.webContentSettings.isFraudulentSiteWarningEnabled.toggle()
+    }
+
+    @objc func toggleAutoplayingSound(_ sender: Any?) {
+        webContext.webContentSettings.isAutoplayingSoundAllowed.toggle()
+    }
+
     func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
         let tab = session.selectedTab
         switch menuItem.action {
@@ -96,6 +105,12 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         case #selector(goForward(_:)): return tab?.state.canGoForward == true
         case #selector(reload(_:)): return tab?.address != nil
         case #selector(showNextTab(_:)), #selector(showPreviousTab(_:)): return session.tabs.count > 1
+        case #selector(toggleFraudulentSiteWarning(_:)):
+            menuItem.state = webContext.webContentSettings.isFraudulentSiteWarningEnabled ? .on : .off
+            return true
+        case #selector(toggleAutoplayingSound(_:)):
+            menuItem.state = webContext.webContentSettings.isAutoplayingSoundAllowed ? .on : .off
+            return true
         default: return true
         }
     }

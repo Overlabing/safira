@@ -2,13 +2,17 @@
 // Copyright (c) 2026 Antonin Carlin
 
 import AppKit
+import SafiraCore
 
 @MainActor
 enum MainMenu {
-    static func make(diagnostics: DiagnosticsController) -> NSMenu {
+    static func make(updates: UpdateController, diagnostics: DiagnosticsController) -> NSMenu {
         let menu = NSMenu()
         menu.addItem(submenu(title: "Safira", items: [
             NSMenuItem(title: "About Safira", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: ""),
+            .separator(),
+            target(updates, NSMenuItem(title: "Check for Updates…", action: #selector(UpdateController.checkForUpdates(_:)), keyEquivalent: "")),
+            target(updates, NSMenuItem(title: "Check for Updates Automatically", action: #selector(UpdateController.toggleAutomaticChecks(_:)), keyEquivalent: "")),
             .separator(),
             NSMenuItem(title: "Hide Safira", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h"),
             hideOthers(),
@@ -32,6 +36,13 @@ enum MainMenu {
         ]))
         menu.addItem(submenu(title: "View", items: [
             NSMenuItem(title: "Reload Page", action: #selector(MainWindowController.reload(_:)), keyEquivalent: "r"),
+            .separator(),
+            webContentItem(title: WebContentSettings.fraudulentSiteWarningTitle,
+                           explanation: WebContentSettings.fraudulentSiteWarningExplanation,
+                           action: #selector(MainWindowController.toggleFraudulentSiteWarning(_:))),
+            webContentItem(title: WebContentSettings.autoplayingSoundTitle,
+                           explanation: WebContentSettings.autoplayingSoundExplanation,
+                           action: #selector(MainWindowController.toggleAutoplayingSound(_:))),
         ]))
         menu.addItem(submenu(title: "History", items: [
             NSMenuItem(title: "Back", action: #selector(MainWindowController.goBack(_:)), keyEquivalent: "["),
@@ -49,10 +60,11 @@ enum MainMenu {
         menu.addItem(window)
         NSApplication.shared.windowsMenu = window.submenu
         let help = submenu(title: "Help", items: [
-            diagnosticsItem(title: "Debug Mode", action: #selector(DiagnosticsController.toggleDebugMode(_:)),
-                            target: diagnostics),
-            diagnosticsItem(title: "Export Diagnostic Logs…",
-                            action: #selector(DiagnosticsController.exportDiagnosticLogs(_:)), target: diagnostics),
+            target(diagnostics, NSMenuItem(title: "Debug Mode", action: #selector(DiagnosticsController.toggleDebugMode(_:)),
+                                           keyEquivalent: "")),
+            target(diagnostics, NSMenuItem(title: "Export Diagnostic Logs…",
+                                           action: #selector(DiagnosticsController.exportDiagnosticLogs(_:)),
+                                           keyEquivalent: "")),
         ])
         menu.addItem(help)
         NSApplication.shared.helpMenu = help.submenu
@@ -67,9 +79,14 @@ enum MainMenu {
         return item
     }
 
-    private static func diagnosticsItem(title: String, action: Selector, target: AnyObject) -> NSMenuItem {
-        let item = NSMenuItem(title: title, action: action, keyEquivalent: "")
+    private static func target(_ target: AnyObject, _ item: NSMenuItem) -> NSMenuItem {
         item.target = target
+        return item
+    }
+
+    private static func webContentItem(title: String, explanation: String, action: Selector) -> NSMenuItem {
+        let item = NSMenuItem(title: title, action: action, keyEquivalent: "")
+        item.toolTip = explanation
         return item
     }
 

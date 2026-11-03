@@ -34,7 +34,7 @@ let package = Package(
         .target(name: "LinkPickerUI", dependencies: ["LinkRouting"]),
         .testTarget(name: "LinkPickerUITests", dependencies: ["LinkPickerUI"]),
         .target(name: "Diagnostics", dependencies: ["SafiraCore"]),
-        .testTarget(name: "DiagnosticsTests", dependencies: ["Diagnostics"]),
+        .testTarget(name: "DiagnosticsTests", dependencies: ["Diagnostics", "SafiraCore"]),
         .target(name: "Onboarding", dependencies: ["SafiraCore", "SafiraStore", "Commands"]),
         .testTarget(name: "OnboardingTests", dependencies: ["Onboarding", "Commands"]),
     ]
