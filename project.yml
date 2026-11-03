@@ -1,0 +1,60 @@
+# SPDX-License-Identifier: GPL-3.0-only
+# Copyright (c) 2026 Antonin Carlin
+# Source of truth for the Xcode project: `xcodegen generate` writes Safira.xcodeproj, which is not committed.
+name: Safira
+options:
+  bundleIdPrefix: com.overlabing
+  deploymentTarget:
+    macOS: "27.0"
+  developmentLanguage: en
+  # XcodeGen 2.45.3 knows no Xcode 27 format; xcode16_3 is the newest it can write and Xcode 27.1 opens it.
+  projectFormat: xcode16_3
+packages:
+  SafiraKit:
+    path: Packages/SafiraKit
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    ARCHS: arm64
+targets:
+  Safira:
+    type: application
+    platform: macOS
+    sources: [App/macOS]
+    scheme: {}
+    dependencies:
+      - package: SafiraKit
+        products: [SafiraCore, SafiraStore, SafiraSession, SafiraWeb, Commands, LinkRouting, LinkPickerUI, Diagnostics, Onboarding]
+    info:
+      path: App/macOS/Info.plist
+      properties:
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSPrincipalClass: NSApplication
+        LSApplicationCategoryType: public.app-category.productivity
+    entitlements:
+      # xcodegen rewrites this file from `properties` on every generate: every key lives here, never only in the file.
+      path: App/macOS/Safira.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.network.client: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.overlabing.safira
+        PRODUCT_NAME: Safira
+        GENERATE_INFOPLIST_FILE: YES
+        CODE_SIGN_ENTITLEMENTS: App/macOS/Safira.entitlements
+        ENABLE_HARDENED_RUNTIME: YES
+        # Ad hoc signing needs no certificate or secret, so the same build runs signed and sandboxed locally and in CI.
+        # Developer ID signing for distribution belongs to the release script (docs/architecture-v1.md §8.3).
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: "-"
+        # Xcode drops the hardened runtime from ad hoc signatures ("Disabling hardened runtime with ad-hoc codesigning");
+        # the flag puts it back.
+        OTHER_CODE_SIGN_FLAGS: --options=runtime
+        # Under the hardened runtime, library validation refuses Xcode's separate debug dylib: an ad hoc signature has no
+        # Team ID to match. It only serves SwiftUI previews.
+        ENABLE_DEBUG_DYLIB: NO
