@@ -13,11 +13,13 @@ final class SimulatedPage: WebPageHandle {
     private(set) var isClosed = false
     private var history: [URL] = []
     private var index = -1
+    private var isPlayingMedia = false
     var onStateChange: (@MainActor (PageState) -> Void)?
+    var onNewTab: (@MainActor (NewTabRequest) -> Void)?
 
     var state: PageState {
         PageState(url: history.indices.contains(index) ? history[index] : nil,
-                  canGoBack: index > 0, canGoForward: index < history.count - 1)
+                  canGoBack: index > 0, canGoForward: index < history.count - 1, isPlayingMedia: isPlayingMedia)
     }
 
     func load(_ url: URL) {
@@ -28,6 +30,16 @@ final class SimulatedPage: WebPageHandle {
     /// A navigation the page starts itself, as when the user clicks a link.
     func followLink(to url: URL) {
         navigate(to: url)
+    }
+
+    /// A link the user opens with ⌘: the page asks for a new Tab and stays where it is.
+    func commandClickLink(to url: URL) {
+        onNewTab?(.address(url))
+    }
+
+    func setPlayingMedia(_ playing: Bool) {
+        isPlayingMedia = playing
+        onStateChange?(state)
     }
 
     func goBack() {
@@ -74,6 +86,17 @@ final class SessionFixture {
             createdPageCount += 1
             return page
         }
+    }
+
+    /// A `target=_blank` link clicked in `page`: the engine builds the new page itself and loads the link in it.
+    @discardableResult
+    func clickTargetBlankLink(in page: SimulatedPage?, to url: URL) -> TabID {
+        let id = TabID()
+        let newPage = SimulatedPage()
+        pages[id] = newPage
+        page?.onNewTab?(.page(id, newPage))
+        newPage.followLink(to: url)
+        return id
     }
 
     var selectedPage: SimulatedPage? {
