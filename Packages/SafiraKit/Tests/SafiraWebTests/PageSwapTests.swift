@@ -91,7 +91,7 @@ private final class NavigationCounter: NSObject, WKNavigationDelegate {
 
 /// WebKit refuses to remove a data store while a released web view's process still holds it; that takes a moment.
 @MainActor
-private func removeDataStoreWhenReleased(_ profile: ProfileID) async throws {
+func removeDataStoreWhenReleased(_ profile: ProfileID) async throws {
     for _ in 1..<50 {
         do {
             return try await ProfileWebContext.removeDataStore(of: profile)

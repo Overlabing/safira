@@ -16,6 +16,8 @@ public final class WebKitPage: WebPageHandle {
 
     init(configuration: WKWebViewConfiguration, onClose: @escaping @MainActor () -> Void) {
         webView = WKWebView(frame: .zero, configuration: configuration)
+        // Public API: the page shows in Safari's Develop menu. Safira has no in-app inspector (ADR 0001).
+        webView.isInspectable = true
         self.onClose = onClose
         observations = [
             observe(\.url), observe(\.title), observe(\.canGoBack), observe(\.canGoForward), observe(\.isLoading),

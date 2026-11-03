@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Antonin Carlin
 
 import AppKit
+import SafiraCore
 
 @MainActor
 enum MainMenu {
@@ -35,6 +36,13 @@ enum MainMenu {
         ]))
         menu.addItem(submenu(title: "View", items: [
             NSMenuItem(title: "Reload Page", action: #selector(MainWindowController.reload(_:)), keyEquivalent: "r"),
+            .separator(),
+            webContentItem(title: WebContentSettings.fraudulentSiteWarningTitle,
+                           explanation: WebContentSettings.fraudulentSiteWarningExplanation,
+                           action: #selector(MainWindowController.toggleFraudulentSiteWarning(_:))),
+            webContentItem(title: WebContentSettings.autoplayingSoundTitle,
+                           explanation: WebContentSettings.autoplayingSoundExplanation,
+                           action: #selector(MainWindowController.toggleAutoplayingSound(_:))),
         ]))
         menu.addItem(submenu(title: "History", items: [
             NSMenuItem(title: "Back", action: #selector(MainWindowController.goBack(_:)), keyEquivalent: "["),
@@ -64,6 +72,12 @@ enum MainMenu {
 
     private static func target(_ target: AnyObject, _ item: NSMenuItem) -> NSMenuItem {
         item.target = target
+        return item
+    }
+
+    private static func webContentItem(title: String, explanation: String, action: Selector) -> NSMenuItem {
+        let item = NSMenuItem(title: title, action: action, keyEquivalent: "")
+        item.toolTip = explanation
         return item
     }
 
