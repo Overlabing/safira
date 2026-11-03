@@ -12,11 +12,15 @@ private final class LoadingPage: WebPageHandle {
     var state = PageState()
     var onStateChange: (@MainActor (PageState) -> Void)?
     var onNewTab: (@MainActor (NewTabRequest) -> Void)?
+    var onLoadFailure: (@MainActor (LoadFailure) -> Void)?
+    var onContinueOverHTTP: (@MainActor () -> Void)?
 
-    func load(_ url: URL) {
+    func load(_ url: URL, httpsFirst: Bool) {
         state = PageState(url: url, isLoading: true)
         onStateChange?(state)
     }
+
+    func showInsecureConnectionWarning(_ warning: InsecureConnectionWarning) {}
 
     func finishLoading() {
         state.isLoading = false
