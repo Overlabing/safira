@@ -27,7 +27,7 @@ let package = Package(
         .testTarget(name: "SafiraSessionTests", dependencies: ["SafiraSession", "Diagnostics"]),
         .target(name: "SafiraWeb", dependencies: ["SafiraCore", "SafiraSession", "Diagnostics"]),
         .testTarget(name: "SafiraWebTests", dependencies: ["SafiraWeb", "SafiraCore", "Diagnostics"]),
-        .target(name: "Commands", dependencies: ["SafiraCore"]),
+        .target(name: "Commands", dependencies: ["SafiraCore"], resources: [.copy("Presets")]),
         .testTarget(name: "CommandsTests", dependencies: ["Commands"]),
         .target(name: "LinkRouting", dependencies: ["SafiraCore"]),
         .testTarget(name: "LinkRoutingTests", dependencies: ["LinkRouting"]),

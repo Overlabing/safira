@@ -1,0 +1,59 @@
+{
+  "preset": "arc",
+  "name": "Arc",
+  "source": "https://resources.arc.net/hc/en-us/articles/20595231349911-Keyboard-Shortcuts",
+  "checked": "2026-11-04",
+  "note": "The help center answers automated requests with 403; the list was read from the Internet Archive snapshot of the same page (web.archive.org/web/2025/) on the check date.",
+  "bindings": {
+    "newTab": {
+      "shortcut": "command+t",
+      "from": "New tab (Command-T)"
+    },
+    "newWindow": {
+      "shortcut": "command+n",
+      "from": "New window (Command-N)"
+    },
+    "closeTab": {
+      "shortcut": "command+w",
+      "from": "Close current tab or window (Command-W)"
+    },
+    "quit": {
+      "shortcut": "command+q",
+      "from": "macOS convention; the cited page does not list it"
+    },
+    "reopenClosedTab": {
+      "shortcut": "command+shift+t",
+      "from": "Re-open last closed tab (Command-Shift-T)"
+    },
+    "openCommandBar": {
+      "shortcut": "command+l",
+      "from": "Change current tab URL (Command-L)"
+    },
+    "reload": {
+      "shortcut": "command+r",
+      "from": "Reload webpage (Command-R)"
+    },
+    "goBack": {
+      "shortcut": "command+[",
+      "from": "Go back on tab history (Command-Left Arrow or Command-Left Bracket)"
+    },
+    "goForward": {
+      "shortcut": "command+]",
+      "from": "Go forward on tab history (Command-Right Arrow or Command-Right Bracket)"
+    },
+    "previousTab": {
+      "shortcut": "command+option+up",
+      "from": "Switch between tabs (Command-Option-Up Arrow)"
+    },
+    "nextTab": {
+      "shortcut": "command+option+down",
+      "from": "Switch between tabs (Option-Command-Down Arrow)"
+    }
+  },
+  "unbound": {
+    "closeWindow": "The page lists only Command-W, which closes the current tab or window.",
+    "focusTabList": "The page lists no command to move the focus to the sidebar.",
+    "moveTabUp": "The page lists no command to move a tab; Command-Option-Up Arrow switches tabs instead.",
+    "moveTabDown": "The page lists no command to move a tab; Option-Command-Down Arrow switches tabs instead."
+  }
+}
