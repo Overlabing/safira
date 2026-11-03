@@ -22,6 +22,8 @@ enum MainMenu {
                        keyEquivalent: "l"),
             .separator(),
             NSMenuItem(title: "Close Tab", action: #selector(MainWindowController.closeTab(_:)), keyEquivalent: "w"),
+            NSMenuItem(title: "Reopen Closed Tab", action: #selector(MainWindowController.reopenClosedTab(_:)),
+                       keyEquivalent: "T"),
             NSMenuItem(title: "Close Window", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "W"),
         ]))
         menu.addItem(submenu(title: "Edit", items: [
@@ -32,6 +34,8 @@ enum MainMenu {
         ]))
         menu.addItem(submenu(title: "View", items: [
             NSMenuItem(title: "Reload Page", action: #selector(MainWindowController.reload(_:)), keyEquivalent: "r"),
+            NSMenuItem(title: "Focus Tab List", action: #selector(MainWindowController.focusTabList(_:)),
+                       keyEquivalent: ""),
         ]))
         menu.addItem(submenu(title: "History", items: [
             NSMenuItem(title: "Back", action: #selector(MainWindowController.goBack(_:)), keyEquivalent: "["),
@@ -45,6 +49,10 @@ enum MainMenu {
                        keyEquivalent: "{"),
             NSMenuItem(title: "Show Next Tab", action: #selector(MainWindowController.showNextTab(_:)),
                        keyEquivalent: "}"),
+            arrowItem(title: "Move Tab Up", action: #selector(MainWindowController.moveTabUp(_:)),
+                      arrow: NSUpArrowFunctionKey),
+            arrowItem(title: "Move Tab Down", action: #selector(MainWindowController.moveTabDown(_:)),
+                      arrow: NSDownArrowFunctionKey),
         ])
         menu.addItem(window)
         NSApplication.shared.windowsMenu = window.submenu
@@ -56,6 +64,13 @@ enum MainMenu {
         let submenu = NSMenu(title: title)
         items.forEach(submenu.addItem)
         item.submenu = submenu
+        return item
+    }
+
+    /// ⌥⌘ with an arrow key.
+    private static func arrowItem(title: String, action: Selector, arrow: Int) -> NSMenuItem {
+        let item = NSMenuItem(title: title, action: action, keyEquivalent: String(Character(UnicodeScalar(arrow)!)))
+        item.keyEquivalentModifierMask = [.command, .option]
         return item
     }
 
