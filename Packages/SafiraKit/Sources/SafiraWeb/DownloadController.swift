@@ -1,0 +1,179 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (c) 2026 Antonin Carlin
+
+import Darwin
+import Foundation
+import SafiraCore
+import SafiraSession
+import WebKit
+
+/// The download delegate of one Profile: it takes the downloads its pages start, chooses where they are saved, and
+/// reports to the Profile's `ProfileDownloads`. A page's download belongs to the Profile, not to the page: this object
+/// outlives the page and holds the transfer.
+@MainActor
+final class DownloadController: NSObject, WKDownloadDelegate, DownloadEngine {
+    let downloads: ProfileDownloads
+    /// Where files are saved. The user's Downloads folder unless a test chooses another.
+    var directory: URL
+    /// A web view of the Profile that can start or resume a download when no page is there to do it.
+    private let makeHost: @MainActor () -> WKWebView
+    private var host: WKWebView?
+    private var transfers: [ObjectIdentifier: Transfer] = [:]
+
+    init(downloads: ProfileDownloads, directory: URL = DownloadController.userDownloadsDirectory(),
+         makeHost: @escaping @MainActor () -> WKWebView) {
+        self.downloads = downloads
+        self.directory = directory
+        self.makeHost = makeHost
+    }
+
+    /// The real Downloads folder. A sandboxed app's home directory is its container, so the folder is found through
+    /// the user database; the `files.downloads.read-write` entitlement is what opens it.
+    static func userDownloadsDirectory() -> URL {
+        if let entry = getpwuid(getuid()), let home = entry.pointee.pw_dir {
+            return URL(fileURLWithPath: String(cString: home), isDirectory: true)
+                .appending(path: "Downloads", directoryHint: .isDirectory)
+        }
+        return FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask)[0]
+    }
+
+    /// A download a page of this Profile has just started.
+    func adopt(_ download: WKDownload) {
+        let url = download.originalRequest?.url ?? URL(string: "about:blank")!
+        let id = downloads.begin(from: url, fileName: url.lastPathComponent.isEmpty ? url.host() ?? "download" : url.lastPathComponent)
+        track(download, as: id)
+    }
+
+    func restart(_ record: DownloadRecord) {
+        let partial = partialFile(named: record.fileName)
+        // A transfer started over cannot reuse the broken one's file; one resumed carries on in it.
+        if record.resumeData == nil { try? FileManager.default.removeItem(at: partial) }
+        Task { @MainActor in
+            let host = self.host ?? makeHost()
+            self.host = host
+            let download: WKDownload
+            if let resumeData = record.resumeData {
+                download = await host.resumeDownload(fromResumeData: resumeData)
+            } else {
+                download = await host.startDownload(using: URLRequest(url: record.sourceURL))
+            }
+            let transfer = track(download, as: record.id)
+            // WebKit resumes into the file it was writing and does not ask for a destination again.
+            if record.resumeData != nil {
+                transfer.finalName = record.fileName
+                transfer.partial = partial
+            }
+        }
+    }
+
+    func discardPartialFile(of record: DownloadRecord) {
+        try? FileManager.default.removeItem(at: partialFile(named: record.fileName))
+    }
+
+    /// Stops every transfer and deletes the unfinished files, for a Profile that goes away.
+    func cancelAll() async {
+        await downloads.cancelAll()
+    }
+
+    @discardableResult
+    private func track(_ download: WKDownload, as id: DownloadID) -> Transfer {
+        download.delegate = self
+        let transfer = Transfer(id: id, download: download, downloads: downloads)
+        // A cancelled download reports nothing more, so the transfer is let go here: holding it would keep the
+        // Profile's data store in use.
+        transfer.didCancel = { [weak self] in self?.transfers.removeValue(forKey: ObjectIdentifier(download)) }
+        transfers[ObjectIdentifier(download)] = transfer
+        downloads.attach(transfer, to: id)
+        return transfer
+    }
+
+    /// Bytes arrive in `name.part` and the file takes its name when the download is complete, so that a download that
+    /// stopped halfway never looks like a finished file.
+    private func partialFile(named name: String) -> URL {
+        directory.appending(path: name + Self.partialSuffix)
+    }
+
+    private static let partialSuffix = ".part"
+
+    private func exists(_ name: String) -> Bool {
+        FileManager.default.fileExists(atPath: directory.appending(path: name).path(percentEncoded: false))
+    }
+
+    // MARK: WKDownloadDelegate
+
+    func download(_ download: WKDownload, decideDestinationUsing response: URLResponse,
+                  suggestedFilename: String) async -> URL? {
+        guard let transfer = transfers[ObjectIdentifier(download)] else { return nil }
+        do {
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        } catch {
+            return nil
+        }
+        let reserved = Set(transfers.values.compactMap(\.finalName))
+        let name = DownloadFileName.unique(DownloadFileName.sanitized(suggestedFilename)) { candidate in
+            reserved.contains(candidate) || exists(candidate) || exists(candidate + Self.partialSuffix)
+        }
+        transfer.finalName = name
+        transfer.partial = partialFile(named: name)
+        downloads.named(transfer.id, fileName: name)
+        return transfer.partial
+    }
+
+    func downloadDidFinish(_ download: WKDownload) {
+        guard let transfer = transfers.removeValue(forKey: ObjectIdentifier(download)) else { return }
+        guard let partial = transfer.partial, let wanted = transfer.finalName else {
+            downloads.fail(transfer.id, resumeData: nil)
+            return
+        }
+        // Something else may have taken the name while the bytes came in.
+        let name = DownloadFileName.unique(wanted) { exists($0) }
+        let file = directory.appending(path: name)
+        do {
+            try FileManager.default.moveItem(at: partial, to: file)
+        } catch {
+            downloads.fail(transfer.id, resumeData: nil)
+            return
+        }
+        let bookmark = try? file.bookmarkData(options: [], includingResourceValuesForKeys: nil, relativeTo: nil)
+        let size = (try? FileManager.default.attributesOfItem(atPath: file.path(percentEncoded: false)))?[.size] as? Int64
+        downloads.complete(transfer.id, fileName: name, fileBookmark: bookmark, size: size)
+    }
+
+    func download(_ download: WKDownload, didFailWithError error: any Error, resumeData: Data?) {
+        guard let transfer = transfers.removeValue(forKey: ObjectIdentifier(download)) else { return }
+        downloads.fail(transfer.id, resumeData: resumeData)
+    }
+}
+
+/// One running `WKDownload`, with the observation that feeds its progress to the manager.
+@MainActor
+private final class Transfer: DownloadTransfer {
+    let id: DownloadID
+    let download: WKDownload
+    /// The name the file takes when the download is complete, and the file the bytes arrive in until then.
+    var finalName: String?
+    var partial: URL?
+    var didCancel: (() -> Void)?
+    private var observations: [NSKeyValueObservation] = []
+
+    init(id: DownloadID, download: WKDownload, downloads: ProfileDownloads) {
+        self.id = id
+        self.download = download
+        let progress = download.progress
+        let report: @Sendable (Progress, Any) -> Void = { progress, _ in
+            let received = progress.completedUnitCount
+            let total = progress.totalUnitCount
+            Task { @MainActor in downloads.progress(id, received: received, total: total > 0 ? total : nil) }
+        }
+        observations = [
+            progress.observe(\.completedUnitCount) { progress, _ in report(progress, 0) },
+            progress.observe(\.totalUnitCount) { progress, _ in report(progress, 0) },
+        ]
+    }
+
+    func cancel() async -> Data? {
+        let resumeData = await download.cancel()
+        didCancel?()
+        return resumeData
+    }
+}

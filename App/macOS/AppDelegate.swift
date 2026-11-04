@@ -121,10 +121,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// Quitting waits for the last save of every Profile's Tabs and settings.
+    /// Quitting stops the running downloads, so that they can be continued, and waits for the last save of every
+    /// Profile's Tabs, settings and downloads.
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         guard let registry else { return .terminateNow }
         Task {
+            await registry.stopDownloads()
             await registry.saveAll()
             sender.reply(toApplicationShouldTerminate: true)
         }
