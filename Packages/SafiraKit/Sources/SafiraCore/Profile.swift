@@ -8,7 +8,8 @@ public struct Profile: Hashable, Sendable, Identifiable {
     public var name: String
     /// An emoji that marks the Profile in the sidebar.
     public var symbol: String
-    /// The Profile's Theme, picked from a Palette; nil until Themes exist.
+    /// The id of the Profile's Theme, picked from the Palette: it tints the sidebar and colours the Dock icon. Nil only for
+    /// a Profile made before Themes existed.
     public var paletteID: String?
 
     public init(id: ProfileID, name: String, symbol: String = Profile.defaultSymbol, paletteID: String? = nil) {

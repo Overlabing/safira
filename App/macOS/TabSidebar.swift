@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Antonin Carlin
 
+import Appearance
+import ColorCore
 import SafiraCore
 import SafiraSession
 import SafiraWeb
@@ -18,10 +20,14 @@ struct TabSidebar: View {
     let showPage: () -> Void
 
     private var session: ProfileSession { registry.active.session }
+    /// The Active profile's Theme tints the sidebar; the Space's Theme is its gradient, and a Space with none wears the Profile's.
+    private var profileTheme: Theme { ThemeCatalog.theme(id: registry.activeProfile.paletteID, fallback: ThemeCatalog.first) }
+    private var spaceTheme: Theme { ThemeCatalog.theme(id: session.activeSpace.paletteID, fallback: profileTheme) }
 
     var body: some View {
         VStack(spacing: 0) {
             ProfileSwitcher(registry: registry, actions: profileActions)
+                .modifier(ProfileBand(theme: profileTheme))
             Divider()
             Text(verbatim: "\(session.activeSpace.emoji) \(session.activeSpace.name)")
                 .font(.headline)
@@ -36,6 +42,7 @@ struct TabSidebar: View {
             SpaceBar(session: session, actions: spaceActions)
         }
         .frame(minWidth: 180)
+        .sidebarAppearance(profile: profileTheme, space: spaceTheme)
     }
 
     private var tabList: some View {
@@ -120,6 +127,7 @@ private struct TabRow: View {
     let depth: Int
     let session: ProfileSession
     @State private var isHovered = false
+    @Environment(\.sidebarSecondary) private var secondary
 
     var body: some View {
         HStack(spacing: 6) {
@@ -127,14 +135,14 @@ private struct TabRow: View {
                 if tab.state.isLoading {
                     ProgressView().controlSize(.small)
                 } else {
-                    Image(systemName: "globe").foregroundStyle(.secondary)
+                    Image(systemName: "globe").foregroundStyle(secondary)
                 }
             }
             .frame(width: 16, height: 16)
             if tab.isPinned {
                 Image(systemName: "pin.fill")
                     .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(secondary)
                     .accessibilityHidden(true)
             }
             Text(title)
@@ -143,7 +151,7 @@ private struct TabRow: View {
             Spacer(minLength: 0)
             if tab.state.isPlayingMedia {
                 Image(systemName: "speaker.wave.2.fill")
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(secondary)
             }
             if isHovered {
                 Button {

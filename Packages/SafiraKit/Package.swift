@@ -17,20 +17,32 @@ let package = Package(
         .library(name: "LinkPickerUI", targets: ["LinkPickerUI"]),
         .library(name: "Diagnostics", targets: ["Diagnostics"]),
         .library(name: "Onboarding", targets: ["Onboarding"]),
+        .library(name: "Appearance", targets: ["Appearance"]),
     ],
     dependencies: [
         .package(url: "https://github.com/groue/GRDB.swift", exact: "7.11.1"),
+        .package(url: "https://github.com/Overlabing/ThemeKit", exact: "0.1.0"),
     ],
     targets: [
         .target(name: "SafiraCore"),
+        .target(name: "Appearance", dependencies: [
+            "SafiraCore",
+            .product(name: "ColorCore", package: "ThemeKit"),
+            .product(name: "ColorPlatform", package: "ThemeKit"),
+        ]),
+        .testTarget(name: "AppearanceTests", dependencies: [
+            "Appearance", "SafiraCore",
+            .product(name: "ColorCore", package: "ThemeKit"),
+            .product(name: "ColorPlatform", package: "ThemeKit"),
+        ]),
         .testTarget(name: "SafiraCoreTests", dependencies: ["SafiraCore"]),
         .target(name: "SafiraStore", dependencies: ["SafiraCore", .product(name: "GRDB", package: "GRDB.swift")]),
         .testTarget(name: "SafiraStoreTests", dependencies: [
             "SafiraStore", "SafiraCore", .product(name: "GRDB", package: "GRDB.swift"),
         ]),
-        .target(name: "SafiraSession", dependencies: ["SafiraCore", "SafiraStore", "Diagnostics"]),
+        .target(name: "SafiraSession", dependencies: ["SafiraCore", "SafiraStore", "Diagnostics", "Appearance"]),
         .testTarget(name: "SafiraSessionTests", dependencies: ["SafiraSession", "SafiraStore", "Diagnostics"]),
-        .target(name: "SafiraWeb", dependencies: ["SafiraCore", "SafiraStore", "SafiraSession", "Diagnostics"]),
+        .target(name: "SafiraWeb", dependencies: ["SafiraCore", "SafiraStore", "SafiraSession", "Diagnostics", "Appearance"]),
         .testTarget(name: "SafiraWebTests", dependencies: [
             "SafiraWeb", "SafiraStore", "SafiraSession", "SafiraCore", "Diagnostics",
         ]),

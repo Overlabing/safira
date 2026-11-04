@@ -70,15 +70,16 @@ struct FolderRow: View {
     let session: ProfileSession
     let actions: FolderActions
     @State private var isDropTarget = false
+    @Environment(\.sidebarSecondary) private var secondary
 
     var body: some View {
         HStack(spacing: 6) {
             Image(systemName: "chevron.right")
                 .rotationEffect(.degrees(folder.isExpanded ? 90 : 0))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(secondary)
                 .frame(width: 12)
             Image(systemName: folder.isExpanded ? "folder.fill" : "folder")
-                .foregroundStyle(.secondary)
+                .foregroundStyle(secondary)
             Text(folder.name)
                 .lineLimit(1)
                 .truncationMode(.tail)

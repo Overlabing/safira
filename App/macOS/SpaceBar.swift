@@ -86,14 +86,15 @@ private struct SpaceButton: View {
     }
 }
 
-/// Names a new Space or renames one. The emoji field takes one character; the system's emoji picker (⌃⌘Space) works
-/// in it.
+/// Names a new Space or edits one, and picks its Theme from the Palette. The emoji field takes one character; the
+/// system's emoji picker (⌃⌘Space) works in it.
 struct SpaceEditor: View {
     let title: String
     let confirmTitle: String
     @State var name: String
     @State var emoji: String
-    let save: (_ name: String, _ emoji: String) -> Void
+    @State var paletteID: String
+    let save: (_ name: String, _ emoji: String, _ paletteID: String) -> Void
     let cancel: () -> Void
 
     var body: some View {
@@ -103,12 +104,13 @@ struct SpaceEditor: View {
             Form {
                 TextField("Name", text: $name)
                 TextField("Emoji", text: $emoji)
+                LabeledContent("Theme") { PalettePicker(selection: $paletteID) }
             }
             HStack {
                 Spacer()
                 Button("Cancel", role: .cancel, action: cancel)
                     .keyboardShortcut(.cancelAction)
-                Button(confirmTitle) { save(name, emoji) }
+                Button(confirmTitle) { save(name, emoji, paletteID) }
                     .keyboardShortcut(.defaultAction)
                     .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
