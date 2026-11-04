@@ -27,6 +27,8 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
     private let compactModeStore = CompactModeStore()
     private var presentation: SidebarPresentation
     private var searchEngineSheet: NSWindow?
+    private var spaceSheet: NSWindow?
+    private var renderedTabID: TabID?
 
     init(session: ProfileSession, webContext: ProfileWebContext) {
         self.session = session
@@ -112,6 +114,37 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         applyReveal()
     }
 
+    // MARK: Space actions
+
+    /// Opens the Space editor for a new Space; the Space is created only when the user confirms.
+    @objc func newSpace(_ sender: Any?) {
+        editSpace(nil)
+    }
+
+    @objc func renameSpace(_ sender: Any?) {
+        editSpace(session.activeSpaceID)
+    }
+
+    @objc func deleteSpace(_ sender: Any?) {
+        confirmDeletion(of: session.activeSpaceID)
+    }
+
+    @objc func showPreviousSpace(_ sender: Any?) {
+        session.selectSpace(offset: -1)
+    }
+
+    @objc func showNextSpace(_ sender: Any?) {
+        session.selectSpace(offset: 1)
+    }
+
+    @objc func moveSpaceLeft(_ sender: Any?) {
+        session.moveSpace(session.activeSpaceID, by: -1)
+    }
+
+    @objc func moveSpaceRight(_ sender: Any?) {
+        session.moveSpace(session.activeSpaceID, by: 1)
+    }
+
     @objc func moveTabUp(_ sender: Any?) {
         session.selectedTabID.map { session.move($0, by: -1) }
     }
@@ -160,6 +193,10 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         case #selector(goForward(_:)): return tab?.state.canGoForward == true
         case #selector(reload(_:)): return tab?.address != nil
         case #selector(showNextTab(_:)), #selector(showPreviousTab(_:)): return session.tabs.count > 1
+        case #selector(deleteSpace(_:)): return session.canDeleteSpace
+        case #selector(showNextSpace(_:)), #selector(showPreviousSpace(_:)): return session.spaces.count > 1
+        case #selector(moveSpaceLeft(_:)): return session.spaces.first?.id != session.activeSpaceID
+        case #selector(moveSpaceRight(_:)): return session.spaces.last?.id != session.activeSpaceID
         case #selector(toggleCompactMode(_:)):
             menuItem.state = presentation.isCompact ? .on : .off
             return true
@@ -226,6 +263,60 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         return window?.makeFirstResponder(webView) ?? false
     }
 
+    // MARK: Spaces
+
+    private static let newSpaceEmoji = ["🌿", "📚", "💼", "🎨", "🎵", "✈️", "🧪", "⭐️"]
+
+    /// A new Space when `id` is nil, otherwise that Space.
+    private func editSpace(_ id: SpaceID?) {
+        guard let window, spaceSheet == nil else { return }
+        let space = id.flatMap { id in session.spaces.first { $0.id == id } }
+        if id != nil, space == nil { return }
+        let count = session.spaces.count
+        let editor = SpaceEditor(
+            title: space == nil ? String(localized: "New Space") : String(localized: "Rename Space"),
+            confirmTitle: space == nil ? String(localized: "Create") : String(localized: "Rename"),
+            name: space?.name ?? String(localized: "Space \(count + 1)"),
+            emoji: space?.emoji ?? Self.newSpaceEmoji[count % Self.newSpaceEmoji.count],
+            save: { [weak self] name, emoji in
+                guard let self else { return }
+                if let id {
+                    session.renameSpace(id, name: name, emoji: emoji)
+                } else {
+                    session.createSpace(name: name, emoji: emoji)
+                    focusCommandBar(nil)
+                }
+                endSpaceSheet()
+            },
+            cancel: { [weak self] in self?.endSpaceSheet() }
+        )
+        let sheet = NSWindow(contentViewController: NSHostingController(rootView: editor))
+        spaceSheet = sheet
+        window.beginSheet(sheet)
+    }
+
+    private func endSpaceSheet() {
+        guard let sheet = spaceSheet else { return }
+        window?.endSheet(sheet)
+        spaceSheet = nil
+    }
+
+    /// Deleting a Space closes its Tabs for good, so it is confirmed first. The last Space cannot be deleted.
+    private func confirmDeletion(of id: SpaceID) {
+        guard let window, session.canDeleteSpace, let space = session.spaces.first(where: { $0.id == id }) else { return }
+        let alert = NSAlert()
+        alert.messageText = String(localized: "Delete the Space “\(space.name)”?")
+        let tabs = space.tabs.isEmpty ? String(localized: "It has no Tab.")
+            : String(AttributedString(localized: "Its ^[\(space.tabs.count) Tab](inflect: true) will close.").characters)
+        alert.informativeText = tabs + " " + String(localized: "The Profile's logins and history are kept.")
+        alert.addButton(withTitle: String(localized: "Delete Space")).hasDestructiveAction = true
+        alert.addButton(withTitle: String(localized: "Cancel"))
+        alert.beginSheetModal(for: window) { [weak self] response in
+            guard response == .alertFirstButtonReturn else { return }
+            self?.session.deleteSpace(id)
+        }
+    }
+
     // MARK: Compact mode
 
     private func applyReveal() {
@@ -287,7 +378,11 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         backButton.isEnabled = tab?.state.canGoBack == true
         forwardButton.isEnabled = tab?.state.canGoForward == true
         reloadButton.isEnabled = tab?.address != nil
-        if commandBar.currentEditor() == nil {
+        // While the Command bar is being edited its text is the user's, unless the shown Tab changed under it (another
+        // Space or Tab shown by a shortcut): text typed for a ⌘T new Tab stays.
+        let shownTabChanged = tab?.id != renderedTabID
+        renderedTabID = tab?.id
+        if commandBar.currentEditor() == nil || (shownTabChanged && session.commandBarTarget != .newTab) {
             commandBar.stringValue = tab?.address?.absoluteString ?? ""
         }
         window?.title = tab?.state.title.flatMap { $0.isEmpty ? nil : $0 } ?? "Safira"
@@ -343,7 +438,13 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         toolbar.widthAnchor.constraint(equalTo: content.widthAnchor).isActive = true
         pageArea.widthAnchor.constraint(equalTo: content.widthAnchor).isActive = true
 
-        let sidebar = NSHostingController(rootView: TabSidebar(session: session) { [weak self] in self?.showPage() })
+        let spaceActions = SpaceActions(
+            edit: { [weak self] id in self?.editSpace(id) },
+            delete: { [weak self] id in self?.confirmDeletion(of: id) }
+        )
+        let sidebar = NSHostingController(rootView: TabSidebar(session: session, spaceActions: spaceActions) { [weak self] in
+            self?.showPage()
+        })
         self.sidebar = sidebar
         let page = NSViewController()
         page.view = content

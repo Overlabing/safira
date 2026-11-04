@@ -57,6 +57,20 @@ enum MainMenu {
             NSMenuItem(title: "Back", action: #selector(MainWindowController.goBack(_:)), keyEquivalent: "["),
             NSMenuItem(title: "Forward", action: #selector(MainWindowController.goForward(_:)), keyEquivalent: "]"),
         ]))
+        menu.addItem(submenu(title: "Spaces", items: [
+            controlCommandItem(title: "New Space…", action: #selector(MainWindowController.newSpace(_:)), key: "n"),
+            NSMenuItem(title: "Rename Space…", action: #selector(MainWindowController.renameSpace(_:)), keyEquivalent: ""),
+            NSMenuItem(title: "Delete Space…", action: #selector(MainWindowController.deleteSpace(_:)), keyEquivalent: ""),
+            .separator(),
+            controlArrowItem(title: "Show Previous Space", action: #selector(MainWindowController.showPreviousSpace(_:)),
+                             arrow: NSLeftArrowFunctionKey),
+            controlArrowItem(title: "Show Next Space", action: #selector(MainWindowController.showNextSpace(_:)),
+                             arrow: NSRightArrowFunctionKey),
+            NSMenuItem(title: "Move Space Left", action: #selector(MainWindowController.moveSpaceLeft(_:)),
+                       keyEquivalent: ""),
+            NSMenuItem(title: "Move Space Right", action: #selector(MainWindowController.moveSpaceRight(_:)),
+                       keyEquivalent: ""),
+        ]))
         let window = submenu(title: "Window", items: [
             NSMenuItem(title: "Minimize", action: #selector(NSWindow.performMiniaturize(_:)), keyEquivalent: "m"),
             NSMenuItem(title: "Zoom", action: #selector(NSWindow.performZoom(_:)), keyEquivalent: ""),
@@ -99,7 +113,14 @@ enum MainMenu {
         return item
     }
 
-    /// ⌃⌘ with a letter, the system's own sidebar shortcut.
+    /// ⌃⌘ with an arrow key: no browser-level or system shortcut uses it.
+    private static func controlArrowItem(title: String, action: Selector, arrow: Int) -> NSMenuItem {
+        let item = NSMenuItem(title: title, action: action, keyEquivalent: String(Character(UnicodeScalar(arrow)!)))
+        item.keyEquivalentModifierMask = [.command, .control]
+        return item
+    }
+
+    /// ⌃⌘ with a letter, the system's own sidebar shortcut for S.
     private static func controlCommandItem(title: String, action: Selector, key: String) -> NSMenuItem {
         let item = NSMenuItem(title: title, action: action, keyEquivalent: key)
         item.keyEquivalentModifierMask = [.control, .command]
