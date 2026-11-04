@@ -5,8 +5,9 @@ import SafiraCore
 import SafiraSession
 import SwiftUI
 
-/// The sites one Profile remembers a camera, microphone or location decision for, with a button to revoke each. It
-/// lists the Profile it was opened for and no other: there is no global permission screen.
+/// The sites one Profile remembers a camera, microphone or location decision for, and the kinds of link it remembers
+/// whether to open an app for, with a button to revoke each. It lists the Profile it was opened for and no other:
+/// there is no global permission screen.
 struct SitePermissionsView: View {
     let profileName: String
     let permissions: SitePermissions
@@ -16,26 +17,49 @@ struct SitePermissionsView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Site permissions of “\(profileName)”")
                 .font(.headline)
-            Text("A site asks each time until you choose to remember your choice. Revoking a choice makes the site ask again.")
+            Text("A site or a link asks each time until you choose to remember your choice. Revoking a choice makes it ask again.")
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
-            if permissions.all.isEmpty {
-                Text("No site has a remembered choice in this Profile.")
+            if permissions.all.isEmpty && permissions.appLinks.isEmpty {
+                Text("No site or link has a remembered choice in this Profile.")
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, minHeight: 80)
             } else {
-                List(permissions.all) { permission in
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text(verbatim: permission.origin.identifier)
-                            Text("\(Self.name(of: permission.kind)): \(Self.name(of: permission.decision))")
-                                .font(.callout)
-                                .foregroundStyle(.secondary)
+                List {
+                    if !permissions.all.isEmpty {
+                        Section("Sites") {
+                            ForEach(permissions.all) { permission in
+                                HStack {
+                                    VStack(alignment: .leading) {
+                                        Text(verbatim: permission.origin.identifier)
+                                        Text("\(Self.name(of: permission.kind)): \(Self.name(of: permission.decision))")
+                                            .font(.callout)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    Spacer()
+                                    Button("Revoke") { permissions.revoke(permission.kind, at: permission.origin) }
+                                        .accessibilityLabel(Text("Revoke \(Self.name(of: permission.kind)) for \(permission.origin.identifier)"))
+                                }
+                            }
                         }
-                        Spacer()
-                        Button("Revoke") { permissions.revoke(permission.kind, at: permission.origin) }
-                            .accessibilityLabel(Text("Revoke \(Self.name(of: permission.kind)) for \(permission.origin.identifier)"))
+                    }
+                    if !permissions.appLinks.isEmpty {
+                        Section("Links that open an app") {
+                            ForEach(permissions.appLinks) { choice in
+                                HStack {
+                                    VStack(alignment: .leading) {
+                                        Text(verbatim: "\(choice.scheme.rawValue):")
+                                        Text(Self.name(of: choice.decision, forLinks: true))
+                                            .font(.callout)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    Spacer()
+                                    Button("Revoke") { permissions.revokeAppLink(choice.scheme) }
+                                        .accessibilityLabel(Text("Revoke the choice for \(choice.scheme.rawValue): links"))
+                                }
+                            }
+                        }
                     }
                 }
                 .frame(minHeight: 160)
@@ -46,7 +70,7 @@ struct SitePermissionsView: View {
                 .fixedSize(horizontal: false, vertical: true)
             HStack {
                 Button("Revoke All", role: .destructive) { permissions.revokeAll() }
-                    .disabled(permissions.all.isEmpty)
+                    .disabled(permissions.all.isEmpty && permissions.appLinks.isEmpty)
                 Spacer()
                 Button("Done", action: done)
                     .keyboardShortcut(.defaultAction)
@@ -61,6 +85,13 @@ struct SitePermissionsView: View {
         case .camera: String(localized: "Camera")
         case .microphone: String(localized: "Microphone")
         case .location: String(localized: "Location")
+        }
+    }
+
+    static func name(of decision: PermissionDecision, forLinks: Bool) -> String {
+        switch decision {
+        case .allow: String(localized: "Opens its app without asking")
+        case .deny: String(localized: "Never opens an app")
         }
     }
 

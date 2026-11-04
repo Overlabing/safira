@@ -6,13 +6,16 @@ import Observation
 import SafiraCore
 import SafiraStore
 
-/// What one Profile remembers about the sites that asked for the camera, the microphone or the location. A decision is
-/// saved in the Profile's own database, so it never reaches another Profile, and it stays until the user revokes it.
+/// What one Profile remembers about the sites that asked for the camera, the microphone or the location, and about the
+/// apps links may open (by scheme, whatever the site). A decision is saved in the Profile's own database, so it never
+/// reaches another Profile, and it stays until the user revokes it.
 @MainActor
 @Observable
 public final class SitePermissions {
     /// Every remembered decision, by site then capability.
     public private(set) var all: [SitePermission]
+    /// Every remembered choice about opening an app, by scheme.
+    public private(set) var appLinks: [AppLinkChoice]
     @ObservationIgnored private let database: ProfileDatabase?
     @ObservationIgnored private let onError: @MainActor (String, any Error) -> Void
 
@@ -26,6 +29,12 @@ public final class SitePermissions {
         } catch {
             all = []
             onError("The remembered site permissions could not be read", error)
+        }
+        do {
+            appLinks = try database?.appLinkChoices() ?? []
+        } catch {
+            appLinks = []
+            onError("The remembered app choices could not be read", error)
         }
     }
 
@@ -66,6 +75,7 @@ public final class SitePermissions {
         all.removeAll { $0.origin == origin && $0.kind == kind }
     }
 
+    /// Forgets every site permission and every app choice.
     public func revokeAll() {
         do {
             try database?.removeAllSitePermissions()
@@ -74,5 +84,36 @@ public final class SitePermissions {
             return
         }
         all = []
+        appLinks = []
+    }
+
+    public func appLinkDecision(for scheme: URLScheme) -> PermissionDecision? {
+        appLinks.first { $0.scheme == scheme }?.decision
+    }
+
+    /// Remembers whether links of `scheme` may open their app. A choice that could not be saved is not remembered, so
+    /// the user is asked again rather than trusting something the next launch would forget.
+    public func rememberAppLink(_ decision: PermissionDecision, for scheme: URLScheme, now: Date = Date()) {
+        let choice = AppLinkChoice(scheme: scheme, decision: decision, decidedAt: now)
+        do {
+            try database?.save(choice)
+        } catch {
+            onError("The app choice could not be saved", error)
+            return
+        }
+        appLinks.removeAll { $0.scheme == scheme }
+        appLinks.append(choice)
+        appLinks.sort { $0.scheme < $1.scheme }
+    }
+
+    /// Forgets the choice for a scheme: its links ask again.
+    public func revokeAppLink(_ scheme: URLScheme) {
+        do {
+            try database?.removeAppLinkChoice(for: scheme)
+        } catch {
+            onError("The app choice could not be revoked", error)
+            return
+        }
+        appLinks.removeAll { $0.scheme == scheme }
     }
 }

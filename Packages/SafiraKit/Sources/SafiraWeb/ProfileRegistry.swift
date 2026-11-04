@@ -23,6 +23,11 @@ public final class ProfileRegistry {
     @ObservationIgnored public var permissionPrompt: (@MainActor (PermissionPrompt) async -> PermissionAnswer)? {
         didSet { loadedContexts.forEach { $0.web.permissionPrompt = permissionPrompt } }
     }
+    /// What every Profile's links to other apps use to ask the user and to open the app. Without it such links are
+    /// refused; the owners created later get it too.
+    @ObservationIgnored public var appLinkHandlers = AppLinkHandlers() {
+        didSet { loadedContexts.forEach { $0.session.appLinks.handlers = appLinkHandlers } }
+    }
     @ObservationIgnored private let appDatabase: AppDatabase?
     @ObservationIgnored private let layout: StoreLayout?
     @ObservationIgnored private let diagnostics: DiagnosticLogger?
@@ -235,6 +240,7 @@ public final class ProfileRegistry {
         }
         let context = ProfileContext(id: id, database: database, diagnostics: diagnostics, onError: onError)
         context.web.permissionPrompt = permissionPrompt
+        context.session.appLinks.handlers = appLinkHandlers
         return context
     }
 

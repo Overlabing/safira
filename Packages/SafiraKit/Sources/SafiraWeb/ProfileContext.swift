@@ -29,7 +29,8 @@ public final class ProfileContext: MatchingTabSearchable {
         let permissions = SitePermissions(database: database) { onError($0, $1) }
         let web = ProfileWebContext(profileID: id, webContentSettings: settings.webContent, permissions: permissions)
         web.diagnostics = diagnostics
-        let session = ProfileSession(profileID: id, settings: settings, history: database) {
+        let appLinks = AppLinkGate(profileID: id, permissions: permissions)
+        let session = ProfileSession(profileID: id, settings: settings, history: database, appLinks: appLinks) {
             [unowned web] in web.makePage(for: $0)
         }
         session.onHistoryError = { onError("The history could not be used", $0) }
