@@ -5,9 +5,9 @@ import LinkRouting
 import Observation
 import SafiraCore
 
-/// One Profile offered by the Link picker.
-public struct LinkPickerRow: Hashable, Identifiable, Sendable {
-    public let id: ProfileID
+/// One Profile, or one Space, offered by the Link picker.
+public struct LinkPickerRow<ID: Hashable & Sendable>: Hashable, Identifiable, Sendable {
+    public let id: ID
     /// The position shown to the user, starting at 1. Only 1 to 9 have a number key.
     public let number: Int
     public let symbol: String
@@ -19,9 +19,9 @@ public struct LinkPickerRow: Hashable, Identifiable, Sendable {
 }
 
 /// What a key did to the Link picker.
-public enum LinkPickerOutcome: Hashable, Sendable {
+public enum LinkPickerOutcome<ID: Hashable & Sendable>: Hashable, Sendable {
     case none
-    case chose(ProfileID)
+    case chose(ID)
     /// The user dismissed the question; the link is dropped.
     case cancelled
 }
@@ -30,26 +30,24 @@ public enum LinkPickerOutcome: Hashable, Sendable {
 /// key highlights one and Return then chooses the highlighted row. Return does nothing while no row is highlighted.
 @MainActor
 @Observable
-public final class LinkPickerModel {
+public final class LinkPickerModel<ID: Hashable & Sendable> {
     public let title: String
     public let detail: String
     /// The name of the Opener, when macOS reports it.
     public let openerName: String?
-    public let rows: [LinkPickerRow]
+    public let rows: [LinkPickerRow<ID>]
     public private(set) var highlightedIndex: Int?
     /// Whether the panel is unfolded from the notch.
     public var isOpen = false
 
-    public init(link: IncomingLink, profiles: [Profile]) {
+    public init(link: IncomingLink, rows: [LinkPickerRow<ID>]) {
         title = link.title
         detail = link.detail
         openerName = link.opener?.name
-        rows = profiles.enumerated().map { index, profile in
-            LinkPickerRow(id: profile.id, number: index + 1, symbol: profile.symbol, name: profile.name)
-        }
+        self.rows = rows
     }
 
-    public func handle(_ input: LinkPickerKeyInput) -> LinkPickerOutcome {
+    public func handle(_ input: LinkPickerKeyInput) -> LinkPickerOutcome<ID> {
         switch input {
         case .character(let character):
             guard let index = LinkPickerKey.rowIndex(for: character), rows.indices.contains(index) else { return .none }
@@ -70,11 +68,11 @@ public final class LinkPickerModel {
     }
 
     /// Clicking a row chooses it.
-    public func choose(_ id: ProfileID) -> LinkPickerOutcome {
+    public func choose(_ id: ID) -> LinkPickerOutcome<ID> {
         rows.contains { $0.id == id } ? .chose(id) : .none
     }
 
-    public var highlightedRow: LinkPickerRow? {
+    public var highlightedRow: LinkPickerRow<ID>? {
         highlightedIndex.map { rows[$0] }
     }
 
@@ -86,5 +84,21 @@ public final class LinkPickerModel {
             return
         }
         highlightedIndex = ((current + delta) % rows.count + rows.count) % rows.count
+    }
+}
+
+extension LinkPickerModel where ID == ProfileID {
+    public convenience init(link: IncomingLink, profiles: [Profile]) {
+        self.init(link: link, rows: profiles.enumerated().map { index, profile in
+            LinkPickerRow(id: profile.id, number: index + 1, symbol: profile.symbol, name: profile.name)
+        })
+    }
+}
+
+extension LinkPickerModel where ID == SpaceID {
+    public convenience init(link: IncomingLink, spaces: [SpaceChoice]) {
+        self.init(link: link, rows: spaces.enumerated().map { index, space in
+            LinkPickerRow(id: space.id, number: index + 1, symbol: space.emoji, name: space.name)
+        })
     }
 }

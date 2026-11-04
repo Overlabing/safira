@@ -10,7 +10,7 @@ public enum CommandID: String, CaseIterable, Hashable, Sendable {
     case previousTab, nextTab, moveTabUp, moveTabDown
     case commandBarNext, commandBarPrevious
     case newSpace, renameSpace, deleteSpace, previousSpace, nextSpace, moveSpaceLeft, moveSpaceRight
-    case newProfile, renameProfile, deleteProfile, previousProfile, nextProfile
+    case newProfile, renameProfile, deleteProfile, previousProfile, nextProfile, sitePermissions
     case clearBrowsingData
 }
 
@@ -71,6 +71,7 @@ public enum CommandRegistry {
         window(.newProfile, "New Profile…", nil),
         window(.renameProfile, "Rename Profile…", nil),
         window(.deleteProfile, "Delete Profile…", nil),
+        window(.sitePermissions, "Site Permissions…", nil),
         window(.previousProfile, "Show Previous Profile", Shortcut(.left, [.command, .control, .option])),
         window(.nextProfile, "Show Next Profile", Shortcut(.right, [.command, .control, .option])),
         window(.clearBrowsingData, "Clear History and Website Data…", Shortcut(.delete, [.command, .shift])),

@@ -27,10 +27,22 @@ struct LinkPickerLayout: Equatable {
     }
 }
 
-struct LinkPickerView: View {
-    let model: LinkPickerModel
+/// What the panel asks, and how each row opens the link.
+struct LinkPickerWording: Equatable {
+    let question: String
+    let rowHint: String
+
+    static let profile = LinkPickerWording(question: String(localized: "Choose a Profile for this link"),
+                                           rowHint: String(localized: "Opens the link in this Profile"))
+    static let space = LinkPickerWording(question: String(localized: "Choose a Space for this link"),
+                                         rowHint: String(localized: "Opens the link in this Space"))
+}
+
+struct LinkPickerView<ID: Hashable & Sendable>: View {
+    let model: LinkPickerModel<ID>
     let layout: LinkPickerLayout
-    let choose: (ProfileID) -> Void
+    let wording: LinkPickerWording
+    let choose: (ID) -> Void
     let dismiss: () -> Void
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -54,7 +66,7 @@ struct LinkPickerView: View {
         .animation(reduceMotion ? nil : .spring(response: open ? 0.42 : 0.4, dampingFraction: open ? 0.8 : 1), value: open)
         .environment(\.colorScheme, .dark)
         .accessibilityElement(children: .contain)
-        .accessibilityLabel(String(localized: "Choose a Profile for this link"))
+        .accessibilityLabel(wording.question)
     }
 
     private var content: some View {
@@ -107,7 +119,7 @@ struct LinkPickerView: View {
         return String(localized: "Link to \(model.title)")
     }
 
-    private func tile(_ row: LinkPickerRow, isHighlighted: Bool) -> some View {
+    private func tile(_ row: LinkPickerRow<ID>, isHighlighted: Bool) -> some View {
         Button { choose(row.id) } label: {
             VStack(spacing: 4) {
                 Text(verbatim: row.symbol)
@@ -132,7 +144,7 @@ struct LinkPickerView: View {
         .buttonStyle(.plain)
         .accessibilityLabel(row.name)
         .accessibilityValue(row.numberKey.map { String(localized: "Key \(String($0))") } ?? "")
-        .accessibilityHint(String(localized: "Opens the link in this Profile"))
+        .accessibilityHint(wording.rowHint)
         .accessibilityAddTraits(isHighlighted ? .isSelected : [])
     }
 }

@@ -35,6 +35,16 @@ public struct TabCounts: Hashable, Sendable {
     }
 }
 
+/// Why a Link rule that matched a link was passed over.
+public enum LinkRuleSkipReason: String, Hashable, Sendable {
+    case unknownProfile, ambiguousProfile, unknownSpace, ambiguousSpace
+}
+
+/// Why the Link rules file was refused.
+public enum LinkRulesFileProblem: String, Hashable, Sendable {
+    case unreadable, notJSON, unsupportedVersion, invalidField
+}
+
 /// Everything Debug mode may record. Each case carries typed fields only, so a line cannot hold a path, a query, a
 /// title, a cookie or a Space or Profile name.
 public enum DiagnosticEvent: Hashable, Sendable {
@@ -44,6 +54,10 @@ public enum DiagnosticEvent: Hashable, Sendable {
     case tabCounts(TabCounts)
     case memory(footprintBytes: UInt64)
     case debugMode(isOn: Bool)
+    /// The rule at `index` (from 0) matched a link but names a Profile or Space that cannot be found, so it was not used.
+    case linkRuleSkipped(index: Int, reason: LinkRuleSkipReason)
+    /// The Link rules file is invalid, so no rule applied.
+    case linkRulesInvalid(LinkRulesFileProblem)
 
     public enum Level: String, Sendable {
         case info, notice, error
@@ -60,7 +74,8 @@ public enum DiagnosticEvent: Hashable, Sendable {
     public var level: Level {
         switch self {
         case .tabCounts, .memory: .info
-        case .pageLoaded, .debugMode: .notice
+        case .pageLoaded, .debugMode, .linkRuleSkipped: .notice
+        case .linkRulesInvalid: .error
         // A navigation the user or the page itself replaced is expected, not a failure.
         case .loadFailed(_, let error): error.domain == NSURLErrorDomain && error.code == NSURLErrorCancelled ? .notice : .error
         }
@@ -71,7 +86,7 @@ public enum DiagnosticEvent: Hashable, Sendable {
         switch self {
         case .pageLoaded: true
         case .loadFailed(let host, _): host != nil
-        case .tabCounts, .memory, .debugMode: false
+        case .tabCounts, .memory, .debugMode, .linkRuleSkipped, .linkRulesInvalid: false
         }
     }
 
@@ -88,6 +103,10 @@ public enum DiagnosticEvent: Hashable, Sendable {
             "memory footprint-bytes=\(bytes)"
         case .debugMode(let isOn):
             "debug-mode \(isOn ? "on" : "off")"
+        case .linkRuleSkipped(let index, let reason):
+            "link-rule-skipped index=\(index) reason=\(reason.rawValue)"
+        case .linkRulesInvalid(let problem):
+            "link-rules-invalid problem=\(problem.rawValue)"
         }
     }
 }

@@ -30,6 +30,8 @@ public final class ProfileSession {
     public private(set) var commandBarTarget: CommandBarTarget?
     /// A search typed while the Profile has no search engine; the user is asked to pick one before it runs.
     public private(set) var searchAwaitingEngine: String?
+    /// The windows pages opened with window features (sign-in popups), oldest first. They are not Tabs and are never saved.
+    public private(set) var popups: [Popup] = []
     /// The Tabs closed during this session, the last one closed at the end. Kept in memory only.
     private var closedTabs: [ClosedTab] = []
     @ObservationIgnored private var searchAwaitingEngineTarget = CommandBarTarget.selectedTab
@@ -98,6 +100,8 @@ public final class ProfileSession {
     /// nothing.
     public func restore(_ saved: SavedSession) {
         guard let active = saved.activeSpace else { return }
+        popups.forEach { $0.close() }
+        popups = []
         allTabs.forEach { $0.close() }
         spaces = saved.spaces.map { record in
             let space = Space(id: record.id, name: record.name, emoji: record.emoji, paletteID: record.paletteID)
@@ -192,6 +196,7 @@ public final class ProfileSession {
     public func deleteSpace(_ id: SpaceID) {
         guard canDeleteSpace, let index = spaces.firstIndex(where: { $0.id == id }) else { return }
         let space = spaces.remove(at: index)
+        closePopups(openedBy: space.tabs.map(\.id))
         space.tabs.forEach { $0.close() }
         space.tabs = []
         if activeSpaceID == id {
@@ -255,6 +260,7 @@ public final class ProfileSession {
         if let address = tab.address {
             closedTabs.append(ClosedTab(address: address, space: space.id, index: index))
         }
+        closePopups(openedBy: [id])
         tab.close()
         if space.selectedTabID == id {
             space.selectedTabID = space.tabs.isEmpty ? nil : space.tabs[min(index, space.tabs.count - 1)].id
@@ -265,6 +271,8 @@ public final class ProfileSession {
     /// Closes every Tab of every Space for good, releasing their pages; none can be reopened. For a Profile being
     /// deleted.
     public func closeAllTabs() {
+        popups.forEach { $0.close() }
+        popups = []
         allTabs.forEach { $0.close() }
         for space in spaces {
             space.tabs = []
@@ -322,6 +330,18 @@ public final class ProfileSession {
     public func move(_ id: TabID, by offset: Int) {
         guard let from = tabs.firstIndex(where: { $0.id == id }) else { return }
         move(id, to: from + offset)
+    }
+
+    // MARK: Popups
+
+    /// Closes a popup and its page, as the user does with its close button.
+    public func closePopup(_ id: PopupID) {
+        guard let index = popups.firstIndex(where: { $0.id == id }) else { return }
+        popups.remove(at: index).close()
+    }
+
+    private func closePopups(openedBy tabs: [TabID]) {
+        popups.filter { tabs.contains($0.openerTabID) }.forEach { closePopup($0.id) }
     }
 
     // MARK: Command bar
@@ -408,7 +428,7 @@ public final class ProfileSession {
     }
 
     /// A page opened a link in a new Tab: it goes right after the Tab that opened it, in the background, in the
-    /// opener's Space.
+    /// opener's Space. A popup is not a Tab: it stays a window of the Tab that opened it.
     private func openBackgroundTab(_ request: NewTabRequest, after opener: TabID) {
         let space = spaces.first { $0.tabs.contains { $0.id == opener } } ?? activeSpace
         let position = space.tabs.firstIndex { $0.id == opener }.map { $0 + 1 } ?? space.tabs.count
@@ -419,6 +439,11 @@ public final class ProfileSession {
             tab.load(url)
         case .page(let id, let page):
             space.tabs.insert(makeTab(id: id, page: page), at: position)
+        case .popup(let id, let page, let requested):
+            let popup = Popup(id: id, openerTabID: opener, requestedWindow: requested, page: page)
+            popup.attach(onClose: { [weak self] in self?.closePopup(id) },
+                         onNewTab: { [weak self] request in self?.openBackgroundTab(request, after: opener) })
+            popups.append(popup)
         }
     }
 

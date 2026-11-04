@@ -45,6 +45,10 @@ struct ClearBrowsingDataSheet: View {
             }
             .pickerStyle(.radioGroup)
             .accessibilityHint("Choose how far back to clear. Nothing is chosen until you pick one.")
+            // A radio group takes the keyboard only with Full Keyboard Access, so the number keys choose a range too.
+            Text("Press 1, 2 or 3 to choose a range, then Return.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
             HStack {
                 Spacer()
                 Button("Cancel", role: .cancel, action: cancel)
@@ -58,6 +62,17 @@ struct ClearBrowsingDataSheet: View {
         }
         .padding(20)
         .frame(width: 420)
+        .background {
+            ZStack {
+                ForEach(Array(ClearRange.allCases.enumerated()), id: \.element) { index, option in
+                    Button(option.title) { range = option }
+                        .keyboardShortcut(KeyEquivalent(Character("\(index + 1)")), modifiers: [])
+                }
+            }
+            .opacity(0)
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
+        }
     }
 
     private var confirmTitle: String {

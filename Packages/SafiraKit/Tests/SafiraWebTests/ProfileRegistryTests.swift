@@ -136,6 +136,69 @@ private final class TemporaryRoot {
         await cleanUp(ids)
     }
 
+    @Test func anExternalLinkOpensInTheNamedSpaceOfTheProfile() async throws {
+        let root = TemporaryRoot()
+        var ids: [ProfileID] = []
+        do {
+            let registry = ProfileRegistry(layout: root.layout)
+            let first = registry.activeProfileID
+            let work = registry.createProfile(name: "Work", symbol: "💼", searchEngine: .kagi)
+            let docs = registry.active.session.createSpace(name: "Docs", emoji: "📄")
+            let home = try #require(registry.active.session.spaces.first?.id)
+            registry.active.session.selectSpace(home)
+            registry.selectProfile(first)
+            ids = registry.profiles.map(\.id)
+
+            let opened = registry.openExternalLink(try #require(URL(string: "about:blank")), in: work, space: docs)
+
+            #expect(opened)
+            #expect(registry.activeProfileID == work)
+            #expect(registry.active.session.activeSpaceID == docs)
+            #expect(registry.active.session.spaces.map(\.tabs.count) == [0, 1])
+            for context in registry.loadedContexts { context.session.closeAllTabs() }
+        }
+        await cleanUp(ids)
+    }
+
+    @Test func anExternalLinkForASpaceThatDoesNotExistChangesNothing() async throws {
+        let root = TemporaryRoot()
+        var ids: [ProfileID] = []
+        do {
+            let registry = ProfileRegistry(layout: root.layout)
+            let first = registry.activeProfileID
+            let work = registry.createProfile(name: "Work", symbol: "💼", searchEngine: .kagi)
+            registry.selectProfile(first)
+            ids = registry.profiles.map(\.id)
+
+            let opened = registry.openExternalLink(try #require(URL(string: "about:blank")), in: work, space: SpaceID())
+
+            #expect(!opened)
+            #expect(registry.activeProfileID == first)
+            #expect(registry.active.session.tabs.isEmpty)
+            for context in registry.loadedContexts { context.session.closeAllTabs() }
+        }
+        await cleanUp(ids)
+    }
+
+    @Test func theSpacesOfAProfileAreListedWithoutShowingIt() async throws {
+        let root = TemporaryRoot()
+        var ids: [ProfileID] = []
+        do {
+            let registry = ProfileRegistry(layout: root.layout)
+            let first = registry.activeProfileID
+            let work = registry.createProfile(name: "Work", symbol: "💼", searchEngine: .kagi)
+            registry.active.session.createSpace(name: "Docs", emoji: "📄")
+            registry.selectProfile(first)
+            ids = registry.profiles.map(\.id)
+
+            #expect(registry.spaces(in: work).map(\.name) == ["Home", "Docs"])
+            #expect(registry.activeProfileID == first)
+            #expect(registry.spaces(in: ProfileID(rawValue: UUID())).isEmpty)
+            for context in registry.loadedContexts { context.session.closeAllTabs() }
+        }
+        await cleanUp(ids)
+    }
+
     @Test func anExternalLinkForAProfileThatDoesNotExistChangesNothing() async throws {
         let root = TemporaryRoot()
         var ids: [ProfileID] = []

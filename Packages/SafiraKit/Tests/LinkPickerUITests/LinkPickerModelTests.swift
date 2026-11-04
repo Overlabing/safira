@@ -16,7 +16,7 @@ private let home = profile(2, "Home", "🏡")
 private let school = profile(3, "School", "🎓")
 
 @MainActor
-private func picker(_ profiles: [Profile] = [work, home, school]) -> LinkPickerModel {
+private func picker(_ profiles: [Profile] = [work, home, school]) -> LinkPickerModel<ProfileID> {
     LinkPickerModel(link: IncomingLink(url: URL(string: "https://example.com/a")!,
                                        opener: Opener(bundleIdentifier: "com.tinyspeck.slackmacgap", name: "Slack")),
                     profiles: profiles)
@@ -118,5 +118,36 @@ private func picker(_ profiles: [Profile] = [work, home, school]) -> LinkPickerM
         for _ in 0..<11 { _ = arrows.handle(.down) }
         #expect(arrows.highlightedIndex == 10)
         #expect(arrows.handle(.return) == .chose(many[10].id))
+    }
+}
+
+@MainActor
+@Suite struct SpacePickerModelTests {
+    private let dev = SpaceChoice(id: SpaceID(uuidString: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")!, name: "Dev", emoji: "🛠")
+    private let docs = SpaceChoice(id: SpaceID(uuidString: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb")!, name: "Docs", emoji: "📄")
+
+    private func picker() -> LinkPickerModel<SpaceID> {
+        LinkPickerModel(link: IncomingLink(url: URL(string: "https://example.com/a")!), spaces: [dev, docs])
+    }
+
+    @Test func theRowsAreTheSpacesInSidebarOrderWithTheirEmoji() {
+        let model = picker()
+        #expect(model.rows.map(\.number) == [1, 2])
+        #expect(model.rows.map(\.name) == ["Dev", "Docs"])
+        #expect(model.rows.map(\.symbol) == ["🛠", "📄"])
+    }
+
+    @Test func nothingIsPreselectedAndANumberKeyChoosesTheSpace() {
+        let model = picker()
+        #expect(model.highlightedIndex == nil)
+        #expect(model.handle(.return) == .none)
+        #expect(model.handle(.character("2")) == .chose(docs.id))
+    }
+
+    @Test func arrowsThenReturnChooseTheHighlightedSpaceAndEscapeDismisses() {
+        let model = picker()
+        _ = model.handle(.down)
+        #expect(model.handle(.return) == .chose(dev.id))
+        #expect(model.handle(.escape) == .cancelled)
     }
 }

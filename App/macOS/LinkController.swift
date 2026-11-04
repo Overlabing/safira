@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Antonin Carlin
 
 import AppKit
+import Diagnostics
 import LinkPickerUI
 import LinkRouting
 import SafiraCore
@@ -34,6 +35,72 @@ struct WorkspaceDefaultApplications: DefaultApplicationRegistry {
     }
 }
 
+/// `NSWorkspace` as the installed apps of Slack, Linear, Notion and Figma, and the way to open a link in one.
+struct WorkspaceNativeApplications: NativeApplications {
+    func isInstalled(bundleIdentifier: String) -> Bool {
+        NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleIdentifier) != nil
+    }
+
+    func open(_ url: URL, bundleIdentifier: String) async -> Bool {
+        guard let app = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleIdentifier) else { return false }
+        do {
+            _ = try await NSWorkspace.shared.open([url], withApplicationAt: app, configuration: NSWorkspace.OpenConfiguration())
+            return true
+        } catch {
+            return false
+        }
+    }
+}
+
+/// Writes what the router could not use to the diagnostics, and tells the user once per change of the rules file that it
+/// is invalid.
+@MainActor
+private final class LinkRulesReporter: LinkRoutingReporting {
+    private let logger: DiagnosticLogger
+    private let rulesFile: URL
+    private var lastAlerted: (error: LinkRulesError, modified: Date?)?
+
+    init(logger: DiagnosticLogger, rulesFile: URL) {
+        self.logger = logger
+        self.rulesFile = rulesFile
+    }
+
+    func rulesFileIsInvalid(_ error: LinkRulesError) {
+        logger.record(.linkRulesInvalid(Self.problem(for: error)))
+        let modified = try? rulesFile.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate
+        if let lastAlerted, lastAlerted.error == error, lastAlerted.modified == modified { return }
+        lastAlerted = (error, modified)
+        let alert = NSAlert()
+        alert.messageText = String(localized: "The Link rules file is not valid")
+        alert.informativeText = error.explanation + " "
+            + String(localized: "No Link rule applies until it is fixed: links go to the Link picker.")
+        alert.addButton(withTitle: String(localized: "OK"))
+        alert.addButton(withTitle: String(localized: "Show in Finder"))
+        if alert.runModal() == .alertSecondButtonReturn {
+            NSWorkspace.shared.activateFileViewerSelecting([rulesFile])
+        }
+    }
+
+    func ruleWasSkipped(index: Int, because problem: LinkRuleProblem) {
+        let reason: LinkRuleSkipReason = switch problem {
+        case .unknownProfile: .unknownProfile
+        case .ambiguousProfile: .ambiguousProfile
+        case .unknownSpace: .unknownSpace
+        case .ambiguousSpace: .ambiguousSpace
+        }
+        logger.record(.linkRuleSkipped(index: index, reason: reason))
+    }
+
+    private static func problem(for error: LinkRulesError) -> LinkRulesFileProblem {
+        switch error {
+        case .unreadable: .unreadable
+        case .notJSON: .notJSON
+        case .unsupportedVersion: .unsupportedVersion
+        case .invalidField: .invalidField
+        }
+    }
+}
+
 /// Delivers external links to the Profiles of the app, and shows the Main window once a link has been opened.
 @MainActor
 private final class RegistryDestination: LinkDestination {
@@ -47,29 +114,45 @@ private final class RegistryDestination: LinkDestination {
 
     var profiles: [Profile] { registry.profiles }
 
-    func open(_ url: URL, in profile: ProfileID) -> Bool {
-        guard registry.openExternalLink(url, in: profile) else { return false }
+    func spaces(in profile: ProfileID) -> [SpaceChoice] {
+        registry.spaces(in: profile).map { SpaceChoice(id: $0.id, name: $0.name, emoji: $0.emoji) }
+    }
+
+    // Every link is a new Tab until Matching tabs exist (`target.forcesNewTab` is for them).
+    func open(_ url: URL, in target: LinkTarget) -> Bool {
+        guard registry.openExternalLink(url, in: target.profile, space: target.space) else { return false }
         didOpen()
         return true
     }
 }
 
-/// External links in the app: the Link picker, the choice log and the default browser setting, with their menu items.
+/// External links in the app: the Link picker, the Link rules, the choice log and the default browser setting, with
+/// their menu items.
 @MainActor
 final class LinkController: NSObject, NSMenuItemValidation {
-    private let coordinator: ExternalLinkCoordinator
+    private var coordinator: ExternalLinkCoordinator!
     private let choiceLog: LinkChoiceLog
     private let settings = LinkChoiceLogSettingsStore()
+    private let askForSpaceStore = AskForSpaceSettingsStore()
+    private var asksForSpace: Bool
+    private let slackGrant = SlackFolderGrant()
+    private let rulesFile = StoreLayout.application.linkRulesFile
     private let defaultBrowser = DefaultBrowser(registry: WorkspaceDefaultApplications(), appURL: Bundle.main.bundleURL)
 
-    init(registry: ProfileRegistry, mainWindow: MainWindowController) {
+    init(registry: ProfileRegistry, mainWindow: MainWindowController, diagnostics: DiagnosticsController) {
         choiceLog = LinkChoiceLog(file: StoreLayout.application.linkChoiceLogFile,
                                   isEnabled: settings.load().isEnabled)
+        asksForSpace = askForSpaceStore.load().isEnabled
+        let applications = WorkspaceNativeApplications()
+        let router = LinkRouter(
+            rules: LinkRulesFile(url: rulesFile),
+            nativeApps: NativeAppLinks(applications: applications, slack: slackGrant),
+            reporter: LinkRulesReporter(logger: diagnostics.logger, rulesFile: rulesFile))
+        super.init()
         coordinator = ExternalLinkCoordinator(
             destination: RegistryDestination(registry: registry) { [weak mainWindow] in mainWindow?.showOpenedLink() },
-            chooser: LinkPickerPresenter(),
-            choiceLog: choiceLog)
-        super.init()
+            chooser: LinkPickerPresenter(), router: router, nativeApplications: applications, choiceLog: choiceLog,
+            asksForSpace: { [weak self] in self?.asksForSpace ?? false })
     }
 
     func receive(_ link: IncomingLink) {
@@ -79,6 +162,46 @@ final class LinkController: NSObject, NSMenuItemValidation {
     @objc func toggleChoiceLog(_ sender: Any?) {
         choiceLog.isEnabled.toggle()
         settings.save(LinkChoiceLogSettings(isEnabled: choiceLog.isEnabled))
+    }
+
+    @objc func toggleAskForSpace(_ sender: Any?) {
+        asksForSpace.toggle()
+        askForSpaceStore.save(AskForSpaceSettings(isEnabled: asksForSpace))
+    }
+
+    /// Slack's own folder, which the sandbox hides: the user picks it once, and Slack links then open in the app.
+    @objc func grantSlackFolder(_ sender: Any?) {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.showsHiddenFiles = true
+        panel.directoryURL = Self.slackFolderSuggestion
+        panel.message = String(localized: "Choose Slack's folder (Application Support/Slack) so Slack links can open in the Slack app. Safira reads only the list of your workspaces from it.")
+        panel.prompt = String(localized: "Grant Access")
+        guard panel.runModal() == .OK, let folder = panel.url else { return }
+        do {
+            try slackGrant.grant(folder)
+        } catch {
+            let alert = NSAlert()
+            alert.messageText = String(localized: "That is not Slack's folder")
+            alert.informativeText = String(localized: "Choose the folder named Slack inside Application Support. It holds a folder named storage.")
+            alert.runModal()
+        }
+    }
+
+    @objc func forgetSlackFolder(_ sender: Any?) {
+        slackGrant.revoke()
+    }
+
+    /// The file is made on first use, so there is something to edit.
+    @objc func showLinkRules(_ sender: Any?) {
+        let manager = FileManager.default
+        if !manager.fileExists(atPath: rulesFile.path(percentEncoded: false)) {
+            try? manager.createDirectory(at: rulesFile.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try? Data("{\n  \"version\": 1,\n  \"rules\": []\n}\n".utf8).write(to: rulesFile)
+        }
+        NSWorkspace.shared.activateFileViewerSelecting([rulesFile])
     }
 
     @objc func makeDefaultBrowser(_ sender: Any?) {
@@ -100,6 +223,16 @@ final class LinkController: NSObject, NSMenuItemValidation {
             menuItem.state = choiceLog.isEnabled ? .on : .off
             menuItem.toolTip = LinkChoiceLogSettings.explanation
             return true
+        case #selector(toggleAskForSpace(_:)):
+            menuItem.state = asksForSpace ? .on : .off
+            menuItem.toolTip = AskForSpaceSettings.explanation
+            return true
+        case #selector(grantSlackFolder(_:)):
+            menuItem.title = slackGrant.isGranted ? String(localized: "Change Slack Folder…")
+                                                  : String(localized: "Grant Access to Slack's Folder…")
+            return true
+        case #selector(forgetSlackFolder(_:)):
+            return slackGrant.isGranted
         case #selector(makeDefaultBrowser(_:)):
             let isDefault = defaultBrowser.isDefault
             menuItem.title = isDefault ? String(localized: "Safira Is the Default Browser")
@@ -108,5 +241,12 @@ final class LinkController: NSObject, NSMenuItemValidation {
         default:
             return true
         }
+    }
+
+    /// The real home folder: inside the sandbox, the user's home is not the one the process sees.
+    private static var slackFolderSuggestion: URL? {
+        guard let entry = getpwuid(getuid()) else { return nil }
+        return URL(filePath: String(cString: entry.pointee.pw_dir), directoryHint: .isDirectory)
+            .appending(path: "Library/Application Support/Slack", directoryHint: .isDirectory)
     }
 }

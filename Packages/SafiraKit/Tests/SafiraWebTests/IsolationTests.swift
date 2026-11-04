@@ -5,6 +5,7 @@ import CoreGraphics
 import Foundation
 import Network
 import SafiraCore
+import SafiraSession
 import SafiraWeb
 import Testing
 import WebKit
@@ -221,6 +222,43 @@ private let readEverything = """
             #expect(try await read(in: personalReader) == written)
             #expect(await cookieNames(personalContext) == ["script", "server"])
             for page in [workWriter, personalWriter, workReader, personalReader] { page.close() }
+        }
+        await removeDataStoreWhenReleased(work)
+        await removeDataStoreWhenReleased(personal)
+    }
+
+    @Test func aPopupUsesTheDataStoreOfItsOpenersProfileAndNeverAnotherProfilesStore() async throws {
+        let site = try await SignInSite()
+        let work = try #require(ProfileID(uuidString: "0B4E2C1A-5D3F-4E8B-9A7C-1F2E3D4C5B6A"))
+        let personal = try #require(ProfileID(uuidString: "7C8D9E0F-1A2B-4C3D-8E5F-6A7B8C9D0E1F"))
+        do {
+            let workContext = ProfileWebContext(profileID: work)
+            let personalContext = ProfileWebContext(profileID: personal)
+            let session = ProfileSession(profileID: work) { workContext.makePage(for: $0) }
+            let personalSession = ProfileSession(profileID: personal) { personalContext.makePage(for: $0) }
+            for (session, context) in [(session, workContext), (personalSession, personalContext)] {
+                session.openCommandBar(for: .newTab)
+                session.submitCommandBar(site.app("/app").absoluteString)
+                let opener = try #require(session.selectedTabID.flatMap(context.webView(for:)))
+                try await waitUntil("the opener loads") { opener.title == "app: signed out" }
+            }
+            let workOpener = try #require(session.selectedTabID.flatMap(workContext.webView(for:)))
+            _ = try await workOpener.evaluateJavaScript("document.getElementById('hold').click()")
+            try await waitUntil("the popup opens") { !session.popups.isEmpty }
+            let popupID = try #require(session.popups.first?.id)
+            let popup = try #require(workContext.webView(forPopup: popupID))
+            try await waitUntil("the popup loads") { popup.title == "provider: waiting" && !popup.isLoading }
+
+            #expect(popup.configuration.websiteDataStore === workContext.dataStore)
+            #expect(popup.configuration.websiteDataStore.identifier?.uuidString == "0B4E2C1A-5D3F-4E8B-9A7C-1F2E3D4C5B6A")
+            #expect(popup.configuration.websiteDataStore !== personalContext.dataStore)
+            #expect(popup.configuration.websiteDataStore.identifier != personal.rawValue)
+            #expect(await workContext.dataStore.httpCookieStore.allCookies().map(\.name) == ["idp_session"])
+            #expect(await personalContext.dataStore.httpCookieStore.allCookies() == [])
+            #expect(personalSession.popups.isEmpty)
+
+            session.closeAllTabs()
+            personalSession.closeAllTabs()
         }
         await removeDataStoreWhenReleased(work)
         await removeDataStoreWhenReleased(personal)
