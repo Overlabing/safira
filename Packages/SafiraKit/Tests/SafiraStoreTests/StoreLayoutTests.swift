@@ -19,3 +19,12 @@ import Testing
 
     #expect(layout.logsDirectory.path(percentEncoded: false) == "/tmp/safira-support/Logs/")
 }
+
+@Test func eachProfileDatabaseLivesInItsProfileFolder() throws {
+    let layout = StoreLayout(root: URL(filePath: "/tmp/safira-support/", directoryHint: .isDirectory))
+    let profile = try #require(ProfileID(uuidString: "6F9619FF-8B86-D011-B42D-00C04FC964FF"))
+
+    #expect(layout.profileDatabaseFile(for: profile).path(percentEncoded: false)
+        == "/tmp/safira-support/Profiles/6F9619FF-8B86-D011-B42D-00C04FC964FF/profile.sqlite")
+    #expect(layout.appDatabaseFile.path(percentEncoded: false) == "/tmp/safira-support/app.sqlite")
+}

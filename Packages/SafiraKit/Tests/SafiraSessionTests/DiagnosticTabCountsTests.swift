@@ -12,6 +12,10 @@ private final class LoadingPage: WebPageHandle {
     var state = PageState()
     var onStateChange: (@MainActor (PageState) -> Void)?
     var onNewTab: (@MainActor (NewTabRequest) -> Void)?
+    let navigationState: Data? = nil
+    let sensitiveContent: SensitiveContent = []
+
+    func restore(_ navigationState: Data) -> Bool { false }
 
     func load(_ url: URL) {
         state = PageState(url: url, isLoading: true)

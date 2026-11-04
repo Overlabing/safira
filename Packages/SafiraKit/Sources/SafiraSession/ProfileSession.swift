@@ -30,15 +30,20 @@ public final class ProfileSession {
     private var closedTabs: [ClosedTab] = []
     @ObservationIgnored private var searchAwaitingEngineTarget = CommandBarTarget.selectedTab
     @ObservationIgnored private let makePage: @MainActor (TabID) -> any WebPageHandle
+    @ObservationIgnored private let osBuild: String
 
     private struct ClosedTab {
         let address: URL
         let index: Int
     }
 
-    /// - Parameter makePage: builds the page of a Tab, called once per Tab on its first load.
-    public init(profile: Profile, makePage: @escaping @MainActor (TabID) -> any WebPageHandle) {
+    /// - Parameters:
+    ///   - osBuild: the macOS build, which decides whether a saved navigation state can be restored.
+    ///   - makePage: builds the page of a Tab, called once per Tab on its first load or its first selection.
+    public init(profile: Profile, osBuild: String = OSBuild.current,
+                makePage: @escaping @MainActor (TabID) -> any WebPageHandle) {
         self.profile = profile
+        self.osBuild = osBuild
         self.makePage = makePage
     }
 
@@ -50,26 +55,53 @@ public final class ProfileSession {
         !closedTabs.isEmpty
     }
 
+    // MARK: Saving and restoring
+
+    /// Brings back saved Tabs after the ones already open. Only the selected Tab gets a page; the others stay dormant
+    /// until they are selected.
+    public func restore(_ saved: SavedSession) {
+        let restored = saved.tabs.map { record in
+            Tab(restoring: record, osBuild: osBuild, makePage: makePage) { [weak self] request in
+                self?.openBackgroundTab(request, after: record.id)
+            }
+        }
+        tabs.append(contentsOf: restored)
+        setSelection(saved.selectedTabID ?? restored.first?.id ?? selectedTabID)
+    }
+
+    /// What to save of the Profile's Tabs now.
+    public func savedSession() -> SavedSession {
+        SavedSession(tabs: tabs.map(\.record), selectedTabID: selectedTabID)
+    }
+
+    /// Reads what `savedSession()` depends on, so that observing this call reports every change worth saving.
+    func readSavedFields() {
+        _ = selectedTabID
+        for tab in tabs {
+            _ = (tab.state, tab.dormantRecord)
+        }
+    }
+
     // MARK: Tabs
 
     @discardableResult
     public func openNewTab() -> TabID {
         let tab = makeTab(id: TabID())
         tabs.append(tab)
-        selectedTabID = tab.id
+        setSelection(tab.id)
         return tab.id
     }
 
     public func select(_ id: TabID) {
         guard tabs.contains(where: { $0.id == id }) else { return }
-        selectedTabID = id
+        setSelection(id)
     }
 
     /// Selects the Tab `offset` places away from the selected one, wrapping around the ends of the list.
     public func selectTab(offset: Int) {
         guard let index = tabs.firstIndex(where: { $0.id == selectedTabID }) else { return }
         let count = tabs.count
-        selectedTabID = tabs[((index + offset) % count + count) % count].id
+        setSelection(tabs[((index + offset) % count + count) % count].id)
     }
 
     /// Closing discards the Tab and its page; a Tab that had an address can be reopened during this session.
@@ -83,7 +115,7 @@ public final class ProfileSession {
         }
         tab.close()
         if selectedTabID == id {
-            selectedTabID = tabs.isEmpty ? nil : tabs[min(index, tabs.count - 1)].id
+            setSelection(tabs.isEmpty ? nil : tabs[min(index, tabs.count - 1)].id)
         }
     }
 
@@ -97,7 +129,7 @@ public final class ProfileSession {
         guard let closed = closedTabs.popLast() else { return nil }
         let tab = makeTab(id: TabID())
         tabs.insert(tab, at: min(closed.index, tabs.count))
-        selectedTabID = tab.id
+        setSelection(tab.id)
         tab.load(closed.address)
         return tab.id
     }
@@ -191,8 +223,14 @@ public final class ProfileSession {
         }
     }
 
+    /// A Tab shown for the first time since a relaunch creates its page here.
+    private func setSelection(_ id: TabID?) {
+        selectedTabID = id
+        selectedTab?.wake()
+    }
+
     private func makeTab(id: TabID, page: (any WebPageHandle)? = nil) -> Tab {
-        Tab(id: id, page: page, makePage: makePage) { [weak self] request in
+        Tab(id: id, page: page, osBuild: osBuild, makePage: makePage) { [weak self] request in
             self?.openBackgroundTab(request, after: id)
         }
     }
