@@ -10,8 +10,11 @@ import WebKit
 /// This file is the one place allowed to name website data stores (scripts/guard-singletons.sh).
 @MainActor
 public final class ProfileWebContext {
+    /// The Profile this context belongs to; for a Private window, the Profile it is attached to.
     public let profileID: ProfileID
     public let dataStore: WKWebsiteDataStore
+    /// True for a Private window's context: its data store lives in memory only.
+    public let isPrivate: Bool
     /// Receives the navigation events of the pages made after it is set.
     public var diagnostics: DiagnosticLogger?
     /// Read each time a page is built: a change reaches the pages created after it, never the ones already open.
@@ -37,6 +40,7 @@ public final class ProfileWebContext {
         self.permissions = permissions
         self.downloads = downloads
         self.dataStore = WKWebsiteDataStore(forIdentifier: profileID.rawValue)
+        isPrivate = false
         pageEvents.context = self
         downloadController = DownloadController(downloads: downloads) { [unowned self] in
             // Only the data store matters to a download: no script, no page.
@@ -56,6 +60,23 @@ public final class ProfileWebContext {
     /// Stops the Profile's running downloads, for a Profile that goes away.
     public func cancelDownloads() async {
         await downloadController.cancelAll()
+    }
+
+    /// The context of a Private window attached to a Profile. Its data store is a new non-persistent one, which WebKit
+    /// keeps in memory and writes nowhere ("no data will be written to the file system"), and its site permissions are
+    /// remembered in memory only. It reads nothing of the Profile's data store, and the Profile's cannot read it.
+    public init(privateWindowOf profileID: ProfileID, webContentSettings: WebContentSettings = WebContentSettings()) {
+        self.profileID = profileID
+        self.webContentSettings = webContentSettings
+        permissions = SitePermissions()
+        dataStore = WKWebsiteDataStore.nonPersistent()
+        isPrivate = true
+        pageEvents.context = self
+    }
+
+    /// Empties the data store of a Private window now, without waiting for WebKit to release it.
+    public func eraseWebsiteData() async {
+        await dataStore.removeData(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(), modifiedSince: .distantPast)
     }
 
     public func makeConfiguration() -> WKWebViewConfiguration {

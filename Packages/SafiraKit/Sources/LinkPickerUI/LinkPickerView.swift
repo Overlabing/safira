@@ -119,6 +119,14 @@ struct LinkPickerView<ID: Hashable & Sendable>: View {
         return String(localized: "Link to \(model.title)")
     }
 
+    /// The number key, and "Open" in green when a Tab of this Profile already shows the link.
+    private func keyLine(_ row: LinkPickerRow<ID>) -> Text {
+        let key = Text(verbatim: row.numberKey.map(String.init) ?? " ").foregroundStyle(.white.opacity(0.5))
+        guard row.isLinkOpen else { return key }
+        return key + Text(verbatim: "  ·  ").foregroundStyle(.white.opacity(0.5))
+            + Text("Open").foregroundStyle(Color.green)
+    }
+
     private func tile(_ row: LinkPickerRow<ID>, isHighlighted: Bool) -> some View {
         Button { choose(row.id) } label: {
             VStack(spacing: 4) {
@@ -129,9 +137,8 @@ struct LinkPickerView<ID: Hashable & Sendable>: View {
                     .foregroundStyle(.white.opacity(isHighlighted ? 1 : 0.75))
                     .lineLimit(1)
                     .truncationMode(.tail)
-                Text(verbatim: row.numberKey.map(String.init) ?? " ")
+                keyLine(row)
                     .font(.system(size: 10, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.5))
             }
             .padding(.vertical, 8)
             .frame(width: LinkPickerLayout.tileWidth, height: 84)
@@ -143,7 +150,9 @@ struct LinkPickerView<ID: Hashable & Sendable>: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(row.name)
-        .accessibilityValue(row.numberKey.map { String(localized: "Key \(String($0))") } ?? "")
+        .accessibilityValue([row.numberKey.map { String(localized: "Key \(String($0))") },
+                             row.isLinkOpen ? String(localized: "The link is already open here") : nil]
+            .compactMap { $0 }.joined(separator: ", "))
         .accessibilityHint(wording.rowHint)
         .accessibilityAddTraits(isHighlighted ? .isSelected : [])
     }

@@ -84,6 +84,16 @@ import Testing
     #expect(display(.safari, .nextSpace) == "⌃⌘→")
 }
 
+@Test func newPrivateWindowIsAnUnreservedWindowCommandOnShiftCommandN() {
+    let command = CommandRegistry.command(.newPrivateWindow)
+    #expect(command.title == "New Private Window")
+    #expect(command.scope == .window)
+    #expect(command.isRebindable)
+    #expect(command.isImplemented)
+    #expect(!command.isReserved)
+    #expect(command.defaultShortcut?.display == "⇧⌘N")
+}
+
 @Test func thePinCommandsAreRebindableWindowCommandsWithNoDefaultShortcut() {
     for id in [CommandID.togglePin, .newFolder] {
         let command = CommandRegistry.command(id)

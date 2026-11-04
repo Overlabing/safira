@@ -12,6 +12,9 @@ public struct LinkPickerRow<ID: Hashable & Sendable>: Hashable, Identifiable, Se
     public let number: Int
     public let symbol: String
     public let name: String
+    /// Whether a Tab of this Profile already shows the link. It is a mark only: the row is not highlighted or chosen
+    /// because of it.
+    public let isLinkOpen: Bool
 
     public var numberKey: Character? {
         number <= 9 ? Character(String(number)) : nil
@@ -88,9 +91,11 @@ public final class LinkPickerModel<ID: Hashable & Sendable> {
 }
 
 extension LinkPickerModel where ID == ProfileID {
-    public convenience init(link: IncomingLink, profiles: [Profile]) {
+    /// - Parameter alreadyOpenIn: the Profiles that have a Tab showing the link, which get a mark.
+    public convenience init(link: IncomingLink, profiles: [Profile], alreadyOpenIn: Set<ProfileID> = []) {
         self.init(link: link, rows: profiles.enumerated().map { index, profile in
-            LinkPickerRow(id: profile.id, number: index + 1, symbol: profile.symbol, name: profile.name)
+            LinkPickerRow(id: profile.id, number: index + 1, symbol: profile.symbol, name: profile.name,
+                          isLinkOpen: alreadyOpenIn.contains(profile.id))
         })
     }
 }
@@ -98,7 +103,7 @@ extension LinkPickerModel where ID == ProfileID {
 extension LinkPickerModel where ID == SpaceID {
     public convenience init(link: IncomingLink, spaces: [SpaceChoice]) {
         self.init(link: link, rows: spaces.enumerated().map { index, space in
-            LinkPickerRow(id: space.id, number: index + 1, symbol: space.emoji, name: space.name)
+            LinkPickerRow(id: space.id, number: index + 1, symbol: space.emoji, name: space.name, isLinkOpen: false)
         })
     }
 }

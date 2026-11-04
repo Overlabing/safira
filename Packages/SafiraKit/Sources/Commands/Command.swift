@@ -4,7 +4,7 @@
 /// Every command a shortcut can be bound to. The raw value is the key used in preset files and in the saved overrides,
 /// so it never changes once shipped.
 public enum CommandID: String, CaseIterable, Hashable, Sendable {
-    case newTab, newWindow, closeTab, closeWindow, reopenClosedTab, quit
+    case newTab, newWindow, newPrivateWindow, closeTab, closeWindow, reopenClosedTab, quit
     case openCommandBar, focusTabList, compactMode, showSidebar
     case reload, goBack, goForward
     case previousTab, nextTab, moveTabUp, moveTabDown
@@ -45,6 +45,7 @@ public enum CommandRegistry {
     public static let commands: [Command] = [
         window(.newTab, "New Tab", Shortcut(.character("t"), .command), reserved: true),
         window(.newWindow, "New Window", Shortcut(.character("n"), .command), reserved: true, implemented: false),
+        window(.newPrivateWindow, "New Private Window", Shortcut(.character("n"), [.command, .shift])),
         window(.closeTab, "Close Tab", Shortcut(.character("w"), .command), reserved: true),
         window(.closeWindow, "Close Window", Shortcut(.character("w"), [.command, .shift])),
         window(.reopenClosedTab, "Reopen Closed Tab", Shortcut(.character("t"), [.command, .shift]), reserved: true),

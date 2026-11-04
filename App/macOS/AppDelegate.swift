@@ -21,6 +21,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let shortcuts = ShortcutController()
     private(set) lazy var shortcutsWindow = ShortcutsWindowController(shortcuts: shortcuts)
     private var mainWindow: MainWindowController?
+    /// The open Private windows. Only they hold their contexts: nothing else can list or search them.
+    private var privateWindows: [PrivateWindowController] = []
     private var registry: ProfileRegistry?
     private var links: LinkController?
     /// Links that arrived before the Profiles were open, as on a launch started by a link.
@@ -70,7 +72,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func rebuildMenu() {
         guard let links else { return }
         NSApp.mainMenu = MainMenu.make(updates: updates, diagnostics: diagnostics, links: links,
-                                       shortcuts: shortcuts.bindings, shortcutsWindow: shortcutsWindow)
+                                       shortcuts: shortcuts.bindings, shortcutsWindow: shortcutsWindow, app: self)
+    }
+
+    /// Opens a Private window attached to the Profile of the Private window that has the focus, or else the Active profile.
+    @objc func newPrivateWindow(_ sender: Any?) {
+        guard let registry else { return }
+        let focused = NSApp.keyWindow?.windowController as? PrivateWindowController
+        let profile = focused?.context.parent.id ?? registry.activeProfileID
+        guard let context = registry.makePrivateContext(attachedTo: profile) else { return }
+        let controller = PrivateWindowController(context: context, shortcuts: shortcuts)
+        controller.onClose = { [weak self] closed in self?.privateWindows.removeAll { $0 === closed } }
+        privateWindows.append(controller)
+        let origin = focused?.window.map { NSPoint(x: $0.frame.minX + 28, y: $0.frame.maxY - 28) }
+        controller.open(cascadedFrom: origin)
+        NSApp.activate()
     }
 
     /// The menu carries the key equivalents, so a change of preset or override rebuilds it.

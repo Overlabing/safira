@@ -10,7 +10,7 @@ import SafiraStore
 /// The one owner of a Profile's state: its website data store (through its web context), its database and its
 /// session. Only `ProfileRegistry` creates one, and no API takes two of them (docs/architecture-v1.md §2.2).
 @MainActor
-public final class ProfileContext {
+public final class ProfileContext: MatchingTabSearchable {
     public let id: ProfileID
     public let web: ProfileWebContext
     public let session: ProfileSession
@@ -47,6 +47,10 @@ public final class ProfileContext {
         self.web = web
         self.session = session
         self.autosave = autosave
+    }
+
+    public func matchingTab(for address: NormalizedAddress) -> MatchingTab? {
+        session.matchingTab(for: address)
     }
 
     /// What the Profile remembers about the sites that asked for the camera, the microphone or the location.

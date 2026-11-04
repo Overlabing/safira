@@ -13,6 +13,10 @@
       "shortcut": "command+n",
       "from": "New window (Command-N)"
     },
+    "newPrivateWindow": {
+      "shortcut": "command+shift+n",
+      "from": "New incognito window (Command-Shift-N)"
+    },
     "closeTab": {
       "shortcut": "command+w",
       "from": "Close current tab or window (Command-W)"
