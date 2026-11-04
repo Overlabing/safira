@@ -56,6 +56,46 @@ import Testing
         await removeDataStoreWhenReleased(second.id)
     }
 
+    /// The Space rail draws every Profile's Spaces; one not shown since launch is read from its saved Spaces.
+    @Test func theSpacesOfAProfileNotShownSinceLaunchAreReadWithoutLoadingItThenFollowItsSession() async throws {
+        let layout = StoreLayout(root: FileManager.default.temporaryDirectory
+            .appending(path: "safira-\(UUID().uuidString)", directoryHint: .isDirectory))
+        defer { try? FileManager.default.removeItem(at: layout.root) }
+        let first = Profile(id: ProfileID(rawValue: UUID()), name: "Home")
+        let second = Profile(id: ProfileID(rawValue: UUID()), name: "Work")
+        let dev = SpaceRecord(id: SpaceID(), name: "Dev", emoji: "🛠", paletteID: "teal-green")
+        let ops = SpaceRecord(id: SpaceID(), name: "Ops", emoji: "🚀")
+        do {
+            let app = try AppDatabase(file: layout.appDatabaseFile)
+            try app.add(first)
+            try app.add(second)
+            try await ProfileDatabase(file: layout.profileDatabaseFile(for: second.id))
+                .save(SavedSession(spaces: [dev, ops], activeSpaceID: ops.id))
+        }
+        do {
+            let registry = ProfileRegistry(layout: layout)
+            _ = registry.active
+
+            #expect(registry.spaceSummary(of: second.id) == ProfileSpaces(
+                spaces: [SpaceSummary(id: dev.id, name: "Dev", emoji: "🛠", paletteID: "teal-green"),
+                         SpaceSummary(id: ops.id, name: "Ops", emoji: "🚀")],
+                lastSpaceID: ops.id))
+            #expect(registry.loadedContexts.map(\.id) == [first.id])
+            #expect(registry.spaceSummary(of: first.id).spaces.map(\.name) == ["Home"])
+            #expect(registry.spaceSummary(of: ProfileID(rawValue: UUID())) == ProfileSpaces())
+
+            registry.selectProfile(second.id)
+            registry.active.session.selectSpace(dev.id)
+
+            #expect(registry.spaceSummary(of: second.id).lastSpaceID == dev.id)
+            #expect(registry.spaceSummary(of: second.id).spaces.map(\.name) == ["Dev", "Ops"])
+
+            await registry.saveAll()
+        }
+        await removeDataStoreWhenReleased(first.id)
+        await removeDataStoreWhenReleased(second.id)
+    }
+
     @Test func aMatchOfAProfileThatNoLongerExistsIsRefusedAndTheActiveProfileStays() async throws {
         let registry = ProfileRegistry(layout: nil)
         let gone = MatchingTab(profile: ProfileID(rawValue: UUID()), space: SpaceID(), tab: TabID())

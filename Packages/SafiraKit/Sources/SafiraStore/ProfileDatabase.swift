@@ -44,6 +44,21 @@ public final class ProfileDatabase: Sendable {
         }
     }
 
+    /// The Spaces' own fields, in sidebar order, and the active Space, without reading any Tab.
+    public func savedSpaces() throws -> ProfileSpaces {
+        try queue.read { db in
+            let spaces = try Row.fetchAll(db, sql: "SELECT id, name, emoji, palette_id FROM space ORDER BY position")
+                .compactMap { row -> SpaceSummary? in
+                    guard let id = SpaceID(uuidString: row["id"]) else { return nil }
+                    return SpaceSummary(id: id, name: row["name"], emoji: row["emoji"], paletteID: row["palette_id"])
+                }
+            let active = try String.fetchOne(db, sql: "SELECT value FROM profile_setting WHERE key = ?",
+                                             arguments: [Self.activeSpaceKey])
+                .flatMap(SpaceID.init(uuidString:))
+            return ProfileSpaces(spaces: spaces, lastSpaceID: spaces.contains { $0.id == active } ? active : nil)
+        }
+    }
+
     /// Replaces the saved Spaces and Tabs in one transaction: a crash keeps either the previous session or this one.
     public func save(_ session: SavedSession) throws {
         try queue.write { db in try Self.write(session, db) }

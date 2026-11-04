@@ -10,7 +10,7 @@ import SwiftUI
 
 /// The column of a Private window, from the same kit pieces as the Main window's: the address and Back, Forward and
 /// Reload, the list of its Tabs, and a band naming the Profile it is attached to. There is no
-/// Profile switcher and no Space switcher. The Private Theme's purple, always dark, is what tells it from the Main
+/// Space rail. The Private Theme's purple, always dark, is what tells it from the Main
 /// window.
 struct PrivateSidebar: View {
     let session: ProfileSession
