@@ -22,6 +22,9 @@ public final class Tab: Identifiable {
     @ObservationIgnored private var httpsFirstAddress: URL?
     @ObservationIgnored private let makePage: @MainActor (TabID) -> any WebPageHandle
     @ObservationIgnored private let onNewTab: @MainActor (NewTabRequest) -> Void
+    @ObservationIgnored private var visits = VisitTracker()
+    /// Called when the Tab visits a web address or learns the title of the page it shows; the session sets it.
+    @ObservationIgnored var onVisitEvent: (@MainActor (VisitEvent) -> Void)?
 
     init(id: TabID, page: (any WebPageHandle)? = nil, osBuild: String,
          makePage: @escaping @MainActor (TabID) -> any WebPageHandle,
@@ -44,6 +47,7 @@ public final class Tab: Identifiable {
         self.onNewTab = onNewTab
         state = PageState(url: record.address, title: record.title)
         dormantRecord = record
+        visits = VisitTracker(restoredAddress: record.address)
     }
 
     public var address: URL? { state.url }
@@ -122,12 +126,21 @@ public final class Tab: Identifiable {
 
     @discardableResult
     private func attach(_ page: any WebPageHandle) -> any WebPageHandle {
-        page.onStateChange = { [weak self] state in self?.state = state }
+        page.onStateChange = { [weak self] state in self?.pageChanged(state) }
         page.onNewTab = { [onNewTab] request in onNewTab(request) }
         page.onLoadFailure = { [weak self] failure in self?.pageFailed(failure) }
         page.onContinueOverHTTP = { [weak self] in self?.continueOverHTTP() }
-        state = page.state
         self.page = page
+        pageChanged(page.state)
         return page
+    }
+
+    private func pageChanged(_ state: PageState) {
+        self.state = state
+        // The warning page borrows the address that failed to load; that address was never visited.
+        guard insecureConnectionWarning == nil else { return }
+        for event in visits.observe(state, sensitiveContent: page?.sensitiveContent ?? []) {
+            onVisitEvent?(event)
+        }
     }
 }

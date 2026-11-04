@@ -4,6 +4,7 @@
 import Foundation
 import SafiraCore
 import SafiraSession
+import SafiraStore
 
 /// A page with a back-forward list, standing in for a web view. It counts every load, reload and restoration it is
 /// asked for. Its navigation state is its back-forward list, encoded.
@@ -21,6 +22,8 @@ final class SimulatedPage: WebPageHandle {
     private var history: [Entry] = []
     private var index = -1
     private var isPlayingMedia = false
+    private var title: String?
+    private var isLoading = false
     private var sensitiveHistory = SensitiveHistory<UUID>()
     var onStateChange: (@MainActor (PageState) -> Void)?
     var onNewTab: (@MainActor (NewTabRequest) -> Void)?
@@ -38,8 +41,9 @@ final class SimulatedPage: WebPageHandle {
     }
 
     var state: PageState {
-        PageState(url: history.indices.contains(index) ? history[index].url : nil,
-                  canGoBack: index > 0, canGoForward: index < history.count - 1, isPlayingMedia: isPlayingMedia)
+        PageState(url: history.indices.contains(index) ? history[index].url : nil, title: title,
+                  canGoBack: index > 0, canGoForward: index < history.count - 1, isLoading: isLoading,
+                  isPlayingMedia: isPlayingMedia)
     }
 
     var navigationState: Data? {
@@ -104,6 +108,18 @@ final class SimulatedPage: WebPageHandle {
         onNewTab?(.address(url))
     }
 
+    /// The shown document sets its title, as `<title>` does once it is parsed.
+    func setTitle(_ newTitle: String) {
+        title = newTitle
+        onStateChange?(state)
+    }
+
+    /// The engine reports that the shown navigation is still loading, or has finished.
+    func setLoading(_ loading: Bool) {
+        isLoading = loading
+        onStateChange?(state)
+    }
+
     func setPlayingMedia(_ playing: Bool) {
         isPlayingMedia = playing
         onStateChange?(state)
@@ -131,6 +147,7 @@ final class SimulatedPage: WebPageHandle {
     }
 
     private func navigate(to url: URL) {
+        title = nil
         history.removeSubrange((index + 1)...)
         history.append(Entry(url: url))
         index += 1
@@ -148,9 +165,10 @@ final class SessionFixture {
     var preparePage: (SimulatedPage) -> Void = { _ in }
 
     init(searchEngine: SearchEngine? = nil, osBuild: String = "26A434",
-         id: ProfileID = ProfileID(rawValue: UUID(uuidString: "6F9619FF-8B86-D011-B42D-00C04FC964FF")!)) {
+         id: ProfileID = ProfileID(rawValue: UUID(uuidString: "6F9619FF-8B86-D011-B42D-00C04FC964FF")!),
+         history: ProfileDatabase? = nil) {
         session = ProfileSession(profileID: id, settings: ProfileSettings(searchEngine: searchEngine),
-                                 osBuild: osBuild) { [unowned self] tabID in
+                                 osBuild: osBuild, history: history) { [unowned self] tabID in
             let page = SimulatedPage()
             preparePage(page)
             pages[tabID] = page
@@ -176,5 +194,17 @@ final class SessionFixture {
 
     var addresses: [String?] {
         session.tabs.map { $0.address?.absoluteString }
+    }
+}
+
+extension SessionFixture {
+    /// Opens `address` in a new Tab, gives its page `title`, and leaves the Command bar closed.
+    @discardableResult
+    func visit(_ address: String, titled title: String? = nil) -> TabID {
+        session.openCommandBar(for: .newTab)
+        session.submitCommandBar(address)
+        let id = session.selectedTabID!
+        if let title { pages[id]?.setTitle(title) }
+        return id
     }
 }
