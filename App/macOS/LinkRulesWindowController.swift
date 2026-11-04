@@ -23,13 +23,15 @@ final class LinkRulesWindowController: NSWindowController, NSWindowDelegate {
                               styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
         window.title = String(localized: "Link Rules")
         window.isReleasedWhenClosed = false
-        window.setFrameAutosaveName("LinkRulesWindow")
-        window.minSize = NSSize(width: 520, height: 460)
+        window.minSize = NSSize(width: 600, height: 540)
         super.init(window: window)
         window.delegate = self
         window.contentViewController = NSHostingController(rootView: LinkRulesView(model: model, actions: LinkRulesActions(
             importFile: { [weak self] in self?.importFile() }, importZenPicker: { [weak self] in self?.importZenPicker() },
             export: { [weak self] in self?.export() }, showInFinder: { [weak self] in self?.showInFinder() })))
+        // The hosting controller sizes the window to the view's minimum, which would clip the check's answer.
+        window.setContentSize(NSSize(width: 680, height: 620))
+        window.setFrameAutosaveName("LinkRulesWindow")
     }
 
     @available(*, unavailable)
@@ -193,7 +195,8 @@ private struct LinkRulesView: View {
             check
         }
         .padding(16)
-        .frame(minWidth: 520, minHeight: 460)
+        .frame(minWidth: 600, minHeight: 540)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 
     private var list: some View {
