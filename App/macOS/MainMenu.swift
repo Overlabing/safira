@@ -46,6 +46,10 @@ enum MainMenu {
                            explanation: WebContentSettings.autoplayingSoundExplanation,
                            action: #selector(MainWindowController.toggleAutoplayingSound(_:))),
             .separator(),
+            controlCommandItem(title: "Compact Mode", action: #selector(MainWindowController.toggleCompactMode(_:)),
+                               key: "s"),
+            optionCommandItem(title: "Show Sidebar", action: #selector(MainWindowController.toggleRevealedSidebar(_:)),
+                              key: "s"),
             NSMenuItem(title: "Focus Tab List", action: #selector(MainWindowController.focusTabList(_:)),
                        keyEquivalent: ""),
         ]))
@@ -92,6 +96,19 @@ enum MainMenu {
     private static func arrowItem(title: String, action: Selector, arrow: Int) -> NSMenuItem {
         let item = NSMenuItem(title: title, action: action, keyEquivalent: String(Character(UnicodeScalar(arrow)!)))
         item.keyEquivalentModifierMask = [.command, .option]
+        return item
+    }
+
+    /// ⌃⌘ with a letter, the system's own sidebar shortcut.
+    private static func controlCommandItem(title: String, action: Selector, key: String) -> NSMenuItem {
+        let item = NSMenuItem(title: title, action: action, keyEquivalent: key)
+        item.keyEquivalentModifierMask = [.control, .command]
+        return item
+    }
+
+    private static func optionCommandItem(title: String, action: Selector, key: String) -> NSMenuItem {
+        let item = NSMenuItem(title: title, action: action, keyEquivalent: key)
+        item.keyEquivalentModifierMask = [.option, .command]
         return item
     }
 
