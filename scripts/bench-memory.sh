@@ -127,7 +127,9 @@ wait_for_quiet_server() { # <run folder>
 run_safira() { # <run folder>
     dir=$1
     write_urls "$shared/urls.txt"
-    rm -rf "$container"
+    # The container itself is protected; what it holds, including the saved Tabs a relaunch would restore, is not.
+    rm -rf "$container/Data"
+    [ ! -e "$container/Data/Library/Application Support/$bundle" ] || fail "the container of $bundle could not be emptied"
     open -g -n -a "$app" --args -SafiraBenchURLs "$shared/urls.txt" -SafiraBenchGapSeconds "$gap" || fail "open $app"
     waited=0
     until [ -s "$status_file" ] && grep -q '"event":"launched"' "$status_file"; do
