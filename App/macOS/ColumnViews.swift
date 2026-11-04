@@ -69,6 +69,10 @@ struct BrowserControls: View {
             .padding(.trailing, tokens.spacing.listMargin - tokens.spacing.rowInsetHorizontal)
         }
         .frame(minHeight: tokens.size.statusLine)
+        // The row sits at the window's top edge, level with the page's canvas; its empty space moves the window, as a
+        // title bar would.
+        .background { Color.clear.contentShape(.rect).gesture(WindowDragGesture()) }
+        .padding(.top, tokens.spacing.canvasInset)
         .padding(.bottom, tokens.spacing.statusLineToList)
     }
 
@@ -215,8 +219,8 @@ struct TabListKeyboard: ViewModifier {
     }
 }
 
-/// A band of the Theme's colour holding a short text, in `ColorRoles.bandFill` and `bandText`: the Active profile in
-/// the Main window, the attached Profile in a Private window.
+/// A band of the Theme's colour holding a short text, in `ColorRoles.bandFill` and `bandText`: the Private window's
+/// mark, naming the Profile it is attached to.
 struct ThemeBand<Label: View>: View {
     let label: Label
     @Environment(\.designTokens) private var tokens

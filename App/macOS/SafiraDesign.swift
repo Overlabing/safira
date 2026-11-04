@@ -18,8 +18,8 @@ enum SafiraDesign {
     static let commandBarTopFraction: CGFloat = 0.18
     /// Concentric to the suggestion rows inside it, which sit `Spacing.s` from its edge.
     static var commandBarRadius: CGFloat { tokens.radius.row + DesignTokens.Spacing.s }
-    /// A veil of the window background under the glass: the page behind it can be any colour.
-    static let commandBarVeil: Double = 0.35
+    /// The scrim that dims the page while the Command bar is open, in black: the page steps back behind the panel.
+    static let commandBarScrim: Double = 0.25
     /// It never comes closer than this to the page's sides.
     static var commandBarSideMargin: CGFloat { tokens.spacing.pillFloat }
 

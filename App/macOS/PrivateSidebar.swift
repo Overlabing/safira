@@ -9,7 +9,7 @@ import SafiraSession
 import SwiftUI
 
 /// The column of a Private window, from the same kit pieces as the Main window's: the address and Back, Forward and
-/// Reload, a "Private" header, the list of its Tabs, and a band naming the Profile it is attached to. There is no
+/// Reload, the list of its Tabs, and a band naming the Profile it is attached to. There is no
 /// Profile switcher and no Space switcher. The Private Theme's purple, always dark, is what tells it from the Main
 /// window.
 struct PrivateSidebar: View {
@@ -24,7 +24,6 @@ struct PrivateSidebar: View {
             BrowserControls(session: session, actions: pageActions)
             ScrollView {
                 VStack(spacing: 0) {
-                    SectionHeader(String(localized: "Private"), isGroupHeader: true)
                     NewTabRow(shortcut: nil, newTab: pageActions.newTab)
                     ForEach(Array(session.tabs.enumerated()), id: \.element.id) { index, tab in
                         TabRowView(tab: tab, isSelected: session.selectedTabID == tab.id,

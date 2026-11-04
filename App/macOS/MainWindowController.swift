@@ -25,6 +25,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     private let sideSetting: SidebarSideSetting
     private lazy var commandBar = FloatingCommandBar { [unowned self] in session }
     private let columnFocus = ColumnFocus()
+    private var windowButtons: WindowButtonsReveal?
     private let pageArea = TabHostView()
     private var sidebar: NSViewController?
     private var layout: BrowserWindowLayout?
@@ -784,6 +785,8 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
             spaceActions: spaceActions, folderActions: folderActions,
             newTabShortcut: { [weak self] in self?.shortcuts.bindings[.newTab]?.display }))
         sidebar.sizingOptions = []
+        // The column starts at the window's top edge: the title bar's buttons only show on demand.
+        sidebar.safeAreaRegions = []
         self.sidebar = sidebar
         let theme: () -> Theme = { [weak self] in self?.spaceTheme ?? ThemeCatalog.first }
         let layout = BrowserWindowLayout(
@@ -794,6 +797,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         layout.onPointerLeftSidebar = { [weak self] in self?.hideSidebarAfterPointerLeft() }
         self.layout = layout
         window.contentViewController = layout
+        windowButtons = WindowButtonsReveal(window: window, layout: layout)
         window.setContentSize(SafiraDesign.mainWindowSize)
     }
 }

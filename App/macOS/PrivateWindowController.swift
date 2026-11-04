@@ -25,6 +25,7 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSMen
     private let sideSetting: SidebarSideSetting
     private lazy var commandBar = FloatingCommandBar { [unowned self] in session }
     private let columnFocus = ColumnFocus()
+    private var windowButtons: WindowButtonsReveal?
     private let pageArea = TabHostView()
     private var layout: BrowserWindowLayout?
     private var sidebar: NSViewController?
@@ -284,6 +285,8 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSMen
         let sidebar = NSHostingController(rootView: PrivateSidebar(
             session: session, parent: context.parent, focus: columnFocus, pageActions: pageActions))
         sidebar.sizingOptions = []
+        // The column starts at the window's top edge: the title bar's buttons only show on demand.
+        sidebar.safeAreaRegions = []
         self.sidebar = sidebar
         let theme: () -> Theme = { SidebarComposition.privateTheme }
         let layout = BrowserWindowLayout(
@@ -292,6 +295,7 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSMen
             column: sidebar, canvas: canvas, side: sideSetting.side)
         self.layout = layout
         window.contentViewController = layout
+        windowButtons = WindowButtonsReveal(window: window, layout: layout)
         window.setContentSize(SafiraDesign.privateWindowSize)
     }
 }

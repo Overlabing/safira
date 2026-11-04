@@ -25,14 +25,27 @@ public enum SidebarComposition {
     public static let tabSubtitle = Text(name: "Tab subtitle", role: .secondaryText, surfaces: rowSurfaces)
     /// The address in the field pill and the Command bar's text, on glass.
     public static let address = Text(name: "Address", role: .primaryText, surfaces: [.glass])
-    /// The Active profile's band: `ColorRoles.bandText` on `ColorRoles.bandFill`, the Profile's hue, opaque.
-    public static let profileBand = Text(name: "Profile band", role: .textOnHue, surfaces: [.solidHue])
+    /// The Private window's band: `ColorRoles.bandText` on `ColorRoles.bandFill`, the Theme's hue, opaque.
+    public static let privateBand = Text(name: "Private band", role: .textOnHue, surfaces: [.solidHue])
+    /// The Active profile's chooser at the bottom of the column: a field pill, its name in the label colour on glass.
+    public static let profilePill = Text(name: "Profile pill", role: .primaryText, surfaces: [.glass])
 
     /// The selected Tab row's marker, drawn by the kit at its leading edge (`ColorRoles.selectionMarker`, 3:1); under
     /// Increase Contrast the row's outline takes its place.
     public static let selectedTabMarker = Text(name: "Selected Tab marker", role: .selectionMarker, surfaces: [.selectedRow])
 
-    public static let texts = [tabTitle, tabSubtitle, address, profileBand, selectedTabMarker]
+    public static let texts = [tabTitle, tabSubtitle, address, privateBand, profilePill, selectedTabMarker]
+
+    /// The floating Command bar sits over any page, so its glass stands on a veil of the window background this opaque:
+    /// whatever the page behind it, white or black, its text and rows read as on the plain window.
+    public static let commandBarVeil = 0.9
+
+    /// What the Command bar's text sits on, at worst: the veil over a white page and over a black one, glass ignored
+    /// (it only moves the result toward the veil).
+    public static func commandBarSurfaces(in appearance: Appearance, theme: Theme) -> [RGBA] {
+        let background = ResolvedColors(theme, in: appearance).background
+        return [RGBA.white, RGBA.black].map { background.opacity(commandBarVeil).composited(over: $0) }
+    }
 
     /// A Private window wears this Theme, always in the dark appearance: the purple that tells it from the Main window.
     public static let privateTheme = Theme(id: "private", primary: .purple, secondary: .indigo)

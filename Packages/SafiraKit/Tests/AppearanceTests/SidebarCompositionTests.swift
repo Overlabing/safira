@@ -3,6 +3,7 @@
 
 import Appearance
 import ColorCore
+import ColorPlatform
 import DesignKit
 import Testing
 
@@ -37,8 +38,25 @@ struct SidebarCompositionTests {
     }
 
     @Test(arguments: SidebarCompositionTests.cases)
-    func theProfileBandReachesFourPointFive(_ theme: Theme, _ appearance: Appearance) {
-        expectLegible(SidebarComposition.profileBand, theme, appearance, count: 1)
+    func thePrivateBandReachesFourPointFive(_ theme: Theme, _ appearance: Appearance) {
+        expectLegible(SidebarComposition.privateBand, theme, appearance, count: 1)
+    }
+
+    @Test(arguments: SidebarCompositionTests.cases)
+    func theProfilePillReachesFourPointFiveOnGlass(_ theme: Theme, _ appearance: Appearance) {
+        expectLegible(SidebarComposition.profilePill, theme, appearance, count: 1)
+    }
+
+    /// The worst page behind the Command bar is white in dark and black in light: the field's text, a suggestion's
+    /// title and detail, and the highlighted suggestion all stay at 4.5:1.
+    @Test(arguments: SidebarCompositionTests.cases)
+    func theCommandBarStaysLegibleOverABrightOrADarkPage(_ theme: Theme, _ appearance: Appearance) {
+        let colors = ResolvedColors(theme, in: appearance)
+        let roles = ColorRoles(theme: theme, tokens: .standard, appearance: appearance)
+        let panel = SidebarComposition.commandBarSurfaces(in: appearance, theme: theme)
+        let highlighted = panel.map { colors.primary.opacity(roles.selectionOpacity).composited(over: $0) }
+        #expect(Contrast.worst(foreground: colors.label, on: panel + highlighted) >= 4.5)
+        #expect(Contrast.worst(foreground: roles.secondaryTextRGBA, on: panel + highlighted) >= 4.5)
     }
 
     @Test(arguments: SidebarCompositionTests.cases)
@@ -54,7 +72,7 @@ struct SidebarCompositionTests {
     @Test func theTextsAreMeasuredAgainstTheKitsThresholds() {
         let tokens = DesignTokens.standard
         #expect(tokens.emphasis.textContrast == 4.5)
-        #expect(SidebarComposition.texts.map(\.name) == ["Tab title", "Tab subtitle", "Address", "Profile band", "Selected Tab marker"])
+        #expect(SidebarComposition.texts.map(\.name) == ["Tab title", "Tab subtitle", "Address", "Private band", "Profile pill", "Selected Tab marker"])
         #expect(SidebarComposition.themes.count == 8)
         #expect(SidebarComposition.privateTheme.primary == .purple)
     }

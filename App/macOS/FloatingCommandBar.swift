@@ -188,7 +188,7 @@ final class CommandBarAppearance {
     var theme: Theme = SidebarComposition.privateTheme
 }
 
-/// Covers the page while the Command bar is open, and holds the panel in its upper third. A click outside the panel
+/// Covers the page with a dimming scrim while the Command bar is open, and holds the panel in its upper third. A click outside the panel
 /// closes it; one over the page is swallowed, so it never reaches the page behind, and one elsewhere in the window (the
 /// sidebar) goes on to the control it landed on.
 @MainActor
@@ -204,6 +204,8 @@ final class CommandBarOverlay: NSView {
         super.init(frame: .zero)
         isHidden = true
         setAccessibilityElement(false)
+        wantsLayer = true
+        layer?.backgroundColor = NSColor.black.withAlphaComponent(SafiraDesign.commandBarScrim).cgColor
         panel.translatesAutoresizingMaskIntoConstraints = false
         addSubview(panel)
         let top = panel.topAnchor.constraint(equalTo: topAnchor)
@@ -283,8 +285,8 @@ final class CommandBarHostingView: NSHostingView<CommandBarPanel> {
     }
 }
 
-/// The glass panel: the field on top, the suggestions under a hairline. The glass sits on a veil of the window
-/// background so its text stays legible over any page.
+/// The glass panel: the field on top, the suggestions under a hairline. The glass stands on a nearly opaque veil of the
+/// window background (`SidebarComposition.commandBarVeil`), so its text stays legible over any page.
 struct CommandBarPanel: View {
     let field: NSTextField
     let model: CommandBarSuggestionModel
@@ -311,7 +313,9 @@ struct CommandBarPanel: View {
                 }
             }
             .frame(width: SafiraDesign.commandBarWidth)
-            .background(Color(nsColor: .windowBackgroundColor).opacity(SafiraDesign.commandBarVeil), in: shape)
+            // The veil and the rows are clipped to the panel, then the glass goes around it: no page text competes.
+            .background(Color(nsColor: .windowBackgroundColor).opacity(SidebarComposition.commandBarVeil))
+            .clipShape(shape)
             .surface(.glass(tint: 0), in: shape)
         }
         .theme(appearance.theme)

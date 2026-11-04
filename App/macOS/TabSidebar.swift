@@ -10,9 +10,9 @@ import SafiraSession
 import SafiraWeb
 import SwiftUI
 
-/// The Main window's column, from top to bottom: the address and Back, Forward and Reload; the active Space's name;
-/// its pinned area with its Folders; a hairline; the New Tab row and the other Tabs; the Space switcher; the Active
-/// profile's band. Arrow keys in the list move the selection, which shows the Tab; Delete closes it; Return or Escape
+/// The Main window's column, from top to bottom: the address and Back, Forward and Reload; the active Space's pinned
+/// area with its Folders; a hairline; the New Tab row and the other Tabs; the Space switcher; the Active
+/// profile's chooser. Arrow keys in the list move the selection, which shows the Tab; Delete closes it; Return or Escape
 /// goes to its page. Tabs can be dragged to reorder, and Pinned tabs and Folders into Folders.
 struct TabSidebar: View {
     let registry: ProfileRegistry
@@ -31,9 +31,6 @@ struct TabSidebar: View {
             BrowserControls(session: session, actions: pageActions)
             ScrollView {
                 VStack(spacing: 0) {
-                    SectionHeader(String(localized: "\(session.activeSpace.emoji) \(session.activeSpace.name)"),
-                                  isGroupHeader: true)
-                        .accessibilityLabel(String(localized: "Space: \(session.activeSpace.name)"))
                     PinnedSection(session: session, focus: focus, actions: folderActions)
                     if !session.pinnedItems.isEmpty { ColumnSeparator() }
                     NewTabRow(shortcut: newTabShortcut(), newTab: pageActions.newTab)
@@ -81,8 +78,8 @@ struct TabMenu: View {
 }
 
 /// The Space switcher: ThemeKit's glass bar of the Profile's Spaces, each its initial on its Theme's colour and the
-/// active one named; absent with one Space. The emoji stays in the Space header: a glyph that shows it would show it
-/// twice next to the name. Its context menu renames, moves or deletes the active Space.
+/// active one named; absent with one Space. It is the only place the column names the Space (with the window's
+/// gradient); a glyph showing the emoji would show it twice next to the name. Its context menu renames, moves or deletes the active Space.
 private struct SpaceSwitcher: View {
     let session: ProfileSession
     let actions: SpaceActions
@@ -117,8 +114,9 @@ private struct SpaceSwitcher: View {
     }
 }
 
-/// The Active profile's band, a menu that switches Profile, and the button that adds a Space. It sits at the other end
-/// of the column from the address, apart from the Space switcher's glass, so that a Profile never changes by accident.
+/// The Active profile's chooser, a menu that switches Profile, and the button that adds a Space. It is a kit field pill:
+/// glass, with the Profile's hue only in its circle, so it does not outweigh the Tabs. It sits at the other end of the
+/// column from the address, apart from the Space switcher, so that a Profile never changes by accident.
 private struct ProfileBar: View {
     let registry: ProfileRegistry
     let profileActions: ProfileActions
@@ -127,7 +125,7 @@ private struct ProfileBar: View {
 
     var body: some View {
         let profile = registry.activeProfile
-        HStack(spacing: tokens.spacing.pillActionGap) {
+        HStack(spacing: 0) {
             Menu {
                 ForEach(registry.profiles) { item in
                     Toggle(isOn: Binding(get: { registry.activeProfileID == item.id },
@@ -143,13 +141,12 @@ private struct ProfileBar: View {
                 Divider()
                 Button("Clear History and Website Data…") { profileActions.clearBrowsingData(registry.activeProfileID) }
             } label: {
-                ThemeBand {
-                    HStack(spacing: DesignTokens.Spacing.xs) {
-                        Text(verbatim: "\(profile.symbol) \(profile.name)")
-                        Spacer(minLength: 0)
+                WithColorRoles { roles in
+                    FieldPill(systemImage: "person.fill", title: "\(profile.symbol) \(profile.name)",
+                              placeholder: String(localized: "Profile")) {
                         Image(systemName: "chevron.up.chevron.down")
                             .font(tokens.type.accessory.font)
-                            .accessibilityHidden(true)
+                            .foregroundStyle(roles.secondaryText)
                     }
                 }
                 .theme(ThemeCatalog.theme(id: profile.paletteID, fallback: ThemeCatalog.first))
@@ -161,8 +158,8 @@ private struct ProfileBar: View {
             .accessibilityLabel(String(localized: "Profile: \(profile.name)"))
             .accessibilityHint("Opens the list of Profiles")
             IconButton(String(localized: "New Space"), systemImage: "plus") { spaceActions.edit(nil) }
+                .padding(.trailing, tokens.spacing.listMargin - tokens.spacing.rowInsetHorizontal)
         }
-        .padding(.horizontal, tokens.spacing.listMargin)
         .padding(.bottom, tokens.spacing.switcherBottom)
     }
 }

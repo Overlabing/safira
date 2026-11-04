@@ -27,6 +27,7 @@ final class BrowserWindowLayout: NSViewController {
     private let pageItem: NSSplitViewItem
     private let overlay: OverlayView
     private let edge = EdgeView()
+    private var splitTop: NSLayoutConstraint?
     private var overlayConstraints: [NSLayoutConstraint] = []
     private var edgeConstraints: [NSLayoutConstraint] = []
     private var overlayOffset: NSLayoutConstraint?
@@ -69,10 +70,12 @@ final class BrowserWindowLayout: NSViewController {
         for subview in [background, split.view] {
             subview.translatesAutoresizingMaskIntoConstraints = false
             view.addSubview(subview)
+            let top = subview.topAnchor.constraint(equalTo: view.topAnchor)
+            if subview === split.view { splitTop = top }
             NSLayoutConstraint.activate([
                 subview.leadingAnchor.constraint(equalTo: view.leadingAnchor),
                 subview.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-                subview.topAnchor.constraint(equalTo: view.topAnchor),
+                top,
                 subview.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             ])
         }
@@ -96,6 +99,22 @@ final class BrowserWindowLayout: NSViewController {
             width,
         ])
         pinToSide()
+    }
+
+    /// The column and the page start at the window's top edge; while the window's buttons show, they step down by the
+    /// title bar's height so that the buttons sit on a strip of their own.
+    func setTopStrip(_ height: CGFloat, animated: Bool) {
+        guard splitTop?.constant != height else { return }
+        guard animated else {
+            splitTop?.constant = height
+            return
+        }
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = MotionRole.overlayFade.spec.duration.rawValue
+            context.allowsImplicitAnimation = true
+            splitTop?.animator().constant = height
+            view.layoutSubtreeIfNeeded()
+        }
     }
 
     /// True when the keyboard focus is inside the sidebar.
@@ -241,7 +260,7 @@ final class PageCanvasView: NSView {
         NSLayoutConstraint.activate([
             clip.leadingAnchor.constraint(equalTo: leadingAnchor, constant: inset),
             clip.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -inset),
-            clip.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor, constant: inset),
+            clip.topAnchor.constraint(equalTo: topAnchor, constant: inset),
             clip.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -inset),
         ])
         for view in [page, commandBar] {
