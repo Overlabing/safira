@@ -33,8 +33,10 @@ public final class PrivateContext: BrowsingContext {
     }
 
     /// Closes every page and empties the data store, as the window closes. Nothing is left to keep: the data store is
-    /// released with its last page.
+    /// released with its last page. A download still running is stopped and its partial file removed; the list of
+    /// downloads was never saved (no database).
     public func close() async {
+        await web.cancelDownloads()
         session.closeAllTabs()
         await web.eraseWebsiteData()
     }

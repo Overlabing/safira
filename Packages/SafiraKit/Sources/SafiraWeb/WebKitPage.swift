@@ -35,6 +35,7 @@ public final class WebKitPage: NSObject, WebPageHandle {
     private let makeNewTabPage: @MainActor (WKWebViewConfiguration) -> (TabID, WebKitPage)?
     private let makePopupPage: @MainActor (WKWebViewConfiguration) -> (PopupID, WebKitPage)?
     private let decidePermission: @MainActor (SiteOrigin, [PermissionKind]) async -> PermissionDecision
+    private let startDownload: @MainActor (WKDownload) -> Void
     private let onClose: @MainActor () -> Void
     private let navigationDiagnostics: NavigationDiagnostics?
 
@@ -42,11 +43,13 @@ public final class WebKitPage: NSObject, WebPageHandle {
          makeNewTabPage: @escaping @MainActor (WKWebViewConfiguration) -> (TabID, WebKitPage)?,
          makePopupPage: @escaping @MainActor (WKWebViewConfiguration) -> (PopupID, WebKitPage)?,
          decidePermission: @escaping @MainActor (SiteOrigin, [PermissionKind]) async -> PermissionDecision,
+         startDownload: @escaping @MainActor (WKDownload) -> Void,
          onClose: @escaping @MainActor () -> Void) {
         webView = WKWebView(frame: .zero, configuration: configuration)
         self.makeNewTabPage = makeNewTabPage
         self.makePopupPage = makePopupPage
         self.decidePermission = decidePermission
+        self.startDownload = startDownload
         // Public API: the page shows in Safari's Develop menu. Safira has no in-app inspector (ADR 0001).
         webView.isInspectable = true
         self.onClose = onClose
@@ -180,6 +183,10 @@ extension WebKitPage: WKNavigationDelegate {
             onNonWebLink?(link)
             return (.cancel, preferences)
         }
+        // A link the page marks `download` is saved, even with ⌘ held: opening a Tab for it would leave the Tab blank.
+        if navigationAction.shouldPerformDownload {
+            return (.download, preferences)
+        }
         if navigationAction.navigationType == .linkActivated, navigationAction.modifierFlags.contains(.command),
            let url = navigationAction.request.url, let onNewTab {
             onNewTab(.address(url))
@@ -203,6 +210,24 @@ extension WebKitPage: WKNavigationDelegate {
             preferences.preferredHTTPSNavigationPolicy = httpsFirstPolicy
         }
         return (.allow, preferences)
+    }
+
+    public func webView(_ webView: WKWebView, decidePolicyFor navigationResponse: WKNavigationResponse) async
+        -> WKNavigationResponsePolicy {
+        let disposition = (navigationResponse.response as? HTTPURLResponse)?.value(forHTTPHeaderField: "Content-Disposition")
+        guard DownloadPolicy.savesResponse(canShowType: navigationResponse.canShowMIMEType, contentDisposition: disposition)
+        else { return .allow }
+        // The POST that produced the file never commits a page, so it must not mark the next page that does.
+        if navigationResponse.isForMainFrame { mainFrameIsPosting = false }
+        return .download
+    }
+
+    public func webView(_ webView: WKWebView, navigationAction: WKNavigationAction, didBecome download: WKDownload) {
+        startDownload(download)
+    }
+
+    public func webView(_ webView: WKWebView, navigationResponse: WKNavigationResponse, didBecome download: WKDownload) {
+        startDownload(download)
     }
 
     public func webView(_ webView: WKWebView, respondTo challenge: URLAuthenticationChallenge) async

@@ -35,6 +35,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
     private var profileSheet: NSWindow?
     private var clearSheet: NSWindow?
     private var permissionsSheet: NSWindow?
+    private lazy var downloadsWindow = DownloadsWindowController(registry: registry)
     private var popupPanels: [PopupID: PopupPanelController] = [:]
     private var renderedTabID: TabID?
     private lazy var permissionPrompter = PermissionPrompter(
@@ -204,6 +205,11 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         let sheet = NSWindow(contentViewController: NSHostingController(rootView: view))
         permissionsSheet = sheet
         window.beginSheet(sheet)
+    }
+
+    /// The Active profile's downloads, in a window of their own.
+    @objc func showDownloads(_ sender: Any?) {
+        downloadsWindow.showWindow(nil)
     }
 
     private func endPermissionsSheet() {
