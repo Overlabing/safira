@@ -38,7 +38,10 @@ final class SimulatedPage: WebPageHandle {
     }
 
     var navigationState: Data? {
-        history.isEmpty ? nil : try? JSONEncoder().encode(NavigationState(history: history, index: index))
+        guard !history.isEmpty else { return nil }
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .sortedKeys
+        return try? encoder.encode(NavigationState(history: history, index: index))
     }
 
     var sensitiveContent: SensitiveContent {
