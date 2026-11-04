@@ -21,6 +21,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private(set) lazy var shortcutsWindow = ShortcutsWindowController(shortcuts: shortcuts)
     private var mainWindow: MainWindowController?
     private var registry: ProfileRegistry?
+    #if BENCHMARK
+    private var benchmark: BenchmarkRun?
+    #endif
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         let registry = ProfileRegistry(layout: .application, diagnostics: diagnostics.logger) { message, error in
@@ -30,10 +33,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         diagnostics.attach(to: registry)
         let controller = MainWindowController(registry: registry, shortcuts: shortcuts)
         controller.showWindow(nil)
-        controller.focusCommandBar(nil)
         mainWindow = controller
-        NSApp.activate()
         keepMenuInStepWithShortcuts()
+        #if BENCHMARK
+        // A measurement run leaves the foreground to whatever the user is doing, and opens its addresses in the
+        // Active Profile like any other launch.
+        if let run = BenchmarkRun(statusDirectory: StoreLayout.application.root) {
+            benchmark = run
+            run.start(session: registry.active.session)
+            return
+        }
+        #endif
+        controller.focusCommandBar(nil)
+        NSApp.activate()
     }
 
     func rebuildMenu() {
