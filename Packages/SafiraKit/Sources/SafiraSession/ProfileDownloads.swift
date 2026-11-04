@@ -87,8 +87,12 @@ public final class ProfileDownloads {
         transfers[id] = transfer
     }
 
-    public func named(_ id: DownloadID, fileName: String) {
-        update(id) { $0.fileName = fileName }
+    /// The engine has chosen where and under which name the file is saved.
+    public func named(_ id: DownloadID, fileName: String, folder: URL? = nil) {
+        update(id) {
+            $0.fileName = fileName
+            if let folder { $0.folder = folder }
+        }
     }
 
     /// Progress is kept for this run only; the database learns the byte count when the transfer ends.

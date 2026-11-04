@@ -28,7 +28,7 @@ struct DownloadsView: View {
             }
             HStack {
                 if downloads.savesInAppFolder {
-                    Text("You declined access to your Downloads folder, so files are saved in Safira's own folder. You can allow it in System Settings > Privacy & Security > Files & Folders.")
+                    Text("You declined access to your Downloads folder, so this Profile's files are saved in a folder inside Safira's own data, which is erased with the Profile. You can allow access in System Settings > Privacy & Security > Files & Folders.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     Button("Show Folder") {

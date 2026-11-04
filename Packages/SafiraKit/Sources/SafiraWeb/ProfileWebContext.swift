@@ -30,7 +30,7 @@ public final class ProfileWebContext {
     /// The live pages of this Profile's popups, which share their opener's configuration.
     private var popupPages: [PopupID: WebKitPage] = [:]
     private let pageEvents = PageEventHandler()
-    private var downloadController: DownloadController!
+    private(set) var downloadController: DownloadController!
 
     /// - Parameter downloads: where this Profile's downloads are listed; the default keeps them for this run only.
     public init(profileID: ProfileID, webContentSettings: WebContentSettings = WebContentSettings(),
@@ -61,14 +61,15 @@ public final class ProfileWebContext {
         set { downloadController.directory = newValue }
     }
 
-    /// Where files go when the user declines access to the Downloads folder: a folder of the app's own container.
+    /// Where files go when the user declines access to the Downloads folder: a real folder of the app's own container,
+    /// never its symbolic `Downloads` entry, which leads to the folder that was declined.
     public var downloadsFallbackDirectory: URL {
         get { downloadController.fallbackDirectory }
         set { downloadController.fallbackDirectory = newValue }
     }
 
     /// Decides whether a folder may be used, in place of macOS's own consent prompt. Tests replace it.
-    public var downloadsAccess: @MainActor (URL) async -> Bool {
+    public var downloadsAccess: @Sendable (URL) async -> Bool {
         get { downloadController.access }
         set { downloadController.access = newValue }
     }
