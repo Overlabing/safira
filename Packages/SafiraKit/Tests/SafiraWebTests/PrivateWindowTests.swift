@@ -167,7 +167,15 @@ private func webKitFolders() -> [URL] {
             // WebKit names the data store's folder in lower case; without it the diff below would cover nothing.
             #expect(!storeFolders.isEmpty)
             let profileFolders = [root.layout.profileDirectory(for: profile)] + storeFolders
-            let before = Tree(profileFolders)
+            // WebKit keeps writing the Profile's own store for a moment after its page closes; take the snapshot
+            // only once two reads a second apart agree, so a late write of the Profile is not blamed on the window.
+            var before = Tree(profileFolders)
+            for _ in 0..<10 {
+                try await Task.sleep(for: .seconds(1))
+                let again = Tree(profileFolders)
+                if again.newFiles(since: before).isEmpty, again.changedFiles(since: before).isEmpty { break }
+                before = again
+            }
 
             let privateWindow = try #require(registry.makePrivateContext(attachedTo: profile))
             let writer = try await load(server.url("/cookie"), in: privateWindow.web)
@@ -182,7 +190,7 @@ private func webKitFolders() -> [URL] {
             try await Task.sleep(for: .seconds(3))
 
             let after = Tree(profileFolders)
-            #expect(after.newFiles(since: before) == [])
+            #expect(after.newFiles(since: before) == [], "new files: \(after.newFiles(since: before))")
             #expect(after.changedFiles(since: before).filter { !$0.hasSuffix("-wal") && !$0.hasSuffix("-shm") } == [])
             #expect(filesContaining(token, in: [root.layout.root] + webKitFolders()) == [])
         }
