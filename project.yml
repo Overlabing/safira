@@ -88,6 +88,8 @@ targets:
         # The Debug mode export is saved where the user chooses, through the save panel. Debug builds use the hand-kept
         # Safira.Debug.entitlements, which carries the same key.
         com.apple.security.files.user-selected.read-write: true
+        # Downloads are saved in the user's Downloads folder (docs/architecture-v1.md §4.5, §8.2).
+        com.apple.security.files.downloads.read-write: true
         # What WebKit needs for a site the user allowed to use the camera, the microphone or the location; sites ask per
         # Profile and nothing is allowed by default (docs/architecture-v1.md §4.7, §8.2).
         com.apple.security.device.camera: true

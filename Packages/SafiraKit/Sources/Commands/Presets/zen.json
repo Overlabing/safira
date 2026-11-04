@@ -68,6 +68,10 @@
     "clearBrowsingData": {
       "shortcut": "command+shift+delete",
       "from": "Clear Browsing Data (Shift+Ctrl+Delete)"
+    },
+    "showDownloads": {
+      "shortcut": "command+shift+y",
+      "from": "Open Downloads (Shift+Ctrl+Y)"
     }
   },
   "unbound": {

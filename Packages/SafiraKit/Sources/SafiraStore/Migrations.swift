@@ -92,6 +92,22 @@ enum Migrations {
                 table.add(column: "pinned_url", .text)
             }
         }
+        // The Profile's downloads: what the download manager lists, and what a cancelled or interrupted transfer needs
+        // to be started again. A transfer that was running when Safira quit is read back as failed.
+        migrator.registerMigration("v7-downloads") { db in
+            try db.create(table: "download") { table in
+                table.primaryKey("id", .text)
+                table.column("source_url", .text).notNull()
+                table.column("file_name", .text).notNull()
+                table.column("file_bookmark", .blob)
+                table.column("state", .text).notNull()
+                table.column("bytes", .integer).notNull().defaults(to: 0)
+                table.column("total_bytes", .integer)
+                table.column("resume_data", .blob)
+                table.column("started_at", .double).notNull().indexed()
+                table.column("finished_at", .double)
+            }
+        }
         return migrator
     }
 
