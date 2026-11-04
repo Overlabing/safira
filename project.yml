@@ -9,8 +9,7 @@ options:
   developmentLanguage: en
   # XcodeGen 2.45.3 knows no Xcode 27 format; xcode16_3 is the newest it can write and Xcode 27.1 opens it.
   projectFormat: xcode16_3
-# Benchmark is Release with the benchmark mode compiled in, a throwaway bundle id and the browser declaration, for the
-# memory measurement (scripts/bench-memory.sh). It is never distributed; scripts/check.sh proves Release has none of it.
+# Benchmark is Release with the benchmark mode compiled in and a throwaway bundle id, for the memory measurement (scripts/bench-memory.sh). It is never distributed; scripts/check.sh proves Release has none of it.
 configs:
   Debug: debug
   Release: release
@@ -42,16 +41,25 @@ targets:
         # Re-signs Sparkle.framework with the app's identity on copy: an ad hoc app refuses a framework that keeps
         # Sparkle's own Team ID (library validation), and the release export needs the copy re-signed anyway.
         codeSign: true
-    postBuildScripts:
-      - name: Declare http and https handling (Benchmark only)
-        script: scripts/bench/declare-browser.sh
-        basedOnDependencyAnalysis: false
     info:
       path: App/macOS/Info.plist
       properties:
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         NSPrincipalClass: NSApplication
+        # Registers Safira for web links and local HTML files, which lets the user choose it as the default browser
+        # (docs/architecture-v1.md §5.2). WebKit also gives a handler of http and https the browser cache model.
+        CFBundleURLTypes:
+          - CFBundleURLName: Web address
+            CFBundleTypeRole: Viewer
+            CFBundleURLSchemes: [http, https]
+        # Alternate: opening HTML files with Safira is the user's choice, in Finder or in the default browser setting;
+        # installing Safira does not take them from another app.
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: HTML document
+            CFBundleTypeRole: Viewer
+            LSHandlerRank: Alternate
+            LSItemContentTypes: [public.html, public.xhtml]
         LSApplicationCategoryType: public.app-category.productivity
         # A browser loads the HTTP pages the user chose to continue to; the system does not stop web content for lack of TLS.
         NSAppTransportSecurity:
