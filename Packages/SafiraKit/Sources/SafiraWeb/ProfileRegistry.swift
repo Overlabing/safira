@@ -127,6 +127,14 @@ public final class ProfileRegistry {
         return true
     }
 
+    /// A new Private window's owner, attached to a Profile: it starts with the Profile's search engine and shares
+    /// nothing else with it. The registry keeps no reference to it, so it is in no list the Profiles' sessions are searched
+    /// through. Nil when the Profile does not exist.
+    public func makePrivateContext(attachedTo id: ProfileID) -> PrivateContext? {
+        guard let profile = profiles.first(where: { $0.id == id }) else { return nil }
+        return PrivateContext(parent: profile, searchEngine: context(for: id).session.settings.searchEngine)
+    }
+
     // MARK: Creating and renaming
 
     /// Adds a Profile after the others and shows it. A Profile cannot be created without a search engine, which the
