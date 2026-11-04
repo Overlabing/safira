@@ -314,4 +314,26 @@ private func relaunch(from database: TemporaryDatabase, osBuild: String = "26A43
 
         #expect(try reader.savedSession().tabs.map(\.address?.absoluteString) == ["https://a.com/clicked"])
     }
+
+    @Test func readingTheProfileWhileTheAutosaveWritesNeverFindsItLocked() async throws {
+        let database = TemporaryDatabase()
+        let fixture = SessionFixture()
+        let autosave = SessionAutosave(session: fixture.session, database: try database.open(), delay: .zero)
+        autosave.start()
+        _ = open(fixture, ["a.com"])
+
+        let reader = try database.open()
+        for index in 0..<100 {
+            let address = "https://a.com/\(index)"
+            fixture.selectedPage?.followLink(to: URL(string: address)!)
+            let deadline = ContinuousClock.now + .seconds(5)
+            while try reader.savedSession().tabs.first?.address?.absoluteString != address,
+                  ContinuousClock.now < deadline {
+                await Task.yield()
+            }
+        }
+        autosave.stop()
+
+        #expect(try reader.savedSession().tabs.map(\.address?.absoluteString) == ["https://a.com/99"])
+    }
 }
