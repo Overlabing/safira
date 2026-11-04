@@ -8,7 +8,8 @@ import SafiraSession
 import WebKit
 
 /// The floating panel of a popup (a sign-in, a payment), attached to the Main window. Its title is the host the popup
-/// is on, which a page cannot change: the page's own title is only its subtitle. The panel goes away when the popup
+/// is on, which a page cannot change. The page's own title is not shown: next to the host it could pass for another
+/// site's name (a sign-in panel titled "accounts.google.com"). The panel goes away when the popup
 /// ends, and the user closing it ends the popup.
 @MainActor
 final class PopupPanelController: NSObject, NSWindowDelegate {
@@ -58,7 +59,6 @@ final class PopupPanelController: NSObject, NSWindowDelegate {
 
     private func updateTitle() {
         panel.title = popup.state.url?.host() ?? String(localized: "Loading…")
-        panel.subtitle = popup.state.title ?? ""
     }
 
     private func track() {
