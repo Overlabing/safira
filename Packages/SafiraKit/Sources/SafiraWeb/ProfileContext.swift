@@ -31,7 +31,8 @@ public final class ProfileContext: MatchingTabSearchable {
         let web = ProfileWebContext(profileID: id, webContentSettings: settings.webContent, permissions: permissions,
                                     downloads: downloads)
         web.diagnostics = diagnostics
-        let session = ProfileSession(profileID: id, settings: settings, history: database) {
+        let appLinks = AppLinkGate(profileID: id, permissions: permissions)
+        let session = ProfileSession(profileID: id, settings: settings, history: database, appLinks: appLinks) {
             [unowned web] in web.makePage(for: $0)
         }
         session.onHistoryError = { onError("The history could not be used", $0) }
@@ -72,6 +73,21 @@ public final class ProfileContext: MatchingTabSearchable {
     public func saveNow() async {
         await autosave.saveNow()
         await session.recordedHistorySettled()
+    }
+
+    /// Clears this Profile's Browsing data for `range`: its history and its website data. Only this Profile's own
+    /// database and data store are reached. Spaces, Tabs, Pinned tabs, settings and the closed-Tab stack are kept. The
+    /// website data is cleared even when the history cannot be, and the history error is then thrown.
+    public func clearBrowsingData(_ range: ClearRange, now: Date = Date()) async throws {
+        let start = range.start(now: now)
+        var historyError: (any Error)?
+        do {
+            try await session.clearHistory(since: start)
+        } catch {
+            historyError = error
+        }
+        await web.clearWebsiteData(since: start)
+        if let historyError { throw historyError }
     }
 
     /// Stops saving, stops the running downloads and closes every page, so that WebKit lets the data store go.

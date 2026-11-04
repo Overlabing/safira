@@ -29,6 +29,7 @@ final class SimulatedPage: WebPageHandle {
     var onNewTab: (@MainActor (NewTabRequest) -> Void)?
     var onLoadFailure: (@MainActor (LoadFailure) -> Void)?
     var onContinueOverHTTP: (@MainActor () -> Void)?
+    var onNonWebLink: (@MainActor (NonWebLink) -> Void)?
     var onDidClose: (@MainActor () -> Void)?
 
     private struct Entry: Codable {
@@ -109,6 +110,12 @@ final class SimulatedPage: WebPageHandle {
         onNewTab?(.address(url))
     }
 
+    /// The page follows a link that is not a web address, by a click, a script, an iframe or a redirect. As with the
+    /// real engine the page refuses the navigation itself: it stays where it was.
+    func followNonWebLink(to address: String) {
+        onNonWebLink?(NonWebLink(URL(string: address)!)!)
+    }
+
     /// The page calls `window.close()`.
     func closeWindow() {
         onDidClose?()
@@ -172,9 +179,10 @@ final class SessionFixture {
 
     init(searchEngine: SearchEngine? = nil, osBuild: String = "26A434",
          id: ProfileID = ProfileID(rawValue: UUID(uuidString: "6F9619FF-8B86-D011-B42D-00C04FC964FF")!),
-         history: ProfileDatabase? = nil) {
+         history: ProfileDatabase? = nil, permissions: SitePermissions = SitePermissions()) {
         session = ProfileSession(profileID: id, settings: ProfileSettings(searchEngine: searchEngine),
-                                 osBuild: osBuild, history: history) { [unowned self] tabID in
+                                 osBuild: osBuild, history: history,
+                                 appLinks: AppLinkGate(profileID: id, permissions: permissions)) { [unowned self] tabID in
             let page = SimulatedPage()
             preparePage(page)
             pages[tabID] = page

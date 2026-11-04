@@ -22,8 +22,12 @@ public final class PrivateContext: BrowsingContext {
     init(parent: Profile, searchEngine: SearchEngine?) {
         self.parent = parent
         let web = ProfileWebContext(privateWindowOf: parent.id)
+        // The app choices live next to the window's site permissions: in memory, gone with the window.
+        let appLinks = AppLinkGate(profileID: parent.id, permissions: web.permissions)
         let session = ProfileSession(profileID: parent.id, settings: ProfileSettings(searchEngine: searchEngine),
-                                     history: nil, hasSpaces: false) { [unowned web] in web.makePage(for: $0) }
+                                     history: nil, appLinks: appLinks, hasSpaces: false) {
+            [unowned web] in web.makePage(for: $0)
+        }
         self.web = web
         self.session = session
     }

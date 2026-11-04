@@ -126,6 +126,15 @@ public final class ProfileWebContext {
         }
     }
 
+    /// Removes the website data this Profile's store modified at or after `start`: cookies, local and session storage,
+    /// IndexedDB, service workers, caches and the rest. Open pages keep running: what they already hold in memory stays
+    /// until they reload, but their stored data is gone.
+    public func clearWebsiteData(since start: Date) async {
+        // WebKit raises an exception, and the app dies, when the start is later than now (it builds a Screen Time
+        // interval from it), so a start in the future is read as now.
+        await dataStore.removeData(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(), modifiedSince: min(start, Date()))
+    }
+
     public static func removeDataStore(of profileID: ProfileID) async throws {
         try await WKWebsiteDataStore.remove(forIdentifier: profileID.rawValue)
     }

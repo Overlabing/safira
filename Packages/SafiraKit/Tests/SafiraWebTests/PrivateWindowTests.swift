@@ -341,6 +341,34 @@ private func webKitFolders() -> [URL] {
         await removeDataStoreWhenReleased(profile)
     }
 
+    @MainActor private final class StubLauncher: ExternalAppLauncher {
+        func app(toOpen url: URL) -> ExternalApp? { ExternalApp(name: "Mail", location: URL(string: "file:///Applications/Mail.app")!) }
+        func open(_ url: URL, with app: ExternalApp) async throws {}
+    }
+
+    @Test func aPrivateWindowRemembersAppChoicesInMemoryAndNotInItsProfile() async throws {
+        let root = TemporaryRoot()
+        var profile = ProfileID(rawValue: UUID())
+        do {
+            let registry = ProfileRegistry(layout: root.layout)
+            profile = registry.activeProfileID
+            let privateWindow = try #require(registry.makePrivateContext(attachedTo: profile))
+            privateWindow.session.appLinks.handlers = AppLinkHandlers(
+                launcher: StubLauncher(), prompt: { _ in PermissionAnswer(decision: .allow, remember: true) })
+            let link = try #require(NonWebLink(URL(string: "mailto:team@example.test")!))
+
+            #expect(await privateWindow.session.appLinks.handle(link, requestedBy: nil) != .ignored)
+
+            #expect(privateWindow.session.appLinks.permissions.appLinks.map(\.scheme.rawValue) == ["mailto"])
+            #expect(registry.active.permissions.appLinks.isEmpty)
+            await privateWindow.close()
+            let again = try #require(registry.makePrivateContext(attachedTo: profile))
+            #expect(again.session.appLinks.permissions.appLinks.isEmpty)
+            await again.close()
+        }
+        await removeDataStoreWhenReleased(profile)
+    }
+
     // MARK: Helpers
 
     private func load(_ url: URL, in context: ProfileWebContext) async throws -> WebKitPage {

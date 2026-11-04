@@ -222,6 +222,33 @@ private func schema(_ file: URL) throws -> [String] {
         #expect(try database.downloads() == [second])
     }
 
+    @Test func rememberedAppChoicesShareTheSitePermissionTableWithoutShowingUpAsSitePermissions() throws {
+        let root = TemporaryRoot()
+        let at = Date(timeIntervalSince1970: 1_700_000_000)
+        let meet = try #require(SiteOrigin(identifier: "https://meet.example"))
+        let database = try ProfileDatabase(file: root.layout.profileDatabaseFile(for: work))
+        try database.save(SitePermission(origin: meet, kind: .camera, decision: .allow, decidedAt: at))
+        try database.save(AppLinkChoice(scheme: try #require(URLScheme("slack")), decision: .allow, decidedAt: at))
+        try database.save(AppLinkChoice(scheme: try #require(URLScheme("mailto")), decision: .deny, decidedAt: at))
+        try database.save(AppLinkChoice(scheme: try #require(URLScheme("slack")), decision: .deny,
+                                        decidedAt: at.addingTimeInterval(60)))
+
+        let reopened = try ProfileDatabase(file: root.layout.profileDatabaseFile(for: work))
+        #expect(try reopened.appLinkChoices() == [
+            AppLinkChoice(scheme: try #require(URLScheme("mailto")), decision: .deny, decidedAt: at),
+            AppLinkChoice(scheme: try #require(URLScheme("slack")), decision: .deny, decidedAt: at.addingTimeInterval(60)),
+        ])
+        #expect(try reopened.sitePermissions().map(\.id) == ["https://meet.example camera"])
+        #expect(try ProfileDatabase(file: root.layout.profileDatabaseFile(for: personal)).appLinkChoices() == [])
+
+        try reopened.removeAppLinkChoice(for: try #require(URLScheme("mailto")))
+        #expect(try reopened.appLinkChoices().map(\.scheme.rawValue) == ["slack"])
+        #expect(try reopened.sitePermissions().count == 1)
+
+        try reopened.removeAllSitePermissions()
+        #expect(try reopened.appLinkChoices() == [])
+    }
+
     @Test func anInMemoryDatabaseKeepsTabsWhileOpen() throws {
         let database = try ProfileDatabase.inMemory()
         try database.save(oneSpace([TabRecord(id: firstTab)], selected: firstTab))

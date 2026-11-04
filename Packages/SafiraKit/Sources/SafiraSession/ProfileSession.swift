@@ -38,6 +38,8 @@ public final class ProfileSession {
     private var closedTabs: [ClosedTab] = []
     @ObservationIgnored private var searchAwaitingEngineTarget = CommandBarTarget.selectedTab
     @ObservationIgnored private let makePage: @MainActor (TabID) -> any WebPageHandle
+    /// Decides what a non-web link a page of this Profile follows may open. Its choices are the Profile's own.
+    @ObservationIgnored public let appLinks: AppLinkGate
     @ObservationIgnored private let osBuild: String
     /// False for a Private window's session: its one Space is internal, never shown, and no other can be added.
     public let hasSpaces: Bool
@@ -62,12 +64,14 @@ public final class ProfileSession {
     /// - Parameters:
     ///   - osBuild: the macOS build, which decides whether a saved navigation state can be restored.
     ///   - history: the Profile's database, where the pages its Tabs visit are recorded and searched; nil keeps no history.
+    ///   - appLinks: the Profile's remembered app choices; without it they are kept for this run only.
     ///   - hasSpaces: false for a Private window, which has a single internal Space the user never sees.
     ///   - makePage: builds the page of a Tab, called once per Tab on its first load or its first selection.
     public init(profileID: ProfileID, settings: ProfileSettings = ProfileSettings(), osBuild: String = OSBuild.current,
-                history: ProfileDatabase? = nil, hasSpaces: Bool = true,
+                history: ProfileDatabase? = nil, appLinks: AppLinkGate? = nil, hasSpaces: Bool = true,
                 makePage: @escaping @MainActor (TabID) -> any WebPageHandle) {
         self.profileID = profileID
+        self.appLinks = appLinks ?? AppLinkGate(profileID: profileID)
         self.settings = settings
         self.osBuild = osBuild
         self.hasSpaces = hasSpaces
@@ -137,6 +141,7 @@ public final class ProfileSession {
             self?.openBackgroundTab(request, after: record.id)
         }
         observeVisits(of: restored)
+        observeNonWebLinks(of: restored)
         return restored
     }
 
@@ -622,7 +627,8 @@ public final class ProfileSession {
         case .popup(let id, let page, let requested):
             let popup = Popup(id: id, openerTabID: opener, requestedWindow: requested, page: page)
             popup.attach(onClose: { [weak self] in self?.closePopup(id) },
-                         onNewTab: { [weak self] request in self?.openBackgroundTab(request, after: opener) })
+                         onNewTab: { [weak self] request in self?.openBackgroundTab(request, after: opener) },
+                         onNonWebLink: { [appLinks] link, host in appLinks.request(link, requestedBy: host) })
             popups.append(popup)
         }
     }
@@ -639,7 +645,12 @@ public final class ProfileSession {
             self?.openBackgroundTab(request, after: id)
         }
         observeVisits(of: tab)
+        observeNonWebLinks(of: tab)
         return tab
+    }
+
+    private func observeNonWebLinks(of tab: Tab) {
+        tab.onNonWebLink = { [appLinks] link, host in appLinks.request(link, requestedBy: host) }
     }
 
     /// Returns once the visits recorded so far have reached the history database.
