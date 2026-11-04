@@ -268,6 +268,26 @@ private func plain(_ session: ProfileSession) -> [String?] {
         #expect(!fixture.session.canMove(ids[2], by: -1))
     }
 
+    @Test func moveUpAndDownCountOnlyTheTabsAndNeverStopOnAFolderAmongThem() {
+        let fixture = SessionFixture()
+        let ids = openTabs(fixture, ["a.com", "b.com", "c.com"])
+        ids.forEach { fixture.session.pin($0) }
+        let docs = fixture.session.createFolder(name: "F")!
+        fixture.session.movePinned(.folder(docs), into: nil, at: 1)
+        #expect(outline(fixture.session.pinnedItems) == "a.com [F: ] b.com c.com")
+
+        fixture.session.move(ids[2], by: -1)
+        #expect(outline(fixture.session.pinnedItems) == "a.com [F: ] c.com b.com")
+
+        fixture.session.move(ids[0], by: 1)
+        #expect(outline(fixture.session.pinnedItems) == "[F: ] c.com a.com b.com")
+
+        fixture.session.move(ids[0], by: 5)
+        #expect(outline(fixture.session.pinnedItems) == "[F: ] c.com b.com a.com")
+        #expect(!fixture.session.canMove(ids[0], by: 1))
+        #expect(fixture.session.canMove(ids[0], by: -1))
+    }
+
     @Test func renamingAndCollapsingAFolder() {
         let fixture = SessionFixture()
         let docs = fixture.session.createFolder(name: "Docs")!
