@@ -27,6 +27,11 @@ public struct StoreLayout: Sendable {
         root.appending(path: "link-choices.jsonl", directoryHint: .notDirectory)
     }
 
+    /// The user's Link rules, a JSON file they edit; the folder is the app's own container, never the project.
+    public var linkRulesFile: URL {
+        root.appending(path: "link-rules.json", directoryHint: .notDirectory)
+    }
+
     public func profileDirectory(for profile: ProfileID) -> URL {
         root
             .appending(path: "Profiles", directoryHint: .isDirectory)

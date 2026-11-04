@@ -48,7 +48,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let controller = MainWindowController(registry: registry, shortcuts: shortcuts)
         controller.showWindow(nil)
         mainWindow = controller
-        let links = LinkController(registry: registry, mainWindow: controller)
+        let links = LinkController(registry: registry, mainWindow: controller, diagnostics: diagnostics)
         self.links = links
         earlyLinks.forEach(links.receive)
         earlyLinks = []
