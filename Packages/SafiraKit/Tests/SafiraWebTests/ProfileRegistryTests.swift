@@ -113,6 +113,45 @@ private final class TemporaryRoot {
         await cleanUp(ids)
     }
 
+    @Test func anExternalLinkOpensInTheChosenProfileAndShowsIt() async throws {
+        let root = TemporaryRoot()
+        var ids: [ProfileID] = []
+        do {
+            let registry = ProfileRegistry(layout: root.layout)
+            let first = registry.activeProfileID
+            let work = registry.createProfile(name: "Work", symbol: "💼", searchEngine: .kagi)
+            registry.selectProfile(first)
+            ids = registry.profiles.map(\.id)
+
+            let opened = registry.openExternalLink(try #require(URL(string: "about:blank")), in: work)
+
+            #expect(opened)
+            #expect(registry.activeProfileID == work)
+            #expect(registry.active.session.tabs.count == 1)
+            #expect(registry.active.session.selectedTabID == registry.active.session.tabs.first?.id)
+            registry.selectProfile(first)
+            #expect(registry.active.session.tabs.isEmpty)
+            for context in registry.loadedContexts { context.session.closeAllTabs() }
+        }
+        await cleanUp(ids)
+    }
+
+    @Test func anExternalLinkForAProfileThatDoesNotExistChangesNothing() async throws {
+        let root = TemporaryRoot()
+        var ids: [ProfileID] = []
+        do {
+            let registry = ProfileRegistry(layout: root.layout)
+            ids = registry.profiles.map(\.id)
+
+            let opened = registry.openExternalLink(try #require(URL(string: "about:blank")),
+                                                   in: ProfileID(rawValue: UUID()))
+
+            #expect(!opened)
+            #expect(registry.active.session.tabs.isEmpty)
+        }
+        await cleanUp(ids)
+    }
+
     @Test func theLastProfileCannotBeDeleted() async throws {
         let root = TemporaryRoot()
         var ids: [ProfileID] = []
@@ -191,6 +230,63 @@ private final class TemporaryRoot {
                 (try? app.profilesPendingDeletion()) == []
             }
             #expect(!root.exists(root.layout.profileDirectory(for: leftover)))
+        }
+        await cleanUp(ids)
+    }
+
+    /// The whole path with real pages: each Profile records the pages its own Tabs load, suggestions follow the Active
+    /// profile when it changes, and computing them sends nothing to the servers.
+    @Test func suggestionsFollowTheActiveProfileAndTypingSendsNoRequest() async throws {
+        let personalServer = try await LocalServer.start(.http, title: "Caf&#233; menu of the week")
+        let workServer = try await LocalServer.start(.http, title: "Quarterly roadmap")
+        defer { personalServer.stop(); workServer.stop() }
+        var ids: [ProfileID] = []
+        do {
+            let registry = ProfileRegistry(layout: nil)
+            let personal = registry.activeProfileID
+            let work = registry.createProfile(name: "Work", symbol: "💼", searchEngine: .kagi)
+            ids = registry.profiles.map(\.id)
+            func open(_ server: LocalServer, titled title: String) async throws -> TabID {
+                let session = registry.active.session
+                session.openCommandBar(for: .newTab)
+                session.submitCommandBar("http://127.0.0.1:\(server.port)/")
+                let tab = try #require(session.selectedTab)
+                try await waitUntil("the page \(title) has loaded") { tab.state.title == title && !tab.state.isLoading }
+                return tab.id
+            }
+            func suggested(_ text: String) async -> [String] {
+                await registry.active.session.suggestions(for: text).map {
+                    switch $0.kind {
+                    case .openTab: "tab: \($0.title)"
+                    case .history: "history: \($0.title)"
+                    }
+                }
+            }
+
+            let roadmap = try await open(workServer, titled: "Quarterly roadmap")
+            registry.selectProfile(personal)
+            _ = try await open(personalServer, titled: "Café menu of the week")
+            let requestsAfterLoading = (personalServer.requestCount, workServer.requestCount)
+
+            #expect(await suggested("cafe") == ["tab: Café menu of the week"])
+            #expect(await suggested("QUARTERLY").isEmpty)
+            for typed in ["c", "ca", "caf", "café", "café m", "quarterly", "https://example.com", "x y z"] {
+                _ = await suggested(typed)
+            }
+
+            registry.selectProfile(work)
+            #expect(registry.activeProfileID == work)
+            #expect(await suggested("quarterly") == ["tab: Quarterly roadmap"])
+            #expect(await suggested("cafe").isEmpty)
+
+            registry.active.session.close(roadmap)
+            #expect(await suggested("quarterly") == ["history: Quarterly roadmap"])
+            registry.selectProfile(personal)
+            #expect(await suggested("quarterly").isEmpty)
+            #expect(await suggested("cafe") == ["tab: Café menu of the week"])
+
+            #expect((personalServer.requestCount, workServer.requestCount) == requestsAfterLoading)
+            for context in registry.loadedContexts { context.session.closeAllTabs() }
         }
         await cleanUp(ids)
     }

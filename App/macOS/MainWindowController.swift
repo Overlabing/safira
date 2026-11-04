@@ -38,6 +38,11 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
     private lazy var permissionPrompter = PermissionPrompter(
         window: { [weak self] in self?.window },
         profileName: { [weak self] id in self?.registry.profiles.first { $0.id == id }?.name ?? "" })
+    private let suggestionModel = CommandBarSuggestionModel()
+    private var suggestionHost: CommandBarSuggestionHostingView?
+    private var suggestionTask: Task<Void, Never>?
+    /// The text the shown suggestions were computed for: Return opens a highlighted one only while the text still is it.
+    private var suggestionText: String?
 
     init(registry: ProfileRegistry, shortcuts: ShortcutController) {
         self.registry = registry
@@ -265,21 +270,50 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         }
     }
 
+    /// A link from another app was opened as a new Tab, in a Profile that is now the Active profile: brings the Main
+    /// window forward on it, with the keyboard in the page.
+    func showOpenedLink() {
+        if window?.isMiniaturized == true { window?.deminiaturize(nil) }
+        showWindow(nil)
+        NSApp.activate()
+        session.dismissCommandBar()
+        render()
+        announce(String(localized: "Profile: \(registry.activeProfile.name)"))
+        showPage()
+    }
+
     // MARK: Command bar
 
     func control(_ control: NSControl, textView: NSTextView, doCommandBy selector: Selector) -> Bool {
         switch selector {
         case #selector(NSResponder.insertNewline(_:)):
+            if suggestionText == commandBar.stringValue, let suggestion = suggestionModel.highlighted {
+                openSuggestion(suggestion)
+                return true
+            }
+            hideSuggestions()
             session.submitCommandBar(commandBar.stringValue)
             render()
             if session.commandBarTarget == nil {
                 showPage()
             }
             return true
+        case #selector(NSResponder.moveDown(_:)):
+            guard !suggestionModel.suggestions.isEmpty, suggestionText == commandBar.stringValue else { return false }
+            suggestionModel.moveDown()
+            announceHighlight()
+            return true
+        case #selector(NSResponder.moveUp(_:)):
+            guard !suggestionModel.suggestions.isEmpty, suggestionText == commandBar.stringValue else { return false }
+            suggestionModel.moveUp()
+            announceHighlight()
+            return true
         case #selector(NSResponder.insertTab(_:)), #selector(NSResponder.insertBacktab(_:)):
+            hideSuggestions()
             focusTabList(nil)
             return true
         case #selector(NSResponder.cancelOperation(_:)):
+            hideSuggestions()
             session.dismissCommandBar()
             commandBar.placeholderString = Self.placeholder
             commandBar.stringValue = session.selectedTab?.address?.absoluteString ?? ""
@@ -292,11 +326,64 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         }
     }
 
+    /// Typing asks the Active profile for local suggestions: its open Tabs and its history. Nothing leaves the app, and
+    /// no page loads until Return.
+    func controlTextDidChange(_ notification: Notification) {
+        updateSuggestions()
+    }
+
     func controlTextDidEndEditing(_ notification: Notification) {
         // Leaving the field abandons a pending new Tab, as Escape does.
+        hideSuggestions()
         session.dismissCommandBar()
         commandBar.placeholderString = Self.placeholder
         render()
+    }
+
+    private func updateSuggestions() {
+        suggestionTask?.cancel()
+        let text = commandBar.stringValue
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            hideSuggestions()
+            return
+        }
+        // Results go to the Profile that was active when the text was typed, and are dropped if another one is shown by
+        // the time they arrive or the text moved on.
+        let profile = registry.activeProfileID
+        let session = session
+        suggestionTask = Task { [weak self] in
+            let found = await session.suggestions(for: text)
+            guard let self, !Task.isCancelled, registry.activeProfileID == profile,
+                  commandBar.stringValue == text, commandBar.currentEditor() != nil else { return }
+            suggestionModel.show(found, typing: text)
+            suggestionText = text
+            suggestionHost?.isHidden = found.isEmpty
+            if !found.isEmpty {
+                announce(String(AttributedString(localized: "^[\(found.count) suggestion](inflect: true)").characters))
+            }
+        }
+    }
+
+    private func hideSuggestions() {
+        suggestionTask?.cancel()
+        suggestionTask = nil
+        suggestionText = nil
+        suggestionModel.clear()
+        suggestionHost?.isHidden = true
+    }
+
+    private func openSuggestion(_ suggestion: CommandBarSuggestion) {
+        hideSuggestions()
+        session.openSuggestion(suggestion)
+        render()
+        if session.commandBarTarget == nil {
+            showPage()
+        }
+    }
+
+    /// The keyboard stays in the text field, so VoiceOver is told which suggestion the arrows reached.
+    private func announceHighlight() {
+        announce(suggestionModel.highlighted?.title ?? commandBar.stringValue)
     }
 
     /// Setting the text or the focus ends an edit in progress, which dismisses the Command bar: the target comes last.
@@ -378,6 +465,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         let before = registry.activeProfileID
         change(registry)
         guard registry.activeProfileID != before else { return }
+        hideSuggestions()
         session.dismissCommandBar()
         render()
         announce(String(localized: "Profile: \(registry.activeProfile.name)"))
@@ -609,6 +697,24 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         content.alignment = .leading
         toolbar.widthAnchor.constraint(equalTo: content.widthAnchor).isActive = true
         pageArea.widthAnchor.constraint(equalTo: content.widthAnchor).isActive = true
+
+        let suggestions = CommandBarSuggestionHostingView(rootView: CommandBarSuggestionList(model: suggestionModel) {
+            [weak self] in self?.openSuggestion($0)
+        })
+        suggestions.translatesAutoresizingMaskIntoConstraints = false
+        suggestions.isHidden = true
+        // Its width follows the Command bar's: the default min and max size constraints of a hosting view would cap
+        // the field at the width of an empty list.
+        suggestions.sizingOptions = [.intrinsicContentSize]
+        suggestions.setContentHuggingPriority(NSLayoutConstraint.Priority(1), for: .horizontal)
+        suggestions.setContentCompressionResistancePriority(NSLayoutConstraint.Priority(1), for: .horizontal)
+        content.addSubview(suggestions)
+        NSLayoutConstraint.activate([
+            suggestions.topAnchor.constraint(equalTo: toolbar.bottomAnchor, constant: -4),
+            suggestions.leadingAnchor.constraint(equalTo: commandBar.leadingAnchor, constant: -8),
+            suggestions.trailingAnchor.constraint(equalTo: commandBar.trailingAnchor, constant: 8),
+        ])
+        suggestionHost = suggestions
 
         let spaceActions = SpaceActions(
             edit: { [weak self] id in self?.editSpace(id) },

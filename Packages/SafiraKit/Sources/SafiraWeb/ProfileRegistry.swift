@@ -105,6 +105,17 @@ public final class ProfileRegistry {
         selectProfile(profiles[((index + offset) % count + count) % count].id)
     }
 
+    /// Opens a link from another app as a new Tab in the Profile's last active Space and shows that Profile. The Tab
+    /// is made by the Profile's own owner, so the link reaches that Profile's logins and nothing else. False when the
+    /// Profile does not exist.
+    @discardableResult
+    public func openExternalLink(_ url: URL, in id: ProfileID) -> Bool {
+        guard profiles.contains(where: { $0.id == id }) else { return false }
+        selectProfile(id)
+        active.session.openExternalLink(url)
+        return true
+    }
+
     // MARK: Creating and renaming
 
     /// Adds a Profile after the others and shows it. A Profile cannot be created without a search engine, which the

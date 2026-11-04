@@ -4,6 +4,7 @@
 import Foundation
 import Observation
 import SafiraCore
+import SafiraStore
 
 /// Where the Command bar sends what is typed in it.
 public enum CommandBarTarget: Hashable, Sendable {
@@ -36,6 +37,13 @@ public final class ProfileSession {
     @ObservationIgnored private var searchAwaitingEngineTarget = CommandBarTarget.selectedTab
     @ObservationIgnored private let makePage: @MainActor (TabID) -> any WebPageHandle
     @ObservationIgnored private let osBuild: String
+    /// Nil for a session that keeps no history, as a Private window's will.
+    @ObservationIgnored let history: ProfileDatabase?
+    @ObservationIgnored private let historyRecorder: HistoryRecorder?
+    /// Called when the Profile's history could not be written or searched.
+    @ObservationIgnored public var onHistoryError: (@MainActor (any Error) -> Void)? {
+        didSet { historyRecorder?.onError = onHistoryError }
+    }
 
     private struct ClosedTab {
         let address: URL
@@ -49,12 +57,15 @@ public final class ProfileSession {
 
     /// - Parameters:
     ///   - osBuild: the macOS build, which decides whether a saved navigation state can be restored.
+    ///   - history: the Profile's database, where the pages its Tabs visit are recorded and searched; nil keeps no history.
     ///   - makePage: builds the page of a Tab, called once per Tab on its first load or its first selection.
     public init(profileID: ProfileID, settings: ProfileSettings = ProfileSettings(), osBuild: String = OSBuild.current,
-                makePage: @escaping @MainActor (TabID) -> any WebPageHandle) {
+                history: ProfileDatabase? = nil, makePage: @escaping @MainActor (TabID) -> any WebPageHandle) {
         self.profileID = profileID
         self.settings = settings
         self.osBuild = osBuild
+        self.history = history
+        historyRecorder = history.map(HistoryRecorder.init(database:))
         self.makePage = makePage
         let space = Space(id: SpaceID(), name: Self.initialSpaceName, emoji: Self.initialSpaceEmoji)
         spaces = [space]
@@ -95,9 +106,11 @@ public final class ProfileSession {
         spaces = saved.spaces.map { record in
             let space = Space(id: record.id, name: record.name, emoji: record.emoji, paletteID: record.paletteID)
             space.tabs = record.tabs.map { tab in
-                Tab(restoring: tab, osBuild: osBuild, makePage: makePage) { [weak self] request in
+                let restored = Tab(restoring: tab, osBuild: osBuild, makePage: makePage) { [weak self] request in
                     self?.openBackgroundTab(request, after: tab.id)
                 }
+                observeVisits(of: restored)
+                return restored
             }
             space.selectedTabID = record.selectedTabID ?? space.tabs.first?.id
             return space
@@ -212,6 +225,15 @@ public final class ProfileSession {
         activeSpace.tabs.append(tab)
         setSelection(tab.id)
         return tab.id
+    }
+
+    /// Opens a link another app sent as a new Tab, selected, in the Space that was last active (the one shown when the
+    /// Profile was last used, saved with it).
+    @discardableResult
+    public func openExternalLink(_ url: URL) -> TabID {
+        let id = openNewTab()
+        selectedTab?.load(url)
+        return id
     }
 
     /// Shows a Tab, switching to its Space when it is in another one.
@@ -364,6 +386,19 @@ public final class ProfileSession {
         searchAwaitingEngine = nil
     }
 
+    /// Opens a suggestion where the Command bar's target says, then closes the Command bar. An open Tab is shown, in
+    /// whichever Space of this Profile holds it, and no Tab is created even after ⌘T.
+    public func openSuggestion(_ suggestion: CommandBarSuggestion) {
+        let target = commandBarTarget ?? .selectedTab
+        commandBarTarget = nil
+        switch suggestion.kind {
+        case .openTab(let id):
+            select(id)
+        case .history(let url):
+            open(url, in: target)
+        }
+    }
+
     // MARK: Settings
 
     /// Pages created from now on follow the new settings; pages already open keep theirs.
@@ -419,8 +454,20 @@ public final class ProfileSession {
     }
 
     private func makeTab(id: TabID, page: (any WebPageHandle)? = nil) -> Tab {
-        Tab(id: id, page: page, osBuild: osBuild, makePage: makePage) { [weak self] request in
+        let tab = Tab(id: id, page: page, osBuild: osBuild, makePage: makePage) { [weak self] request in
             self?.openBackgroundTab(request, after: id)
         }
+        observeVisits(of: tab)
+        return tab
+    }
+
+    /// Returns once the visits recorded so far have reached the history database.
+    public func recordedHistorySettled() async {
+        await historyRecorder?.settled()
+    }
+
+    private func observeVisits(of tab: Tab) {
+        guard let historyRecorder else { return }
+        tab.onVisitEvent = { [unowned historyRecorder] in historyRecorder.record($0) }
     }
 }
