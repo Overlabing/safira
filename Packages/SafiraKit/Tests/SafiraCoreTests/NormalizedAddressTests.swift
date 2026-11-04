@@ -96,4 +96,29 @@ private func normalized(_ address: String) -> String? {
             == MatchingTab(profile: profile, space: home.id, tab: home.tabs[0].id))
         #expect(SavedSession().matchingTab(for: address, in: profile) == nil)
     }
+
+    @Test func aSavedPinnedTabOrOneInsideAFolderIsFoundToo() throws {
+        let profile = ProfileID(rawValue: UUID())
+        let pinned = TabRecord(id: TabID(), address: URL(string: "https://example.com/pinned"))
+        let inFolder = TabRecord(id: TabID(), address: URL(string: "https://example.com/folder"))
+        let inSubFolder = TabRecord(id: TabID(), address: URL(string: "https://example.com/sub"))
+        let home = SpaceRecord(id: SpaceID(), name: "Home", emoji: "🏠", pinned: [
+            .tab(pinned),
+            .folder(FolderRecord(id: FolderID(), name: "Docs", isExpanded: false, items: [
+                .tab(inFolder),
+                .folder(FolderRecord(id: FolderID(), name: "More", isExpanded: false, items: [.tab(inSubFolder)])),
+            ])),
+        ], tabs: [TabRecord(id: TabID(), address: URL(string: "https://example.com/plain"))])
+        let saved = SavedSession(spaces: [home], activeSpaceID: home.id)
+
+        func found(_ link: String) throws -> TabID? {
+            let address = try #require(NormalizedAddress(URL(string: link)!))
+            return saved.matchingTab(for: address, in: profile)?.tab
+        }
+
+        #expect(try found("https://example.com/pinned?utm_source=x") == pinned.id)
+        #expect(try found("https://example.com/folder#top") == inFolder.id)
+        #expect(try found("https://EXAMPLE.com/sub/") == inSubFolder.id)
+        #expect(try found("https://example.com/plain") == home.tabs[0].id)
+    }
 }

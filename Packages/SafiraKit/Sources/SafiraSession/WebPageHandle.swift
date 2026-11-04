@@ -53,6 +53,8 @@ public protocol WebPageHandle: AnyObject {
     /// Called when the page follows a link that is not a web address (`mailto:`, `slack:`) from any frame, by a click,
     /// a script or a redirect. The page has already refused to follow it: only the session may hand it to an app.
     var onNonWebLink: (@MainActor (NonWebLink) -> Void)? { get set }
+    /// Called when a navigation of the page turned into a download, which the Profile's downloads take over.
+    var onDownloadStarted: (@MainActor () -> Void)? { get set }
     /// The engine's opaque navigation state (back-forward list, scroll positions, form fields); nil when it has none.
     var navigationState: Data? { get }
     /// What the pages of the back-forward list hold that keeps the navigation state off the disk (decision D1).
