@@ -58,6 +58,16 @@ enum MainMenu {
             item(.goBack, #selector(MainWindowController.goBack(_:))),
             item(.goForward, #selector(MainWindowController.goForward(_:))),
         ]))
+        menu.addItem(submenu(title: "Spaces", items: [
+            item(.newSpace, #selector(MainWindowController.newSpace(_:))),
+            item(.renameSpace, #selector(MainWindowController.renameSpace(_:))),
+            item(.deleteSpace, #selector(MainWindowController.deleteSpace(_:))),
+            .separator(),
+            item(.previousSpace, #selector(MainWindowController.showPreviousSpace(_:))),
+            item(.nextSpace, #selector(MainWindowController.showNextSpace(_:))),
+            item(.moveSpaceLeft, #selector(MainWindowController.moveSpaceLeft(_:))),
+            item(.moveSpaceRight, #selector(MainWindowController.moveSpaceRight(_:))),
+        ]))
         let window = submenu(title: "Window", items: [
             NSMenuItem(title: "Minimize", action: #selector(NSWindow.performMiniaturize(_:)), keyEquivalent: "m"),
             NSMenuItem(title: "Zoom", action: #selector(NSWindow.performZoom(_:)), keyEquivalent: ""),

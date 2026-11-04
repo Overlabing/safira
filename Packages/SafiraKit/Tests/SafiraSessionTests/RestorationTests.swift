@@ -8,7 +8,7 @@ import SafiraStore
 import Testing
 
 /// A Profile database in a fresh folder, removed when the test ends.
-private final class TemporaryDatabase {
+final class TemporaryDatabase {
     let folder = FileManager.default.temporaryDirectory.appending(path: "safira-\(UUID().uuidString)",
                                                                  directoryHint: .isDirectory)
     var file: URL { folder.appending(path: "profile.sqlite") }

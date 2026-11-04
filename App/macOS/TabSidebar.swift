@@ -5,13 +5,32 @@ import SafiraCore
 import SafiraSession
 import SwiftUI
 
-/// The sidebar list of the Tabs of the single Space. Arrow keys move the selection, which shows the Tab; Delete closes
-/// it; Return or Escape goes to its page; rows can be dragged to reorder.
+/// The sidebar: the active Space's name, the list of its Tabs, and the row of Spaces at the bottom. In the list, arrow
+/// keys move the selection, which shows the Tab; Delete closes it; Return or Escape goes to its page; rows can be
+/// dragged to reorder.
 struct TabSidebar: View {
     let session: ProfileSession
+    let spaceActions: SpaceActions
     let showPage: () -> Void
 
     var body: some View {
+        VStack(spacing: 0) {
+            Text(verbatim: "\(session.activeSpace.emoji) \(session.activeSpace.name)")
+                .font(.headline)
+                .lineLimit(1)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .accessibilityLabel(String(localized: "Space: \(session.activeSpace.name)"))
+                .accessibilityAddTraits(.isHeader)
+            tabList
+            Divider()
+            SpaceBar(session: session, actions: spaceActions)
+        }
+        .frame(minWidth: 180)
+    }
+
+    private var tabList: some View {
         List(selection: selection) {
             ForEach(session.tabs) { tab in
                 TabRow(
@@ -41,7 +60,6 @@ struct TabSidebar: View {
             showPage()
             return .handled
         }
-        .frame(minWidth: 180)
     }
 
     private var selection: Binding<TabID?> {

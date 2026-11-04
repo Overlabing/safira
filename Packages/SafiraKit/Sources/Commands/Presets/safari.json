@@ -59,6 +59,13 @@
     "showSidebar": "The cited page lists no command to reveal a hidden tab list over the page.",
     "focusTabList": "Safari has no command to move the focus to a tab list.",
     "moveTabUp": "Safari has no command to move a tab.",
-    "moveTabDown": "Safari has no command to move a tab."
+    "moveTabDown": "Safari has no command to move a tab.",
+    "newSpace": "The cited page lists no Tab Group shortcuts, Safari's nearest equivalent of a Space.",
+    "renameSpace": "The cited page lists no Tab Group shortcuts, Safari's nearest equivalent of a Space.",
+    "deleteSpace": "The cited page lists no Tab Group shortcuts, Safari's nearest equivalent of a Space.",
+    "previousSpace": "The cited page lists no Tab Group shortcuts, Safari's nearest equivalent of a Space.",
+    "nextSpace": "The cited page lists no Tab Group shortcuts, Safari's nearest equivalent of a Space.",
+    "moveSpaceLeft": "The cited page lists no Tab Group shortcuts, Safari's nearest equivalent of a Space.",
+    "moveSpaceRight": "The cited page lists no Tab Group shortcuts, Safari's nearest equivalent of a Space."
   }
 }

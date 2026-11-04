@@ -52,6 +52,14 @@
     "nextTab": {
       "shortcut": "command+option+down",
       "from": "Switch between tabs (Option-Command-Down Arrow)"
+    },
+    "previousSpace": {
+      "shortcut": "command+option+left",
+      "from": "Switch between Spaces (Command-Option-Left Arrow or Option-Command-Right Arrow)"
+    },
+    "nextSpace": {
+      "shortcut": "command+option+right",
+      "from": "Switch between Spaces (Command-Option-Left Arrow or Option-Command-Right Arrow)"
     }
   },
   "unbound": {
@@ -59,6 +67,11 @@
     "closeWindow": "The page lists only Command-W, which closes the current tab or window.",
     "focusTabList": "The page lists no command to move the focus to the sidebar.",
     "moveTabUp": "The page lists no command to move a tab; Command-Option-Up Arrow switches tabs instead.",
-    "moveTabDown": "The page lists no command to move a tab; Option-Command-Down Arrow switches tabs instead."
+    "moveTabDown": "The page lists no command to move a tab; Option-Command-Down Arrow switches tabs instead.",
+    "newSpace": "The page lists no command to create a Space.",
+    "renameSpace": "The page lists no command to rename a Space.",
+    "deleteSpace": "The page lists no command to delete a Space.",
+    "moveSpaceLeft": "The page lists no command to move a Space.",
+    "moveSpaceRight": "The page lists no command to move a Space."
   }
 }

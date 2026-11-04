@@ -9,6 +9,7 @@ public enum CommandID: String, CaseIterable, Hashable, Sendable {
     case reload, goBack, goForward
     case previousTab, nextTab, moveTabUp, moveTabDown
     case commandBarNext, commandBarPrevious
+    case newSpace, renameSpace, deleteSpace, previousSpace, nextSpace, moveSpaceLeft, moveSpaceRight
 }
 
 /// Where a shortcut is heard. A window shortcut works whatever has the keyboard focus (it is a menu key equivalent);
@@ -56,6 +57,14 @@ public enum CommandRegistry {
         window(.nextTab, "Show Next Tab", Shortcut(.character("]"), [.command, .shift]), reserved: true),
         window(.moveTabUp, "Move Tab Up", Shortcut(.up, [.command, .option])),
         window(.moveTabDown, "Move Tab Down", Shortcut(.down, [.command, .option])),
+        // ⌃⌘ with N or an arrow: no browser-level, preset-default or system shortcut uses it.
+        window(.newSpace, "New Space…", Shortcut(.character("n"), [.command, .control])),
+        window(.renameSpace, "Rename Space…", nil),
+        window(.deleteSpace, "Delete Space…", nil),
+        window(.previousSpace, "Show Previous Space", Shortcut(.left, [.command, .control])),
+        window(.nextSpace, "Show Next Space", Shortcut(.right, [.command, .control])),
+        window(.moveSpaceLeft, "Move Space Left", nil),
+        window(.moveSpaceRight, "Move Space Right", nil),
         Command(id: .commandBarNext, title: "Command Bar: Move to the Tab List", scope: .commandBar,
                 defaultShortcut: Shortcut(.tab), isReserved: false, isRebindable: false, isImplemented: true),
         Command(id: .commandBarPrevious, title: "Command Bar: Move to the Tab List, Backward", scope: .commandBar,

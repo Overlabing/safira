@@ -30,6 +30,23 @@ enum Migrations {
                 table.add(column: "state_os_build", .text)
             }
         }
+        // Spaces get a name and an emoji, the Theme slot of #10, and the Profile remembers its active Space. The Space
+        // the Profile already has keeps its Tabs and becomes the active one.
+        migrator.registerMigration("v3-spaces") { db in
+            try db.alter(table: "space") { table in
+                table.add(column: "name", .text).notNull().defaults(to: "Home")
+                table.add(column: "emoji", .text).notNull().defaults(to: "🏠")
+                table.add(column: "palette_id", .text)
+            }
+            try db.create(table: "profile_setting") { table in
+                table.primaryKey("key", .text)
+                table.column("value", .text).notNull()
+            }
+            try db.execute(sql: """
+                INSERT INTO profile_setting (key, value)
+                SELECT 'active_space_id', id FROM space ORDER BY position LIMIT 1
+                """)
+        }
         return migrator
     }
 

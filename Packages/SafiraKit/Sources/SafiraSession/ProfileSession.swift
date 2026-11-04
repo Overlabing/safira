@@ -13,15 +13,16 @@ public enum CommandBarTarget: Hashable, Sendable {
     case newTab
 }
 
-/// The navigation facade of one Profile: its Tabs, the selection, and every navigation the user asks for.
-/// It reaches web pages only through `WebPageHandle`, so it runs headless with simulated pages.
+/// The navigation facade of one Profile: its Spaces, their Tabs, the selection, and every navigation the user asks
+/// for. Tab commands act on the active Space. It reaches web pages only through `WebPageHandle`, so it runs headless
+/// with simulated pages.
 @MainActor
 @Observable
 public final class ProfileSession {
     public private(set) var profile: Profile
-    /// The Tabs of the Profile's single Space, in sidebar order.
-    public private(set) var tabs: [Tab] = []
-    public private(set) var selectedTabID: TabID?
+    /// The Profile's Spaces, in sidebar order; never empty.
+    public private(set) var spaces: [Space]
+    public private(set) var activeSpaceID: SpaceID
     /// Nil while the Command bar is closed.
     public private(set) var commandBarTarget: CommandBarTarget?
     /// A search typed while the Profile has no search engine; the user is asked to pick one before it runs.
@@ -34,8 +35,13 @@ public final class ProfileSession {
 
     private struct ClosedTab {
         let address: URL
+        let space: SpaceID
         let index: Int
     }
+
+    /// The Space a Profile starts with, the same one the database creates.
+    public static let initialSpaceName = "Home"
+    public static let initialSpaceEmoji = "🏠"
 
     /// - Parameters:
     ///   - osBuild: the macOS build, which decides whether a saved navigation state can be restored.
@@ -45,10 +51,26 @@ public final class ProfileSession {
         self.profile = profile
         self.osBuild = osBuild
         self.makePage = makePage
+        let space = Space(id: SpaceID(), name: Self.initialSpaceName, emoji: Self.initialSpaceEmoji)
+        spaces = [space]
+        activeSpaceID = space.id
+    }
+
+    public var activeSpace: Space {
+        spaces.first { $0.id == activeSpaceID } ?? spaces[0]
+    }
+
+    /// The Tabs of the active Space, in sidebar order.
+    public var tabs: [Tab] {
+        activeSpace.tabs
+    }
+
+    public var selectedTabID: TabID? {
+        activeSpace.selectedTabID
     }
 
     public var selectedTab: Tab? {
-        tabs.first { $0.id == selectedTabID }
+        activeSpace.selectedTab
     }
 
     public var canReopenClosedTab: Bool {
@@ -57,29 +79,121 @@ public final class ProfileSession {
 
     // MARK: Saving and restoring
 
-    /// Brings back saved Tabs after the ones already open. Only the selected Tab gets a page; the others stay dormant
-    /// until they are selected.
+    /// Replaces the Spaces with saved ones, as at launch, and closes the Tabs open before. Only the selected Tab of
+    /// the active Space gets a page; every other Tab stays dormant until it is shown. A save with no Space changes
+    /// nothing.
     public func restore(_ saved: SavedSession) {
-        let restored = saved.tabs.map { record in
-            Tab(restoring: record, osBuild: osBuild, makePage: makePage) { [weak self] request in
-                self?.openBackgroundTab(request, after: record.id)
+        guard let active = saved.activeSpace else { return }
+        allTabs.forEach { $0.close() }
+        spaces = saved.spaces.map { record in
+            let space = Space(id: record.id, name: record.name, emoji: record.emoji, paletteID: record.paletteID)
+            space.tabs = record.tabs.map { tab in
+                Tab(restoring: tab, osBuild: osBuild, makePage: makePage) { [weak self] request in
+                    self?.openBackgroundTab(request, after: tab.id)
+                }
             }
+            space.selectedTabID = record.selectedTabID ?? space.tabs.first?.id
+            return space
         }
-        tabs.append(contentsOf: restored)
-        setSelection(saved.selectedTabID ?? restored.first?.id ?? selectedTabID)
+        activeSpaceID = active.id
+        activeSpace.selectedTab?.wake()
     }
 
-    /// What to save of the Profile's Tabs now.
+    /// What to save of the Profile's Spaces and Tabs now.
     public func savedSession() -> SavedSession {
-        SavedSession(tabs: tabs.map(\.record), selectedTabID: selectedTabID)
+        SavedSession(spaces: spaces.map(\.record), activeSpaceID: activeSpaceID)
     }
 
     /// Reads what `savedSession()` depends on, so that observing this call reports every change worth saving.
     func readSavedFields() {
-        _ = selectedTabID
-        for tab in tabs {
-            _ = (tab.state, tab.dormantRecord)
+        _ = activeSpaceID
+        for space in spaces {
+            _ = (space.name, space.emoji, space.paletteID, space.selectedTabID)
+            for tab in space.tabs {
+                _ = (tab.state, tab.dormantRecord)
+            }
         }
+    }
+
+    /// Every Tab of every Space.
+    var allTabs: [Tab] {
+        spaces.flatMap(\.tabs)
+    }
+
+    // MARK: Spaces
+
+    /// Adds a Space after the others and makes it active. It starts with no Tab.
+    @discardableResult
+    public func createSpace(name: String, emoji: String) -> SpaceID {
+        let space = Space(id: SpaceID(), name: Self.cleanName(name) ?? Self.initialSpaceName,
+                          emoji: Self.cleanEmoji(emoji) ?? Self.initialSpaceEmoji)
+        spaces.append(space)
+        activeSpaceID = space.id
+        return space.id
+    }
+
+    /// Renames a Space. A blank name or emoji keeps the current one; an emoji keeps its first character only.
+    public func renameSpace(_ id: SpaceID, name: String, emoji: String) {
+        guard let space = space(id) else { return }
+        if let name = Self.cleanName(name) { space.name = name }
+        if let emoji = Self.cleanEmoji(emoji) { space.emoji = emoji }
+    }
+
+    /// Moves a Space so that it ends at `index` in the list; an index past either end is clamped to it.
+    public func moveSpace(_ id: SpaceID, to index: Int) {
+        guard let from = spaces.firstIndex(where: { $0.id == id }) else { return }
+        let space = spaces.remove(at: from)
+        spaces.insert(space, at: max(0, min(index, spaces.count)))
+    }
+
+    /// Moves a Space `offset` places towards the start (negative) or the end (positive), stopping at the ends.
+    public func moveSpace(_ id: SpaceID, by offset: Int) {
+        guard let from = spaces.firstIndex(where: { $0.id == id }) else { return }
+        moveSpace(id, to: from + offset)
+    }
+
+    /// Shows a Space: its selected Tab gets a page if it had none.
+    public func selectSpace(_ id: SpaceID) {
+        guard space(id) != nil else { return }
+        activeSpaceID = id
+        activeSpace.selectedTab?.wake()
+    }
+
+    /// Shows the Space `offset` places away from the active one, wrapping around the ends of the list.
+    public func selectSpace(offset: Int) {
+        guard let index = spaces.firstIndex(where: { $0.id == activeSpaceID }) else { return }
+        let count = spaces.count
+        selectSpace(spaces[((index + offset) % count + count) % count].id)
+    }
+
+    public var canDeleteSpace: Bool {
+        spaces.count > 1
+    }
+
+    /// Deletes a Space and closes its Tabs; they cannot be reopened. The Profile's logins and history are untouched:
+    /// they belong to the Profile, not to the Space. The last Space of a Profile cannot be deleted. Deleting the
+    /// active Space shows the one before it, or the next one when it was first.
+    public func deleteSpace(_ id: SpaceID) {
+        guard canDeleteSpace, let index = spaces.firstIndex(where: { $0.id == id }) else { return }
+        let space = spaces.remove(at: index)
+        space.tabs.forEach { $0.close() }
+        space.tabs = []
+        if activeSpaceID == id {
+            selectSpace(spaces[max(0, index - 1)].id)
+        }
+    }
+
+    private func space(_ id: SpaceID) -> Space? {
+        spaces.first { $0.id == id }
+    }
+
+    private static func cleanName(_ name: String) -> String? {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+    }
+
+    private static func cleanEmoji(_ emoji: String) -> String? {
+        emoji.trimmingCharacters(in: .whitespacesAndNewlines).first.map(String.init)
     }
 
     // MARK: Tabs
@@ -87,13 +201,15 @@ public final class ProfileSession {
     @discardableResult
     public func openNewTab() -> TabID {
         let tab = makeTab(id: TabID())
-        tabs.append(tab)
+        activeSpace.tabs.append(tab)
         setSelection(tab.id)
         return tab.id
     }
 
+    /// Shows a Tab, switching to its Space when it is in another one.
     public func select(_ id: TabID) {
-        guard tabs.contains(where: { $0.id == id }) else { return }
+        guard let space = spaces.first(where: { $0.tabs.contains { $0.id == id } }) else { return }
+        activeSpaceID = space.id
         setSelection(id)
     }
 
@@ -108,14 +224,16 @@ public final class ProfileSession {
     /// Closing the selected Tab selects the one that takes its place, or the one before it when it was last.
     /// Closing the last Tab leaves the Profile with no Tab; the window stays open.
     public func close(_ id: TabID) {
-        guard let index = tabs.firstIndex(where: { $0.id == id }) else { return }
-        let tab = tabs.remove(at: index)
+        guard let space = spaces.first(where: { $0.tabs.contains { $0.id == id } }),
+              let index = space.tabs.firstIndex(where: { $0.id == id }) else { return }
+        let tab = space.tabs.remove(at: index)
         if let address = tab.address {
-            closedTabs.append(ClosedTab(address: address, index: index))
+            closedTabs.append(ClosedTab(address: address, space: space.id, index: index))
         }
         tab.close()
-        if selectedTabID == id {
-            setSelection(tabs.isEmpty ? nil : tabs[min(index, tabs.count - 1)].id)
+        if space.selectedTabID == id {
+            space.selectedTabID = space.tabs.isEmpty ? nil : space.tabs[min(index, space.tabs.count - 1)].id
+            if space.id == activeSpaceID { space.selectedTab?.wake() }
         }
     }
 
@@ -123,12 +241,16 @@ public final class ProfileSession {
         if let selectedTabID { close(selectedTabID) }
     }
 
-    /// Reopens the last closed Tab at its former place, loads its last address and selects it.
+    /// Reopens the last closed Tab at its former place in its Space, which it shows, loads its last address and
+    /// selects it. A Tab whose Space was deleted since reopens in the active Space.
     @discardableResult
     public func reopenClosedTab() -> TabID? {
         guard let closed = closedTabs.popLast() else { return nil }
+        if space(closed.space) != nil {
+            activeSpaceID = closed.space
+        }
         let tab = makeTab(id: TabID())
-        tabs.insert(tab, at: min(closed.index, tabs.count))
+        activeSpace.tabs.insert(tab, at: min(closed.index, tabs.count))
         setSelection(tab.id)
         tab.load(closed.address)
         return tab.id
@@ -136,9 +258,10 @@ public final class ProfileSession {
 
     /// Moves a Tab so that it ends at `index` in the list; an index past either end is clamped to it.
     public func move(_ id: TabID, to index: Int) {
-        guard let from = tabs.firstIndex(where: { $0.id == id }) else { return }
-        let tab = tabs.remove(at: from)
-        tabs.insert(tab, at: max(0, min(index, tabs.count)))
+        let space = activeSpace
+        guard let from = space.tabs.firstIndex(where: { $0.id == id }) else { return }
+        let tab = space.tabs.remove(at: from)
+        space.tabs.insert(tab, at: max(0, min(index, space.tabs.count)))
     }
 
     /// Moves a Tab `offset` places up (negative) or down (positive), stopping at the ends of the list.
@@ -210,22 +333,24 @@ public final class ProfileSession {
         selectedTab?.load(url, httpsFirst: httpsFirst)
     }
 
-    /// A page opened a link in a new Tab: it goes right after the Tab that opened it, in the background.
+    /// A page opened a link in a new Tab: it goes right after the Tab that opened it, in the background, in the
+    /// opener's Space.
     private func openBackgroundTab(_ request: NewTabRequest, after opener: TabID) {
-        let position = tabs.firstIndex { $0.id == opener }.map { $0 + 1 } ?? tabs.count
+        let space = spaces.first { $0.tabs.contains { $0.id == opener } } ?? activeSpace
+        let position = space.tabs.firstIndex { $0.id == opener }.map { $0 + 1 } ?? space.tabs.count
         switch request {
         case .address(let url):
             let tab = makeTab(id: TabID())
-            tabs.insert(tab, at: position)
+            space.tabs.insert(tab, at: position)
             tab.load(url)
         case .page(let id, let page):
-            tabs.insert(makeTab(id: id, page: page), at: position)
+            space.tabs.insert(makeTab(id: id, page: page), at: position)
         }
     }
 
-    /// A Tab shown for the first time since a relaunch creates its page here.
+    /// Selects a Tab of the active Space. A Tab shown for the first time since a relaunch creates its page here.
     private func setSelection(_ id: TabID?) {
-        selectedTabID = id
+        activeSpace.selectedTabID = id
         selectedTab?.wake()
     }
 
