@@ -6,7 +6,7 @@ import SafiraSession
 import SwiftUI
 
 /// The sidebar list of the Tabs of the single Space. Arrow keys move the selection, which shows the Tab; Delete closes
-/// it; Return goes to its page; rows can be dragged to reorder.
+/// it; Return or Escape goes to its page; rows can be dragged to reorder.
 struct TabSidebar: View {
     let session: ProfileSession
     let showPage: () -> Void
@@ -34,6 +34,10 @@ struct TabSidebar: View {
             session.closeSelectedTab()
         }
         .onKeyPress(.return) {
+            showPage()
+            return .handled
+        }
+        .onKeyPress(.escape) {
             showPage()
             return .handled
         }

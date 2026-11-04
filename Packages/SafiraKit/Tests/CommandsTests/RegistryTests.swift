@@ -18,6 +18,10 @@ import Testing
     #expect(display(.reopenClosedTab) == "⇧⌘T")
     #expect(display(.openCommandBar) == "⌘L")
     #expect(display(.quit) == "⌘Q")
+    #expect(display(.compactMode) == "⌃⌘S")
+    #expect(display(.showSidebar) == "⌥⌘S")
+    #expect(display(.previousTab) == "⇧⌘[")
+    #expect(display(.nextTab) == "⇧⌘]")
     #expect(display(.moveTabUp) == "⌥⌘↑")
     #expect(display(.moveTabDown) == "⌥⌘↓")
     #expect(display(.commandBarNext) == "⇥")
@@ -37,4 +41,17 @@ import Testing
     var configuration = ShortcutConfiguration(preset: .arc)
     configuration.overrides[.commandBarNext] = .unbound
     #expect(configuration.bindings[.commandBarNext]?.display == "⇥")
+}
+
+@Test func theCompactModeCommandsAreWindowCommandsYouCanRebind() {
+    for id in [CommandID.compactMode, .showSidebar] {
+        let command = CommandRegistry.command(id)
+        #expect(command.scope == .window)
+        #expect(command.isRebindable)
+        #expect(command.isImplemented)
+        #expect(!command.isReserved)
+    }
+    #expect(CommandRegistry.command(.compactMode).title == "Compact Mode")
+    #expect(CommandRegistry.command(.showSidebar).title == "Show Sidebar")
+    #expect(CommandRegistry.commands.count == 19)
 }

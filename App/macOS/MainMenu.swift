@@ -50,6 +50,8 @@ enum MainMenu {
                            explanation: WebContentSettings.autoplayingSoundExplanation,
                            action: #selector(MainWindowController.toggleAutoplayingSound(_:))),
             .separator(),
+            item(.compactMode, #selector(MainWindowController.toggleCompactMode(_:))),
+            item(.showSidebar, #selector(MainWindowController.toggleRevealedSidebar(_:))),
             item(.focusTabList, #selector(MainWindowController.focusTabList(_:))),
         ]))
         menu.addItem(submenu(title: "History", items: [

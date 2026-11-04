@@ -55,6 +55,8 @@
     }
   },
   "unbound": {
+    "compactMode": "The cited page lists no command to hide or show a tab list; its only sidebar commands are Control-Command-1 (Bookmarks) and Control-Command-2 (Reading List).",
+    "showSidebar": "The cited page lists no command to reveal a hidden tab list over the page.",
     "focusTabList": "Safari has no command to move the focus to a tab list.",
     "moveTabUp": "Safari has no command to move a tab.",
     "moveTabDown": "Safari has no command to move a tab."

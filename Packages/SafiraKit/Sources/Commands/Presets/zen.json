@@ -37,6 +37,14 @@
       "shortcut": "command+r",
       "from": "Reload Page (Ctrl+R)"
     },
+    "compactMode": {
+      "shortcut": "command+option+c",
+      "from": "Toggle Compact Mode (Alt+Ctrl+C)"
+    },
+    "showSidebar": {
+      "shortcut": "command+option+s",
+      "from": "Toggle Floating Sidebar (Alt+Ctrl+S)"
+    },
     "goBack": {
       "shortcut": "command+[",
       "from": "Navigate Back (Alternative) (Ctrl+[); the primary Alt+Left is the macOS word-movement key"

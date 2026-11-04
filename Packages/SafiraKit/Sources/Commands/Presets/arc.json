@@ -33,6 +33,10 @@
       "shortcut": "command+r",
       "from": "Reload webpage (Command-R)"
     },
+    "compactMode": {
+      "shortcut": "command+s",
+      "from": "Show/Hide the Sidebar (Command-S)"
+    },
     "goBack": {
       "shortcut": "command+[",
       "from": "Go back on tab history (Command-Left Arrow or Command-Left Bracket)"
@@ -51,6 +55,7 @@
     }
   },
   "unbound": {
+    "showSidebar": "The page lists one Show/Hide the Sidebar command (Command-S), which Compact Mode takes; it lists no separate command to reveal a hidden sidebar over the page.",
     "closeWindow": "The page lists only Command-W, which closes the current tab or window.",
     "focusTabList": "The page lists no command to move the focus to the sidebar.",
     "moveTabUp": "The page lists no command to move a tab; Command-Option-Up Arrow switches tabs instead.",

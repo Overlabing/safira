@@ -5,7 +5,7 @@
 /// so it never changes once shipped.
 public enum CommandID: String, CaseIterable, Hashable, Sendable {
     case newTab, newWindow, closeTab, closeWindow, reopenClosedTab, quit
-    case openCommandBar, focusTabList
+    case openCommandBar, focusTabList, compactMode, showSidebar
     case reload, goBack, goForward
     case previousTab, nextTab, moveTabUp, moveTabDown
     case commandBarNext, commandBarPrevious
@@ -23,7 +23,8 @@ public struct Command: Hashable, Sendable, Identifiable {
     public let title: String
     public let scope: CommandScope
     /// The shortcut Safira ships with until a preset is chosen: the product defaults decided so far (⌘T ⌘N ⌘W ⇧⌘T ⌘L
-    /// ⌘Q reach the menu; Move Tab is ⌥⌘↑ and ⌥⌘↓; Tab and ⇧Tab leave the Command bar for the sidebar).
+    /// ⌘Q ⇧⌘[ ⇧⌘] reach the menu; Move Tab is ⌥⌘↑ and ⌥⌘↓; Tab and ⇧Tab leave the Command bar for the sidebar; Compact
+    /// Mode is ⌃⌘S, the system's sidebar shortcut, and Show Sidebar is ⌥⌘S).
     public let defaultShortcut: Shortcut?
     /// The browser-level shortcuts that must always reach the menu, never the page, so the window offers them to the
     /// menu before the web view sees them.
@@ -46,11 +47,13 @@ public enum CommandRegistry {
         window(.quit, "Quit Safira", Shortcut(.character("q"), .command), reserved: true),
         window(.openCommandBar, "Open Command Bar", Shortcut(.character("l"), .command), reserved: true),
         window(.focusTabList, "Focus Tab List", nil),
+        window(.compactMode, "Compact Mode", Shortcut(.character("s"), [.command, .control])),
+        window(.showSidebar, "Show Sidebar", Shortcut(.character("s"), [.command, .option])),
         window(.reload, "Reload Page", Shortcut(.character("r"), .command)),
         window(.goBack, "Back", Shortcut(.character("["), .command)),
         window(.goForward, "Forward", Shortcut(.character("]"), .command)),
-        window(.previousTab, "Show Previous Tab", Shortcut(.character("["), [.command, .shift])),
-        window(.nextTab, "Show Next Tab", Shortcut(.character("]"), [.command, .shift])),
+        window(.previousTab, "Show Previous Tab", Shortcut(.character("["), [.command, .shift]), reserved: true),
+        window(.nextTab, "Show Next Tab", Shortcut(.character("]"), [.command, .shift]), reserved: true),
         window(.moveTabUp, "Move Tab Up", Shortcut(.up, [.command, .option])),
         window(.moveTabDown, "Move Tab Down", Shortcut(.down, [.command, .option])),
         Command(id: .commandBarNext, title: "Command Bar: Move to the Tab List", scope: .commandBar,

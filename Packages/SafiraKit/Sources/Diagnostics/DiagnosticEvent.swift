@@ -66,6 +66,15 @@ public enum DiagnosticEvent: Hashable, Sendable {
         }
     }
 
+    /// Whether the line tells where the user browsed or how long a page took. A failure without a host does not.
+    public var carriesSiteInformation: Bool {
+        switch self {
+        case .pageLoaded: true
+        case .loadFailed(let host, _): host != nil
+        case .tabCounts, .memory, .debugMode: false
+        }
+    }
+
     /// The text of the line after its timestamp and level.
     public var message: String {
         switch self {

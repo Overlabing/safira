@@ -8,20 +8,25 @@ private func press(_ characters: String, _ modifiers: ShortcutModifiers) -> KeyS
     KeyStroke(characters: characters, modifiers: modifiers)
 }
 
+/// The six that every preset keeps.
 private let reservedPresses: [KeyStroke] = [
     press("t", .command), press("n", .command), press("w", .command), press("T", [.command, .shift]),
     press("l", .command), press("q", .command),
 ]
 
+/// ⇧⌘[ and ⇧⌘] arrive as "{" and "}" because Shift is held.
+private let tabSwitchingPresses: [KeyStroke] = [press("{", [.command, .shift]), press("}", [.command, .shift])]
+
 private let unreservedPresses: [KeyStroke] = [
     press("r", .command), press("t", []), press("t", .control), press("t", [.command, .option]),
     press("t", [.command, .control]), press("W", [.command, .shift]), press("a", .command), press("x", .command),
-    press("[", .command), press("\u{F700}", [.command, .option]), press("\t", []), press("", .command),
+    press("[", .command), press("{", .command), press("}", .command), press("\u{F700}", [.command, .option]),
+    press("\t", []), press("", .command),
 ]
 
 /// The key equivalents the window offers to the menu before a web page sees them (standing order 22). ⌘N has no menu
 /// item yet, so the menu will decline it, but it is reserved all the same.
-@Test(arguments: reservedPresses)
+@Test(arguments: reservedPresses + tabSwitchingPresses)
 func theBrowserLevelShortcutsAreReservedByDefault(key: KeyStroke) {
     #expect(KeyBindings.defaults.reservesKeyEquivalent(key))
 }
@@ -61,7 +66,27 @@ func everyPresetReservesTheSameBrowserShortcuts(preset: ShortcutPreset) {
     }
 }
 
-@Test func theRegistryMarksExactlyTheSixReservedCommands() {
+@Test func theRegistryMarksExactlyTheEightReservedCommands() {
     let reserved = CommandRegistry.commands.filter(\.isReserved).map(\.id)
-    #expect(Set(reserved) == [.newTab, .newWindow, .closeTab, .reopenClosedTab, .openCommandBar, .quit])
+    #expect(Set(reserved) == [.newTab, .newWindow, .closeTab, .reopenClosedTab, .openCommandBar, .quit, .previousTab, .nextTab])
+}
+
+@Test func theReservedShortcutsByDefaultAreTheseEightLiterally() {
+    let shortcuts = CommandRegistry.commands.filter(\.isReserved).compactMap { $0.defaultShortcut?.display }
+    #expect(Set(shortcuts) == ["⌘T", "⌘N", "⌘W", "⇧⌘T", "⌘L", "⌘Q", "⇧⌘[", "⇧⌘]"])
+    #expect(shortcuts.count == 8)
+}
+
+@Test func showingThePreviousAndNextTabIsReservedWhereverThePresetBindsIt() {
+    func reserves(_ preset: ShortcutPreset, _ key: KeyStroke) -> Bool {
+        ShortcutConfiguration(preset: preset).bindings.reservesKeyEquivalent(key)
+    }
+    for key in tabSwitchingPresses {
+        #expect(reserves(.safari, key))
+        #expect(!reserves(.zen, key))
+        #expect(!reserves(.arc, key))
+    }
+    #expect(reserves(.arc, press("\u{F700}", [.command, .option])))
+    #expect(reserves(.arc, press("\u{F701}", [.command, .option])))
+    #expect(!reserves(.zen, press("\u{F700}", [.command, .option])))
 }
