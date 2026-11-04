@@ -177,4 +177,17 @@ private func titles(_ entries: [HistoryEntry]) -> [String?] { entries.map(\.titl
 
         #expect(titles(try await database.searchHistory("old", limit: 10)) == ["Old news"])
     }
+
+    @Test func aVisitExactlyAtTheStartOfTheRangeIsCleared() async throws {
+        let database = try await database()
+        let start = ClearRange.lastHour.start(now: now)
+        try await database.recordVisit(to: url("https://edge.example/"), at: start)
+        try await database.setTitle("Edge news", ofLatestVisitTo: url("https://edge.example/"))
+        try await database.recordVisit(to: url("https://before.example/"), at: start.addingTimeInterval(-1))
+        try await database.setTitle("Before news", ofLatestVisitTo: url("https://before.example/"))
+
+        try await database.clearHistory(since: start)
+
+        #expect(Set(titles(try await database.searchHistory("news", limit: 10))) == ["Before news", "Old news", "Today news"])
+    }
 }
