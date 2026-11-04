@@ -440,10 +440,16 @@ private final class Disk {
 
         fixture.session.pin(id)
         fixture.session.createFolder(name: "Docs")
-        try await Task.sleep(for: .milliseconds(300))
+        // Wait for the debounced save itself rather than a fixed delay, which a loaded machine overran.
+        let deadline = ContinuousClock.now + .seconds(10)
+        var latest: SavedSession?
+        while (latest?.spaces.first?.pinned.count ?? 0) < 2, ContinuousClock.now < deadline {
+            try await Task.sleep(for: .milliseconds(20))
+            if let next = try? ProfileDatabase(file: disk.file).savedSession() { latest = next }
+        }
         autosave.stop()
+        let saved = try #require(latest)
 
-        let saved = try ProfileDatabase(file: disk.file).savedSession()
         #expect(saved.spaces[0].pinned.count == 2)
         #expect(saved.spaces[0].tabs == [])
     }
