@@ -47,6 +47,23 @@ enum Migrations {
                 SELECT 'active_space_id', id FROM space ORDER BY position LIMIT 1
                 """)
         }
+        // The Profile's history, searchable with letter case and accents ignored. The index is kept in step with the
+        // table by triggers, so a title set after the visit is searchable too.
+        migrator.registerMigration("v4-history") { db in
+            try db.create(table: "history_visit") { table in
+                table.autoIncrementedPrimaryKey("id")
+                table.column("url", .text).notNull().indexed()
+                table.column("host", .text).notNull()
+                table.column("title", .text)
+                table.column("visited_at", .double).notNull().indexed()
+            }
+            try db.create(virtualTable: "history_visit_search", using: FTS5()) { table in
+                table.synchronize(withTable: "history_visit")
+                table.tokenizer = .unicode61(diacritics: .remove)
+                table.column("title")
+                table.column("url")
+            }
+        }
         return migrator
     }
 

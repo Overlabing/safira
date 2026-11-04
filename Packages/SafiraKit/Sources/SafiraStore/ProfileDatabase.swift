@@ -7,7 +7,7 @@ import SafiraCore
 
 /// One Profile's database, `profile.sqlite` in the Profile's own folder. No API reads two Profiles at once.
 public final class ProfileDatabase: Sendable {
-    private let queue: DatabaseQueue
+    let queue: DatabaseQueue
 
     public init(file: URL) throws {
         queue = try .opened(at: file, migrator: Migrations.profile)

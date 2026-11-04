@@ -28,7 +28,10 @@ public final class ProfileContext {
         }
         let web = ProfileWebContext(profileID: id, webContentSettings: settings.webContent)
         web.diagnostics = diagnostics
-        let session = ProfileSession(profileID: id, settings: settings) { [unowned web] in web.makePage(for: $0) }
+        let session = ProfileSession(profileID: id, settings: settings, history: database) {
+            [unowned web] in web.makePage(for: $0)
+        }
+        session.onHistoryError = { onError("The history could not be used", $0) }
         do {
             session.restore(try database.savedSession())
         } catch {
@@ -52,9 +55,10 @@ public final class ProfileContext {
         }
     }
 
-    /// Saves now and waits until the write has reached the database.
+    /// Saves now and waits until the writes, Tabs and history, have reached the database.
     public func saveNow() async {
         await autosave.saveNow()
+        await session.recordedHistorySettled()
     }
 
     /// Stops saving and closes every page, so that WebKit lets the data store go.
