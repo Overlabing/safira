@@ -12,17 +12,7 @@ mkdir -p .build
 log=".build/check-$$.log"
 trap 'rm -f "$log"' EXIT
 
-step() { # <label> <command...>
-    label=$1; shift
-    if "$@" > "$log" 2>&1; then
-        echo "OK: $label"
-    else
-        tail -40 "$log"
-        grep -E "recorded an issue|error:" "$log" | head -20
-        echo "FAILED: $label"
-        exit 1
-    fi
-}
+. scripts/step.sh
 
 app=.build/dd/Build/Products/Debug/Safira.app
 updates_opt_in() {
@@ -78,6 +68,7 @@ signed_and_sandboxed() {
 }
 
 step "xcodegen generate" xcodegen generate
+step "step helper self test (a failing or unset-variable step prints FAILED)" scripts/test-step.sh
 step "singleton guard self test (fixtures)" scripts/test-guard-singletons.sh
 step "singleton guard (App, Packages)" scripts/guard-singletons.sh "$allowed" App Packages
 step "swift test (SafiraKit)" swift test --package-path Packages/SafiraKit

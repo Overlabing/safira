@@ -3,6 +3,7 @@
 
 import Foundation
 import SafiraCore
+import SafiraSession
 import SafiraStore
 import SafiraWeb
 import Testing
@@ -523,6 +524,86 @@ extension ProfileRegistryTests {
 
             #expect(ProfileRegistry(layout: root.layout).isOnboardingPending == false)
         }
+        await cleanUp(ids)
+    }
+}
+
+private typealias MailScheme = SafiraCore.URLScheme
+
+/// What each Profile remembers about sites and apps stays in that Profile, and what clearing Browsing data keeps.
+extension ProfileRegistryTests {
+    @Test func twoProfilesNeverShareOneSitePermissionsAndWhatOneRemembersIsUnknownToTheOther() async throws {
+        let root = TemporaryRoot()
+        var ids: [ProfileID] = []
+        do {
+            let registry = ProfileRegistry(layout: root.layout)
+            let work = registry.active
+            let personal = registry.createProfile(name: "Personal", symbol: "🏠", searchEngine: .kagi)
+            let home = registry.active
+            ids = registry.profiles.map(\.id)
+            let meet = try #require(SiteOrigin(identifier: "https://meet.example"))
+            let mail = try #require(MailScheme("mailto"))
+
+            #expect(work.permissions !== home.permissions)
+            #expect(work.web.permissions === work.permissions)
+            #expect(work.session.appLinks.permissions === work.permissions)
+            #expect(home.session.appLinks.permissions === home.permissions)
+
+            work.permissions.remember(.allow, for: [.camera], at: meet)
+            work.permissions.rememberAppLink(.allow, for: mail)
+
+            #expect(home.permissions.all.isEmpty)
+            #expect(home.permissions.appLinks.isEmpty)
+            home.web.permissionPrompt = nil
+            #expect(await home.web.permissionDecision(requesting: [.camera], at: meet) == .deny)
+            #expect(await work.web.permissionDecision(requesting: [.camera], at: meet) == .allow)
+            #expect(home.permissions.appLinkDecision(for: mail) == nil)
+            #expect(try ProfileDatabase(file: root.layout.profileDatabaseFile(for: personal)).sitePermissions().isEmpty)
+            #expect(try ProfileDatabase(file: root.layout.profileDatabaseFile(for: work.id)).sitePermissions().count == 1)
+        }
+        await cleanUp(ids)
+    }
+
+    @Test func clearingAllTimeKeepsPinnedTabsFoldersAndSitePermissionsInMemoryAndOnDisk() async throws {
+        let root = TemporaryRoot()
+        let server = try await LocalServer.start(.http, title: "Quarterly roadmap")
+        var ids: [ProfileID] = []
+        do {
+            let registry = ProfileRegistry(layout: root.layout)
+            let context = registry.active
+            ids = registry.profiles.map(\.id)
+            let session = context.session
+            session.openCommandBar(for: .newTab)
+            session.submitCommandBar("http://127.0.0.1:\(server.port)/pinned")
+            let tab = try #require(session.selectedTab)
+            try await waitUntil("the page has loaded") { tab.state.title == "Quarterly roadmap" && !tab.state.isLoading }
+            session.pin(tab.id)
+            _ = try #require(session.createFolder(name: "Docs"))
+            let meet = try #require(SiteOrigin(identifier: "https://meet.example"))
+            let mail = try #require(MailScheme("mailto"))
+            context.permissions.remember(.allow, for: [.camera, .location], at: meet)
+            context.permissions.rememberAppLink(.deny, for: mail)
+            await context.saveNow()
+            let pinnedAddress = URL(string: "http://127.0.0.1:\(server.port)/pinned")
+
+            try await context.clearBrowsingData(.allTime)
+            await context.saveNow()
+
+            let space = try #require(session.spaces.first)
+            #expect(space.pinnedTabs.map(\.id) == [tab.id])
+            #expect(space.pinnedTabs.first?.pinnedAddress == pinnedAddress)
+            #expect(session.pinnedItems.count == 2)
+            #expect(context.permissions.all.map(\.kind) == [.camera, .location])
+            #expect(context.permissions.appLinkDecision(for: mail) == .deny)
+            let saved = try ProfileDatabase(file: root.layout.profileDatabaseFile(for: context.id))
+            let savedSpace = try #require(saved.savedSession().spaces.first)
+            #expect(savedSpace.pinned.pinnedTabs.map(\.id) == [tab.id])
+            #expect(savedSpace.pinned.count == 2)
+            #expect(try saved.sitePermissions().map(\.kind) == [.camera, .location])
+            #expect(try saved.appLinkChoices().map(\.scheme) == [mail])
+            for context in registry.loadedContexts { context.session.closeAllTabs() }
+        }
+        server.stop()
         await cleanUp(ids)
     }
 }

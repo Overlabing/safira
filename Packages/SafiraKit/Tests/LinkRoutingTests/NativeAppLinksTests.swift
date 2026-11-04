@@ -23,6 +23,9 @@ private func rewrite(_ address: String, installed: Set<NativeApp> = everyApp, en
         ("https://www.figma.com/design/AbC123/Landing?node-id=1-2", "figma://design/AbC123/Landing?node-id=1-2"),
         ("https://figma.com/file/AbC123/Old-file", "figma://file/AbC123/Old-file"),
         ("https://www.figma.com/board/AbC123/Workshop", "figma://board/AbC123/Workshop"),
+        ("https://www.figma.com/proto/AbC123/Flow?node-id=1-2&scaling=contain", "figma://proto/AbC123/Flow?node-id=1-2&scaling=contain"),
+        ("https://www.figma.com/slides/AbC123/Roadmap", "figma://slides/AbC123/Roadmap"),
+        ("https://figma.com/deck/AbC123/Roadmap", "figma://deck/AbC123/Roadmap"),
         ("http://linear.app/acme/issue/ABC-12", "linear://acme/issue/ABC-12"),
     ])
     func aLinkOfAnInstalledAppIsRewrittenToTheAppsOwnScheme(address: String, expected: String) {
@@ -40,6 +43,9 @@ private func rewrite(_ address: String, installed: Set<NativeApp> = everyApp, en
         "https://www.notion.so/login",
         "https://www.notion.so/signup",
         "https://www.notion.so/oauth2/authorize",
+        "https://www.notion.so/oauth/authorize?client_id=1",
+        "https://notion.so/oauth/token",
+        "https://app.notion.com/oauth/authorize?client_id=1",
         "https://www.notion.so/install-integration?x=1",
         "https://www.notion.so/api/v3/loadPageChunk",
         "https://www.figma.com/",

@@ -480,6 +480,71 @@ private func schema(_ file: URL) throws -> [String] {
         #expect(try ProfileDatabase(file: file).savedSession() == session)
     }
 
+    private static let latestMigrations = ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions",
+                                           "v6-pinned-tabs-folders", "v7-downloads", "v8-space-themes"]
+
+    /// What every later feature needs from a database that was left by an older schema: the same tables as a fresh one,
+    /// and a working history, site permissions, Pinned tabs, downloads and Space themes.
+    private func useEveryLaterFeature(of file: URL, in root: TemporaryRoot) async throws {
+        let fresh = root.layout.profileDatabaseFile(for: personal)
+        _ = try ProfileDatabase(file: fresh)
+        #expect(try schema(file) == schema(fresh))
+        #expect(try migrations(file) == Self.latestMigrations)
+
+        let database = try ProfileDatabase(file: file)
+        try await database.recordVisit(to: URL(string: "https://c.com/")!, at: Date(timeIntervalSince1970: 2000))
+        try await database.setTitle("Gamma Café", ofLatestVisitTo: URL(string: "https://c.com/")!)
+        #expect(try await database.searchHistory("cafe", limit: 10).map(\.title) == ["Gamma Café"])
+        try await database.clearHistory(since: Date(timeIntervalSince1970: 2000))
+        #expect(try await database.searchHistory("cafe", limit: 10).isEmpty)
+
+        let meet = try #require(SiteOrigin(identifier: "https://meet.example"))
+        let permission = SitePermission(origin: meet, kind: .camera, decision: .allow,
+                                        decidedAt: Date(timeIntervalSince1970: 1_700_000_000))
+        try database.save(permission)
+        #expect(try database.sitePermissions() == [permission])
+
+        let download = DownloadRecord(sourceURL: URL(string: "https://files.example/a.zip")!, fileName: "a.zip",
+                                      startedAt: Date(timeIntervalSince1970: 1_700_000_000))
+        try database.save(download)
+        #expect(try database.downloads() == [download])
+
+        var session = try database.savedSession()
+        var space = try #require(session.spaces.first)
+        #expect(space.paletteID == "indigo-blue")
+        let pinnedTab = TabRecord(id: firstTab, address: URL(string: "https://a.com/"), title: "A",
+                                  pinnedAddress: URL(string: "https://a.com/"))
+        space.pinned = [.folder(FolderRecord(id: docsFolder, name: "Docs", items: [.tab(pinnedTab)]))]
+        space.tabs = space.tabs.filter { $0.id != firstTab }
+        session.spaces = [space]
+        try await database.save(session)
+        #expect(try ProfileDatabase(file: file).savedSession() == session)
+    }
+
+    @Test func aVersion3DatabaseUpgradesToTheLatestSchemaKeepingItsSettingAndTabsAndGainingEveryLaterFeature() async throws {
+        let root = TemporaryRoot()
+        let file = root.layout.profileDatabaseFile(for: work)
+        try write(Self.version1 + Self.version2 + Self.version3, at: file)
+
+        let kept = try ProfileDatabase(file: file)
+        #expect(try kept.settings().searchEngine == .kagi)
+        #expect(try kept.savedSession().spaces.flatMap(\.tabs).map(\.id) == [firstTab, secondTab])
+
+        try await useEveryLaterFeature(of: file, in: root)
+    }
+
+    @Test func aVersion4DatabaseUpgradesToTheLatestSchemaKeepingItsHistoryAndGainingEveryLaterFeature() async throws {
+        let root = TemporaryRoot()
+        let file = root.layout.profileDatabaseFile(for: work)
+        try write(Self.version1 + Self.version2 + Self.version3 + Self.version4, at: file)
+
+        let kept = try ProfileDatabase(file: file)
+        #expect(try await kept.searchHistory("alpha", limit: 10).map(\.title) == ["Alpha"])
+        #expect(try kept.savedSession().spaces.flatMap(\.tabs).map(\.id) == [firstTab, secondTab])
+
+        try await useEveryLaterFeature(of: file, in: root)
+    }
+
     @Test func aVersion5DatabaseUpgradesKeepingItsTabAndSitePermissionAndEndsWithTheSchemaOfAFreshDatabase() throws {
         let root = TemporaryRoot()
         let file = root.layout.profileDatabaseFile(for: work)
