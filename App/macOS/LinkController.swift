@@ -118,9 +118,18 @@ private final class RegistryDestination: LinkDestination {
         registry.spaces(in: profile).map { SpaceChoice(id: $0.id, name: $0.name, emoji: $0.emoji) }
     }
 
-    // Every link is a new Tab until Matching tabs exist (`target.forcesNewTab` is for them).
     func open(_ url: URL, in target: LinkTarget) -> Bool {
         guard registry.openExternalLink(url, in: target.profile, space: target.space) else { return false }
+        didOpen()
+        return true
+    }
+
+    func matchingTab(for address: NormalizedAddress, in profile: ProfileID) -> MatchingTab? {
+        registry.matchingTab(for: address, in: profile)
+    }
+
+    func focus(_ match: MatchingTab, openedFrom link: URL) -> Bool {
+        guard registry.focus(match, openedFrom: link) else { return false }
         didOpen()
         return true
     }
@@ -135,6 +144,8 @@ final class LinkController: NSObject, NSMenuItemValidation {
     private let settings = LinkChoiceLogSettingsStore()
     private let askForSpaceStore = AskForSpaceSettingsStore()
     private var asksForSpace: Bool
+    private let matchingStore = MatchingTabSettingsStore()
+    private var matchesOpenTabs: Bool
     private let slackGrant = SlackFolderGrant()
     private let rulesFile = StoreLayout.application.linkRulesFile
     private let defaultBrowser = DefaultBrowser(registry: WorkspaceDefaultApplications(), appURL: Bundle.main.bundleURL)
@@ -143,12 +154,14 @@ final class LinkController: NSObject, NSMenuItemValidation {
         choiceLog = LinkChoiceLog(file: StoreLayout.application.linkChoiceLogFile,
                                   isEnabled: settings.load().isEnabled)
         asksForSpace = askForSpaceStore.load().isEnabled
+        matchesOpenTabs = matchingStore.load().isEnabled
         let applications = WorkspaceNativeApplications()
+        super.init()
         let router = LinkRouter(
             rules: LinkRulesFile(url: rulesFile),
             nativeApps: NativeAppLinks(applications: applications, slack: slackGrant),
-            reporter: LinkRulesReporter(logger: diagnostics.logger, rulesFile: rulesFile))
-        super.init()
+            reporter: LinkRulesReporter(logger: diagnostics.logger, rulesFile: rulesFile),
+            isMatchingEnabled: { [weak self] in self?.matchesOpenTabs ?? true })
         coordinator = ExternalLinkCoordinator(
             destination: RegistryDestination(registry: registry) { [weak mainWindow] in mainWindow?.showOpenedLink() },
             chooser: LinkPickerPresenter(), router: router, nativeApplications: applications, choiceLog: choiceLog,
@@ -162,6 +175,11 @@ final class LinkController: NSObject, NSMenuItemValidation {
     @objc func toggleChoiceLog(_ sender: Any?) {
         choiceLog.isEnabled.toggle()
         settings.save(LinkChoiceLogSettings(isEnabled: choiceLog.isEnabled))
+    }
+
+    @objc func toggleMatchingTabs(_ sender: Any?) {
+        matchesOpenTabs.toggle()
+        matchingStore.save(MatchingTabSettings(isEnabled: matchesOpenTabs))
     }
 
     @objc func toggleAskForSpace(_ sender: Any?) {
@@ -222,6 +240,10 @@ final class LinkController: NSObject, NSMenuItemValidation {
         case #selector(toggleChoiceLog(_:)):
             menuItem.state = choiceLog.isEnabled ? .on : .off
             menuItem.toolTip = LinkChoiceLogSettings.explanation
+            return true
+        case #selector(toggleMatchingTabs(_:)):
+            menuItem.state = matchesOpenTabs ? .on : .off
+            menuItem.toolTip = MatchingTabSettings.explanation
             return true
         case #selector(toggleAskForSpace(_:)):
             menuItem.state = asksForSpace ? .on : .off

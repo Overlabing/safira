@@ -43,6 +43,9 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
     private var suggestionTask: Task<Void, Never>?
     /// The text the shown suggestions were computed for: Return opens a highlighted one only while the text still is it.
     private var suggestionText: String?
+    private let bannerModel = MatchBannerModel()
+    private var bannerHost: NSHostingView<MatchBannerBar>?
+    private var announcedBannerID: UUID?
 
     init(registry: ProfileRegistry, shortcuts: ShortcutController) {
         self.registry = registry
@@ -626,6 +629,23 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         pageArea.show(tab.flatMap { webContext.webView(for: $0.id) })
         updateSearchEngineSheet(query: session.searchAwaitingEngine)
         showPopups()
+        showMatchBanner()
+    }
+
+    /// The banner follows the Active profile's session. A new one is announced and goes by itself after a while; the
+    /// session takes it down as soon as another Tab is shown.
+    private func showMatchBanner() {
+        let banner = session.matchBanner
+        bannerModel.banner = banner
+        bannerHost?.isHidden = banner == nil
+        guard let banner, banner.id != announcedBannerID else { return }
+        announcedBannerID = banner.id
+        announce(String(localized: "This link was already open, so Safira showed that Tab. A button offers to open it in a new Tab."))
+        let session = session
+        Task { @MainActor [weak session] in
+            try? await Task.sleep(for: .seconds(12))
+            if session?.matchBanner?.id == banner.id { session?.dismissMatchBanner() }
+        }
     }
 
     /// A popup shows in a floating panel while the Tab that opened it is the shown Tab of the Active profile, and is
@@ -691,11 +711,24 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         toolbar.edgeInsets = NSEdgeInsets(top: 8, left: 10, bottom: 8, right: 10)
         commandBar.setContentHuggingPriority(.defaultLow, for: .horizontal)
 
-        let content = NSStackView(views: [toolbar, pageArea])
+        let banner = NSHostingView(rootView: MatchBannerBar(
+            model: bannerModel,
+            openInNewTab: { [weak self] in
+                guard let self else { return }
+                session.openMatchBannerLinkInNewTab()
+                showPage()
+            },
+            dismiss: { [weak self] in self?.session.dismissMatchBanner() }))
+        banner.sizingOptions = [.intrinsicContentSize]
+        banner.isHidden = true
+        bannerHost = banner
+
+        let content = NSStackView(views: [toolbar, banner, pageArea])
         content.orientation = .vertical
         content.spacing = 0
         content.alignment = .leading
         toolbar.widthAnchor.constraint(equalTo: content.widthAnchor).isActive = true
+        banner.widthAnchor.constraint(equalTo: content.widthAnchor).isActive = true
         pageArea.widthAnchor.constraint(equalTo: content.widthAnchor).isActive = true
 
         let suggestions = CommandBarSuggestionHostingView(rootView: CommandBarSuggestionList(model: suggestionModel) {
