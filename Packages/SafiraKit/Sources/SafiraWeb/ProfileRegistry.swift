@@ -176,8 +176,15 @@ public final class ProfileRegistry {
         }
         try appDatabase?.markForDeletion(id)
         profiles.remove(at: index)
-        contexts.removeValue(forKey: id)?.discard()
+        await contexts.removeValue(forKey: id)?.discard()
         try await erase(id)
+    }
+
+    /// Stops the running downloads of every Profile, keeping what lets the user continue them after the next launch.
+    public func stopDownloads() async {
+        for context in loadedContexts {
+            await context.downloads.cancelActive()
+        }
     }
 
     /// Saves every Profile now and waits until the writes have reached their databases.

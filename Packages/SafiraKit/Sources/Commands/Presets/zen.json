@@ -60,6 +60,10 @@
     "nextSpace": {
       "shortcut": "command+option+e",
       "from": "Forward Workspace (Alt+Ctrl+E)"
+    },
+    "showDownloads": {
+      "shortcut": "command+shift+y",
+      "from": "Open Downloads (Shift+Ctrl+Y)"
     }
   },
   "unbound": {

@@ -72,7 +72,7 @@ signed_and_sandboxed() {
     # (docs/architecture-v1.md §8.2); nothing else is added.
     for key in com.apple.security.app-sandbox com.apple.security.network.client com.apple.security.device.camera \
         com.apple.security.device.audio-input com.apple.security.personal-information.location \
-        com.apple.security.files.bookmarks.app-scope; do
+        com.apple.security.files.bookmarks.app-scope com.apple.security.files.downloads.read-write; do
         echo "$entitlements" | grep -q "<key>$key</key><true/>" || { echo "$key missing"; return 1; }
     done
 }

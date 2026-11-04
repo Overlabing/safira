@@ -78,6 +78,7 @@
     "moveSpaceLeft": "The page lists no command to move a Space.",
     "moveSpaceRight": "The page lists no command to move a Space.",
     "newFolder": "The page lists no command to create a folder.",
+    "showDownloads": "Not verified: the archived copy of the page could not be fetched on 2026-11-04 when this command was added, so no Arc shortcut is claimed. Re-check the page.",
     "newProfile": "The page lists no Profile command; Arc attaches a Profile to Spaces and switches it with them.",
     "renameProfile": "The page lists no Profile command; Arc attaches a Profile to Spaces and switches it with them.",
     "deleteProfile": "The page lists no Profile command; Arc attaches a Profile to Spaces and switches it with them.",

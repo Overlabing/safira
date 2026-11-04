@@ -27,7 +27,9 @@ public final class ProfileContext {
             settings = ProfileSettings()
         }
         let permissions = SitePermissions(database: database) { onError($0, $1) }
-        let web = ProfileWebContext(profileID: id, webContentSettings: settings.webContent, permissions: permissions)
+        let downloads = ProfileDownloads(database: database, onError: onError)
+        let web = ProfileWebContext(profileID: id, webContentSettings: settings.webContent, permissions: permissions,
+                                    downloads: downloads)
         web.diagnostics = diagnostics
         let session = ProfileSession(profileID: id, settings: settings, history: database) {
             [unowned web] in web.makePage(for: $0)
@@ -50,6 +52,9 @@ public final class ProfileContext {
     /// What the Profile remembers about the sites that asked for the camera, the microphone or the location.
     public var permissions: SitePermissions { web.permissions }
 
+    /// The Profile's downloads, listed in its own database and nowhere else.
+    public var downloads: ProfileDownloads { web.downloads }
+
     /// The Profile's web content settings. A change is saved with the Profile and reaches the pages created after it.
     public var webContentSettings: WebContentSettings {
         get { session.settings.webContent }
@@ -65,9 +70,10 @@ public final class ProfileContext {
         await session.recordedHistorySettled()
     }
 
-    /// Stops saving and closes every page, so that WebKit lets the data store go.
-    func discard() {
+    /// Stops saving, stops the running downloads and closes every page, so that WebKit lets the data store go.
+    func discard() async {
         autosave.stop()
+        await web.cancelDownloads()
         session.closeAllTabs()
     }
 }

@@ -53,7 +53,7 @@ import Testing
     }
     #expect(CommandRegistry.command(.compactMode).title == "Compact Mode")
     #expect(CommandRegistry.command(.showSidebar).title == "Show Sidebar")
-    #expect(CommandRegistry.commands.count == 34)
+    #expect(CommandRegistry.commands.count == 35)
 }
 
 @Test func theSpaceCommandsAreRebindableWindowCommandsOnControlCommandKeys() {
@@ -105,4 +105,17 @@ import Testing
     for preset in ShortcutPreset.allCases {
         #expect(display(preset, .newFolder) == nil)
     }
+}
+
+@Test func theDownloadsCommandOpensTheDownloadManagerAndFallsBackToSafirasKeyWhereAPresetHasNone() {
+    func display(_ preset: ShortcutPreset) -> String? {
+        ShortcutConfiguration(preset: preset).bindings[.showDownloads]?.display
+    }
+    let command = CommandRegistry.command(.showDownloads)
+    #expect(command.title == "Downloads")
+    #expect(command.defaultShortcut?.display == "⌥⌘L")
+    #expect(command.isRebindable && command.isImplemented && !command.isReserved)
+    #expect(display(.zen) == "⇧⌘Y")
+    #expect(display(.arc) == "⌥⌘L")
+    #expect(display(.safari) == "⌥⌘L")
 }

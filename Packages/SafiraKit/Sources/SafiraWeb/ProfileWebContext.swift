@@ -18,6 +18,8 @@ public final class ProfileWebContext {
     public var webContentSettings: WebContentSettings
     /// What this Profile remembers about the sites that asked for the camera, the microphone or the location.
     public let permissions: SitePermissions
+    /// This Profile's downloads, whichever Tab started them. Another Profile has its own list.
+    public let downloads: ProfileDownloads
     /// Asks the user about a request the Profile has no decision for. Without it, such a request is denied.
     public var permissionPrompt: (@MainActor (PermissionPrompt) async -> PermissionAnswer)?
     /// The live pages of this Profile's Tabs. They live here, outside the views, until their Tab closes.
@@ -25,14 +27,35 @@ public final class ProfileWebContext {
     /// The live pages of this Profile's popups, which share their opener's configuration.
     private var popupPages: [PopupID: WebKitPage] = [:]
     private let pageEvents = PageEventHandler()
+    private var downloadController: DownloadController!
 
+    /// - Parameter downloads: where this Profile's downloads are listed; the default keeps them for this run only.
     public init(profileID: ProfileID, webContentSettings: WebContentSettings = WebContentSettings(),
-                permissions: SitePermissions = SitePermissions()) {
+                permissions: SitePermissions = SitePermissions(), downloads: ProfileDownloads = ProfileDownloads()) {
         self.profileID = profileID
         self.webContentSettings = webContentSettings
         self.permissions = permissions
+        self.downloads = downloads
         self.dataStore = WKWebsiteDataStore(forIdentifier: profileID.rawValue)
         pageEvents.context = self
+        downloadController = DownloadController(downloads: downloads) { [unowned self] in
+            // Only the data store matters to a download: no script, no page.
+            let configuration = WKWebViewConfiguration()
+            configuration.websiteDataStore = dataStore
+            return WKWebView(frame: .zero, configuration: configuration)
+        }
+        downloads.engine = downloadController
+    }
+
+    /// Where this Profile's downloads are saved: the user's Downloads folder unless changed.
+    public var downloadsDirectory: URL {
+        get { downloadController.directory }
+        set { downloadController.directory = newValue }
+    }
+
+    /// Stops the Profile's running downloads, for a Profile that goes away.
+    public func cancelDownloads() async {
+        await downloadController.cancelAll()
     }
 
     public func makeConfiguration() -> WKWebViewConfiguration {
@@ -115,6 +138,7 @@ public final class ProfileWebContext {
             decidePermission: { [weak self] origin, kinds in
                 await self?.permissionDecision(requesting: kinds, at: origin) ?? .deny
             },
+            startDownload: { [weak self] in self?.downloadController.adopt($0) },
             onClose: onClose
         )
     }

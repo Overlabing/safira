@@ -100,6 +100,8 @@ enum MainMenu {
             NSMenuItem(title: "Minimize", action: #selector(NSWindow.performMiniaturize(_:)), keyEquivalent: "m"),
             NSMenuItem(title: "Zoom", action: #selector(NSWindow.performZoom(_:)), keyEquivalent: ""),
             .separator(),
+            item(.showDownloads, #selector(MainWindowController.showDownloads(_:))),
+            .separator(),
             item(.previousTab, #selector(MainWindowController.showPreviousTab(_:))),
             item(.nextTab, #selector(MainWindowController.showNextTab(_:))),
             item(.moveTabUp, #selector(MainWindowController.moveTabUp(_:))),

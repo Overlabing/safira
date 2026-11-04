@@ -12,6 +12,7 @@ public enum CommandID: String, CaseIterable, Hashable, Sendable {
     case newSpace, renameSpace, deleteSpace, previousSpace, nextSpace, moveSpaceLeft, moveSpaceRight
     case togglePin, newFolder
     case newProfile, renameProfile, deleteProfile, previousProfile, nextProfile, sitePermissions
+    case showDownloads
 }
 
 /// Where a shortcut is heard. A window shortcut works whatever has the keyboard focus (it is a menu key equivalent);
@@ -74,6 +75,8 @@ public enum CommandRegistry {
         window(.renameProfile, "Rename Profile…", nil),
         window(.deleteProfile, "Delete Profile…", nil),
         window(.sitePermissions, "Site Permissions…", nil),
+        // ⌥⌘L is Safari's own key for its download list; no other command or preset binding uses it.
+        window(.showDownloads, "Downloads", Shortcut(.character("l"), [.command, .option])),
         window(.previousProfile, "Show Previous Profile", Shortcut(.left, [.command, .control, .option])),
         window(.nextProfile, "Show Next Profile", Shortcut(.right, [.command, .control, .option])),
         Command(id: .commandBarNext, title: "Command Bar: Move to the Tab List", scope: .commandBar,

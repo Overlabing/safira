@@ -74,7 +74,7 @@ private func schema(_ file: URL) throws -> [String] {
         #expect(space.emoji == "🏠")
         #expect(space.paletteID == nil)
         #expect(space.tabs == [])
-        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders"])
+        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads"])
     }
 
     @Test func savedSpacesComeBackInOrderWithTheirTabsSelectionAndTheActiveSpace() throws {
@@ -178,6 +178,48 @@ private func schema(_ file: URL) throws -> [String] {
 
         try database.removeAllSitePermissions()
         #expect(try database.sitePermissions() == [])
+    }
+
+    @Test func downloadsComeBackNewestFirstWithEveryFieldAndNeverReachAnotherProfile() throws {
+        let root = TemporaryRoot()
+        let database = try ProfileDatabase(file: root.layout.profileDatabaseFile(for: work))
+        let older = DownloadRecord(
+            id: DownloadID(rawValue: UUID(uuidString: "D0000000-0000-4000-8000-000000000001")!),
+            sourceURL: URL(string: "https://files.example/a.zip")!, fileName: "a.zip", fileBookmark: Data([1, 2]),
+            state: .completed, receivedBytes: 2048, totalBytes: 2048, startedAt: Date(timeIntervalSince1970: 1_700_000_000),
+            finishedAt: Date(timeIntervalSince1970: 1_700_000_050))
+        let newer = DownloadRecord(
+            id: DownloadID(rawValue: UUID(uuidString: "D0000000-0000-4000-8000-000000000002")!),
+            sourceURL: URL(string: "https://files.example/b.iso")!, fileName: "b.iso", state: .cancelled,
+            receivedBytes: 512, totalBytes: nil, resumeData: Data([7, 7, 7]),
+            startedAt: Date(timeIntervalSince1970: 1_700_000_100), finishedAt: Date(timeIntervalSince1970: 1_700_000_110))
+
+        try database.save(older)
+        try database.save(newer)
+
+        let reopened = try ProfileDatabase(file: root.layout.profileDatabaseFile(for: work))
+        #expect(try reopened.downloads() == [newer, older])
+        #expect(try ProfileDatabase(file: root.layout.profileDatabaseFile(for: personal)).downloads() == [])
+    }
+
+    @Test func savingADownloadAgainReplacesItAndRemovingDeletesOnlyTheOnesNamed() throws {
+        let database = try ProfileDatabase.inMemory()
+        var first = DownloadRecord(sourceURL: URL(string: "https://files.example/a.zip")!, fileName: "a.zip",
+                                   startedAt: Date(timeIntervalSince1970: 10))
+        let second = DownloadRecord(sourceURL: URL(string: "https://files.example/b.zip")!, fileName: "b.zip",
+                                    startedAt: Date(timeIntervalSince1970: 20))
+        try database.save(first)
+        try database.save(second)
+
+        first.state = .failed
+        first.receivedBytes = 99
+        try database.save(first)
+        #expect(try database.downloads() == [second, first])
+
+        try database.removeDownloads([first.id])
+        #expect(try database.downloads() == [second])
+        try database.removeDownloads([])
+        #expect(try database.downloads() == [second])
     }
 
     @Test func anInMemoryDatabaseKeepsTabsWhileOpen() throws {
@@ -291,7 +333,7 @@ private func schema(_ file: URL) throws -> [String] {
 
         let database = try ProfileDatabase(file: file)
 
-        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders"])
+        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads"])
         #expect(try database.savedSession() == SavedSession(spaces: [
             SpaceRecord(id: Self.existingSpace, name: "Home", emoji: "🏠", tabs: [
                 TabRecord(id: firstTab, address: URL(string: "https://a.com/"), title: "A",
@@ -319,7 +361,7 @@ private func schema(_ file: URL) throws -> [String] {
 
         let database = try ProfileDatabase(file: file)
 
-        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders"])
+        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads"])
         #expect(try database.sitePermissions() == [])
         #expect(try database.settings().searchEngine == .kagi)
         #expect(try database.savedSession().spaces.flatMap(\.tabs).count == 2)
@@ -346,7 +388,7 @@ private func schema(_ file: URL) throws -> [String] {
 
         let saved = try ProfileDatabase(file: file).savedSession()
 
-        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders"])
+        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads"])
         let space = try #require(saved.spaces.first)
         #expect(space.pinned == [])
         #expect(space.tabs.map(\.id) == [firstTab, secondTab])
@@ -362,7 +404,7 @@ private func schema(_ file: URL) throws -> [String] {
         let database = try ProfileDatabase(file: file)
         let saved = try database.savedSession()
 
-        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders"])
+        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads"])
         let space = try #require(saved.spaces.first)
         #expect(space.pinned == [])
         #expect(space.tabs.map(\.id) == [firstTab, secondTab])
@@ -392,7 +434,7 @@ private func schema(_ file: URL) throws -> [String] {
         let database = try ProfileDatabase(file: file)
         let saved = try database.savedSession()
 
-        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders"])
+        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads"])
         let space = try #require(saved.spaces.first)
         #expect(space.pinned == [])
         #expect(space.tabs.map(\.id) == [firstTab, secondTab])
@@ -401,6 +443,48 @@ private func schema(_ file: URL) throws -> [String] {
         #expect(try database.sitePermissions() == [
             SitePermission(origin: meet, kind: .camera, decision: .allow, decidedAt: Date(timeIntervalSince1970: 1_700_000_000)),
         ])
+
+        let fresh = root.layout.profileDatabaseFile(for: personal)
+        _ = try ProfileDatabase(file: fresh)
+        #expect(try schema(file) == schema(fresh))
+    }
+
+    /// `v6-pinned-tabs-folders` as it shipped: Folders, and the pin columns on `tab`, with one pinned Tab in a Folder.
+    private static let version6 = """
+        INSERT INTO grdb_migrations VALUES ('v6-pinned-tabs-folders');
+        CREATE TABLE folder (
+            id TEXT PRIMARY KEY NOT NULL,
+            space_id TEXT NOT NULL REFERENCES space(id) ON DELETE CASCADE,
+            parent_folder_id TEXT REFERENCES folder(id) ON DELETE CASCADE,
+            name TEXT NOT NULL,
+            position INTEGER NOT NULL,
+            is_expanded BOOLEAN NOT NULL DEFAULT 1
+        );
+        CREATE INDEX folder_on_space_id ON folder(space_id);
+        ALTER TABLE tab ADD COLUMN folder_id TEXT REFERENCES folder(id) ON DELETE CASCADE;
+        ALTER TABLE tab ADD COLUMN is_pinned BOOLEAN NOT NULL DEFAULT 0;
+        ALTER TABLE tab ADD COLUMN pinned_url TEXT;
+        INSERT INTO folder VALUES ('CCCCCCCC-CCCC-4CCC-8CCC-CCCCCCCCCCCC', '9A1F0C3E-0000-4000-8000-000000000000', NULL, 'Docs', 0, 1);
+        UPDATE tab SET is_pinned = 1, folder_id = 'CCCCCCCC-CCCC-4CCC-8CCC-CCCCCCCCCCCC', pinned_url = 'https://a.com/'
+            WHERE id = '11111111-1111-4111-8111-111111111111';
+        """
+
+    @Test func aVersion6DatabaseUpgradesWithNoDownloadAndKeepsItsPinnedTabAndFolder() throws {
+        let root = TemporaryRoot()
+        let file = root.layout.profileDatabaseFile(for: work)
+        try write(Self.version1 + Self.version2 + Self.version3 + Self.version4 + Self.version5 + Self.version6, at: file)
+
+        let database = try ProfileDatabase(file: file)
+
+        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads"])
+        #expect(try database.downloads() == [])
+        let space = try #require(try database.savedSession().spaces.first)
+        #expect(space.pinned.count == 1)
+        #expect(space.tabs.map(\.id) == [secondTab])
+        let download = DownloadRecord(sourceURL: URL(string: "https://files.example/a.zip")!, fileName: "a.zip",
+                                      startedAt: Date(timeIntervalSince1970: 1_700_000_000))
+        try database.save(download)
+        #expect(try ProfileDatabase(file: file).downloads() == [download])
 
         let fresh = root.layout.profileDatabaseFile(for: personal)
         _ = try ProfileDatabase(file: fresh)
