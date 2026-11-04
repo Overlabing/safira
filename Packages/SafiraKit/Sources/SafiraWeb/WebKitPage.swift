@@ -25,6 +25,10 @@ public final class WebKitPage: NSObject, WebPageHandle {
     var httpsFirstPolicy: WKWebpagePreferences.UpgradeToHTTPSPolicy = .userMediatedFallbackToHTTP
     /// Lets tests trust a throwaway certificate; nil in the app, where the system decides.
     var trustsServer: (@MainActor (SecTrust) -> Bool)?
+    private var sensitiveHistory = SensitiveHistory<ObjectIdentifier>()
+    /// Sensitive content seen while the page had no back-forward entry to hold it; it stays for the page's lifetime.
+    private var unattributedSensitiveContent: SensitiveContent = []
+    private var mainFrameIsPosting = false
     private var observations: [NSKeyValueObservation] = []
     private let makeNewTabPage: @MainActor (WKWebViewConfiguration) -> (TabID, WebKitPage)?
     private let onClose: @MainActor () -> Void
@@ -52,10 +56,26 @@ public final class WebKitPage: NSObject, WebPageHandle {
                   canGoForward: webView.canGoForward, isLoading: webView.isLoading, isPlayingMedia: isPlayingMedia)
     }
 
+    public var navigationState: Data? {
+        webView.interactionState as? Data
+    }
+
+    public var sensitiveContent: SensitiveContent {
+        let list = webView.backForwardList
+        let entries = list.backList + [list.currentItem].compactMap { $0 } + list.forwardList
+        return sensitiveHistory.content(of: entries.map(ObjectIdentifier.init)).union(unattributedSensitiveContent)
+    }
+
     public func load(_ url: URL, httpsFirst: Bool) {
         httpsFirstAddress = httpsFirst ? url : nil
         showing = nil
         webView.load(URLRequest(url: url))
+    }
+
+    /// WebKit navigates to the restored entry right away; a state it cannot read leaves the page without an entry.
+    public func restore(_ navigationState: Data) -> Bool {
+        webView.interactionState = navigationState
+        return webView.backForwardList.currentItem != nil
     }
 
     public func showInsecureConnectionWarning(_ warning: InsecureConnectionWarning) {
@@ -88,6 +108,19 @@ public final class WebKitPage: NSObject, WebPageHandle {
         webView.navigationDelegate = nil
         webView.uiDelegate = nil
         onClose()
+    }
+
+    /// A frame of the shown page has a password field.
+    func passwordFieldFound() {
+        markShownEntry(.passwordField)
+    }
+
+    private func markShownEntry(_ content: SensitiveContent) {
+        if let entry = webView.backForwardList.currentItem {
+            sensitiveHistory.mark(ObjectIdentifier(entry), content)
+        } else {
+            unattributedSensitiveContent.formUnion(content)
+        }
     }
 
     func refreshMediaState() {
@@ -127,6 +160,14 @@ extension WebKitPage: WKNavigationDelegate {
             onContinueOverHTTP?()
             return (.cancel, preferences)
         }
+        if navigationAction.request.httpMethod?.uppercased() == "POST", let frame = navigationAction.targetFrame {
+            // A main-frame POST gets its own back-forward entry when it commits; a frame's POST lands in the shown one.
+            if frame.isMainFrame {
+                mainFrameIsPosting = true
+            } else {
+                markShownEntry(.postBody)
+            }
+        }
         if navigationAction.targetFrame?.isMainFrame == true, let url = navigationAction.request.url,
            let expected = httpsFirstAddress, HTTPSFallback.isSameAddress(url, expected) {
             preferences.preferredHTTPSNavigationPolicy = httpsFirstPolicy
@@ -145,6 +186,10 @@ extension WebKitPage: WKNavigationDelegate {
     // WebKit holds one navigation delegate per web view, so this page is it and hands the load events to the
     // diagnostics, which only observe.
     public func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
+        if mainFrameIsPosting {
+            mainFrameIsPosting = false
+            markShownEntry(.postBody)
+        }
         navigationDiagnostics?.webView(webView, didCommit: navigation)
     }
 
@@ -158,6 +203,7 @@ extension WebKitPage: WKNavigationDelegate {
 
     public func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!,
                         withError error: any Error) {
+        mainFrameIsPosting = false
         navigationDiagnostics?.webView(webView, didFailProvisionalNavigation: navigation, withError: error)
         let error = error as NSError
         guard let url = error.userInfo[NSURLErrorFailingURLErrorKey] as? URL else { return }

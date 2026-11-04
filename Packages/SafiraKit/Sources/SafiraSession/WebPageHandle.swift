@@ -45,8 +45,14 @@ public protocol WebPageHandle: AnyObject {
     var onLoadFailure: (@MainActor (LoadFailure) -> Void)? { get set }
     /// Called when the user chooses, on the page shown by `showInsecureConnectionWarning`, to continue over HTTP.
     var onContinueOverHTTP: (@MainActor () -> Void)? { get set }
+    /// The engine's opaque navigation state (back-forward list, scroll positions, form fields); nil when it has none.
+    var navigationState: Data? { get }
+    /// What the pages of the back-forward list hold that keeps the navigation state off the disk (decision D1).
+    var sensitiveContent: SensitiveContent { get }
     /// - Parameter httpsFirst: the address was typed without a scheme; the page asks the platform to try HTTPS first.
     func load(_ url: URL, httpsFirst: Bool)
+    /// Restores a navigation state taken from `navigationState`; false when the engine could not use it.
+    func restore(_ navigationState: Data) -> Bool
     /// Replaces the page with a warning that offers to continue over HTTP, without touching the network.
     func showInsecureConnectionWarning(_ warning: InsecureConnectionWarning)
     func goBack()

@@ -5,26 +5,52 @@ import Foundation
 import SafiraCore
 import SafiraSession
 
-/// A page with a back-forward list, standing in for a web view. It counts every load and reload it is asked for.
+/// A page with a back-forward list, standing in for a web view. It counts every load, reload and restoration it is
+/// asked for. Its navigation state is its back-forward list, encoded.
 @MainActor
 final class SimulatedPage: WebPageHandle {
     private(set) var loadCount = 0
     private(set) var reloadCount = 0
+    private(set) var restoreCount = 0
     private(set) var isClosed = false
     /// Every load the session asked for, in order, with the policy it asked for.
     private(set) var loads: [(url: URL, httpsFirst: Bool)] = []
     private(set) var shownWarnings: [InsecureConnectionWarning] = []
-    private var history: [URL] = []
+    /// Makes `restore` fail, as the engine does with a state it cannot read.
+    var refusesNavigationState = false
+    private var history: [Entry] = []
     private var index = -1
     private var isPlayingMedia = false
+    private var sensitiveHistory = SensitiveHistory<UUID>()
     var onStateChange: (@MainActor (PageState) -> Void)?
     var onNewTab: (@MainActor (NewTabRequest) -> Void)?
     var onLoadFailure: (@MainActor (LoadFailure) -> Void)?
     var onContinueOverHTTP: (@MainActor () -> Void)?
 
+    private struct Entry: Codable {
+        var id = UUID()
+        let url: URL
+    }
+
+    private struct NavigationState: Codable {
+        let history: [Entry]
+        let index: Int
+    }
+
     var state: PageState {
-        PageState(url: history.indices.contains(index) ? history[index] : nil,
+        PageState(url: history.indices.contains(index) ? history[index].url : nil,
                   canGoBack: index > 0, canGoForward: index < history.count - 1, isPlayingMedia: isPlayingMedia)
+    }
+
+    var navigationState: Data? {
+        guard !history.isEmpty else { return nil }
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .sortedKeys
+        return try? encoder.encode(NavigationState(history: history, index: index))
+    }
+
+    var sensitiveContent: SensitiveContent {
+        sensitiveHistory.content(of: history.map(\.id))
     }
 
     func load(_ url: URL, httpsFirst: Bool) {
@@ -45,6 +71,27 @@ final class SimulatedPage: WebPageHandle {
     /// The user presses "Continue over HTTP" on the warning page.
     func pressContinueOverHTTP() {
         onContinueOverHTTP?()
+    }
+
+    func restore(_ navigationState: Data) -> Bool {
+        restoreCount += 1
+        guard !refusesNavigationState,
+              let saved = try? JSONDecoder().decode(NavigationState.self, from: navigationState) else { return false }
+        history = saved.history
+        index = saved.index
+        onStateChange?(state)
+        return true
+    }
+
+    /// The shown page gets a password field.
+    func showPasswordField() {
+        sensitiveHistory.mark(history[index].id, .passwordField)
+    }
+
+    /// The user submits a form that posts to `url`.
+    func submitPostForm(to url: URL) {
+        navigate(to: url)
+        sensitiveHistory.mark(history[index].id, .postBody)
     }
 
     /// A navigation the page starts itself, as when the user clicks a link.
@@ -85,7 +132,7 @@ final class SimulatedPage: WebPageHandle {
 
     private func navigate(to url: URL) {
         history.removeSubrange((index + 1)...)
-        history.append(url)
+        history.append(Entry(url: url))
         index += 1
         onStateChange?(state)
     }
@@ -97,11 +144,15 @@ final class SessionFixture {
     private(set) var pages: [TabID: SimulatedPage] = [:]
     private(set) var createdPageCount = 0
     private(set) var session: ProfileSession!
+    /// Applied to every page as it is created.
+    var preparePage: (SimulatedPage) -> Void = { _ in }
 
-    init(searchEngine: SearchEngine? = nil) {
+    init(searchEngine: SearchEngine? = nil, osBuild: String = "26A434") {
         let id = ProfileID(rawValue: UUID(uuidString: "6F9619FF-8B86-D011-B42D-00C04FC964FF")!)
-        session = ProfileSession(profile: Profile(id: id, name: "Personal", searchEngine: searchEngine)) { [unowned self] tabID in
+        session = ProfileSession(profile: Profile(id: id, name: "Personal", searchEngine: searchEngine),
+                                 osBuild: osBuild) { [unowned self] tabID in
             let page = SimulatedPage()
+            preparePage(page)
             pages[tabID] = page
             createdPageCount += 1
             return page
