@@ -13,7 +13,9 @@ final class TemporaryDatabase {
                                                                  directoryHint: .isDirectory)
     var file: URL { folder.appending(path: "profile.sqlite") }
 
-    /// Opens the file as a relaunched app would: a new connection that knows nothing of the previous one.
+    /// Opens the file as a relaunched app would: a new connection that knows nothing of the previous one. While an
+    /// autosave runs, read through its own connection, as the app does: a second connection fails at once with
+    /// "database is locked" when it meets the autosave's write.
     func open() throws -> ProfileDatabase {
         try ProfileDatabase(file: file)
     }
@@ -278,19 +280,19 @@ private func relaunch(from database: TemporaryDatabase, osBuild: String = "26A43
     @Test func aChangeIsSavedShortlyAfterwardsWithoutAskingForIt() async throws {
         let database = TemporaryDatabase()
         let fixture = SessionFixture()
-        let autosave = SessionAutosave(session: fixture.session, database: try database.open(), delay: .milliseconds(10))
+        let connection = try database.open()
+        let autosave = SessionAutosave(session: fixture.session, database: connection, delay: .milliseconds(10))
         autosave.start()
         let ids = open(fixture, ["a.com", "b.com"])
         fixture.session.select(ids[0])
 
-        let reader = try database.open()
         let deadline = ContinuousClock.now + .seconds(5)
-        while try reader.savedSession().selectedTabID != ids[0], ContinuousClock.now < deadline {
+        while try connection.savedSession().selectedTabID != ids[0], ContinuousClock.now < deadline {
             try await Task.sleep(for: .milliseconds(20))
         }
         autosave.stop()
 
-        let saved = try reader.savedSession()
+        let saved = try connection.savedSession()
         #expect(saved.tabs.map(\.address?.absoluteString) == ["https://a.com", "https://b.com"])
         #expect(saved.selectedTabID == ids[0])
     }
@@ -298,42 +300,42 @@ private func relaunch(from database: TemporaryDatabase, osBuild: String = "26A43
     @Test func aNavigationInsideThePageIsSaved() async throws {
         let database = TemporaryDatabase()
         let fixture = SessionFixture()
-        let autosave = SessionAutosave(session: fixture.session, database: try database.open(), delay: .milliseconds(10))
+        let connection = try database.open()
+        let autosave = SessionAutosave(session: fixture.session, database: connection, delay: .milliseconds(10))
         autosave.start()
         _ = open(fixture, ["a.com"])
         await autosave.saveNow()
         fixture.selectedPage?.followLink(to: URL(string: "https://a.com/clicked")!)
 
-        let reader = try database.open()
         let deadline = ContinuousClock.now + .seconds(5)
-        while try reader.savedSession().tabs.first?.address?.absoluteString != "https://a.com/clicked",
+        while try connection.savedSession().tabs.first?.address?.absoluteString != "https://a.com/clicked",
               ContinuousClock.now < deadline {
             try await Task.sleep(for: .milliseconds(20))
         }
         autosave.stop()
 
-        #expect(try reader.savedSession().tabs.map(\.address?.absoluteString) == ["https://a.com/clicked"])
+        #expect(try connection.savedSession().tabs.map(\.address?.absoluteString) == ["https://a.com/clicked"])
     }
 
     @Test func readingTheProfileWhileTheAutosaveWritesNeverFindsItLocked() async throws {
         let database = TemporaryDatabase()
         let fixture = SessionFixture()
-        let autosave = SessionAutosave(session: fixture.session, database: try database.open(), delay: .zero)
+        let connection = try database.open()
+        let autosave = SessionAutosave(session: fixture.session, database: connection, delay: .zero)
         autosave.start()
         _ = open(fixture, ["a.com"])
 
-        let reader = try database.open()
         for index in 0..<100 {
             let address = "https://a.com/\(index)"
             fixture.selectedPage?.followLink(to: URL(string: address)!)
             let deadline = ContinuousClock.now + .seconds(5)
-            while try reader.savedSession().tabs.first?.address?.absoluteString != address,
+            while try connection.savedSession().tabs.first?.address?.absoluteString != address,
                   ContinuousClock.now < deadline {
                 await Task.yield()
             }
         }
         autosave.stop()
 
-        #expect(try reader.savedSession().tabs.map(\.address?.absoluteString) == ["https://a.com/99"])
+        #expect(try connection.savedSession().tabs.map(\.address?.absoluteString) == ["https://a.com/99"])
     }
 }
