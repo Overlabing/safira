@@ -120,5 +120,6 @@ struct DefaultsWindowView: View {
                 makeDefaultBrowser: controller.defaultBrowserActions.make))
         }
         .padding(16)
+        .frame(minWidth: 480, idealWidth: 600, minHeight: 400, idealHeight: 640)
     }
 }

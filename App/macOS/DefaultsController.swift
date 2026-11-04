@@ -97,15 +97,15 @@ final class DefaultsController: NSObject {
     @objc func showDefaults(_ sender: Any?) {
         let view = DefaultsWindowView(model: makeSummaryModel(), controller: self)
         let window = self.window ?? {
-            let window = NSWindow(contentViewController: NSHostingController(rootView: view))
+            let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 600, height: 640),
+                                  styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
             window.title = String(localized: "Defaults")
-            window.styleMask = [.titled, .closable, .resizable]
             window.isReleasedWhenClosed = false
-            window.setContentSize(NSSize(width: 600, height: 640))
             window.center()
             return window
         }()
         window.contentViewController = NSHostingController(rootView: view)
+        window.setContentSize(NSSize(width: 600, height: 640))
         self.window = window
         window.makeKeyAndOrderFront(nil)
         NSApp.activate()

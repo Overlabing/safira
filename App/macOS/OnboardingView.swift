@@ -43,8 +43,11 @@ struct OnboardingView: View {
         }
         .padding(20)
         .frame(width: 600, height: 640)
-        .onAppear(perform: focusFirstControl)
-        .onChange(of: model.step) { _, _ in focusFirstControl() }
+        // The controls of a step exist only after it is drawn, and a sheet takes the focus a moment after it opens.
+        .task(id: model.step) {
+            try? await Task.sleep(for: .milliseconds(150))
+            focusFirstControl()
+        }
     }
 
     private func focusFirstControl() {
