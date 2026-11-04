@@ -56,6 +56,13 @@ public final class ProfileDownloads {
         }
     }
 
+    /// True while files are saved in Safira's own folder because the user declined access to the Downloads folder.
+    public private(set) var savesInAppFolder = false
+
+    public func setSavesInAppFolder(_ value: Bool) {
+        if savesInAppFolder != value { savesInAppFolder = value }
+    }
+
     public var hasActiveDownload: Bool {
         all.contains { $0.state == .active }
     }

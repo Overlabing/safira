@@ -61,6 +61,24 @@ public final class ProfileWebContext {
         set { downloadController.directory = newValue }
     }
 
+    /// Where files go when the user declines access to the Downloads folder: a folder of the app's own container.
+    public var downloadsFallbackDirectory: URL {
+        get { downloadController.fallbackDirectory }
+        set { downloadController.fallbackDirectory = newValue }
+    }
+
+    /// Decides whether a folder may be used, in place of macOS's own consent prompt. Tests replace it.
+    public var downloadsAccess: @MainActor (URL) async -> Bool {
+        get { downloadController.access }
+        set { downloadController.access = newValue }
+    }
+
+    /// Asks for access to the Downloads folder now, at a moment the user chose, so that the first download does not
+    /// have to. Returns once the user has answered; the main thread is never held meanwhile.
+    public func prepareDownloadsAccess() async {
+        await downloadController.resolveDirectory()
+    }
+
     /// Stops the Profile's running downloads, for a Profile that goes away.
     public func cancelDownloads() async {
         await downloadController.cancelAll()

@@ -27,9 +27,18 @@ struct DownloadsView: View {
                 .frame(minHeight: 200)
             }
             HStack {
-                Text("Files are saved in your Downloads folder.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                if downloads.savesInAppFolder {
+                    Text("You declined access to your Downloads folder, so files are saved in Safira's own folder. You can allow it in System Settings > Privacy & Security > Files & Folders.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Button("Show Folder") {
+                        NSWorkspace.shared.activateFileViewerSelecting([registry.active.web.downloadsFallbackDirectory])
+                    }
+                } else {
+                    Text("Files are saved in your Downloads folder.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
                 Spacer()
                 Button("Clear List") { downloads.removeFinished() }
                     .disabled(!downloads.all.contains { $0.state != .active })
@@ -37,6 +46,9 @@ struct DownloadsView: View {
         }
         .padding(16)
         .frame(minWidth: 460, minHeight: 280)
+        // macOS asks for the Downloads folder the first time it is needed; asking here, when the user opened the
+        // list, keeps that prompt from appearing in the middle of a page's download.
+        .task(id: registry.activeProfileID) { await registry.active.web.prepareDownloadsAccess() }
     }
 }
 
