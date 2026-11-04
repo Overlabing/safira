@@ -89,6 +89,54 @@ private func address(_ text: String) -> NormalizedAddress {
         #expect(after.pages[first]?.state.url?.absoluteString == "https://example.com/docs/api")
     }
 
+    @Test func aPinnedTabMatchesAndSoDoesOneInsideAFolderCollapsedOrNot() {
+        let fixture = SessionFixture()
+        let pinned = fixture.visit("https://example.com/pinned")
+        let inFolder = fixture.visit("https://example.com/folder")
+        let inSubFolder = fixture.visit("https://example.com/sub")
+        fixture.visit("https://swift.org")
+        [pinned, inFolder, inSubFolder].forEach { fixture.session.pin($0) }
+        let docs = fixture.session.createFolder(name: "Docs")!
+        let more = fixture.session.createFolder(name: "More", in: docs)!
+        fixture.session.movePinned(.tab(inFolder), into: docs)
+        fixture.session.movePinned(.tab(inSubFolder), into: more)
+        fixture.session.setFolderExpanded(more, false)
+        fixture.session.setFolderExpanded(docs, false)
+
+        #expect(fixture.session.matchingTab(for: address("https://example.com/pinned?utm_source=mail"))?.tab == pinned)
+        #expect(fixture.session.matchingTab(for: address("https://example.com/folder#top"))?.tab == inFolder)
+        #expect(fixture.session.matchingTab(for: address("https://EXAMPLE.com/sub/"))?.tab == inSubFolder)
+    }
+
+    @Test func aPinnedTabClosedToItsLastAddressStillMatchesAndFocusingItWakesIt() throws {
+        let fixture = SessionFixture()
+        let id = fixture.visit("https://example.com/docs")
+        fixture.visit("https://swift.org")
+        fixture.session.pin(id)
+        fixture.session.close(id)
+        #expect(fixture.pages[id]?.isClosed == true)
+
+        let match = try #require(fixture.session.matchingTab(for: address("https://example.com/docs#intro")))
+        #expect(match.tab == id)
+
+        #expect(fixture.session.focus(match, openedFrom: URL(string: "https://example.com/docs#intro")!))
+        #expect(fixture.session.selectedTabID == id)
+        #expect(fixture.session.selectedTab?.address?.absoluteString == "https://example.com/docs")
+    }
+
+    @Test func aPinnedTabOfAnotherSpaceMatchesAndFocusingItSwitchesSpace() {
+        let fixture = SessionFixture()
+        let home = fixture.session.activeSpaceID
+        let id = fixture.visit("https://example.com/docs")
+        fixture.session.pin(id)
+        fixture.session.createSpace(name: "Reading", emoji: "📚")
+        fixture.visit("https://swift.org")
+
+        let match = fixture.session.matchingTab(for: address("https://example.com/docs"))
+
+        #expect(match == MatchingTab(profile: fixture.session.profileID, space: home, tab: id))
+    }
+
     // MARK: Banner
 
     @Test func focusingAMatchingTabRaisesABannerThatCarriesTheLinkAsSent() throws {

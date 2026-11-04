@@ -37,6 +37,9 @@ public final class ProfileSession {
     public internal(set) var matchBanner: MatchBanner?
     /// The Tabs closed during this session, the last one closed at the end. Kept in memory only.
     private var closedTabs: [ClosedTab] = []
+    /// The last background Tab each Tab opened, so that the next one lands right after it and the links come out in
+    /// click order. A closed Tab's entry is ignored.
+    @ObservationIgnored private var lastBackgroundChild: [TabID: TabID] = [:]
     @ObservationIgnored private var searchAwaitingEngineTarget = CommandBarTarget.selectedTab
     @ObservationIgnored private let makePage: @MainActor (TabID) -> any WebPageHandle
     /// Decides what a non-web link a page of this Profile follows may open. Its choices are the Profile's own.
@@ -289,12 +292,19 @@ public final class ProfileSession {
     }
 
     /// Selects the Tab `offset` places away from the selected one, wrapping around the ends of the list. The list is
-    /// the Space's Pinned tabs, folded Folders included, then its other Tabs.
+    /// what the sidebar shows: the Space's Pinned tabs, minus those inside a collapsed Folder, then its other Tabs. A
+    /// selected Tab hidden in a collapsed Folder moves on to the next shown one from where it sits.
     public func selectTab(offset: Int) {
         let order = activeSpace.allTabs
-        guard let index = order.firstIndex(where: { $0.id == selectedTabID }) else { return }
-        let count = order.count
-        setSelection(order[((index + offset) % count + count) % count].id)
+        let shown = Set(activeSpace.visibleTabs.map(\.id))
+        guard var index = order.firstIndex(where: { $0.id == selectedTabID }), !shown.isEmpty else { return }
+        let step = offset < 0 ? -1 : 1
+        for _ in 0..<abs(offset) {
+            repeat {
+                index = (index + step + order.count) % order.count
+            } while !shown.contains(order[index].id)
+        }
+        setSelection(order[index].id)
     }
 
     /// Closing discards the Tab and its page; a Tab that had an address can be reopened during this session.
@@ -305,6 +315,7 @@ public final class ProfileSession {
         guard let space = spaces.first(where: { $0.allTabs.contains { $0.id == id } }),
               let position = space.allTabs.firstIndex(where: { $0.id == id }) else { return }
         closePopups(openedBy: [id])
+        lastBackgroundChild[id] = nil
         if let index = space.tabs.firstIndex(where: { $0.id == id }) {
             let tab = space.tabs.remove(at: index)
             if let address = tab.address {
@@ -619,16 +630,21 @@ public final class ProfileSession {
     /// opener's Space. A popup is not a Tab: it stays a window of the Tab that opened it.
     private func openBackgroundTab(_ request: NewTabRequest, after opener: TabID) {
         let space = spaces.first { $0.allTabs.contains { $0.id == opener } } ?? activeSpace
-        // A link opened from a Pinned tab goes to the top of the other Tabs, right below the pinned area.
-        let position = space.tabs.firstIndex { $0.id == opener }.map { $0 + 1 }
+        // After the opener's previous child while that one is still there, otherwise right after the opener. A link
+        // opened from a Pinned tab goes to the top of the other Tabs, right below the pinned area.
+        let anchor = lastBackgroundChild[opener].flatMap { child in space.tabs.contains { $0.id == child } ? child : nil }
+            ?? opener
+        let position = space.tabs.firstIndex { $0.id == anchor }.map { $0 + 1 }
             ?? (space.holds(.tab(opener)) ? 0 : space.tabs.count)
         switch request {
         case .address(let url):
-            let tab = makeTab(id: TabID())
+            let tab = makeBackgroundTab(id: TabID())
             space.tabs.insert(tab, at: position)
+            lastBackgroundChild[opener] = tab.id
             tab.load(url)
         case .page(let id, let page):
-            space.tabs.insert(makeTab(id: id, page: page), at: position)
+            space.tabs.insert(makeBackgroundTab(id: id, page: page), at: position)
+            lastBackgroundChild[opener] = id
         case .popup(let id, let page, let requested):
             let popup = Popup(id: id, openerTabID: opener, requestedWindow: requested, page: page)
             popup.attach(onClose: { [weak self] in self?.closePopup(id) },
@@ -636,6 +652,14 @@ public final class ProfileSession {
                          onNonWebLink: { [appLinks] link, host in appLinks.request(link, requestedBy: host) })
             popups.append(popup)
         }
+    }
+
+    /// A Tab a link opened. Should its first navigation turn out to be a download, nothing was ever shown in it, so it
+    /// goes away instead of staying blank.
+    private func makeBackgroundTab(id: TabID, page: (any WebPageHandle)? = nil) -> Tab {
+        let tab = makeTab(id: id, page: page)
+        tab.onEmptyDownload = { [weak self] in self?.close(id) }
+        return tab
     }
 
     /// Selects a Tab of the active Space. A Tab shown for the first time since a relaunch creates its page here.

@@ -20,11 +20,12 @@ public protocol MatchingTabSearchable: AnyObject {
 }
 
 extension ProfileSession {
-    /// The Tab, in any Space, whose current address has the same Normalized address. A Tab not loaded since launch
-    /// counts by its last saved address. The active Space is searched first.
+    /// The Tab, in any Space, whose current address has the same Normalized address, a Pinned tab or one inside a
+    /// Folder included, collapsed or not. A Tab not loaded since launch counts by its last saved address. The active
+    /// Space is searched first.
     public func matchingTab(for address: NormalizedAddress) -> MatchingTab? {
         for space in [activeSpace] + spaces.filter({ $0.id != activeSpaceID }) {
-            if let tab = space.tabs.first(where: { $0.address.flatMap(NormalizedAddress.init) == address }) {
+            if let tab = space.allTabs.first(where: { $0.address.flatMap(NormalizedAddress.init) == address }) {
                 return MatchingTab(profile: profileID, space: space.id, tab: tab.id)
             }
         }

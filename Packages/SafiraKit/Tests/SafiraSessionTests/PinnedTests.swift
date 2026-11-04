@@ -152,6 +152,67 @@ private func plain(_ session: ProfileSession) -> [String?] {
         #expect(fixture.session.selectedTab?.address?.host() == "c.com")
     }
 
+    @Test func nextAndPreviousTabSkipTabsHiddenInACollapsedFolder() {
+        let fixture = SessionFixture()
+        let ids = openTabs(fixture, ["a.com", "b.com", "c.com", "d.com", "e.com"])
+        ids.prefix(4).forEach { fixture.session.pin($0) }
+        let docs = fixture.session.createFolder(name: "Docs")!
+        let notes = fixture.session.createFolder(name: "Notes", in: docs)!
+        fixture.session.movePinned(.tab(ids[1]), into: docs)
+        fixture.session.movePinned(.tab(ids[2]), into: notes)
+        // The pinned area is: a.com, d.com, [Docs: [Notes: c.com], b.com]; then the plain e.com.
+        #expect(outline(fixture.session.pinnedItems) == "a.com d.com [Docs: [Notes: c.com] b.com]")
+        fixture.session.setFolderExpanded(notes, false)
+
+        fixture.session.select(ids[3])
+        fixture.session.selectTab(offset: 1)
+        #expect(fixture.session.selectedTab?.address?.host() == "b.com")
+        fixture.session.selectTab(offset: -1)
+        #expect(fixture.session.selectedTab?.address?.host() == "d.com")
+
+        fixture.session.setFolderExpanded(docs, false)
+        fixture.session.selectTab(offset: 1)
+        #expect(fixture.session.selectedTab?.address?.host() == "e.com")
+        fixture.session.selectTab(offset: -1)
+        #expect(fixture.session.selectedTab?.address?.host() == "d.com")
+
+        fixture.session.setFolderExpanded(docs, true)
+        fixture.session.setFolderExpanded(notes, true)
+        fixture.session.selectTab(offset: 1)
+        #expect(fixture.session.selectedTab?.address?.host() == "c.com")
+    }
+
+    @Test func nextAndPreviousTabLeaveATabHiddenInACollapsedFolderForTheNextShownOne() {
+        let fixture = SessionFixture()
+        let ids = openTabs(fixture, ["a.com", "b.com", "c.com"])
+        ids.prefix(2).forEach { fixture.session.pin($0) }
+        let docs = fixture.session.createFolder(name: "Docs")!
+        fixture.session.movePinned(.tab(ids[0]), into: docs)
+        #expect(outline(fixture.session.pinnedItems) == "b.com [Docs: a.com]")
+        fixture.session.select(ids[0])
+        fixture.session.setFolderExpanded(docs, false)
+
+        fixture.session.selectTab(offset: 1)
+        #expect(fixture.session.selectedTab?.address?.host() == "c.com")
+
+        fixture.session.select(ids[0])
+        fixture.session.selectTab(offset: -1)
+        #expect(fixture.session.selectedTab?.address?.host() == "b.com")
+    }
+
+    @Test func nextTabStaysPutWhenEveryTabIsHidden() {
+        let fixture = SessionFixture()
+        let id = openTabs(fixture, ["a.com"])[0]
+        fixture.session.pin(id)
+        let docs = fixture.session.createFolder(name: "Docs")!
+        fixture.session.movePinned(.tab(id), into: docs)
+        fixture.session.setFolderExpanded(docs, false)
+
+        fixture.session.selectTab(offset: 1)
+
+        #expect(fixture.session.selectedTabID == id)
+    }
+
     @Test func aLinkOpenedFromAPinnedTabGoesRightBelowThePinnedArea() {
         let fixture = SessionFixture()
         let ids = openTabs(fixture, ["a.com", "b.com"])

@@ -31,6 +31,8 @@ public final class Tab: Identifiable {
     @ObservationIgnored var onVisitEvent: (@MainActor (VisitEvent) -> Void)?
     /// Called when the Tab's page follows a non-web link, with the host of the page that asked; the session sets it.
     @ObservationIgnored var onNonWebLink: (@MainActor (NonWebLink, String?) -> Void)?
+    /// Called when a download starts in a Tab that has never shown anything; the session sets it on Tabs a link opened.
+    @ObservationIgnored var onEmptyDownload: (@MainActor () -> Void)?
 
     init(id: TabID, page: (any WebPageHandle)? = nil, osBuild: String,
          makePage: @escaping @MainActor (TabID) -> any WebPageHandle,
@@ -158,6 +160,7 @@ public final class Tab: Identifiable {
         page?.onLoadFailure = nil
         page?.onContinueOverHTTP = nil
         page?.onNonWebLink = nil
+        page?.onDownloadStarted = nil
         page?.close()
         page = nil
     }
@@ -169,9 +172,15 @@ public final class Tab: Identifiable {
         page.onLoadFailure = { [weak self] failure in self?.pageFailed(failure) }
         page.onContinueOverHTTP = { [weak self] in self?.continueOverHTTP() }
         page.onNonWebLink = { [weak self] link in self?.onNonWebLink?(link, self?.state.url?.host) }
+        page.onDownloadStarted = { [weak self] in self?.pageStartedDownload() }
         self.page = page
         pageChanged(page.state)
         return page
+    }
+
+    private func pageStartedDownload() {
+        guard state.url == nil, !state.canGoBack else { return }
+        onEmptyDownload?()
     }
 
     private func pageChanged(_ state: PageState) {

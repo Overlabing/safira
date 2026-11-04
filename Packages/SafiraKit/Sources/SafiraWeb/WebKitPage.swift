@@ -18,6 +18,7 @@ public final class WebKitPage: NSObject, WebPageHandle {
     public var onContinueOverHTTP: (@MainActor () -> Void)?
     public var onNonWebLink: (@MainActor (NonWebLink) -> Void)?
     public var onDidClose: (@MainActor () -> Void)?
+    public var onDownloadStarted: (@MainActor () -> Void)?
     private var isPlayingMedia = false
     /// The warning the page currently shows; only its own "Continue over HTTP" link is intercepted.
     private var showing: InsecureConnectionWarning?
@@ -121,6 +122,7 @@ public final class WebKitPage: NSObject, WebPageHandle {
         onContinueOverHTTP = nil
         onNonWebLink = nil
         onDidClose = nil
+        onDownloadStarted = nil
         webView.stopLoading()
         webView.removeFromSuperview()
         webView.navigationDelegate = nil
@@ -223,11 +225,17 @@ extension WebKitPage: WKNavigationDelegate {
     }
 
     public func webView(_ webView: WKWebView, navigationAction: WKNavigationAction, didBecome download: WKDownload) {
-        startDownload(download)
+        began(download)
     }
 
     public func webView(_ webView: WKWebView, navigationResponse: WKNavigationResponse, didBecome download: WKDownload) {
+        began(download)
+    }
+
+    /// The Profile's downloads hold the transfer, so the Tab may go away right after, outside WebKit's callback.
+    private func began(_ download: WKDownload) {
         startDownload(download)
+        Task { @MainActor [weak self] in self?.onDownloadStarted?() }
     }
 
     public func webView(_ webView: WKWebView, respondTo challenge: URLAuthenticationChallenge) async
