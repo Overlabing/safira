@@ -190,7 +190,11 @@ private func webKitFolders() -> [URL] {
             try await Task.sleep(for: .seconds(3))
 
             let after = Tree(profileFolders)
-            #expect(after.newFiles(since: before) == [], "new files: \(after.newFiles(since: before))")
+            // WebKit creates the Profile's own ResourceLoadStatistics databases (pcm.db) a few seconds after its page
+            // closes, whether or not a Private window was ever opened; the search for the Private page's data below
+            // still proves none of it reached them.
+            let newFiles = after.newFiles(since: before).filter { !$0.contains("/ResourceLoadStatistics/") }
+            #expect(newFiles == [], "new files: \(newFiles)")
             #expect(after.changedFiles(since: before).filter { !$0.hasSuffix("-wal") && !$0.hasSuffix("-shm") } == [])
             #expect(filesContaining(token, in: [root.layout.root] + webKitFolders()) == [])
         }
