@@ -9,3 +9,11 @@ public enum LinkPickerKey {
         return digit - 1
     }
 }
+
+/// A key the Link picker answers to. Every other key does nothing.
+public enum LinkPickerKeyInput: Hashable, Sendable {
+    case character(Character)
+    case up, down, left, right
+    case `return`
+    case escape
+}

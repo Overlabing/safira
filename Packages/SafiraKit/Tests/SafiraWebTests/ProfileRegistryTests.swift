@@ -113,6 +113,45 @@ private final class TemporaryRoot {
         await cleanUp(ids)
     }
 
+    @Test func anExternalLinkOpensInTheChosenProfileAndShowsIt() async throws {
+        let root = TemporaryRoot()
+        var ids: [ProfileID] = []
+        do {
+            let registry = ProfileRegistry(layout: root.layout)
+            let first = registry.activeProfileID
+            let work = registry.createProfile(name: "Work", symbol: "💼", searchEngine: .kagi)
+            registry.selectProfile(first)
+            ids = registry.profiles.map(\.id)
+
+            let opened = registry.openExternalLink(try #require(URL(string: "about:blank")), in: work)
+
+            #expect(opened)
+            #expect(registry.activeProfileID == work)
+            #expect(registry.active.session.tabs.count == 1)
+            #expect(registry.active.session.selectedTabID == registry.active.session.tabs.first?.id)
+            registry.selectProfile(first)
+            #expect(registry.active.session.tabs.isEmpty)
+            for context in registry.loadedContexts { context.session.closeAllTabs() }
+        }
+        await cleanUp(ids)
+    }
+
+    @Test func anExternalLinkForAProfileThatDoesNotExistChangesNothing() async throws {
+        let root = TemporaryRoot()
+        var ids: [ProfileID] = []
+        do {
+            let registry = ProfileRegistry(layout: root.layout)
+            ids = registry.profiles.map(\.id)
+
+            let opened = registry.openExternalLink(try #require(URL(string: "about:blank")),
+                                                   in: ProfileID(rawValue: UUID()))
+
+            #expect(!opened)
+            #expect(registry.active.session.tabs.isEmpty)
+        }
+        await cleanUp(ids)
+    }
+
     @Test func theLastProfileCannotBeDeleted() async throws {
         let root = TemporaryRoot()
         var ids: [ProfileID] = []

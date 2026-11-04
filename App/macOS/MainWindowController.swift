@@ -242,6 +242,18 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         }
     }
 
+    /// A link from another app was opened as a new Tab, in a Profile that is now the Active profile: brings the Main
+    /// window forward on it, with the keyboard in the page.
+    func showOpenedLink() {
+        if window?.isMiniaturized == true { window?.deminiaturize(nil) }
+        showWindow(nil)
+        NSApp.activate()
+        session.dismissCommandBar()
+        render()
+        announce(String(localized: "Profile: \(registry.activeProfile.name)"))
+        showPage()
+    }
+
     // MARK: Command bar
 
     func control(_ control: NSControl, textView: NSTextView, doCommandBy selector: Selector) -> Bool {

@@ -69,7 +69,12 @@ public final class WebKitPage: NSObject, WebPageHandle {
     public func load(_ url: URL, httpsFirst: Bool) {
         httpsFirstAddress = httpsFirst ? url : nil
         showing = nil
-        webView.load(URLRequest(url: url))
+        if url.isFileURL {
+            // A local page can read only itself: Safira holds no access to the folder around it.
+            webView.loadFileURL(url, allowingReadAccessTo: url)
+        } else {
+            webView.load(URLRequest(url: url))
+        }
     }
 
     /// WebKit navigates to the restored entry right away; a state it cannot read leaves the page without an entry.

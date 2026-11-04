@@ -209,6 +209,15 @@ public final class ProfileSession {
         return tab.id
     }
 
+    /// Opens a link another app sent as a new Tab, selected, in the Space that was last active (the one shown when the
+    /// Profile was last used, saved with it).
+    @discardableResult
+    public func openExternalLink(_ url: URL) -> TabID {
+        let id = openNewTab()
+        selectedTab?.load(url)
+        return id
+    }
+
     /// Shows a Tab, switching to its Space when it is in another one.
     public func select(_ id: TabID) {
         guard let space = spaces.first(where: { $0.tabs.contains { $0.id == id } }) else { return }

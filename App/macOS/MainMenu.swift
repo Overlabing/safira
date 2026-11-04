@@ -3,12 +3,13 @@
 
 import AppKit
 import Commands
+import LinkRouting
 import SafiraCore
 
 @MainActor
 enum MainMenu {
-    static func make(updates: UpdateController, diagnostics: DiagnosticsController, shortcuts: KeyBindings,
-                     shortcutsWindow: ShortcutsWindowController) -> NSMenu {
+    static func make(updates: UpdateController, diagnostics: DiagnosticsController, links: LinkController,
+                     shortcuts: KeyBindings, shortcutsWindow: ShortcutsWindowController) -> NSMenu {
         func item(_ id: CommandID, _ action: Selector?) -> NSMenuItem { commandItem(id, action, shortcuts) }
         let menu = NSMenu()
         menu.addItem(submenu(title: "Safira", items: [
@@ -19,6 +20,11 @@ enum MainMenu {
             .separator(),
             target(shortcutsWindow, NSMenuItem(title: "Shortcuts…", action: #selector(ShortcutsWindowController.show(_:)),
                                                keyEquivalent: "")),
+            .separator(),
+            target(links, NSMenuItem(title: "Make Safira the Default Browser…", action: #selector(LinkController.makeDefaultBrowser(_:)),
+                                     keyEquivalent: "")),
+            target(links, NSMenuItem(title: LinkChoiceLogSettings.title, action: #selector(LinkController.toggleChoiceLog(_:)),
+                                     keyEquivalent: "")),
             .separator(),
             NSMenuItem(title: "Hide Safira", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h"),
             hideOthers(),
