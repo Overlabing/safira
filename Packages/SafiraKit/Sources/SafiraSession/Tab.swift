@@ -16,6 +16,10 @@ public final class Tab: Identifiable {
     public private(set) var dormantRecord: TabRecord?
     /// Set from the moment an address typed without a scheme cannot be opened securely until the Tab loads anything else.
     public private(set) var insecureConnectionWarning: InsecureConnectionWarning?
+    /// Whether the Tab sits in its Space's pinned area. Only the Space's `ProfileSession` pins and unpins.
+    public private(set) var isPinned = false
+    /// The address the Tab was pinned at; nil while it is not pinned or was pinned blank.
+    public private(set) var pinnedAddress: URL?
     @ObservationIgnored private var page: (any WebPageHandle)?
     @ObservationIgnored private let osBuild: String
     /// The address of the last HTTPS-first navigation: only its failure may lead to a warning.
@@ -47,6 +51,7 @@ public final class Tab: Identifiable {
         self.onNewTab = onNewTab
         state = PageState(url: record.address, title: record.title)
         dormantRecord = record
+        pinnedAddress = record.pinnedAddress
         visits = VisitTracker(restoredAddress: record.address)
     }
 
@@ -54,12 +59,42 @@ public final class Tab: Identifiable {
 
     /// What is saved of this Tab. A dormant Tab keeps its record as it was restored.
     var record: TabRecord {
-        if let dormantRecord { return dormantRecord }
-        let navigationState = page.flatMap {
-            NavigationStateRule.savable($0.navigationState, sensitiveContent: $0.sensitiveContent)
+        var record: TabRecord
+        if let dormantRecord {
+            record = dormantRecord
+        } else {
+            let navigationState = page.flatMap {
+                NavigationStateRule.savable($0.navigationState, sensitiveContent: $0.sensitiveContent)
+            }
+            record = TabRecord(id: id, address: state.url, title: state.title, navigationState: navigationState,
+                               navigationStateOSBuild: navigationState == nil ? nil : osBuild)
         }
-        return TabRecord(id: id, address: state.url, title: state.title, navigationState: navigationState,
-                         navigationStateOSBuild: navigationState == nil ? nil : osBuild)
+        record.pinnedAddress = pinnedAddress
+        return record
+    }
+
+    func pin() {
+        isPinned = true
+        pinnedAddress = address
+    }
+
+    func unpin() {
+        isPinned = false
+        pinnedAddress = nil
+    }
+
+    /// Marks a restored Tab as pinned without changing the address it was pinned at.
+    func restorePinned() {
+        isPinned = true
+    }
+
+    /// Drops the page and keeps the Tab as a restored one: it shows its last address and title, and loads them again
+    /// when it is next shown. This is how a Pinned tab is closed.
+    func unload() {
+        let saved = record
+        close()
+        state = PageState(url: state.url, title: state.title)
+        dormantRecord = saved
     }
 
     /// Gives a dormant Tab its page and restores it: its navigation state when it can, otherwise its last address.

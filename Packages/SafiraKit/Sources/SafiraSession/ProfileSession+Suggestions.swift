@@ -33,7 +33,7 @@ extension ProfileSession {
     private func openTabSuggestions(for text: String) -> [CommandBarSuggestion] {
         let ordered = spaces.sorted { ($0.id == activeSpaceID ? 0 : 1) < ($1.id == activeSpaceID ? 0 : 1) }
         return ordered.flatMap { space in
-            space.tabs.compactMap { tab -> CommandBarSuggestion? in
+            space.allTabs.compactMap { tab -> CommandBarSuggestion? in
                 guard let address = tab.address,
                       SuggestionText.matches(text, in: [tab.state.title ?? "", address.absoluteString]) else { return nil }
                 let title = tab.state.title.flatMap { $0.isEmpty ? nil : $0 } ?? address.absoluteString

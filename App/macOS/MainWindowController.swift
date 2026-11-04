@@ -31,6 +31,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
     private var presentation: SidebarPresentation
     private var searchEngineSheet: NSWindow?
     private var spaceSheet: NSWindow?
+    private var folderSheet: NSWindow?
     private var profileSheet: NSWindow?
     private var clearSheet: NSWindow?
     private var permissionsSheet: NSWindow?
@@ -44,6 +45,9 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
     private var suggestionTask: Task<Void, Never>?
     /// The text the shown suggestions were computed for: Return opens a highlighted one only while the text still is it.
     private var suggestionText: String?
+    private let bannerModel = MatchBannerModel()
+    private var bannerHost: NSHostingView<MatchBannerBar>?
+    private var announcedBannerID: UUID?
 
     init(registry: ProfileRegistry, shortcuts: ShortcutController) {
         self.registry = registry
@@ -90,6 +94,15 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
     @objc func reopenClosedTab(_ sender: Any?) {
         session.reopenClosedTab()
         render()
+    }
+
+    @objc func togglePin(_ sender: Any?) {
+        session.toggleSelectedTabPin()
+    }
+
+    /// Opens the naming sheet for a new Folder at the top of the active Space's pinned area.
+    @objc func newFolder(_ sender: Any?) {
+        editFolder(creatingIn: nil)
     }
 
     @objc func focusCommandBar(_ sender: Any?) {
@@ -247,12 +260,15 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         switch menuItem.action {
         case #selector(closeTab(_:)): return tab != nil
         case #selector(reopenClosedTab(_:)): return session.canReopenClosedTab
-        case #selector(moveTabUp(_:)): return tab != nil && session.tabs.first?.id != tab?.id
-        case #selector(moveTabDown(_:)): return tab != nil && session.tabs.last?.id != tab?.id
+        case #selector(togglePin(_:)):
+            menuItem.title = tab?.isPinned == true ? String(localized: "Unpin Tab") : String(localized: "Pin Tab")
+            return tab != nil
+        case #selector(moveTabUp(_:)): return tab.map { session.canMove($0.id, by: -1) } ?? false
+        case #selector(moveTabDown(_:)): return tab.map { session.canMove($0.id, by: 1) } ?? false
         case #selector(goBack(_:)): return tab?.state.canGoBack == true
         case #selector(goForward(_:)): return tab?.state.canGoForward == true
         case #selector(reload(_:)): return tab?.address != nil
-        case #selector(showNextTab(_:)), #selector(showPreviousTab(_:)): return session.tabs.count > 1
+        case #selector(showNextTab(_:)), #selector(showPreviousTab(_:)): return session.activeSpace.allTabs.count > 1
         case #selector(deleteSpace(_:)): return session.canDeleteSpace
         case #selector(deleteProfile(_:)): return registry.canDeleteProfile
         case #selector(showNextProfile(_:)), #selector(showPreviousProfile(_:)): return registry.profiles.count > 1
@@ -445,13 +461,46 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         spaceSheet = nil
     }
 
+    /// A new Folder when `renaming` is nil, created inside `parent` or at the top of the pinned area; otherwise that
+    /// Folder is renamed.
+    private func editFolder(creatingIn parent: FolderID?, renaming id: FolderID? = nil) {
+        guard let window, folderSheet == nil else { return }
+        let existing = id.flatMap { id in session.activeSpace.folder(id) }
+        if id != nil, existing == nil { return }
+        let editor = FolderEditor(
+            title: existing == nil ? String(localized: "New Folder") : String(localized: "Rename Folder"),
+            confirmTitle: existing == nil ? String(localized: "Create") : String(localized: "Rename"),
+            name: existing?.name ?? String(localized: "New Folder"),
+            save: { [weak self] name in
+                guard let self else { return }
+                if let id {
+                    session.renameFolder(id, name: name)
+                } else {
+                    session.createFolder(name: name, in: parent)
+                }
+                endFolderSheet()
+            },
+            cancel: { [weak self] in self?.endFolderSheet() }
+        )
+        let sheet = NSWindow(contentViewController: NSHostingController(rootView: editor))
+        folderSheet = sheet
+        window.beginSheet(sheet)
+    }
+
+    private func endFolderSheet() {
+        guard let sheet = folderSheet else { return }
+        window?.endSheet(sheet)
+        folderSheet = nil
+    }
+
     /// Deleting a Space closes its Tabs for good, so it is confirmed first. The last Space cannot be deleted.
     private func confirmDeletion(of id: SpaceID) {
         guard let window, session.canDeleteSpace, let space = session.spaces.first(where: { $0.id == id }) else { return }
         let alert = NSAlert()
         alert.messageText = String(localized: "Delete the Space “\(space.name)”?")
-        let tabs = space.tabs.isEmpty ? String(localized: "It has no Tab.")
-            : String(AttributedString(localized: "Its ^[\(space.tabs.count) Tab](inflect: true) will close.").characters)
+        let count = space.allTabs.count
+        let tabs = count == 0 ? String(localized: "It has no Tab.")
+            : String(AttributedString(localized: "Its ^[\(count) Tab](inflect: true) will close.").characters)
         alert.informativeText = tabs + " " + String(localized: "The Profile's logins and history are kept.")
         alert.addButton(withTitle: String(localized: "Delete Space")).hasDestructiveAction = true
         alert.addButton(withTitle: String(localized: "Cancel"))
@@ -673,6 +722,23 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         pageArea.show(tab.flatMap { webContext.webView(for: $0.id) })
         updateSearchEngineSheet(query: session.searchAwaitingEngine)
         showPopups()
+        showMatchBanner()
+    }
+
+    /// The banner follows the Active profile's session. A new one is announced and goes by itself after a while; the
+    /// session takes it down as soon as another Tab is shown.
+    private func showMatchBanner() {
+        let banner = session.matchBanner
+        bannerModel.banner = banner
+        bannerHost?.isHidden = banner == nil
+        guard let banner, banner.id != announcedBannerID else { return }
+        announcedBannerID = banner.id
+        announce(String(localized: "This link was already open, so Safira showed that Tab. A button offers to open it in a new Tab."))
+        let session = session
+        Task { @MainActor [weak session] in
+            try? await Task.sleep(for: .seconds(12))
+            if session?.matchBanner?.id == banner.id { session?.dismissMatchBanner() }
+        }
     }
 
     /// A popup shows in a floating panel while the Tab that opened it is the shown Tab of the Active profile, and is
@@ -738,11 +804,24 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         toolbar.edgeInsets = NSEdgeInsets(top: 8, left: 10, bottom: 8, right: 10)
         commandBar.setContentHuggingPriority(.defaultLow, for: .horizontal)
 
-        let content = NSStackView(views: [toolbar, pageArea])
+        let banner = NSHostingView(rootView: MatchBannerBar(
+            model: bannerModel,
+            openInNewTab: { [weak self] in
+                guard let self else { return }
+                session.openMatchBannerLinkInNewTab()
+                showPage()
+            },
+            dismiss: { [weak self] in self?.session.dismissMatchBanner() }))
+        banner.sizingOptions = [.intrinsicContentSize]
+        banner.isHidden = true
+        bannerHost = banner
+
+        let content = NSStackView(views: [toolbar, banner, pageArea])
         content.orientation = .vertical
         content.spacing = 0
         content.alignment = .leading
         toolbar.widthAnchor.constraint(equalTo: content.widthAnchor).isActive = true
+        banner.widthAnchor.constraint(equalTo: content.widthAnchor).isActive = true
         pageArea.widthAnchor.constraint(equalTo: content.widthAnchor).isActive = true
 
         let suggestions = CommandBarSuggestionHostingView(rootView: CommandBarSuggestionList(model: suggestionModel) {
@@ -767,6 +846,10 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
             edit: { [weak self] id in self?.editSpace(id) },
             delete: { [weak self] id in self?.confirmDeletion(of: id) }
         )
+        let folderActions = FolderActions(
+            create: { [weak self] parent in self?.editFolder(creatingIn: parent) },
+            rename: { [weak self] id in self?.editFolder(creatingIn: nil, renaming: id) }
+        )
         let profileActions = ProfileActions(
             select: { [weak self] id in self?.switchProfile { $0.selectProfile(id) } },
             edit: { [weak self] id in self?.editProfile(id) },
@@ -774,7 +857,8 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
             clearBrowsingData: { [weak self] id in self?.askToClearBrowsingData(ofProfile: id) }
         )
         let sidebar = NSHostingController(rootView: TabSidebar(registry: registry, profileActions: profileActions,
-                                                               spaceActions: spaceActions) { [weak self] in
+                                                               spaceActions: spaceActions,
+                                                               folderActions: folderActions) { [weak self] in
             self?.leaveSidebar()
         })
         self.sidebar = sidebar

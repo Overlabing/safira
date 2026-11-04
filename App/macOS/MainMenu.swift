@@ -25,6 +25,8 @@ enum MainMenu {
                                      keyEquivalent: "")),
             target(links, NSMenuItem(title: LinkChoiceLogSettings.title, action: #selector(LinkController.toggleChoiceLog(_:)),
                                      keyEquivalent: "")),
+            target(links, NSMenuItem(title: MatchingTabSettings.title, action: #selector(LinkController.toggleMatchingTabs(_:)),
+                                     keyEquivalent: "")),
             target(links, NSMenuItem(title: AskForSpaceSettings.title, action: #selector(LinkController.toggleAskForSpace(_:)),
                                      keyEquivalent: "")),
             target(links, NSMenuItem(title: "Show Link Rules in Finder", action: #selector(LinkController.showLinkRules(_:)),
@@ -46,6 +48,10 @@ enum MainMenu {
             .separator(),
             item(.closeTab, #selector(MainWindowController.closeTab(_:))),
             item(.reopenClosedTab, #selector(MainWindowController.reopenClosedTab(_:))),
+            .separator(),
+            item(.togglePin, #selector(MainWindowController.togglePin(_:))),
+            item(.newFolder, #selector(MainWindowController.newFolder(_:))),
+            .separator(),
             item(.closeWindow, #selector(NSWindow.performClose(_:))),
         ]))
         menu.addItem(submenu(title: "Edit", items: [

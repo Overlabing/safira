@@ -10,6 +10,7 @@ public enum CommandID: String, CaseIterable, Hashable, Sendable {
     case previousTab, nextTab, moveTabUp, moveTabDown
     case commandBarNext, commandBarPrevious
     case newSpace, renameSpace, deleteSpace, previousSpace, nextSpace, moveSpaceLeft, moveSpaceRight
+    case togglePin, newFolder
     case newProfile, renameProfile, deleteProfile, previousProfile, nextProfile, sitePermissions
     case clearBrowsingData
 }
@@ -67,6 +68,8 @@ public enum CommandRegistry {
         window(.nextSpace, "Show Next Space", Shortcut(.right, [.command, .control])),
         window(.moveSpaceLeft, "Move Space Left", nil),
         window(.moveSpaceRight, "Move Space Right", nil),
+        window(.togglePin, "Pin or Unpin Tab", nil),
+        window(.newFolder, "New Folder…", nil),
         // ⌃⌥⌘ with an arrow: distinct from the Space keys (⌃⌘ and an arrow), so a Profile never changes by accident.
         window(.newProfile, "New Profile…", nil),
         window(.renameProfile, "Rename Profile…", nil),
