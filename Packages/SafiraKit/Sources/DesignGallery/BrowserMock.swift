@@ -126,7 +126,7 @@ struct Sidebar: View {
             .padding(.bottom, spacing.groupGap)
             .accessibilityAddTraits(.isHeader)
 
-            if tokens.materials.selection == .tint {
+            if tokens.name != "Slim Frame" {
                 SectionHeader(String(localized: "Pinned"))
             }
             ForEach(Sample.pinned) { TabRow(row: $0) }
@@ -239,6 +239,7 @@ struct MainWindow: View {
                 Sidebar(pillText: screen == .commandBar ? nil : Sample.host)
                     .surface(tokens.materials.column, in: TokenShape(radius: tokens.radius.column))
                     .padding([.leading, .vertical], floatsColumn ? inset : 0)
+                    .padding(.leading, floatsColumn || tokens.name != "Slim Frame" ? 0 : inset)
                 InsetPage {
                     ZStack(alignment: .top) {
                         PlaceholderPage()
@@ -260,6 +261,7 @@ struct MainWindow: View {
                     }
                 }
                 .padding([.vertical, .trailing], inset)
+                .padding(.leading, floatsColumn || tokens.name != "Slim Frame" ? 0 : inset)
             }
             if screen == .sheet {
                 Color.black.opacity(tokens.emphasis.scrim)

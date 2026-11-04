@@ -73,27 +73,27 @@ extension DesignTokens {
     public static let slimFrame = DesignTokens(
         name: "Slim Frame",
         spacing: Spacing(
-            listMargin: Spacing.s, rowGap: Spacing.xxs, rowInsetVertical: Spacing.xxs, rowInsetHorizontal: Spacing.xs,
-            sectionHeaderBottom: Spacing.xs, tileToText: Spacing.s, glassMerge: 6, pageInset: Spacing.xs,
+            listMargin: Spacing.m, rowGap: Spacing.xs, rowInsetVertical: Spacing.xs, rowInsetHorizontal: Spacing.s,
+            sectionHeaderBottom: 6, tileToText: Spacing.s, glassMerge: 6, pageInset: Spacing.xs,
             groupGap: Spacing.s, panelFieldVertical: Spacing.m, panelFieldHorizontal: Spacing.m, panelInset: Spacing.xs,
             bannerVertical: Spacing.xs, bannerHorizontal: Spacing.m, sheetMargin: Spacing.l),
-        radius: Radius(tile: 4, row: 6, pill: 8, page: 10, panel: 12, column: 0, banner: 8, sheet: 12),
+        radius: Radius(tile: 5, row: 8, pill: 8, page: 10, panel: 12, column: 0, banner: 8, sheet: 12),
         emphasis: Emphasis(
-            hover: 0.08, hoverLiftLight: 0.28, selectedDark: 0.14, selectedLight: 0.55, selectedLightBrightHue: 0.55, glassTint: 0.30,
-            layer: 0.07, tileFill: 0.20, increasedContrastFactor: 1.8, panelVeil: 0.55, scrim: 0.25, pageShadow: 0,
-            panelGlow: 0),
+            hover: 0.10, hoverLiftLight: 0.10, selectedDark: 0.25, selectedLight: 0.30, selectedLightBrightHue: 0.48,
+            glassTint: 0.35, layer: 0.07, tileFill: 0.25, increasedContrastFactor: 1.8, panelVeil: 0.55, scrim: 0.25,
+            pageShadow: 0, panelGlow: 0),
         size: Size(
-            row: 28, tile: 16, glyph: 11, pill: 30, toolbarButton: Size.minTarget, switcherItem: 28, switcherHeight: 28,
-            columnWidth: 240, panelWidth: 560, panelRow: 32, panelTopFraction: 0.3, sheetWidth: 380, selectionBar: 0),
+            row: 32, tile: 20, glyph: 12, pill: 32, toolbarButton: Size.minTarget, switcherItem: 32, switcherHeight: 32,
+            columnWidth: 260, panelWidth: 560, panelRow: 34, panelTopFraction: 0.3, sheetWidth: 380, selectionBar: 0),
         type: TypeScale(
-            row: TextRole(.body), rowSelected: TextRole(.body, .medium),
-            sectionHeader: TextRole(.caption, .medium), columnTitle: TextRole(.callout, .semibold),
+            row: TextRole(.body), rowSelected: TextRole(.body, .semibold),
+            sectionHeader: TextRole(.caption, .medium), columnTitle: TextRole(.headline),
             pill: TextRole(.callout), panelField: TextRole(.body), panelTitle: TextRole(.body, .medium),
             panelDetail: TextRole(.body), panelAction: TextRole(.caption, .semibold), banner: TextRole(.callout),
-            sheetTitle: TextRole(.headline), sheetBody: TextRole(.callout), switcherLabel: TextRole(.caption, .semibold)),
+            sheetTitle: TextRole(.headline), sheetBody: TextRole(.callout), switcherLabel: TextRole(.callout, .semibold)),
         materials: Materials(
             column: .none, pill: .layer, switcher: .glass(tint: 0), panel: .glass(tint: 0), banner: .glass(tint: 0),
-            selection: .lift),
+            selection: .tint),
         frame: FrameStyle(
             light: GradientSpec(top: 0.34, middle: 0.28, bottom: 0.24),
             dark: GradientSpec(top: 0.36, middle: 0.30, bottom: 0.26),

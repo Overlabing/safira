@@ -106,7 +106,7 @@ func overview(_ tokens: DesignTokens, directory: URL) throws {
 @MainActor
 func renderAll(into directory: URL) async {
     do {
-        for tokens in DesignTokens.all {
+        for tokens in DesignTokens.all where only == nil || Shot.slug(tokens) == only {
             for theme in Sample.themes {
                 for isDark in [false, true] {
                     for screen in MockScreen.allCases {
@@ -127,10 +127,11 @@ func renderAll(into directory: URL) async {
     }
 }
 
-guard CommandLine.arguments.count == 2 else {
-    print("usage: DesignGallery <output directory>")
+guard (2...3).contains(CommandLine.arguments.count) else {
+    print("usage: DesignGallery <output directory> [direction slug]")
     exit(2)
 }
+let only = CommandLine.arguments.count == 3 ? CommandLine.arguments[2] : nil
 let output = URL(filePath: CommandLine.arguments[1], directoryHint: .isDirectory)
 let app = NSApplication.shared
 app.setActivationPolicy(.accessory)
