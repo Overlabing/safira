@@ -75,7 +75,7 @@ public enum BuiltInDefaults {
                 title: "Downloads folder",
                 value: "~/Downloads",
                 explanation: "Downloaded files go to your Downloads folder, and each Profile keeps its own list of "
-                    + "them. Downloads are not in this build yet; this is where they will go.",
+                    + "them, which the Show Downloads command opens.",
                 whereToChange: notAdjustable
             ),
             DefaultEntry(
