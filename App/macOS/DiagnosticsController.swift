@@ -5,6 +5,7 @@ import AppKit
 import Diagnostics
 import SafiraSession
 import SafiraStore
+import SafiraWeb
 import UniformTypeIdentifiers
 
 /// Debug mode in the app: the switch, the periodic Tab and memory sample, and the manual export from the Help menu.
@@ -14,7 +15,7 @@ final class DiagnosticsController: NSObject, NSMenuItemValidation {
 
     let logger: DiagnosticLogger
     private let settings = DiagnosticsSettingsStore()
-    private weak var session: ProfileSession?
+    private weak var registry: ProfileRegistry?
     private var sampling: Task<Void, Never>?
 
     override init() {
@@ -24,8 +25,8 @@ final class DiagnosticsController: NSObject, NSMenuItemValidation {
         logger.setEnabled(settings.load().isDebugModeEnabled)
     }
 
-    func attach(to session: ProfileSession) {
-        self.session = session
+    func attach(to registry: ProfileRegistry) {
+        self.registry = registry
         restartSampling()
     }
 
@@ -78,8 +79,11 @@ final class DiagnosticsController: NSObject, NSMenuItemValidation {
     }
 
     private func sample() {
-        if let session {
-            logger.record(.tabCounts(session.diagnosticTabCounts))
+        if let registry {
+            let counts = registry.loadedContexts.map(\.session.diagnosticTabCounts)
+            logger.record(.tabCounts(TabCounts(blank: counts.map(\.blank).reduce(0, +),
+                                               loading: counts.map(\.loading).reduce(0, +),
+                                               loaded: counts.map(\.loaded).reduce(0, +))))
         }
         if let bytes = ProcessFootprint.currentBytes() {
             logger.record(.memory(footprintBytes: bytes))

@@ -63,14 +63,44 @@ func aPresetHasNoConflict(preset: ShortcutPreset) {
     #expect(display(.arc, .nextTab) == "⌥⌘↓")
     #expect(display(.safari, .previousTab) == "⇧⌘[")
     #expect(display(.safari, .nextTab) == "⇧⌘]")
-    #expect(display(.zen, .previousTab) == nil)
-    #expect(display(.arc, .closeWindow) == nil)
+    #expect(display(.zen, .previousTab) == "⇧⌘[")
     #expect(display(.zen, .closeWindow) == "⇧⌘W")
 }
 
-@Test func aCommandWithNoEquivalentStaysUnboundAndSaysWhy() {
+@Test func aCommandWithNoEquivalentKeepsItsReasonAndTakesSafirasDefault() {
     #expect(ShortcutPreset.safari.data.unbound[.moveTabUp]?.isEmpty == false)
-    #expect(ShortcutConfiguration(preset: .safari).bindings[.moveTabUp] == nil)
+    #expect(ShortcutConfiguration(preset: .safari).bindings[.moveTabUp]?.display == "⌥⌘↑")
+    #expect(ShortcutPreset.arc.data.unbound[.previousProfile] == "The page lists no Profile command; Arc attaches a Profile to Spaces and switches it with them.")
+    #expect(ShortcutPreset.zen.data.unbound[.nextProfile] == "The page lists no Profile command.")
+    #expect(ShortcutPreset.safari.data.unbound[.nextProfile] == "The cited page lists no Profile shortcut.")
+}
+
+@Test(arguments: ShortcutPreset.allCases)
+func showPreviousAndNextProfileFallBackToSafirasDefaultInEveryPreset(preset: ShortcutPreset) {
+    let bindings = ShortcutConfiguration(preset: preset).bindings
+    #expect(bindings[.previousProfile]?.display == "⌃⌥⌘←", "\(preset)")
+    #expect(bindings[.nextProfile]?.display == "⌃⌥⌘→", "\(preset)")
+}
+
+@Test func theSpaceCommandsAMissingPresetEquivalentLeavesAreStillReachable() {
+    func display(_ preset: ShortcutPreset, _ id: CommandID) -> String? {
+        ShortcutConfiguration(preset: preset).bindings[id]?.display
+    }
+    #expect(display(.zen, .newSpace) == "⌃⌘N")
+    #expect(display(.safari, .newSpace) == "⌃⌘N")
+    #expect(display(.safari, .previousSpace) == "⌃⌘←")
+    #expect(display(.safari, .nextSpace) == "⌃⌘→")
+    #expect(display(.arc, .newSpace) == "⌃⌘N")
+    #expect(display(.arc, .previousSpace) == "⌥⌘←")
+    #expect(display(.arc, .nextSpace) == "⌥⌘→")
+}
+
+@Test func aFallbackNeverTakesAKeyThePresetAlreadyUses() throws {
+    let json = #"{"preset":"zen","name":"Zen","source":"https://example.org","checked":"2026-11-04","bindings":{"reload":{"shortcut":"command+control+option+left","from":"x"}},"unbound":{"previousProfile":"no Profile command","nextProfile":"no Profile command"}}"#
+    let bindings = ShortcutConfiguration.bindings(of: try PresetData.decode(Data(json.utf8)))
+    #expect(bindings[.reload]?.display == "⌃⌥⌘←")
+    #expect(bindings[.previousProfile] == nil)
+    #expect(bindings[.nextProfile]?.display == "⌃⌥⌘→")
 }
 
 @Test func aMalformedPresetFileIsRejected() {

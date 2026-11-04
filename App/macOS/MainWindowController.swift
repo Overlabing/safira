@@ -13,8 +13,10 @@ import SwiftUI
 /// there is no page.
 @MainActor
 final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFieldDelegate, NSMenuItemValidation {
-    private let session: ProfileSession
-    private let webContext: ProfileWebContext
+    private let registry: ProfileRegistry
+    /// The Active profile's session: every Tab, Space and Command bar action reaches this Profile only.
+    private var session: ProfileSession { registry.active.session }
+    private var webContext: ProfileWebContext { registry.active.web }
     private let commandBar = NSTextField()
     private let backButton = MainWindowController.toolbarButton(symbol: "chevron.left", label: "Back",
                                                                action: #selector(goBack(_:)))
@@ -29,11 +31,11 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
     private var presentation: SidebarPresentation
     private var searchEngineSheet: NSWindow?
     private var spaceSheet: NSWindow?
+    private var profileSheet: NSWindow?
     private var renderedTabID: TabID?
 
-    init(session: ProfileSession, webContext: ProfileWebContext, shortcuts: ShortcutController) {
-        self.session = session
-        self.webContext = webContext
+    init(registry: ProfileRegistry, shortcuts: ShortcutController) {
+        self.registry = registry
         presentation = compactModeStore.load()
         let window = MainWindow(
             contentRect: NSRect(x: 0, y: 0, width: 1200, height: 800),
@@ -147,6 +149,29 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         session.moveSpace(session.activeSpaceID, by: 1)
     }
 
+    // MARK: Profile actions
+
+    /// Opens the Profile editor for a new Profile; it is created only when the user confirms with a search engine.
+    @objc func newProfile(_ sender: Any?) {
+        editProfile(nil)
+    }
+
+    @objc func renameProfile(_ sender: Any?) {
+        editProfile(registry.activeProfileID)
+    }
+
+    @objc func deleteProfile(_ sender: Any?) {
+        confirmDeletion(ofProfile: registry.activeProfileID)
+    }
+
+    @objc func showPreviousProfile(_ sender: Any?) {
+        switchProfile { $0.selectProfile(offset: -1) }
+    }
+
+    @objc func showNextProfile(_ sender: Any?) {
+        switchProfile { $0.selectProfile(offset: 1) }
+    }
+
     @objc func moveTabUp(_ sender: Any?) {
         session.selectedTabID.map { session.move($0, by: -1) }
     }
@@ -177,11 +202,11 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
 
     /// These change the Profile's settings: pages created from now on follow them, open pages keep theirs.
     @objc func toggleFraudulentSiteWarning(_ sender: Any?) {
-        webContext.webContentSettings.isFraudulentSiteWarningEnabled.toggle()
+        registry.active.webContentSettings.isFraudulentSiteWarningEnabled.toggle()
     }
 
     @objc func toggleAutoplayingSound(_ sender: Any?) {
-        webContext.webContentSettings.isAutoplayingSoundAllowed.toggle()
+        registry.active.webContentSettings.isAutoplayingSoundAllowed.toggle()
     }
 
     func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
@@ -196,6 +221,8 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         case #selector(reload(_:)): return tab?.address != nil
         case #selector(showNextTab(_:)), #selector(showPreviousTab(_:)): return session.tabs.count > 1
         case #selector(deleteSpace(_:)): return session.canDeleteSpace
+        case #selector(deleteProfile(_:)): return registry.canDeleteProfile
+        case #selector(showNextProfile(_:)), #selector(showPreviousProfile(_:)): return registry.profiles.count > 1
         case #selector(showNextSpace(_:)), #selector(showPreviousSpace(_:)): return session.spaces.count > 1
         case #selector(moveSpaceLeft(_:)): return session.spaces.first?.id != session.activeSpaceID
         case #selector(moveSpaceRight(_:)): return session.spaces.last?.id != session.activeSpaceID
@@ -206,10 +233,10 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
             menuItem.title = presentation.isRevealed ? String(localized: "Hide Sidebar") : String(localized: "Show Sidebar")
             return presentation.isCompact
         case #selector(toggleFraudulentSiteWarning(_:)):
-            menuItem.state = webContext.webContentSettings.isFraudulentSiteWarningEnabled ? .on : .off
+            menuItem.state = registry.active.webContentSettings.isFraudulentSiteWarningEnabled ? .on : .off
             return true
         case #selector(toggleAutoplayingSound(_:)):
-            menuItem.state = webContext.webContentSettings.isAutoplayingSoundAllowed ? .on : .off
+            menuItem.state = registry.active.webContentSettings.isAutoplayingSoundAllowed ? .on : .off
             return true
         default: return true
         }
@@ -319,6 +346,96 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         }
     }
 
+    // MARK: Profiles
+
+    private static let newProfileSymbols = ["💼", "🏡", "🎓", "🧪", "🎨", "🌍", "⭐️", "🛠️"]
+
+    /// Shows another Profile; the keyboard focus goes to its page, or to the Command bar when it has none.
+    private func switchProfile(_ change: (ProfileRegistry) -> Void) {
+        let before = registry.activeProfileID
+        change(registry)
+        guard registry.activeProfileID != before else { return }
+        session.dismissCommandBar()
+        render()
+        announce(String(localized: "Profile: \(registry.activeProfile.name)"))
+        if !showPage() { focusCommandBar(nil) }
+    }
+
+    /// A new Profile when `id` is nil, otherwise that Profile.
+    private func editProfile(_ id: ProfileID?) {
+        guard let window, profileSheet == nil else { return }
+        let profile = id.flatMap { id in registry.profiles.first { $0.id == id } }
+        if id != nil, profile == nil { return }
+        let count = registry.profiles.count
+        let editor = ProfileEditor(
+            title: profile == nil ? String(localized: "New Profile") : String(localized: "Rename Profile"),
+            confirmTitle: profile == nil ? String(localized: "Create") : String(localized: "Rename"),
+            name: profile?.name ?? String(localized: "Profile \(count + 1)"),
+            symbol: profile?.symbol ?? Self.newProfileSymbols[count % Self.newProfileSymbols.count],
+            asksForSearchEngine: profile == nil,
+            save: { [weak self] name, symbol, engine in
+                guard let self else { return }
+                if let id {
+                    registry.renameProfile(id, name: name, symbol: symbol)
+                } else if let engine {
+                    endProfileSheet()
+                    switchProfile { $0.createProfile(name: name, symbol: symbol, searchEngine: engine) }
+                    return
+                }
+                endProfileSheet()
+            },
+            cancel: { [weak self] in self?.endProfileSheet() }
+        )
+        let sheet = NSWindow(contentViewController: NSHostingController(rootView: editor))
+        profileSheet = sheet
+        window.beginSheet(sheet)
+    }
+
+    private func endProfileSheet() {
+        guard let sheet = profileSheet else { return }
+        window?.endSheet(sheet)
+        profileSheet = nil
+    }
+
+    /// Deleting a Profile erases everything it holds with no way back, so the confirmation names it. The last Profile
+    /// cannot be deleted.
+    private func confirmDeletion(ofProfile id: ProfileID) {
+        guard let window, registry.canDeleteProfile, let profile = registry.profiles.first(where: { $0.id == id })
+        else { return }
+        let alert = NSAlert()
+        alert.alertStyle = .critical
+        alert.messageText = String(localized: "Delete the Profile “\(profile.name)”?")
+        alert.informativeText = String(localized: """
+            Everything “\(profile.name)” holds is erased: its logins, cookies and website data, its history, its \
+            Spaces and Tabs, and its settings. This cannot be undone.
+            """)
+        alert.addButton(withTitle: String(localized: "Delete “\(profile.name)”")).hasDestructiveAction = true
+        alert.addButton(withTitle: String(localized: "Cancel")).keyEquivalent = "\u{1b}"
+        alert.beginSheetModal(for: window) { [weak self] response in
+            guard response == .alertFirstButtonReturn, let self else { return }
+            Task { @MainActor in
+                let wasActive = self.registry.activeProfileID == id
+                do {
+                    try await self.registry.deleteProfile(id)
+                } catch {
+                    self.showDeletionError(error)
+                }
+                if wasActive {
+                    self.announce(String(localized: "Profile: \(self.registry.activeProfile.name)"))
+                    if !self.showPage() { self.focusCommandBar(nil) }
+                }
+            }
+        }
+    }
+
+    private func showDeletionError(_ error: any Error) {
+        guard let window else { return }
+        let alert = NSAlert()
+        alert.messageText = String(localized: "Some of the Profile’s website data could not be erased yet")
+        alert.informativeText = String(localized: "Safira erases it the next time it opens.")
+        alert.beginSheetModal(for: window)
+    }
+
     /// Return or Escape in the Tab list. With no page to go to, a revealed sidebar that is hiding must not keep the
     /// keyboard focus, so the Command bar takes it.
     private func leaveSidebar() {
@@ -403,10 +520,12 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         guard let window else { return }
         switch (query, searchEngineSheet) {
         case (let query?, nil):
+            // The engine goes to the Profile the search was typed in, even if another one is shown by then.
+            let session = session
             let picker = SearchEnginePicker(
                 query: query,
-                choose: { [weak self] engine in self?.session.chooseSearchEngine(engine) },
-                cancel: { [weak self] in self?.session.cancelSearchEngineChoice() }
+                choose: { [weak session] engine in session?.chooseSearchEngine(engine) },
+                cancel: { [weak session] in session?.cancelSearchEngineChoice() }
             )
             let sheet = NSWindow(contentViewController: NSHostingController(rootView: picker))
             searchEngineSheet = sheet
@@ -451,7 +570,13 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
             edit: { [weak self] id in self?.editSpace(id) },
             delete: { [weak self] id in self?.confirmDeletion(of: id) }
         )
-        let sidebar = NSHostingController(rootView: TabSidebar(session: session, spaceActions: spaceActions) { [weak self] in
+        let profileActions = ProfileActions(
+            select: { [weak self] id in self?.switchProfile { $0.selectProfile(id) } },
+            edit: { [weak self] id in self?.editProfile(id) },
+            delete: { [weak self] id in self?.confirmDeletion(ofProfile: id) }
+        )
+        let sidebar = NSHostingController(rootView: TabSidebar(registry: registry, profileActions: profileActions,
+                                                               spaceActions: spaceActions) { [weak self] in
             self?.leaveSidebar()
         })
         self.sidebar = sidebar

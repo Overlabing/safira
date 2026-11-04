@@ -68,6 +68,14 @@ enum MainMenu {
             item(.moveSpaceLeft, #selector(MainWindowController.moveSpaceLeft(_:))),
             item(.moveSpaceRight, #selector(MainWindowController.moveSpaceRight(_:))),
         ]))
+        menu.addItem(submenu(title: "Profiles", items: [
+            item(.newProfile, #selector(MainWindowController.newProfile(_:))),
+            item(.renameProfile, #selector(MainWindowController.renameProfile(_:))),
+            item(.deleteProfile, #selector(MainWindowController.deleteProfile(_:))),
+            .separator(),
+            item(.previousProfile, #selector(MainWindowController.showPreviousProfile(_:))),
+            item(.nextProfile, #selector(MainWindowController.showNextProfile(_:))),
+        ]))
         let window = submenu(title: "Window", items: [
             NSMenuItem(title: "Minimize", action: #selector(NSWindow.performMiniaturize(_:)), keyEquivalent: "m"),
             NSMenuItem(title: "Zoom", action: #selector(NSWindow.performZoom(_:)), keyEquivalent: ""),

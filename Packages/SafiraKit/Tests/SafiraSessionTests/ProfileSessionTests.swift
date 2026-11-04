@@ -56,7 +56,7 @@ import Testing
         fixture.session.chooseSearchEngine(.duckDuckGo)
 
         #expect(fixture.session.searchAwaitingEngine == nil)
-        #expect(fixture.session.profile.searchEngine == .duckDuckGo)
+        #expect(fixture.session.settings.searchEngine == .duckDuckGo)
         #expect(fixture.addresses == ["https://duckduckgo.com/?q=swift%20testing"])
     }
 
@@ -78,7 +78,7 @@ import Testing
         fixture.session.cancelSearchEngineChoice()
 
         #expect(fixture.session.searchAwaitingEngine == nil)
-        #expect(fixture.session.profile.searchEngine == nil)
+        #expect(fixture.session.settings.searchEngine == nil)
         #expect(fixture.session.tabs.isEmpty)
     }
 }

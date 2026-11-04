@@ -51,7 +51,58 @@ public final class ProfileDatabase: Sendable {
         try await queue.write { db in try Self.write(session, db) }
     }
 
+    /// The Profile's own settings. A setting never saved reads as its default; an engine this build does not know reads
+    /// as none, so the user is asked again.
+    public func settings() throws -> ProfileSettings {
+        try queue.read { db in
+            let values = try Dictionary(uniqueKeysWithValues: Row.fetchAll(db, sql: "SELECT key, value FROM profile_setting")
+                .map { ($0["key"] as String, $0["value"] as String) })
+            let defaults = WebContentSettings()
+            return ProfileSettings(
+                searchEngine: values[SettingKey.searchEngine].flatMap(SearchEngine.init(rawValue:)),
+                webContent: WebContentSettings(
+                    isFraudulentSiteWarningEnabled: values[SettingKey.fraudulentSiteWarning].map { $0 == "1" }
+                        ?? defaults.isFraudulentSiteWarningEnabled,
+                    isAutoplayingSoundAllowed: values[SettingKey.autoplayingSound].map { $0 == "1" }
+                        ?? defaults.isAutoplayingSoundAllowed
+                )
+            )
+        }
+    }
+
+    public func save(_ settings: ProfileSettings) throws {
+        try queue.write { db in try Self.write(settings, db) }
+    }
+
+    /// Saves what changed of the Tabs and the settings in one transaction.
+    public func save(_ session: SavedSession?, _ settings: ProfileSettings?) async throws {
+        try await queue.write { db in
+            if let session { try Self.write(session, db) }
+            if let settings { try Self.write(settings, db) }
+        }
+    }
+
     private static let activeSpaceKey = "active_space_id"
+
+    private enum SettingKey {
+        static let searchEngine = "search_engine"
+        static let fraudulentSiteWarning = "web.fraudulent_site_warning"
+        static let autoplayingSound = "web.autoplaying_sound"
+    }
+
+    private static func write(_ settings: ProfileSettings, _ db: Database) throws {
+        if let engine = settings.searchEngine {
+            try db.execute(sql: "INSERT OR REPLACE INTO profile_setting (key, value) VALUES (?, ?)",
+                           arguments: [SettingKey.searchEngine, engine.rawValue])
+        } else {
+            try db.execute(sql: "DELETE FROM profile_setting WHERE key = ?", arguments: [SettingKey.searchEngine])
+        }
+        for (key, value) in [(SettingKey.fraudulentSiteWarning, settings.webContent.isFraudulentSiteWarningEnabled),
+                             (SettingKey.autoplayingSound, settings.webContent.isAutoplayingSoundAllowed)] {
+            try db.execute(sql: "INSERT OR REPLACE INTO profile_setting (key, value) VALUES (?, ?)",
+                           arguments: [key, value ? "1" : "0"])
+        }
+    }
 
     private static func tabs(of space: String, _ db: Database) throws -> [TabRecord] {
         try Row.fetchAll(db, sql: """

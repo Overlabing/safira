@@ -19,7 +19,6 @@ func eachEngineGetsTheWholeQueryEncoded(engine: SearchEngine, expected: String) 
     #expect(engine.searchURL(for: "c++ & rust=?").absoluteString == expected)
 }
 
-@Test func aNewProfileHasNoSearchEngine() throws {
-    let id = try #require(ProfileID(uuidString: "6F9619FF-8B86-D011-B42D-00C04FC964FF"))
-    #expect(Profile(id: id, name: "Personal").searchEngine == nil)
+@Test func aProfileStartsWithNoSearchEngine() {
+    #expect(ProfileSettings().searchEngine == nil)
 }

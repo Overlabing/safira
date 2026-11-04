@@ -3,18 +3,25 @@
 
 import SafiraCore
 import SafiraSession
+import SafiraWeb
 import SwiftUI
 
-/// The sidebar: the active Space's name, the list of its Tabs, and the row of Spaces at the bottom. In the list, arrow
+/// The sidebar: the Active profile at the top, the active Space's name, the list of its Tabs, and the row of Spaces at
+/// the bottom. In the list, arrow
 /// keys move the selection, which shows the Tab; Delete closes it; Return or Escape goes to its page; rows can be
 /// dragged to reorder.
 struct TabSidebar: View {
-    let session: ProfileSession
+    let registry: ProfileRegistry
+    let profileActions: ProfileActions
     let spaceActions: SpaceActions
     let showPage: () -> Void
 
+    private var session: ProfileSession { registry.active.session }
+
     var body: some View {
         VStack(spacing: 0) {
+            ProfileSwitcher(registry: registry, actions: profileActions)
+            Divider()
             Text(verbatim: "\(session.activeSpace.emoji) \(session.activeSpace.name)")
                 .font(.headline)
                 .lineLimit(1)
