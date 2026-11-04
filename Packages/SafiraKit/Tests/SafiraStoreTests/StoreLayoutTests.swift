@@ -33,4 +33,5 @@ import Testing
     let layout = StoreLayout(root: URL(filePath: "/tmp/safira-support/", directoryHint: .isDirectory))
 
     #expect(layout.linkChoiceLogFile.path(percentEncoded: false) == "/tmp/safira-support/link-choices.jsonl")
+    #expect(layout.linkRulesFile.path(percentEncoded: false) == "/tmp/safira-support/link-rules.json")
 }

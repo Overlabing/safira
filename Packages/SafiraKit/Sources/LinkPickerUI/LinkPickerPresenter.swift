@@ -28,33 +28,65 @@ final class LinkPickerPanel: NSPanel {
 /// question is open, and a second link waits for the first answer.
 @MainActor
 public final class LinkPickerPresenter: ProfileChoosing {
-    private var session: Session?
+    private var session: AnySession?
 
     public init() {}
 
     public func chooseProfile(for link: IncomingLink, among profiles: [Profile]) async -> ProfileID? {
         guard !profiles.isEmpty else { return nil }
-        return await withCheckedContinuation { continuation in
-            session = Session(link: link, profiles: profiles) { [weak self] choice in
+        let announcement = Self.announcement(for: link, rowCount: profiles.count) {
+            String(localized: "Choose a Profile for the link to \($0)")
+        }
+        return await ask(LinkPickerModel(link: link, profiles: profiles), wording: .profile, announcement: announcement)
+    }
+
+    public func chooseSpace(for link: IncomingLink, in profile: Profile, among spaces: [SpaceChoice]) async -> SpaceID? {
+        guard !spaces.isEmpty else { return nil }
+        let announcement = Self.announcement(for: link, rowCount: spaces.count) {
+            String(localized: "Choose a Space of \(profile.name) for the link to \($0)")
+        }
+        return await ask(LinkPickerModel(link: link, spaces: spaces), wording: .space, announcement: announcement)
+    }
+
+    private func ask<ID: Hashable & Sendable>(_ model: LinkPickerModel<ID>, wording: LinkPickerWording,
+                                              announcement: String) async -> ID? {
+        await withCheckedContinuation { continuation in
+            let open = Session(model: model, wording: wording, announcement: announcement) { [weak self] choice in
                 self?.session = nil
                 continuation.resume(returning: choice)
             }
+            session = AnySession(open)
+        }
+    }
+
+    private static func announcement(for link: IncomingLink, rowCount: Int, question: (String) -> String) -> String {
+        let from = link.opener?.name.map { String(localized: ", from \($0)") } ?? ""
+        return question(link.title) + from + String(localized: ". Press a number from 1 to \(min(rowCount, 9)), or use the arrow keys and Return. Escape dismisses it.")
+    }
+
+    /// Keeps the open question alive without naming its choice type.
+    private struct AnySession {
+        let keepAlive: AnyObject
+
+        init(_ session: AnyObject) {
+            keepAlive = session
         }
     }
 
     /// One open question: its model, its panel, and the single answer that closes it.
     @MainActor
-    private final class Session {
-        private let model: LinkPickerModel
+    private final class Session<ID: Hashable & Sendable> {
+        private let model: LinkPickerModel<ID>
         private let panel: LinkPickerPanel
-        private let finished: (ProfileID?) -> Void
+        private let finished: (ID?) -> Void
         private var isDone = false
 
-        init(link: IncomingLink, profiles: [Profile], finished: @escaping (ProfileID?) -> Void) {
-            model = LinkPickerModel(link: link, profiles: profiles)
+        init(model: LinkPickerModel<ID>, wording: LinkPickerWording, announcement: String,
+             finished: @escaping (ID?) -> Void) {
+            self.model = model
             self.finished = finished
             let screen = Self.screenForPanel()
-            let layout = LinkPickerLayout(closedSize: Self.closedSize(of: screen), rowCount: profiles.count)
+            let layout = LinkPickerLayout(closedSize: Self.closedSize(of: screen), rowCount: model.rows.count)
             // A fixed transparent canvas; only the notch shape inside it animates.
             let size = NSSize(width: layout.openSize.width + 80, height: layout.openSize.height + 60)
             panel = LinkPickerPanel(contentRect: NSRect(origin: .zero, size: size),
@@ -68,7 +100,7 @@ public final class LinkPickerPresenter: ProfileChoosing {
             panel.collectionBehavior = [.fullScreenAuxiliary, .stationary, .canJoinAllSpaces, .ignoresCycle]
             panel.setAccessibilityLabel(String(localized: "Link picker"))
             panel.contentView = NSHostingView(rootView: LinkPickerView(
-                model: model, layout: layout,
+                model: model, layout: layout, wording: wording,
                 choose: { [weak self] id in self?.apply(self?.model.choose(id) ?? .none) },
                 dismiss: { [weak self] in self?.apply(.cancelled) }))
             panel.setFrame(NSRect(x: screen.frame.midX - size.width / 2, y: screen.frame.maxY - size.height,
@@ -76,7 +108,6 @@ public final class LinkPickerPresenter: ProfileChoosing {
             panel.onKey = { [weak self] event in self?.handle(event) ?? false }
 
             panel.makeKeyAndOrderFront(nil)
-            let announcement = Self.announcement(for: link, rowCount: profiles.count)
             DispatchQueue.main.async { [weak self] in
                 self?.model.isOpen = true
                 Self.announce(announcement)
@@ -97,7 +128,7 @@ public final class LinkPickerPresenter: ProfileChoosing {
             return true
         }
 
-        private func apply(_ outcome: LinkPickerOutcome) {
+        private func apply(_ outcome: LinkPickerOutcome<ID>) {
             switch outcome {
             case .none: break
             case .chose(let id): finish(id)
@@ -105,7 +136,7 @@ public final class LinkPickerPresenter: ProfileChoosing {
             }
         }
 
-        private func finish(_ choice: ProfileID?) {
+        private func finish(_ choice: ID?) {
             guard !isDone else { return }
             isDone = true
             model.isOpen = false  // let it fold back into the notch before the link opens
@@ -141,11 +172,6 @@ public final class LinkPickerPresenter: ProfileChoosing {
                 return CGSize(width: screen.frame.width - left.width - right.width + 12, height: screen.safeAreaInsets.top)
             }
             return CGSize(width: 190, height: menuBar > 0 ? menuBar : 24)
-        }
-
-        private static func announcement(for link: IncomingLink, rowCount: Int) -> String {
-            let from = link.opener?.name.map { String(localized: ", from \($0)") } ?? ""
-            return String(localized: "Choose a Profile for the link to \(link.title)\(from). Press a number from 1 to \(min(rowCount, 9)), or use the arrow keys and Return. Escape dismisses it.")
         }
 
         private static func announce(_ message: String) {

@@ -5,6 +5,7 @@ import Diagnostics
 import Foundation
 import Observation
 import SafiraCore
+import SafiraSession
 import SafiraStore
 
 /// The Profiles of the app, in sidebar order, and the Active profile. It alone creates and deletes Profile owners. A
@@ -100,14 +101,24 @@ public final class ProfileRegistry {
         selectProfile(profiles[((index + offset) % count + count) % count].id)
     }
 
-    /// Opens a link from another app as a new Tab in the Profile's last active Space and shows that Profile. The Tab
-    /// is made by the Profile's own owner, so the link reaches that Profile's logins and nothing else. False when the
-    /// Profile does not exist.
+    /// The Spaces of a Profile, in sidebar order; empty for a Profile that does not exist. This creates the Profile's
+    /// owner if it has none yet, without showing the Profile.
+    public func spaces(in id: ProfileID) -> [Space] {
+        guard profiles.contains(where: { $0.id == id }) else { return [] }
+        return context(for: id).session.spaces
+    }
+
+    /// Opens a link from another app as a new Tab in a Space of the Profile, or in its last active Space when `space`
+    /// is nil, and shows that Profile. The Tab is made by the Profile's own owner, so the link reaches that Profile's
+    /// logins and nothing else. False, and nothing changes, when the Profile does not exist or has no such Space.
     @discardableResult
-    public func openExternalLink(_ url: URL, in id: ProfileID) -> Bool {
+    public func openExternalLink(_ url: URL, in id: ProfileID, space: SpaceID? = nil) -> Bool {
         guard profiles.contains(where: { $0.id == id }) else { return false }
+        if let space, !context(for: id).session.spaces.contains(where: { $0.id == space }) { return false }
         selectProfile(id)
-        active.session.openExternalLink(url)
+        let session = active.session
+        if let space { session.selectSpace(space) }
+        session.openExternalLink(url)
         return true
     }
 

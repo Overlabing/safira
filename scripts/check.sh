@@ -67,7 +67,7 @@ signed_and_sandboxed() {
     signature=$(codesign -dv "$app" 2>&1)
     echo "$signature" | grep -q 'flags=.*runtime' || { echo "hardened runtime missing"; return 1; }
     entitlements=$(codesign -d --entitlements - --xml "$app" 2>/dev/null)
-    for key in com.apple.security.app-sandbox com.apple.security.network.client; do
+    for key in com.apple.security.app-sandbox com.apple.security.network.client com.apple.security.files.bookmarks.app-scope; do
         echo "$entitlements" | grep -q "<key>$key</key><true/>" || { echo "$key missing"; return 1; }
     done
 }
