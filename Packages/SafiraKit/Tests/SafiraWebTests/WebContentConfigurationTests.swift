@@ -21,7 +21,7 @@ import WebKit
 
             page.close()
         }
-        try await removeDataStoreWhenReleased(profile)
+        await removeDataStoreWhenReleased(profile)
     }
 
     @Test func changedSettingsReachNewPagesAndLeaveOpenPagesAlone() async throws {
@@ -43,7 +43,7 @@ import WebKit
             before.close()
             after.close()
         }
-        try await removeDataStoreWhenReleased(profile)
+        await removeDataStoreWhenReleased(profile)
     }
 
     @Test func eachProfileAppliesItsOwnSettings() async throws {
@@ -63,7 +63,7 @@ import WebKit
             strictPage.close()
             loosePage.close()
         }
-        try await removeDataStoreWhenReleased(strict)
-        try await removeDataStoreWhenReleased(loose)
+        await removeDataStoreWhenReleased(strict)
+        await removeDataStoreWhenReleased(loose)
     }
 }

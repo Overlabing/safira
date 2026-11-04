@@ -67,7 +67,7 @@ private final class NavigationCounter: NSObject, WKNavigationDelegate {
             }
             pages.forEach { $0.page.close() }
         }
-        try await removeDataStoreWhenReleased(profile)
+        await removeDataStoreWhenReleased(profile)
     }
 
     @Test func aTabPageUsesItsProfileDataStoreAndLeavesTheRegistryWhenClosed() async throws {
@@ -85,6 +85,6 @@ private final class NavigationCounter: NSObject, WKNavigationDelegate {
 
             #expect(context.webView(for: tab) == nil)
         }
-        try await removeDataStoreWhenReleased(profile)
+        await removeDataStoreWhenReleased(profile)
     }
 }

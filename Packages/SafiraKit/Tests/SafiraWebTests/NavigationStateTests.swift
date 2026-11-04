@@ -111,7 +111,7 @@ private final class PageServer: @unchecked Sendable {
             #expect(relaunched.selectedTab?.state.canGoBack == true)
             close(relaunched)
         }
-        try await removeDataStoreWhenReleased(profile)
+        await removeDataStoreWhenReleased(profile)
     }
 
     @Test func aPageWithAPasswordFieldIsSavedByItsAddressOnly() async throws {
@@ -126,7 +126,7 @@ private final class PageServer: @unchecked Sendable {
                                                        address: server.url("/login"), title: "Login"))
             close(session)
         }
-        try await removeDataStoreWhenReleased(profile)
+        await removeDataStoreWhenReleased(profile)
     }
 
     @Test func aPasswordFieldAddedAfterTheLoadOrInAFrameCounts() async throws {
@@ -144,7 +144,7 @@ private final class PageServer: @unchecked Sendable {
             }
             close(session)
         }
-        try await removeDataStoreWhenReleased(profile)
+        await removeDataStoreWhenReleased(profile)
     }
 
     @Test func aPageReachedByAPostIsSavedByItsAddressOnlyWhileItIsInTheHistory() async throws {
@@ -168,7 +168,7 @@ private final class PageServer: @unchecked Sendable {
             #expect(try savedTab(session).navigationState == nil)
             close(session)
         }
-        try await removeDataStoreWhenReleased(profile)
+        await removeDataStoreWhenReleased(profile)
     }
 
     @Test func aStateWebKitCannotReadFallsBackToTheLastAddress() async throws {
@@ -187,6 +187,6 @@ private final class PageServer: @unchecked Sendable {
             #expect(webView.backForwardList.backList.isEmpty)
             close(session)
         }
-        try await removeDataStoreWhenReleased(profile)
+        await removeDataStoreWhenReleased(profile)
     }
 }

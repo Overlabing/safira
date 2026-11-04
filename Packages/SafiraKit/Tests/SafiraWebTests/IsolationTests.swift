@@ -23,7 +23,7 @@ import WebKit
             #expect(workContext.makeConfiguration().websiteDataStore === workContext.dataStore)
         }
 
-        try await ProfileWebContext.removeDataStore(of: work)
-        try await ProfileWebContext.removeDataStore(of: personal)
+        await removeDataStoreWhenReleased(work)
+        await removeDataStoreWhenReleased(personal)
     }
 }

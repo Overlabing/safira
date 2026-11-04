@@ -6,17 +6,23 @@ import SafiraCore
 import SafiraWeb
 import Testing
 
-/// WebKit refuses to remove a data store while a released web view's process still holds it; that takes a moment.
+/// Removes a Profile's data store once its web views are released, for every real-WebKit suite.
+/// WebKit refuses while a released web view's process still holds the store, so this retries for about 10 seconds.
+/// Cleanup is not what a test proves: a store that still cannot be removed is recorded as a warning, never a failure.
 @MainActor
-func removeDataStoreWhenReleased(_ profile: ProfileID) async throws {
-    for _ in 1..<50 {
+func removeDataStoreWhenReleased(_ profile: ProfileID) async {
+    var lastError: (any Error)?
+    for _ in 0..<100 {
         do {
-            return try await ProfileWebContext.removeDataStore(of: profile)
+            try await ProfileWebContext.removeDataStore(of: profile)
+            return
         } catch {
-            try await Task.sleep(for: .milliseconds(100))
+            lastError = error
+            try? await Task.sleep(for: .milliseconds(100))
         }
     }
-    try await ProfileWebContext.removeDataStore(of: profile)
+    Issue.record("could not remove the data store of \(profile.rawValue): \(String(describing: lastError))",
+                 severity: .warning)
 }
 
 /// Waits for a condition that WebKit makes true asynchronously, and records an issue when it never does.
