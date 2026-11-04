@@ -278,4 +278,26 @@ private final class TemporaryRoot {
         try await waitUntil("some bytes arrive") { (context.downloads.all.first?.receivedBytes ?? 0) >= 10_000 }
         return context.downloads
     }
+
+    @Test func aPrivateWindowListsItsDownloadsInMemoryAndTheProfileDatabaseNeverHearsOfThem() async throws {
+        let server = try await DownloadServer.start()
+        defer { server.stop() }
+        let root = TemporaryRoot()
+        try await run(root) { registry in
+            let profile = registry.activeProfileID
+            let privateWindow = try #require(registry.makePrivateContext(attachedTo: profile))
+            privateWindow.web.downloadsDirectory = root.downloads
+
+            privateWindow.session.submitCommandBar(server.url("/small.bin").absoluteString)
+            try await waitUntil("the download is saved") {
+                !privateWindow.web.downloads.all.isEmpty && !privateWindow.web.downloads.hasActiveDownload
+            }
+            await registry.saveAll()
+
+            #expect(privateWindow.web.downloads.all.map(\.fileName) == ["small.bin"])
+            #expect(registry.active.downloads.all == [])
+            #expect(try ProfileDatabase(file: root.layout.profileDatabaseFile(for: profile)).downloads() == [])
+            await privateWindow.close()
+        }
+    }
 }

@@ -42,6 +42,10 @@ public final class ProfileWebContext {
         self.dataStore = WKWebsiteDataStore(forIdentifier: profileID.rawValue)
         isPrivate = false
         pageEvents.context = self
+        installDownloadController()
+    }
+
+    private func installDownloadController() {
         downloadController = DownloadController(downloads: downloads) { [unowned self] in
             // Only the data store matters to a download: no script, no page.
             let configuration = WKWebViewConfiguration()
@@ -69,9 +73,12 @@ public final class ProfileWebContext {
         self.profileID = profileID
         self.webContentSettings = webContentSettings
         permissions = SitePermissions()
+        // No database: what a Private window downloads is listed for this run only, never in the Profile's database.
+        downloads = ProfileDownloads()
         dataStore = WKWebsiteDataStore.nonPersistent()
         isPrivate = true
         pageEvents.context = self
+        installDownloadController()
     }
 
     /// Empties the data store of a Private window now, without waiting for WebKit to release it.
