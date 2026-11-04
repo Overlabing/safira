@@ -39,11 +39,17 @@ struct ProfileSwitcher: View {
             Divider()
             Button("Clear History and Website Data…") { actions.clearBrowsingData(registry.activeProfileID) }
         } label: {
-            Text(verbatim: "\(registry.activeProfile.symbol) \(registry.activeProfile.name)")
-                .font(.headline)
-                .lineLimit(1)
+            HStack(spacing: 4) {
+                Text(verbatim: "\(registry.activeProfile.symbol) \(registry.activeProfile.name)")
+                    .font(.headline)
+                    .lineLimit(1)
+                Image(systemName: "chevron.down")
+                    .font(.caption2.weight(.semibold))
+                    .accessibilityHidden(true)
+            }
         }
-        .menuStyle(.borderlessButton)
+        .menuStyle(.button)
+        .buttonStyle(.plain)
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 12)
         .padding(.vertical, 8)

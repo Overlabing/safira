@@ -65,8 +65,9 @@ struct ProfileBand: ViewModifier {
         let appearance = ColorCore.Appearance(isDark: scheme == .dark, isIncreasedContrast: contrast == .increased)
         let band = SidebarSurfaces.profileBandColor(of: theme, in: appearance)
         let ink = SidebarSurfaces.profileBandInk(of: theme, in: appearance)
+        let inkColor = Color(.sRGB, red: ink.red, green: ink.green, blue: ink.blue)
         content
-            .foregroundStyle(Color(.sRGB, red: ink.red, green: ink.green, blue: ink.blue))
+            .foregroundStyle(inkColor)
             .background(Color(.sRGB, red: band.red, green: band.green, blue: band.blue))
     }
 }
