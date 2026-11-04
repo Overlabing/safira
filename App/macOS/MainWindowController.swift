@@ -23,11 +23,15 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
                                                                  action: #selector(reload(_:)))
     private let pageArea = TabHostView()
     private var sidebar: NSViewController?
+    private var layout: SidebarLayoutViewController?
+    private let compactModeStore = CompactModeStore()
+    private var presentation: SidebarPresentation
     private var searchEngineSheet: NSWindow?
 
     init(session: ProfileSession, webContext: ProfileWebContext) {
         self.session = session
         self.webContext = webContext
+        presentation = compactModeStore.load()
         let window = MainWindow(
             contentRect: NSRect(x: 0, y: 0, width: 1200, height: 800),
             styleMask: [.titled, .closable, .miniaturizable, .resizable],
@@ -40,6 +44,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         super.init(window: window)
         window.delegate = self
         layOut(in: window)
+        layout?.apply(presentation, animated: false)
         window.center()
         observeSession()
     }
@@ -75,10 +80,36 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         commandBar.currentEditor()?.selectAll(nil)
     }
 
-    /// Moves the keyboard focus to the list of Tabs, where the arrow keys select a Tab.
+    /// Moves the keyboard focus to the list of Tabs, where the arrow keys select a Tab. In Compact mode it shows the
+    /// sidebar first.
     @objc func focusTabList(_ sender: Any?) {
+        if presentation.isCompact, !presentation.isRevealed {
+            presentation.reveal()
+            layout?.apply(presentation, animated: true)
+        }
         guard let list = sidebar.flatMap({ Self.firstTableView(in: $0.view) }) else { return }
         window?.makeFirstResponder(list)
+    }
+
+    /// Compact mode hides the sidebar and gives the page the full width; the choice is kept across launches.
+    @objc func toggleCompactMode(_ sender: Any?) {
+        let hadFocus = layout?.sidebarHasFocus == true
+        presentation.toggleCompact()
+        compactModeStore.save(presentation)
+        layout?.apply(presentation, animated: true)
+        announce(presentation.isCompact ? String(localized: "Compact mode on, sidebar hidden")
+                                        : String(localized: "Compact mode off, sidebar shown"))
+        if hadFocus {
+            if presentation.isCompact, !showPage() { window?.makeFirstResponder(commandBar) }
+            else if !presentation.isCompact { focusTabList(nil) }
+        }
+    }
+
+    /// Not named `toggleSidebar(_:)`: the split view controller answers that selector itself and would disable the item.
+    /// In Compact mode, shows the sidebar over the page with the keyboard focus on its list, or hides it again.
+    @objc func toggleRevealedSidebar(_ sender: Any?) {
+        presentation.toggleRevealed()
+        applyReveal()
     }
 
     @objc func moveTabUp(_ sender: Any?) {
@@ -129,6 +160,12 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         case #selector(goForward(_:)): return tab?.state.canGoForward == true
         case #selector(reload(_:)): return tab?.address != nil
         case #selector(showNextTab(_:)), #selector(showPreviousTab(_:)): return session.tabs.count > 1
+        case #selector(toggleCompactMode(_:)):
+            menuItem.state = presentation.isCompact ? .on : .off
+            return true
+        case #selector(toggleRevealedSidebar(_:)):
+            menuItem.title = presentation.isRevealed ? String(localized: "Hide Sidebar") : String(localized: "Show Sidebar")
+            return presentation.isCompact
         case #selector(toggleFraudulentSiteWarning(_:)):
             menuItem.state = webContext.webContentSettings.isFraudulentSiteWarningEnabled ? .on : .off
             return true
@@ -184,8 +221,55 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
     /// Puts the keyboard focus in the selected Tab's page; false when it has none.
     @discardableResult
     private func showPage() -> Bool {
+        hideRevealedSidebar()
         guard let tab = session.selectedTab, let webView = webContext.webView(for: tab.id) else { return false }
         return window?.makeFirstResponder(webView) ?? false
+    }
+
+    // MARK: Compact mode
+
+    private func applyReveal() {
+        layout?.apply(presentation, animated: true)
+        if presentation.isRevealed {
+            announce(String(localized: "Sidebar shown"))
+            focusTabList(nil)
+        } else {
+            announce(String(localized: "Sidebar hidden"))
+            returnFocusToPage()
+        }
+    }
+
+    /// The pointer touched the left edge.
+    private func revealSidebarFromEdge() {
+        guard presentation.isCompact, !presentation.isRevealed else { return }
+        presentation.reveal()
+        layout?.apply(presentation, animated: true)
+        announce(String(localized: "Sidebar shown"))
+    }
+
+    private func hideSidebarAfterPointerLeft() {
+        guard presentation.isRevealed else { return }
+        presentation.hide()
+        layout?.apply(presentation, animated: true)
+        returnFocusToPage()
+    }
+
+    private func hideRevealedSidebar() {
+        guard presentation.isRevealed else { return }
+        presentation.hide()
+        layout?.apply(presentation, animated: true)
+    }
+
+    /// A hidden sidebar cannot keep the keyboard focus.
+    private func returnFocusToPage() {
+        guard layout?.sidebarHasFocus == true else { return }
+        if !showPage() { window?.makeFirstResponder(commandBar) }
+    }
+
+    private func announce(_ message: String) {
+        guard let window else { return }
+        NSAccessibility.post(element: window, notification: .announcementRequested,
+                             userInfo: [.announcement: message, .priority: NSAccessibilityPriorityLevel.high.rawValue])
     }
 
     // MARK: Rendering
@@ -263,13 +347,11 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         self.sidebar = sidebar
         let page = NSViewController()
         page.view = content
-        let split = NSSplitViewController()
-        let sidebarItem = NSSplitViewItem(sidebarWithViewController: sidebar)
-        sidebarItem.minimumThickness = 180
-        sidebarItem.maximumThickness = 400
-        split.addSplitViewItem(sidebarItem)
-        split.addSplitViewItem(NSSplitViewItem(viewController: page))
-        window.contentViewController = split
+        let layout = SidebarLayoutViewController(sidebar: sidebar, page: page)
+        layout.onPointerReachedLeftEdge = { [weak self] in self?.revealSidebarFromEdge() }
+        layout.onPointerLeftSidebar = { [weak self] in self?.hideSidebarAfterPointerLeft() }
+        self.layout = layout
+        window.contentViewController = layout
         window.setContentSize(NSSize(width: 1200, height: 800))
     }
 
