@@ -20,16 +20,13 @@ public struct ShortcutConfiguration: Hashable, Sendable {
         self.overrides = overrides
     }
 
-    /// The bindings in force. Until a preset is chosen they are the registry defaults; with a preset, a command it
-    /// leaves unbound stays unbound. A command that is not rebindable keeps its default whatever the preset says.
+    /// The bindings in force. Until a preset is chosen they are the registry defaults. With a preset, a command the
+    /// preset binds takes its shortcut; a command it has no equivalent for (its `unbound` reason says why) falls back
+    /// to Safira's default, unless the preset or an earlier fallback already uses that key, so Profile and Space
+    /// switching never end up without a shortcut. A command that is not rebindable keeps its default whatever the
+    /// preset says.
     public var bindings: KeyBindings {
-        var bindings = KeyBindings.defaults
-        if let preset {
-            let data = preset.data
-            for command in CommandRegistry.commands where command.isRebindable {
-                bindings[command.id] = data.bindings[command.id]?.shortcut
-            }
-        }
+        var bindings = preset.map { Self.bindings(of: $0.data) } ?? KeyBindings.defaults
         for (id, override) in overrides where CommandRegistry.command(id).isRebindable {
             switch override {
             case .shortcut(let shortcut): bindings[id] = shortcut
@@ -40,6 +37,21 @@ public struct ShortcutConfiguration: Hashable, Sendable {
     }
 
     public var conflicts: [ShortcutConflict] { bindings.conflicts }
+
+    /// The bindings of one preset alone, fallbacks included.
+    public static func bindings(of data: PresetData) -> KeyBindings {
+        var bindings = KeyBindings.defaults
+        let rebindable = CommandRegistry.commands.filter(\.isRebindable)
+        for command in rebindable {
+            bindings[command.id] = data.bindings[command.id]?.shortcut
+        }
+        var taken = Set(CommandRegistry.commands.compactMap { bindings[$0.id] })
+        for command in rebindable where bindings[command.id] == nil && data.unbound[command.id] != nil {
+            guard let fallback = command.defaultShortcut, taken.insert(fallback).inserted else { continue }
+            bindings[command.id] = fallback
+        }
+        return bindings
+    }
 }
 
 /// Keeps the configuration across launches in UserDefaults: three plain values, no schema to migrate. A saved value

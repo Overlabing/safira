@@ -22,6 +22,11 @@ public struct StoreLayout: Sendable {
         root.appending(path: "app.sqlite", directoryHint: .notDirectory)
     }
 
+    /// The Link picker's choice log, when the user turns it on.
+    public var linkChoiceLogFile: URL {
+        root.appending(path: "link-choices.jsonl", directoryHint: .notDirectory)
+    }
+
     public func profileDirectory(for profile: ProfileID) -> URL {
         root
             .appending(path: "Profiles", directoryHint: .isDirectory)

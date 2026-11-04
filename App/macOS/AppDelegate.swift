@@ -3,6 +3,7 @@
 
 import AppKit
 import Commands
+import LinkRouting
 import os
 import SafiraCore
 import SafiraSession
@@ -13,12 +14,6 @@ import SafiraWeb
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let updates = UpdateController()
 
-    /// The single default Profile until Profiles can be created; a fixed identifier keeps its data store across
-    /// launches.
-    private static let defaultProfile = Profile(
-        id: ProfileID(rawValue: UUID(uuidString: "D4AAF7AE-EE5A-45FD-A219-AFC5EA8C1654")!),
-        name: "Default"
-    )
     private static let log = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.overlabing.safira",
                                     category: "persistence")
 
@@ -26,35 +21,56 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let shortcuts = ShortcutController()
     private(set) lazy var shortcutsWindow = ShortcutsWindowController(shortcuts: shortcuts)
     private var mainWindow: MainWindowController?
-    private var autosave: SessionAutosave?
+    private var registry: ProfileRegistry?
+    private var links: LinkController?
+    /// Links that arrived before the Profiles were open, as on a launch started by a link.
+    private var earlyLinks: [IncomingLink] = []
+    private let openers = OpenerIdentifier(lookup: WorkspaceApplicationLookup(),
+                                           ownProcessIdentifier: ProcessInfo.processInfo.processIdentifier)
+    #if BENCHMARK
+    private var benchmark: BenchmarkRun?
+    #endif
+
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        // The Apple event that carries a clicked link, and its sender, is read here: `application(_:open:)` does not
+        // give the sender, and a launch started by a link delivers the event right after this.
+        NSAppleEventManager.shared().setEventHandler(
+            self, andSelector: #selector(handleGetURL(_:reply:)),
+            forEventClass: AEEventClass(kInternetEventClass), andEventID: AEEventID(kAEGetURL))
+    }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        let layout = StoreLayout.application
-        let (profile, database) = Self.openProfile(in: layout)
-        let context = ProfileWebContext(profileID: profile.id)
-        context.diagnostics = diagnostics.logger
-        let session = ProfileSession(profile: profile) { context.makePage(for: $0) }
-        do {
-            session.restore(try database.savedSession())
-        } catch {
-            Self.log.error("The saved Tabs could not be read: \(error, privacy: .private)")
+        let registry = ProfileRegistry(layout: .application, diagnostics: diagnostics.logger) { message, error in
+            Self.log.error("\(message, privacy: .public): \(error, privacy: .private)")
         }
-        let autosave = SessionAutosave(session: session, database: database)
-        autosave.onError = { Self.log.error("The Tabs could not be saved: \($0, privacy: .private)") }
-        autosave.start()
-        self.autosave = autosave
-        diagnostics.attach(to: session)
-        let controller = MainWindowController(session: session, webContext: context, shortcuts: shortcuts)
+        self.registry = registry
+        diagnostics.attach(to: registry)
+        let controller = MainWindowController(registry: registry, shortcuts: shortcuts)
         controller.showWindow(nil)
-        controller.focusCommandBar(nil)
         mainWindow = controller
-        NSApp.activate()
+        let links = LinkController(registry: registry, mainWindow: controller)
+        self.links = links
+        earlyLinks.forEach(links.receive)
+        earlyLinks = []
+        rebuildMenu()
         keepMenuInStepWithShortcuts()
+        #if BENCHMARK
+        // A measurement run leaves the foreground to whatever the user is doing, and opens its addresses in the
+        // Active Profile like any other launch.
+        if let run = BenchmarkRun(statusDirectory: StoreLayout.application.root) {
+            benchmark = run
+            run.start(session: registry.active.session)
+            return
+        }
+        #endif
+        controller.focusCommandBar(nil)
+        NSApp.activate()
     }
 
     func rebuildMenu() {
-        NSApp.mainMenu = MainMenu.make(updates: updates, diagnostics: diagnostics, shortcuts: shortcuts.bindings,
-                                       shortcutsWindow: shortcutsWindow)
+        guard let links else { return }
+        NSApp.mainMenu = MainMenu.make(updates: updates, diagnostics: diagnostics, links: links,
+                                       shortcuts: shortcuts.bindings, shortcutsWindow: shortcutsWindow)
     }
 
     /// The menu carries the key equivalents, so a change of preset or override rebuilds it.
@@ -69,12 +85,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// Quitting waits for the last save of the Tabs.
+    @objc private func handleGetURL(_ event: NSAppleEventDescriptor, reply: NSAppleEventDescriptor) {
+        guard let address = event.paramDescriptor(forKeyword: AEKeyword(keyDirectObject))?.stringValue,
+              let url = URL(string: address) else { return }
+        receive([url], event: event)
+    }
+
+    /// Local files (a double-clicked .html, `open page.html`) arrive as an "open documents" event, not a GetURL one.
+    func application(_ application: NSApplication, open urls: [URL]) {
+        receive(urls, event: NSAppleEventManager.shared().currentAppleEvent)
+    }
+
+    private func receive(_ urls: [URL], event: NSAppleEventDescriptor?) {
+        let sender = event?.attributeDescriptor(forKeyword: AEKeyword(keySenderPIDAttr))?.int32Value
+        let opener = openers.identify(senderProcessIdentifier: sender)
+        for url in urls {
+            let link = IncomingLink(url: url, opener: opener)
+            if let links { links.receive(link) } else { earlyLinks.append(link) }
+        }
+    }
+
+    /// Quitting waits for the last save of every Profile's Tabs and settings.
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
-        guard let autosave else { return .terminateNow }
-        autosave.stop()
+        guard let registry else { return .terminateNow }
         Task {
-            await autosave.saveNow()
+            await registry.saveAll()
             sender.reply(toApplicationShouldTerminate: true)
         }
         return .terminateLater
@@ -85,24 +120,5 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             mainWindow?.showWindow(nil)
         }
         return true
-    }
-
-    /// The first Profile of the app database, created on the first launch, and its own database. When a database
-    /// cannot be opened, Safira still opens, with Tabs that are not saved.
-    private static func openProfile(in layout: StoreLayout) -> (Profile, ProfileDatabase) {
-        var profile = defaultProfile
-        do {
-            let app = try AppDatabase(file: layout.appDatabaseFile)
-            if let first = try app.profiles().first {
-                profile = first
-            } else {
-                try app.add(profile)
-            }
-            return (profile, try ProfileDatabase(file: layout.profileDatabaseFile(for: profile.id)))
-        } catch {
-            log.error("The databases could not be opened; Tabs will not be saved: \(error, privacy: .private)")
-            // An in-memory database cannot fail to open.
-            return (profile, try! ProfileDatabase.inMemory())
-        }
     }
 }

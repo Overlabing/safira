@@ -33,6 +33,32 @@ updates_opt_in() {
     return 0
 }
 
+# The benchmark mode (docs/architecture-v1.md §9.4) is compiled only into the Benchmark configuration: the binary of
+# that configuration has it, and the Release binary has neither it nor the folder the Benchmark entitlements open for
+# reading. `grep -c` reads everything: `grep -q` would exit early and, under pipefail, fail the `strings` feeding it.
+benchmark_only_in_benchmark() {
+    products=.build/dd/Build/Products
+    mode() { strings -a "$1/Contents/MacOS/Safira" | grep -c BenchmarkRun; }
+    [ "$(mode "$products/Benchmark/Safira.app")" -gt 0 ] || { echo "the Benchmark build has no benchmark mode"; return 1; }
+    [ "$(mode "$products/Release/Safira.app")" -eq 0 ] || { echo "the Release build contains the benchmark mode"; return 1; }
+    [ "$(codesign -d --entitlements - "$products/Release/Safira.app" 2>&1 | grep -c safira-bench)" -eq 0 ] \
+        || { echo "the Release build opens the benchmark folder"; return 1; }
+    return 0
+}
+
+# Safira is a registered browser (docs/architecture-v1.md §5.2): every configuration declares http and https and the HTML
+# document types, which is what lets the user pick it as the default browser.
+registered_as_browser() {
+    for configuration in Debug Benchmark Release; do
+        plist=".build/dd/Build/Products/$configuration/Safira.app/Contents/Info.plist"
+        schemes=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleURLTypes:0:CFBundleURLSchemes' "$plist" 2>/dev/null | grep -c -E '^ +(http|https)$')
+        [ "$schemes" -eq 2 ] || { echo "$configuration does not declare http and https"; return 1; }
+        types=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleDocumentTypes:0:LSItemContentTypes' "$plist" 2>/dev/null | grep -c -E '^ +public\.(html|xhtml)$')
+        [ "$types" -eq 2 ] || { echo "$configuration does not declare HTML documents"; return 1; }
+    done
+    return 0
+}
+
 allowed=Packages/SafiraKit/Sources/SafiraWeb/ProfileWebContext.swift
 
 signed_and_sandboxed() {
@@ -53,5 +79,11 @@ step "swift test (SafiraKit)" swift test --package-path Packages/SafiraKit
 step "xcodebuild Safira (Debug)" \
     xcodebuild -project Safira.xcodeproj -scheme Safira -configuration Debug -derivedDataPath .build/dd build
 step "Safira.app signed, hardened runtime, sandboxed" signed_and_sandboxed
+step "xcodebuild Safira (Benchmark)" \
+    xcodebuild -project Safira.xcodeproj -scheme Safira -configuration Benchmark -derivedDataPath .build/dd build
+step "xcodebuild Safira (Release)" \
+    xcodebuild -project Safira.xcodeproj -scheme Safira -configuration Release -derivedDataPath .build/dd build
+step "benchmark mode only in the Benchmark build, absent from Release" benchmark_only_in_benchmark
+step "registered for http, https and HTML files in every configuration" registered_as_browser
 step "Sparkle opt-in: automatic checks off, no system profiling" updates_opt_in
 echo "OK: all checks passed"

@@ -28,3 +28,9 @@ import Testing
         == "/tmp/safira-support/Profiles/6F9619FF-8B86-D011-B42D-00C04FC964FF/profile.sqlite")
     #expect(layout.appDatabaseFile.path(percentEncoded: false) == "/tmp/safira-support/app.sqlite")
 }
+
+@Test func theLinkPickerChoiceLogLivesInTheAppSupportRoot() {
+    let layout = StoreLayout(root: URL(filePath: "/tmp/safira-support/", directoryHint: .isDirectory))
+
+    #expect(layout.linkChoiceLogFile.path(percentEncoded: false) == "/tmp/safira-support/link-choices.jsonl")
+}

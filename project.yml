@@ -9,6 +9,11 @@ options:
   developmentLanguage: en
   # XcodeGen 2.45.3 knows no Xcode 27 format; xcode16_3 is the newest it can write and Xcode 27.1 opens it.
   projectFormat: xcode16_3
+# Benchmark is Release with the benchmark mode compiled in and a throwaway bundle id, for the memory measurement (scripts/bench-memory.sh). It is never distributed; scripts/check.sh proves Release has none of it.
+configs:
+  Debug: debug
+  Release: release
+  Benchmark: release
 packages:
   SafiraKit:
     path: Packages/SafiraKit
@@ -42,6 +47,19 @@ targets:
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         NSPrincipalClass: NSApplication
+        # Registers Safira for web links and local HTML files, which lets the user choose it as the default browser
+        # (docs/architecture-v1.md §5.2). WebKit also gives a handler of http and https the browser cache model.
+        CFBundleURLTypes:
+          - CFBundleURLName: Web address
+            CFBundleTypeRole: Viewer
+            CFBundleURLSchemes: [http, https]
+        # Alternate: opening HTML files with Safira is the user's choice, in Finder or in the default browser setting;
+        # installing Safira does not take them from another app.
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: HTML document
+            CFBundleTypeRole: Viewer
+            LSHandlerRank: Alternate
+            LSItemContentTypes: [public.html, public.xhtml]
         LSApplicationCategoryType: public.app-category.productivity
         # A browser loads the HTTP pages the user chose to continue to; the system does not stop web content for lack of TLS.
         NSAppTransportSecurity:
@@ -78,6 +96,12 @@ targets:
         # add disable-library-validation through a hand-kept copy of the entitlements; Release (Developer ID, one Team
         # ID for the app and Sparkle) uses the generated file and keeps library validation on.
         "CODE_SIGN_ENTITLEMENTS[config=Debug]": App/macOS/Safira.Debug.entitlements
+        # Ad hoc like Debug, so the same library validation exception; plus read access to the folder that holds the
+        # list of addresses, which exists only in this configuration.
+        "CODE_SIGN_ENTITLEMENTS[config=Benchmark]": App/macOS/Safira.Benchmark.entitlements
+        "SWIFT_ACTIVE_COMPILATION_CONDITIONS[config=Benchmark]": BENCHMARK
+        # Another identity than the app Antonin uses (its container and defaults stay untouched).
+        "PRODUCT_BUNDLE_IDENTIFIER[config=Benchmark]": com.overlabing.safira.bench
         ENABLE_HARDENED_RUNTIME: YES
         # Ad hoc signing needs no certificate or secret, so the same build runs signed and sandboxed locally and in CI.
         # Developer ID signing for distribution belongs to the release script (docs/architecture-v1.md §8.3).

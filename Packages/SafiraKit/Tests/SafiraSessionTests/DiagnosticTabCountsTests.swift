@@ -41,7 +41,7 @@ private final class LoadingPage: WebPageHandle {
 @Suite struct DiagnosticTabCountsTests {
     @Test func tabsAreCountedByStateWithoutReadingTheirAddresses() {
         var pages: [TabID: LoadingPage] = [:]
-        let session = ProfileSession(profile: Profile(id: ProfileID(rawValue: UUID()), name: "Work")) { id in
+        let session = ProfileSession(profileID: ProfileID(rawValue: UUID())) { id in
             let page = LoadingPage()
             pages[id] = page
             return page

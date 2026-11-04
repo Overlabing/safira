@@ -53,7 +53,7 @@ private func tabRowCount(_ file: URL) throws -> Int {
         #expect(space.emoji == "🏠")
         #expect(space.paletteID == nil)
         #expect(space.tabs == [])
-        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-pinned-tabs-folders"])
+        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-pinned-tabs-folders"])
     }
 
     @Test func savedSpacesComeBackInOrderWithTheirTabsSelectionAndTheActiveSpace() throws {
@@ -174,6 +174,35 @@ private func tabRowCount(_ file: URL) throws -> Int {
         CREATE TABLE profile_setting (key TEXT PRIMARY KEY NOT NULL, value TEXT NOT NULL);
         INSERT INTO profile_setting VALUES ('active_space_id', '9A1F0C3E-0000-4000-8000-000000000000');
         """
+    /// `v4-history` as it shipped: the visits and the external-content full-text index kept in step by triggers.
+    private static let version4 = """
+        INSERT INTO grdb_migrations VALUES ('v4-history');
+        CREATE TABLE history_visit (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            url TEXT NOT NULL,
+            host TEXT NOT NULL,
+            title TEXT,
+            visited_at DOUBLE NOT NULL
+        );
+        CREATE INDEX history_visit_on_url ON history_visit(url);
+        CREATE INDEX history_visit_on_visited_at ON history_visit(visited_at);
+        CREATE VIRTUAL TABLE history_visit_search USING fts5(
+            title, url, content='history_visit', content_rowid='id', tokenize='unicode61 remove_diacritics 2'
+        );
+        CREATE TRIGGER history_visit_search_ai AFTER INSERT ON history_visit BEGIN
+            INSERT INTO history_visit_search(rowid, title, url) VALUES (new.id, new.title, new.url);
+        END;
+        CREATE TRIGGER history_visit_search_ad AFTER DELETE ON history_visit BEGIN
+            INSERT INTO history_visit_search(history_visit_search, rowid, title, url)
+            VALUES ('delete', old.id, old.title, old.url);
+        END;
+        CREATE TRIGGER history_visit_search_au AFTER UPDATE ON history_visit BEGIN
+            INSERT INTO history_visit_search(history_visit_search, rowid, title, url)
+            VALUES ('delete', old.id, old.title, old.url);
+            INSERT INTO history_visit_search(rowid, title, url) VALUES (new.id, new.title, new.url);
+        END;
+        INSERT INTO history_visit (url, host, title, visited_at) VALUES ('https://a.com/', 'a.com', 'Alpha', 1000);
+        """
     private static let existingSpace = SpaceID(uuidString: "9A1F0C3E-0000-4000-8000-000000000000")!
 
     private func write(_ sql: String, at file: URL) throws {
@@ -203,7 +232,7 @@ private func tabRowCount(_ file: URL) throws -> Int {
 
         let database = try ProfileDatabase(file: file)
 
-        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-pinned-tabs-folders"])
+        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-pinned-tabs-folders"])
         #expect(try database.savedSession() == SavedSession(spaces: [
             SpaceRecord(id: Self.existingSpace, name: "Home", emoji: "🏠", tabs: [
                 TabRecord(id: firstTab, address: URL(string: "https://a.com/"), title: "A",
@@ -234,12 +263,42 @@ private func tabRowCount(_ file: URL) throws -> Int {
 
         let saved = try ProfileDatabase(file: file).savedSession()
 
-        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-pinned-tabs-folders"])
+        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-pinned-tabs-folders"])
         let space = try #require(saved.spaces.first)
         #expect(space.pinned == [])
         #expect(space.tabs.map(\.id) == [firstTab, secondTab])
         #expect(space.tabs.allSatisfy { $0.pinnedAddress == nil })
         #expect(space.selectedTabID == secondTab)
+    }
+
+    @Test func aVersion4DatabaseUpgradesKeepingItsTabsPlainItsHistoryAndAbleToPinThem() throws {
+        let root = TemporaryRoot()
+        let file = root.layout.profileDatabaseFile(for: work)
+        try write(Self.version1 + Self.version2 + Self.version3 + Self.version4, at: file)
+
+        let database = try ProfileDatabase(file: file)
+        let saved = try database.savedSession()
+
+        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-pinned-tabs-folders"])
+        let space = try #require(saved.spaces.first)
+        #expect(space.pinned == [])
+        #expect(space.tabs.map(\.id) == [firstTab, secondTab])
+        #expect(space.tabs.allSatisfy { $0.pinnedAddress == nil })
+        #expect(space.selectedTabID == secondTab)
+        let visits = try DatabaseQueue(path: file.path(percentEncoded: false)).read { db in
+            try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM history_visit_search WHERE history_visit_search MATCH 'alpha'")
+        }
+        #expect(visits == 1)
+
+        var pinned = space
+        pinned.pinned = [.folder(FolderRecord(id: docsFolder, name: "Docs", items: [
+            .tab(TabRecord(id: firstTab, address: URL(string: "https://a.com/"), title: "A",
+                           pinnedAddress: URL(string: "https://a.com/"))),
+        ]))]
+        pinned.tabs = [space.tabs[1]]
+        let session = SavedSession(spaces: [pinned], activeSpaceID: Self.existingSpace)
+        try database.save(session)
+        #expect(try ProfileDatabase(file: file).savedSession() == session)
     }
 
     @Test func aMigratedVersion1DatabaseSavesNavigationState() throws {
@@ -364,6 +423,122 @@ private let notesFolder = FolderID(rawValue: UUID(uuidString: "DDDDDDDD-DDDD-4DD
         let tables = try DatabaseQueue(path: root.layout.appDatabaseFile.path(percentEncoded: false)).read { db in
             try String.fetchAll(db, sql: "SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name")
         }
-        #expect(tables == ["grdb_migrations", "profile"])
+        #expect(tables == ["app_state", "grdb_migrations", "profile"])
+    }
+
+    @Test func aProfileListedBeforeProfilesExistedKeepsItsIdentifierAndBecomesActive() throws {
+        let root = TemporaryRoot()
+        let file = root.layout.appDatabaseFile
+        try FileManager.default.createDirectory(at: root.layout.root, withIntermediateDirectories: true)
+        let queue = try DatabaseQueue(path: file.path(percentEncoded: false))
+        try queue.write { db in
+            try db.execute(sql: """
+                CREATE TABLE grdb_migrations (identifier TEXT NOT NULL PRIMARY KEY);
+                INSERT INTO grdb_migrations VALUES ('v1-profiles');
+                CREATE TABLE profile (id TEXT PRIMARY KEY, name TEXT NOT NULL, position INTEGER NOT NULL);
+                INSERT INTO profile VALUES ('0B4E2C1A-5D3F-4E8B-9A7C-1F2E3D4C5B6A', 'Default', 0);
+                """)
+        }
+        try queue.close()
+
+        let database = try AppDatabase(file: file)
+
+        #expect(try database.profiles() == [Profile(id: work, name: "Default", symbol: "👤")])
+        #expect(try database.lastActiveProfileID() == work)
+        #expect(try migrations(file) == ["v1-profiles", "v2-profile-details"])
+    }
+
+    @Test func aRenamedProfileKeepsItsPlaceAndItsNewNameAfterAReopen() throws {
+        let root = TemporaryRoot()
+        let database = try AppDatabase(file: root.layout.appDatabaseFile)
+        try database.add(Profile(id: work, name: "Work"))
+        try database.add(Profile(id: personal, name: "Personal"))
+
+        try database.update(Profile(id: work, name: "Office", symbol: "💼", paletteID: "ocean"))
+
+        #expect(try AppDatabase(file: root.layout.appDatabaseFile).profiles() == [
+            Profile(id: work, name: "Office", symbol: "💼", paletteID: "ocean"),
+            Profile(id: personal, name: "Personal"),
+        ])
+    }
+
+    @Test func theActiveProfileIsRememberedUntilItIsDeleted() throws {
+        let root = TemporaryRoot()
+        let database = try AppDatabase(file: root.layout.appDatabaseFile)
+        try database.add(Profile(id: work, name: "Work"))
+        try database.add(Profile(id: personal, name: "Personal"))
+        #expect(try database.lastActiveProfileID() == nil)
+
+        try database.setLastActiveProfileID(personal)
+        #expect(try AppDatabase(file: root.layout.appDatabaseFile).lastActiveProfileID() == personal)
+
+        try database.markForDeletion(personal)
+        #expect(try database.lastActiveProfileID() == nil)
+    }
+
+    @Test func aProfileBeingDeletedLeavesTheListButStaysRecordedUntilItIsErased() throws {
+        let root = TemporaryRoot()
+        let database = try AppDatabase(file: root.layout.appDatabaseFile)
+        try database.add(Profile(id: work, name: "Work"))
+        try database.add(Profile(id: personal, name: "Personal"))
+
+        try database.markForDeletion(work)
+        #expect(try database.profiles() == [Profile(id: personal, name: "Personal")])
+        #expect(try AppDatabase(file: root.layout.appDatabaseFile).profilesPendingDeletion() == [work])
+
+        try database.delete(work)
+        #expect(try database.profilesPendingDeletion() == [])
+        #expect(try database.profiles() == [Profile(id: personal, name: "Personal")])
+    }
+}
+
+@Suite struct ProfileSettingsTests {
+    @Test func aNewProfileHasNoSearchEngineAndTheDefaultWebContentSettings() throws {
+        let root = TemporaryRoot()
+        let settings = try ProfileDatabase(file: root.layout.profileDatabaseFile(for: work)).settings()
+        #expect(settings == ProfileSettings(searchEngine: nil, webContent: WebContentSettings(
+            isFraudulentSiteWarningEnabled: true, isAutoplayingSoundAllowed: false)))
+    }
+
+    @Test func settingsAreSavedWithTheProfileAndComeBackAfterAReopen() async throws {
+        let root = TemporaryRoot()
+        let file = root.layout.profileDatabaseFile(for: work)
+        let saved = ProfileSettings(searchEngine: .kagi, webContent: WebContentSettings(
+            isFraudulentSiteWarningEnabled: false, isAutoplayingSoundAllowed: true))
+
+        try await ProfileDatabase(file: file).save(saved)
+
+        #expect(try ProfileDatabase(file: file).settings() == saved)
+    }
+
+    @Test func savingTheTabsKeepsTheSettingsAndTheOtherWayRound() throws {
+        let root = TemporaryRoot()
+        let database = try ProfileDatabase(file: root.layout.profileDatabaseFile(for: work))
+        let settings = ProfileSettings(searchEngine: .ecosia)
+        try database.save(settings)
+        let tabs = oneSpace([TabRecord(id: firstTab)], selected: firstTab)
+
+        try database.save(tabs)
+        try database.save(settings)
+
+        #expect(try database.settings() == settings)
+        #expect(try database.savedSession() == tabs)
+    }
+
+    @Test func oneProfilesSearchEngineIsNotAnotherProfiles() throws {
+        let root = TemporaryRoot()
+        try ProfileDatabase(file: root.layout.profileDatabaseFile(for: work)).save(ProfileSettings(searchEngine: .google))
+
+        #expect(try ProfileDatabase(file: root.layout.profileDatabaseFile(for: personal)).settings().searchEngine == nil)
+    }
+
+    @Test func clearingTheSearchEngineForgetsIt() throws {
+        let root = TemporaryRoot()
+        let database = try ProfileDatabase(file: root.layout.profileDatabaseFile(for: work))
+        try database.save(ProfileSettings(searchEngine: .google))
+
+        try database.save(ProfileSettings(searchEngine: nil))
+
+        #expect(try database.settings().searchEngine == nil)
     }
 }

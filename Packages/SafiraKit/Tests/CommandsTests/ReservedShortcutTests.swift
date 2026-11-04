@@ -77,13 +77,13 @@ func everyPresetReservesTheSameBrowserShortcuts(preset: ShortcutPreset) {
     #expect(shortcuts.count == 8)
 }
 
-@Test func showingThePreviousAndNextTabIsReservedWhereverThePresetBindsIt() {
+@Test func showingThePreviousAndNextTabIsReservedWhereverThePresetOrItsFallbackBindsIt() {
     func reserves(_ preset: ShortcutPreset, _ key: KeyStroke) -> Bool {
         ShortcutConfiguration(preset: preset).bindings.reservesKeyEquivalent(key)
     }
     for key in tabSwitchingPresses {
         #expect(reserves(.safari, key))
-        #expect(!reserves(.zen, key))
+        #expect(reserves(.zen, key))
         #expect(!reserves(.arc, key))
     }
     #expect(reserves(.arc, press("\u{F700}", [.command, .option])))

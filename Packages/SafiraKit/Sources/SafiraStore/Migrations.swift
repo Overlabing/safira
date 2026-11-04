@@ -47,10 +47,27 @@ enum Migrations {
                 SELECT 'active_space_id', id FROM space ORDER BY position LIMIT 1
                 """)
         }
+        // The Profile's history, searchable with letter case and accents ignored. The index is kept in step with the
+        // table by triggers, so a title set after the visit is searchable too.
+        migrator.registerMigration("v4-history") { db in
+            try db.create(table: "history_visit") { table in
+                table.autoIncrementedPrimaryKey("id")
+                table.column("url", .text).notNull().indexed()
+                table.column("host", .text).notNull()
+                table.column("title", .text)
+                table.column("visited_at", .double).notNull().indexed()
+            }
+            try db.create(virtualTable: "history_visit_search", using: FTS5()) { table in
+                table.synchronize(withTable: "history_visit")
+                table.tokenizer = .unicode61(diacritics: .remove)
+                table.column("title")
+                table.column("url")
+            }
+        }
         // Each Space gets a pinned area. A Folder lives in a Space, inside another Folder or at the top of the area; a Tab
         // is pinned with `is_pinned` and then sits in a Folder or at the top. Pinned items and Folders share one
         // `position` sequence per container. Every Tab that exists stays a plain Tab.
-        migrator.registerMigration("v4-pinned-tabs-folders") { db in
+        migrator.registerMigration("v5-pinned-tabs-folders") { db in
             try db.create(table: "folder") { table in
                 table.primaryKey("id", .text)
                 table.column("space_id", .text).notNull().indexed().references("space", onDelete: .cascade)
@@ -76,6 +93,24 @@ enum Migrations {
                 table.column("name", .text).notNull()
                 table.column("position", .integer).notNull()
             }
+        }
+        // A Profile gets the symbol and Theme slot that mark it in the sidebar, and the reserved network configuration
+        // (docs/scope-v1.md §3); a deletion is recorded until the Profile's files are gone; the app remembers which Profile was active. Profiles already listed keep their
+        // identifier, so their folder and data store stay theirs.
+        migrator.registerMigration("v2-profile-details") { db in
+            try db.alter(table: "profile") { table in
+                table.add(column: "symbol", .text).notNull().defaults(to: "👤")
+                table.add(column: "palette_id", .text)
+                table.add(column: "network_config", .text)
+                // Set while a deleted Profile's files are being erased, so that an erase cut short finishes at the
+                // next launch instead of leaving a Profile half erased.
+                table.add(column: "pending_deletion", .boolean).notNull().defaults(to: false)
+            }
+            try db.create(table: "app_state") { table in
+                table.primaryKey("id", .integer).check { $0 == 1 }
+                table.column("last_profile_id", .text)
+            }
+            try db.execute(sql: "INSERT INTO app_state (id, last_profile_id) SELECT 1, id FROM profile ORDER BY position LIMIT 1")
         }
         return migrator
     }

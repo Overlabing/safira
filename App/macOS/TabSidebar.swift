@@ -3,19 +3,26 @@
 
 import SafiraCore
 import SafiraSession
+import SafiraWeb
 import SwiftUI
 
-/// The sidebar: the active Space's name, its pinned area with its Folders, the list of its other Tabs, and the row of
-/// Spaces at the bottom. In the list, arrow keys move the selection, which shows the Tab; Delete closes it; Return or
-/// Escape goes to its page; Tabs can be dragged to reorder, and Pinned tabs and Folders into Folders.
+/// The sidebar: the Active profile at the top, the active Space's name, its pinned area with its Folders, the list of
+/// its other Tabs, and the row of Spaces at the bottom. In the list, arrow keys move the selection, which shows the
+/// Tab; Delete closes it; Return or Escape goes to its page; Tabs can be dragged to reorder, and Pinned tabs and
+/// Folders into Folders.
 struct TabSidebar: View {
-    let session: ProfileSession
+    let registry: ProfileRegistry
+    let profileActions: ProfileActions
     let spaceActions: SpaceActions
     let folderActions: FolderActions
     let showPage: () -> Void
 
+    private var session: ProfileSession { registry.active.session }
+
     var body: some View {
         VStack(spacing: 0) {
+            ProfileSwitcher(registry: registry, actions: profileActions)
+            Divider()
             Text(verbatim: "\(session.activeSpace.emoji) \(session.activeSpace.name)")
                 .font(.headline)
                 .lineLimit(1)
