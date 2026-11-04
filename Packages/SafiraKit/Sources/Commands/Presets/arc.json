@@ -77,6 +77,7 @@
     "renameProfile": "The page lists no Profile command; Arc attaches a Profile to Spaces and switches it with them.",
     "deleteProfile": "The page lists no Profile command; Arc attaches a Profile to Spaces and switches it with them.",
     "previousProfile": "The page lists no Profile command; Arc attaches a Profile to Spaces and switches it with them.",
-    "nextProfile": "The page lists no Profile command; Arc attaches a Profile to Spaces and switches it with them."
+    "nextProfile": "The page lists no Profile command; Arc attaches a Profile to Spaces and switches it with them.",
+    "clearBrowsingData": "The page lists no command to clear history or browsing data."
   }
 }

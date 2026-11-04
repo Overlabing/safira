@@ -42,3 +42,13 @@ extension ProfileSession {
         }
     }
 }
+
+extension ProfileSession {
+    /// Removes the Profile's history from `start` on, after the visits already recorded have reached the database, so
+    /// a visit just made goes too. Tabs, Spaces, settings and the closed-Tab stack are not touched, and no page is
+    /// reloaded; suggestions stop offering the removed pages at once because they read the database each time.
+    public func clearHistory(since start: Date) async throws {
+        await recordedHistorySettled()
+        try await history?.clearHistory(since: start)
+    }
+}

@@ -407,3 +407,73 @@ private func fixtureWithHistory(id: ProfileID = workID) throws -> SessionFixture
         #expect(!SuggestionText.matches("   ", in: ["anything"]))
     }
 }
+
+/// Clearing the history through the Profile session.
+@MainActor
+@Suite struct ClearHistoryTests {
+    @Test func clearingAllTimeDropsHistorySuggestionsAtOnceAndKeepsTheOpenTabs() async throws {
+        let fixture = try fixtureWithHistory()
+        let kept = fixture.visit("https://docs.example.com/", titled: "Swift docs")
+        let closed = fixture.visit("https://blog.example/", titled: "Swift blog")
+        fixture.session.close(closed)
+        #expect(described(await fixture.session.suggestions(for: "swift")) == ["tab: Swift docs", "history: Swift blog"])
+
+        try await fixture.session.clearHistory(since: .distantPast)
+
+        #expect(described(await fixture.session.suggestions(for: "swift")) == ["tab: Swift docs"])
+        #expect(fixture.session.selectedTabID == kept)
+        #expect(fixture.session.tabs.map(\.id) == [kept])
+    }
+
+    @Test func aVisitJustMadeIsClearedToo() async throws {
+        let fixture = try fixtureWithHistory()
+        fixture.visit("https://fresh.example/", titled: "Fresh page")
+        fixture.session.closeSelectedTab()
+
+        try await fixture.session.clearHistory(since: Date().addingTimeInterval(-3_600))
+
+        #expect(await fixture.session.suggestions(for: "fresh").isEmpty)
+    }
+
+    @Test func aRangeStartingInTheFutureClearsNothing() async throws {
+        let fixture = try fixtureWithHistory()
+        fixture.visit("https://blog.example/", titled: "Swift blog")
+        fixture.session.closeSelectedTab()
+
+        try await fixture.session.clearHistory(since: Date().addingTimeInterval(3_600))
+
+        #expect(described(await fixture.session.suggestions(for: "swift")) == ["history: Swift blog"])
+    }
+
+    @Test func clearingKeepsSpacesTheClosedTabStackAndSettings() async throws {
+        let fixture = try fixtureWithHistory()
+        let home = fixture.session.activeSpaceID
+        fixture.visit("https://a.example/", titled: "Alpha")
+        let reading = fixture.session.createSpace(name: "Reading", emoji: "📚")
+        let beta = fixture.visit("https://b.example/", titled: "Beta")
+        fixture.session.close(beta)
+        let engine = fixture.session.settings.searchEngine
+
+        try await fixture.session.clearHistory(since: .distantPast)
+
+        #expect(fixture.session.spaces.map(\.id) == [home, reading])
+        #expect(fixture.session.spaces.map(\.name) == ["Home", "Reading"])
+        #expect(fixture.session.spaces.map(\.tabs.count) == [1, 0])
+        #expect(fixture.session.canReopenClosedTab)
+        #expect(fixture.session.settings.searchEngine == engine)
+    }
+
+    @Test func clearingAnotherProfilesHistoryDoesNotTouchThisOne() async throws {
+        let work = try fixtureWithHistory(id: workID)
+        let personal = try fixtureWithHistory(id: personalID)
+        work.visit("https://roadmap.example/", titled: "Roadmap")
+        work.session.closeSelectedTab()
+        personal.visit("https://roadmap.example/", titled: "Roadmap")
+        personal.session.closeSelectedTab()
+
+        try await work.session.clearHistory(since: .distantPast)
+
+        #expect(await work.session.suggestions(for: "roadmap").isEmpty)
+        #expect(described(await personal.session.suggestions(for: "roadmap")) == ["history: Roadmap"])
+    }
+}

@@ -71,6 +71,7 @@
     "renameProfile": "The cited page lists no Profile shortcut.",
     "deleteProfile": "The cited page lists no Profile shortcut.",
     "previousProfile": "The cited page lists no Profile shortcut.",
-    "nextProfile": "The cited page lists no Profile shortcut."
+    "nextProfile": "The cited page lists no Profile shortcut.",
+    "clearBrowsingData": "The cited page lists no shortcut to clear history or website data."
   }
 }

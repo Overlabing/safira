@@ -290,4 +290,74 @@ private final class TemporaryRoot {
         }
         await cleanUp(ids)
     }
+
+    /// The whole path of "Clear history and website data": two Profiles signed in to the same local site, one cleared
+    /// for all time. It is signed out and no longer suggests a page it only remembers; its Spaces, Tabs and settings
+    /// stay; the other Profile keeps its login and its history.
+    @Test func clearingAllTimeSignsOutOneProfileAndKeepsItsTabsSpacesAndSettingsAndTheOtherProfileUntouched() async throws {
+        let root = TemporaryRoot()
+        let server = try await LocalServer.start(.http, title: "Quarterly roadmap")
+        var ids: [ProfileID] = []
+        do {
+            let registry = ProfileRegistry(layout: root.layout)
+            let personal = registry.activeProfileID
+            let work = registry.createProfile(name: "Work", symbol: "💼", searchEngine: .kagi)
+            ids = registry.profiles.map(\.id)
+            func open(_ path: String, in context: ProfileContext) async throws -> TabID {
+                context.session.openCommandBar(for: .newTab)
+                context.session.submitCommandBar("http://127.0.0.1:\(server.port)\(path)")
+                let tab = try #require(context.session.selectedTab)
+                try await waitUntil("\(path) has loaded") { tab.state.title == "Quarterly roadmap" && !tab.state.isLoading }
+                return tab.id
+            }
+            func signIn(_ context: ProfileContext, through tab: TabID) async throws {
+                let webView = try #require(context.web.webView(for: tab))
+                _ = try await webView.callAsyncJavaScript(
+                    "document.cookie = 'session=signed-in; path=/'; localStorage.setItem('user', 'me')", contentWorld: .page)
+            }
+            func cookies(_ context: ProfileContext) async -> [String] {
+                await context.web.dataStore.httpCookieStore.allCookies().map { "\($0.name)=\($0.value)" }
+            }
+            func suggested(_ context: ProfileContext) async -> [String] {
+                await context.session.suggestions(for: "roadmap").map {
+                    switch $0.kind {
+                    case .openTab: "tab: \($0.address.path())"
+                    case .history: "history: \($0.address.path())"
+                    }
+                }
+            }
+
+            let workContext = registry.active
+            let home = try await open("/home", in: workContext)
+            try await signIn(workContext, through: home)
+            let reading = workContext.session.createSpace(name: "Reading", emoji: "📚")
+            _ = try await open("/reading", in: workContext)
+            let visited = try await open("/visited", in: workContext)
+            workContext.session.close(visited)
+            registry.selectProfile(personal)
+            let personalContext = registry.active
+            let personalTab = try await open("/home", in: personalContext)
+            try await signIn(personalContext, through: personalTab)
+            registry.selectProfile(work)
+
+            #expect(await cookies(workContext) == ["session=signed-in"])
+            #expect(await suggested(workContext) == ["tab: /reading", "tab: /home", "history: /visited"])
+
+            try await workContext.clearBrowsingData(.allTime)
+
+            #expect(await cookies(workContext) == [])
+            #expect(await suggested(workContext) == ["tab: /reading", "tab: /home"])
+            #expect(workContext.session.spaces.map(\.name) == ["Home", "Reading"])
+            #expect(workContext.session.spaces.map { $0.tabs.count } == [1, 1])
+            #expect(workContext.session.activeSpaceID == reading)
+            #expect(workContext.session.settings.searchEngine == .kagi)
+            #expect(await cookies(personalContext) == ["session=signed-in"])
+            #expect(await suggested(personalContext) == ["tab: /home"])
+            personalContext.session.close(personalTab)
+            #expect(await suggested(personalContext) == ["history: /home"])
+            for context in registry.loadedContexts { context.session.closeAllTabs() }
+        }
+        server.stop()
+        await cleanUp(ids)
+    }
 }

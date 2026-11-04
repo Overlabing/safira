@@ -53,7 +53,7 @@ import Testing
     }
     #expect(CommandRegistry.command(.compactMode).title == "Compact Mode")
     #expect(CommandRegistry.command(.showSidebar).title == "Show Sidebar")
-    #expect(CommandRegistry.commands.count == 31)
+    #expect(CommandRegistry.commands.count == 32)
 }
 
 @Test func theSpaceCommandsAreRebindableWindowCommandsOnControlCommandKeys() {
@@ -82,4 +82,26 @@ import Testing
     #expect(display(.zen, .previousSpace) == "⌥⌘Q")
     #expect(display(.zen, .nextSpace) == "⌥⌘E")
     #expect(display(.safari, .nextSpace) == "⌃⌘→")
+}
+
+@Test func clearHistoryAndWebsiteDataIsARebindableWindowCommandOnShiftCommandDelete() {
+    let command = CommandRegistry.command(.clearBrowsingData)
+    #expect(command.title == "Clear History and Website Data…")
+    #expect(command.scope == .window)
+    #expect(command.defaultShortcut?.display == "⇧⌘⌫")
+    #expect(command.isRebindable)
+    #expect(command.isImplemented)
+    #expect(!command.isReserved)
+}
+
+@Test func zenBindsClearBrowsingDataFromItsPageAndArcAndSafariFallBackToSafirasKey() {
+    func display(_ preset: ShortcutPreset) -> String? {
+        ShortcutConfiguration(preset: preset).bindings[.clearBrowsingData]?.display
+    }
+    #expect(ShortcutPreset.zen.data.bindings[.clearBrowsingData]?.from == "Clear Browsing Data (Shift+Ctrl+Delete)")
+    #expect(display(.zen) == "⇧⌘⌫")
+    #expect(ShortcutPreset.arc.data.unbound[.clearBrowsingData]?.isEmpty == false)
+    #expect(ShortcutPreset.safari.data.unbound[.clearBrowsingData]?.isEmpty == false)
+    #expect(display(.arc) == "⇧⌘⌫")
+    #expect(display(.safari) == "⇧⌘⌫")
 }

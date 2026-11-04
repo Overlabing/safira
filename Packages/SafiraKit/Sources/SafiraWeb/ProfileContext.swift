@@ -61,6 +61,21 @@ public final class ProfileContext {
         await session.recordedHistorySettled()
     }
 
+    /// Clears this Profile's Browsing data for `range`: its history and its website data. Only this Profile's own
+    /// database and data store are reached. Spaces, Tabs, Pinned tabs, settings and the closed-Tab stack are kept. The
+    /// website data is cleared even when the history cannot be, and the history error is then thrown.
+    public func clearBrowsingData(_ range: ClearRange, now: Date = Date()) async throws {
+        let start = range.start(now: now)
+        var historyError: (any Error)?
+        do {
+            try await session.clearHistory(since: start)
+        } catch {
+            historyError = error
+        }
+        await web.clearWebsiteData(since: start)
+        if let historyError { throw historyError }
+    }
+
     /// Stops saving and closes every page, so that WebKit lets the data store go.
     func discard() {
         autosave.stop()

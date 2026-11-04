@@ -194,6 +194,82 @@ private let readEverything = """
         await removeDataStoreWhenReleased(fresh)
     }
 
+    @Test func clearingAllTimeInOneProfileRemovesEveryKindOfItsWebsiteDataAndLeavesAnotherProfilesUntouched() async throws {
+        let server = try await StorageServer()
+        let work = ProfileID(rawValue: UUID())
+        let personal = ProfileID(rawValue: UUID())
+        let written = StoredData(cookie: "script=A", local: "A", session: nil, indexedDB: ["isolation"],
+                                 serviceWorkers: 1, caches: ["isolation"])
+        do {
+            let workContext = ProfileWebContext(profileID: work)
+            let personalContext = ProfileWebContext(profileID: personal)
+            let workWriter = try await page(at: server.url("/cookie"), in: workContext, tab: TabID())
+            let personalWriter = try await page(at: server.url("/cookie"), in: personalContext, tab: TabID())
+            #expect(try await run(writeEverything, in: workWriter) == "written")
+            #expect(try await run(writeEverything, in: personalWriter) == "written")
+            #expect(await cookieNames(workContext) == ["script", "server"])
+            #expect(await cookieNames(personalContext) == ["script", "server"])
+
+            await workContext.clearWebsiteData(since: ClearRange.allTime.start())
+
+            let workReader = try await page(at: server.url("/"), in: workContext, tab: TabID())
+            let personalReader = try await page(at: server.url("/"), in: personalContext, tab: TabID())
+            #expect(try await read(in: workReader) == .none)
+            #expect(await cookieNames(workContext) == [])
+            #expect(await workContext.dataStore.dataRecords(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes())
+                .flatMap(\.dataTypes).filter { $0 != WKWebsiteDataTypeMemoryCache }.isEmpty)
+            #expect(try await read(in: personalReader) == written)
+            #expect(await cookieNames(personalContext) == ["script", "server"])
+            for page in [workWriter, personalWriter, workReader, personalReader] { page.close() }
+        }
+        await removeDataStoreWhenReleased(work)
+        await removeDataStoreWhenReleased(personal)
+    }
+
+    @Test func aRangeThatStartsAfterTheDataWasWrittenKeepsItAndOneThatStartsBeforeRemovesIt() async throws {
+        let server = try await StorageServer()
+        let profile = ProfileID(rawValue: UUID())
+        do {
+            let context = ProfileWebContext(profileID: profile)
+            let writer = try await page(at: server.url("/cookie"), in: context, tab: TabID())
+            #expect(try await run(writeEverything, in: writer) == "written")
+
+            try await Task.sleep(for: .seconds(2))
+            await context.clearWebsiteData(since: Date())
+            #expect(await cookieNames(context) == ["script", "server"])
+            #expect(try await read(in: writer).local == "A")
+
+            await context.clearWebsiteData(since: Date().addingTimeInterval(3_600))
+            #expect(await cookieNames(context) == ["script", "server"])
+
+            await context.clearWebsiteData(since: ClearRange.lastHour.start())
+            #expect(await cookieNames(context) == [])
+            let reader = try await page(at: server.url("/"), in: context, tab: TabID())
+            #expect(try await read(in: reader) == .none)
+            for page in [writer, reader] { page.close() }
+        }
+        await removeDataStoreWhenReleased(profile)
+    }
+
+    @Test func aPageOpenWhileItsProfileIsClearedKeepsRunningAndItsStoredDataIsGone() async throws {
+        let server = try await StorageServer()
+        let profile = ProfileID(rawValue: UUID())
+        do {
+            let context = ProfileWebContext(profileID: profile)
+            let open = try await page(at: server.url("/cookie"), in: context, tab: TabID())
+            #expect(try await run(writeEverything, in: open) == "written")
+
+            await context.clearWebsiteData(since: .distantPast)
+
+            // No reload happened: the page is still the one that was loaded, and the data it can read is gone.
+            #expect(open.webView.url == server.url("/cookie"))
+            #expect(try await read(in: open) == .none)
+            #expect(await cookieNames(context) == [])
+            open.close()
+        }
+        await removeDataStoreWhenReleased(profile)
+    }
+
     // MARK: Helpers
 
     private func page(at url: URL, in context: ProfileWebContext, tab: TabID) async throws -> WebKitPage {

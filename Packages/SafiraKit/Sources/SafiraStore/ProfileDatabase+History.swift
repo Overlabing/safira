@@ -47,6 +47,14 @@ extension ProfileDatabase {
         }
     }
 
+    /// Removes the visits made at or after `start`. The full-text index follows by its triggers, so a search no longer
+    /// finds a page whose every visit is gone.
+    public func clearHistory(since start: Date) async throws {
+        try await queue.write { db in
+            try db.execute(sql: "DELETE FROM history_visit WHERE visited_at >= ?", arguments: [start.timeIntervalSince1970])
+        }
+    }
+
     private static func historyHost(of url: URL) -> String? {
         guard let scheme = url.scheme?.lowercased(), scheme == "http" || scheme == "https",
               let host = url.host(percentEncoded: false), !host.isEmpty else { return nil }
