@@ -62,27 +62,32 @@ final class ScriptedChooser: ProfileChoosing {
     private(set) var offered: [[Profile]] = []
     private(set) var markedOpen: [Set<ProfileID>] = []
     private(set) var spacesAsked: [(profile: ProfileID, spaces: [SpaceChoice])] = []
-    private var waiting: [CheckedContinuation<ProfileID?, Never>] = []
-    private var waitingForSpace: [CheckedContinuation<SpaceID?, Never>] = []
+    /// What "always" was set to when the Space step opened.
+    private(set) var rememberingAtSpaceStep: [Bool] = []
+    private var waiting: [CheckedContinuation<PickerAnswer<ProfileID>?, Never>] = []
+    private var waitingForSpace: [CheckedContinuation<PickerAnswer<SpaceID>?, Never>] = []
 
-    func chooseProfile(for link: IncomingLink, among profiles: [Profile], alreadyOpenIn: Set<ProfileID>) async -> ProfileID? {
+    func chooseProfile(for link: IncomingLink, among profiles: [Profile],
+                       alreadyOpenIn: Set<ProfileID>) async -> PickerAnswer<ProfileID>? {
         asked.append(link)
         offered.append(profiles)
         markedOpen.append(alreadyOpenIn)
         return await withCheckedContinuation { waiting.append($0) }
     }
 
-    func chooseSpace(for link: IncomingLink, in profile: Profile, among spaces: [SpaceChoice]) async -> SpaceID? {
+    func chooseSpace(for link: IncomingLink, in profile: Profile, among spaces: [SpaceChoice],
+                     remembering: Bool) async -> PickerAnswer<SpaceID>? {
         spacesAsked.append((profile.id, spaces))
+        rememberingAtSpaceStep.append(remembering)
         return await withCheckedContinuation { waitingForSpace.append($0) }
     }
 
-    func answer(_ choice: ProfileID?) {
-        waiting.removeFirst().resume(returning: choice)
+    func answer(_ choice: ProfileID?, always: Bool = false) {
+        waiting.removeFirst().resume(returning: choice.map { PickerAnswer($0, remembers: always) })
     }
 
-    func answerSpace(_ choice: SpaceID?) {
-        waitingForSpace.removeFirst().resume(returning: choice)
+    func answerSpace(_ choice: SpaceID?, always: Bool = false) {
+        waitingForSpace.removeFirst().resume(returning: choice.map { PickerAnswer($0, remembers: always) })
     }
 
     /// Lets the coordinator run until it asks, or until it has nothing left to do.
@@ -153,14 +158,22 @@ func makeRouter(rules: StubRules = StubRules(), applications: StubApplications =
 }
 
 @MainActor
+final class RecordingRememberer: LinkRuleRemembering {
+    private(set) var remembered: [(host: String, profile: ProfileID, space: SpaceID?)] = []
+
+    func rememberChoice(host: String, profile: ProfileID, space: SpaceID?) { remembered.append((host, profile, space)) }
+}
+
+@MainActor
 func makeCoordinator(_ destination: RecordingDestination, _ chooser: ScriptedChooser, rules: StubRules = StubRules(),
                      applications: StubApplications = StubApplications(), slack: StubSlack = StubSlack(),
                      reporter: RecordingReporter = RecordingReporter(), choiceLog: LinkChoiceLog? = nil,
+                     rememberer: (any LinkRuleRemembering)? = nil,
                      asksForSpace: Bool = false, matching: Bool = true) -> ExternalLinkCoordinator {
     ExternalLinkCoordinator(
         destination: destination, chooser: chooser,
         router: makeRouter(rules: rules, applications: applications, slack: slack, reporter: reporter, matching: matching),
-        nativeApplications: applications, choiceLog: choiceLog, asksForSpace: { asksForSpace })
+        nativeApplications: applications, choiceLog: choiceLog, rememberer: rememberer, asksForSpace: { asksForSpace })
 }
 
 func link(_ address: String, from opener: String? = nil) -> IncomingLink {

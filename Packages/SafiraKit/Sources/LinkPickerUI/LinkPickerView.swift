@@ -11,8 +11,11 @@ struct LinkPickerLayout: Equatable {
     static let topCorner: CGFloat = 19
     static let maxColumns = 5
 
+    static let rememberRowHeight: CGFloat = 30
+
     let closedSize: CGSize
     let rowCount: Int
+    var hasRememberRow = false
 
     var columns: Int { max(1, min(rowCount, Self.maxColumns)) }
     var tileRows: Int { max(1, (rowCount + Self.maxColumns - 1) / Self.maxColumns) }
@@ -23,7 +26,8 @@ struct LinkPickerLayout: Equatable {
 
     var openSize: CGSize {
         CGSize(width: contentWidth + 2 * Self.topCorner + 20,
-               height: closedSize.height + 80 + CGFloat(tileRows) * 84 + CGFloat(tileRows - 1) * Self.tileSpacing)
+               height: closedSize.height + 80 + CGFloat(tileRows) * 84 + CGFloat(tileRows - 1) * Self.tileSpacing
+                   + (hasRememberRow ? Self.rememberRowHeight : 0))
     }
 }
 
@@ -32,10 +36,14 @@ struct LinkPickerWording: Equatable {
     let question: String
     let rowHint: String
 
+    let rememberHint: String
+
     static let profile = LinkPickerWording(question: String(localized: "Choose a Profile for this link"),
-                                           rowHint: String(localized: "Opens the link in this Profile"))
+                                           rowHint: String(localized: "Opens the link in this Profile"),
+                                           rememberHint: String(localized: "The next links from this site open in the Profile you choose, without asking"))
     static let space = LinkPickerWording(question: String(localized: "Choose a Space for this link"),
-                                         rowHint: String(localized: "Opens the link in this Space"))
+                                         rowHint: String(localized: "Opens the link in this Space"),
+                                         rememberHint: String(localized: "The next links from this site open in the Profile and Space you choose, without asking"))
 }
 
 struct LinkPickerView<ID: Hashable & Sendable>: View {
@@ -92,6 +100,7 @@ struct LinkPickerView<ID: Hashable & Sendable>: View {
                     tile(row, isHighlighted: model.highlightedIndex == index)
                 }
             }
+            rememberToggle
         }
         .overlay(alignment: .topTrailing) {
             Button(action: dismiss) {
@@ -104,6 +113,26 @@ struct LinkPickerView<ID: Hashable & Sendable>: View {
             .buttonStyle(.plain)
             .accessibilityLabel(String(localized: "Dismiss the link"))
             .help(String(localized: "Dismiss the link (Esc)"))
+        }
+    }
+
+    @ViewBuilder
+    private var rememberToggle: some View {
+        if let host = model.rememberedHost {
+            Toggle(isOn: Binding(get: { model.remembers }, set: { model.setRemembers($0) })) {
+                HStack(spacing: 6) {
+                    Text("Always send links from \(host) here")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.white.opacity(0.75))
+                    Text(verbatim: "A")
+                        .font(.system(size: 10, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.5))
+                }
+            }
+            .toggleStyle(.checkbox)
+            .accessibilityLabel(String(localized: "Always send links from \(host) here"))
+            .accessibilityHint(wording.rememberHint)
+            .help(String(localized: "Creates a Link rule for \(host) (A)"))
         }
     }
 

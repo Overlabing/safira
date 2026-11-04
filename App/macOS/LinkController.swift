@@ -148,9 +148,13 @@ final class LinkController: NSObject, NSMenuItemValidation {
     private var matchesOpenTabs: Bool
     private let slackGrant = SlackFolderGrant()
     private let rulesFile = StoreLayout.application.linkRulesFile
+    private lazy var rulesStore = LinkRulesStore(url: rulesFile)
+    private let registry: ProfileRegistry
+    private var rulesWindow: LinkRulesWindowController?
     private let defaultBrowser = DefaultBrowser(registry: WorkspaceDefaultApplications(), appURL: Bundle.main.bundleURL)
 
     init(registry: ProfileRegistry, mainWindow: MainWindowController, diagnostics: DiagnosticsController) {
+        self.registry = registry
         choiceLog = LinkChoiceLog(file: StoreLayout.application.linkChoiceLogFile,
                                   isEnabled: settings.load().isEnabled)
         asksForSpace = askForSpaceStore.load().isEnabled
@@ -165,6 +169,9 @@ final class LinkController: NSObject, NSMenuItemValidation {
         coordinator = ExternalLinkCoordinator(
             destination: RegistryDestination(registry: registry) { [weak mainWindow] in mainWindow?.showOpenedLink() },
             chooser: LinkPickerPresenter(), router: router, nativeApplications: applications, choiceLog: choiceLog,
+            rememberer: StoredLinkRuleRemembering(
+                store: LinkRulesStore(url: rulesFile), didFail: { Self.alertRuleNotSaved($0) },
+                didAdd: { [weak self] in self?.rulesWindow?.model.reload() }),
             asksForSpace: { [weak self] in self?.asksForSpace ?? false })
     }
 
@@ -233,6 +240,28 @@ final class LinkController: NSObject, NSMenuItemValidation {
 
     @objc func forgetSlackFolder(_ sender: Any?) {
         slackGrant.revoke()
+    }
+
+    /// The Link rules window, built on first use around the router the real links go through.
+    @objc func showLinkRulesWindow(_ sender: Any?) {
+        if rulesWindow == nil {
+            let registry = registry
+            let coordinator = coordinator!
+            let model = LinkRulesModel(
+                store: rulesStore, profiles: { registry.profiles },
+                spacesOf: { id in registry.spaces(in: id).map { SpaceChoice(id: $0.id, name: $0.name, emoji: $0.emoji) } },
+                route: { coordinator.route(for: $0) })
+            rulesWindow = LinkRulesWindowController(model: model, rulesFile: rulesFile, profiles: { registry.profiles })
+        }
+        rulesWindow?.show(sender)
+    }
+
+    private static func alertRuleNotSaved(_ error: LinkRulesEditError) {
+        let alert = NSAlert()
+        alert.messageText = String(localized: "The Link rule was not saved")
+        alert.informativeText = error.explanation + " " + String(localized: "The link opened where you chose.")
+        alert.addButton(withTitle: String(localized: "OK"))
+        alert.runModal()
     }
 
     /// The file is made on first use, so there is something to edit.

@@ -40,10 +40,16 @@ public final class LinkPickerModel<ID: Hashable & Sendable> {
     public let openerName: String?
     public let rows: [LinkPickerRow<ID>]
     public private(set) var highlightedIndex: Int?
+    /// The site "always" would send here; nil for a link that has no site, which offers no "always".
+    public let rememberedHost: String?
+    /// Whether the choice also becomes a Link rule. Off when the picker opens, unless a step before already turned it on.
+    public private(set) var remembers: Bool
     /// Whether the panel is unfolded from the notch.
     public var isOpen = false
 
-    public init(link: IncomingLink, rows: [LinkPickerRow<ID>]) {
+    public init(link: IncomingLink, rows: [LinkPickerRow<ID>], remembers: Bool = false) {
+        rememberedHost = link.rememberableHost
+        self.remembers = remembers && link.rememberableHost != nil
         title = link.title
         detail = link.detail
         openerName = link.opener?.name
@@ -52,6 +58,9 @@ public final class LinkPickerModel<ID: Hashable & Sendable> {
 
     public func handle(_ input: LinkPickerKeyInput) -> LinkPickerOutcome<ID> {
         switch input {
+        case .character(let character) where LinkPickerKey.togglesRemembering(character):
+            setRemembers(!remembers)
+            return .none
         case .character(let character):
             guard let index = LinkPickerKey.rowIndex(for: character), rows.indices.contains(index) else { return .none }
             highlightedIndex = index
@@ -68,6 +77,12 @@ public final class LinkPickerModel<ID: Hashable & Sendable> {
         case .escape:
             return .cancelled
         }
+    }
+
+    /// Does nothing for a link with no site.
+    public func setRemembers(_ value: Bool) {
+        guard rememberedHost != nil else { return }
+        remembers = value
     }
 
     /// Clicking a row chooses it.
@@ -101,9 +116,9 @@ extension LinkPickerModel where ID == ProfileID {
 }
 
 extension LinkPickerModel where ID == SpaceID {
-    public convenience init(link: IncomingLink, spaces: [SpaceChoice]) {
+    public convenience init(link: IncomingLink, spaces: [SpaceChoice], remembers: Bool = false) {
         self.init(link: link, rows: spaces.enumerated().map { index, space in
             LinkPickerRow(id: space.id, number: index + 1, symbol: space.emoji, name: space.name, isLinkOpen: false)
-        })
+        }, remembers: remembers)
     }
 }

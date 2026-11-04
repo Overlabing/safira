@@ -60,6 +60,15 @@ public protocol LinkRoutingReporting: AnyObject {
     func ruleWasSkipped(index: Int, because problem: LinkRuleProblem)
 }
 
+/// What routing decided and why, for the "Where would this link go?" check.
+public struct LinkRoute: Hashable, Sendable {
+    public let decision: LinkDecision
+    /// The position (from 0) of the Link rule that chose the Target profile; nil when no rule did.
+    public let ruleIndex: Int?
+    /// Set when the rules file is not valid: no rule and no native app was considered.
+    public let rulesFileProblem: LinkRulesError?
+}
+
 /// The Tab of a Profile that shows an address, if any.
 public typealias MatchingTabLookup = (ProfileID, NormalizedAddress) -> MatchingTab?
 
@@ -82,6 +91,12 @@ public struct LinkRouter {
         self.isMatchingEnabled = isMatchingEnabled
     }
 
+    /// The same router, but what it could not use is not reported: the Link rules window asks where a link would go, and
+    /// an invalid file must not raise the alert or the diagnostic that a real link raises.
+    public func withoutReporting() -> LinkRouter {
+        LinkRouter(rules: rules, nativeApps: nativeApps, reporter: SilentReporter(), isMatchingEnabled: isMatchingEnabled)
+    }
+
     /// - Parameters:
     ///   - spacesOf: the Spaces of a Profile, asked only when a matching rule names a Space.
     ///   - matchingTab: asked once the Target profile is known, unless the setting is off or the rule forces a new Tab.
@@ -91,26 +106,38 @@ public struct LinkRouter {
     public func decide(for link: IncomingLink, among profiles: [Profile], spacesOf: (ProfileID) -> [SpaceChoice],
                        matchingTab: MatchingTabLookup = { _, _ in nil },
                        includingNativeApps: Bool = true) -> LinkDecision {
+        route(for: link, among: profiles, spacesOf: spacesOf, matchingTab: matchingTab,
+              includingNativeApps: includingNativeApps).decision
+    }
+
+    /// `decide`, with the rule that chose the Target profile. Real routing and the check both come through here.
+    public func route(for link: IncomingLink, among profiles: [Profile], spacesOf: (ProfileID) -> [SpaceChoice],
+                      matchingTab: MatchingTabLookup = { _, _ in nil },
+                      includingNativeApps: Bool = true) -> LinkRoute {
+        var fileProblem: LinkRulesError?
         switch rules.load() {
         case .invalid(let error):
+            fileProblem = error
             reporter.rulesFileIsInvalid(error)
         case .rules(let set):
             if includingNativeApps, let native = nativeApps.link(for: link.url, enabled: set.enabledNativeApps) {
-                return .openNative(native)
+                return LinkRoute(decision: .openNative(native), ruleIndex: nil, rulesFileProblem: nil)
             }
             for (index, rule) in set.rules.enumerated()
             where rule.matches(link.url, openerBundleIdentifier: link.openerBundleIdentifier) {
-                switch resolve(rule, among: profiles, spacesOf: spacesOf) {
-                case .success(let target): return open(target, link, matchingTab)
+                switch Self.target(for: rule, among: profiles, spacesOf: spacesOf) {
+                case .success(let target):
+                    return LinkRoute(decision: open(target, link, matchingTab), ruleIndex: index, rulesFileProblem: nil)
                 case .failure(let problem): reporter.ruleWasSkipped(index: index, because: problem)
                 }
             }
         }
         // With one Profile there is nothing to choose; with several, the user always chooses, and nothing is preselected.
         if profiles.count == 1, let only = profiles.first {
-            return open(LinkTarget(profile: only.id), link, matchingTab)
+            return LinkRoute(decision: open(LinkTarget(profile: only.id), link, matchingTab), ruleIndex: nil,
+                             rulesFileProblem: fileProblem)
         }
-        return .ask
+        return LinkRoute(decision: .ask, ruleIndex: nil, rulesFileProblem: fileProblem)
     }
 
     /// The Tab of the Target profile, in any Space, that a link to `link` should focus; nil when the setting is off,
@@ -130,8 +157,9 @@ public struct LinkRouter {
         matchingTab(for: link, in: target, lookup: lookup).map(LinkDecision.focus) ?? .open(target)
     }
 
-    private func resolve(_ rule: LinkRule, among profiles: [Profile],
-                         spacesOf: (ProfileID) -> [SpaceChoice]) -> Result<LinkTarget, LinkRuleProblem> {
+    /// The Target a rule names, or why it names none. The Link rules window uses it to mark rules that cannot apply.
+    public static func target(for rule: LinkRule, among profiles: [Profile],
+                              spacesOf: (ProfileID) -> [SpaceChoice]) -> Result<LinkTarget, LinkRuleProblem> {
         let profile: Profile
         switch Self.resolve(rule.profile, among: profiles, id: { $0.id.rawValue }, name: { $0.name }) {
         case .found(let found): profile = found
@@ -147,6 +175,11 @@ public struct LinkRouter {
         case .unknown: return .failure(.unknownSpace)
         case .ambiguous: return .failure(.ambiguousSpace)
         }
+    }
+
+    private final class SilentReporter: LinkRoutingReporting {
+        func rulesFileIsInvalid(_ error: LinkRulesError) {}
+        func ruleWasSkipped(index: Int, because problem: LinkRuleProblem) {}
     }
 
     private enum Resolution<Item> {
