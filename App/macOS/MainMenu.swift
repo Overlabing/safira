@@ -9,7 +9,7 @@ import SafiraCore
 @MainActor
 enum MainMenu {
     static func make(updates: UpdateController, diagnostics: DiagnosticsController, links: LinkController,
-                     shortcuts: KeyBindings, shortcutsWindow: ShortcutsWindowController) -> NSMenu {
+                     shortcuts: KeyBindings, shortcutsWindow: ShortcutsWindowController, app: AppDelegate) -> NSMenu {
         func item(_ id: CommandID, _ action: Selector?) -> NSMenuItem { commandItem(id, action, shortcuts) }
         let menu = NSMenu()
         menu.addItem(submenu(title: "Safira", items: [
@@ -46,6 +46,7 @@ enum MainMenu {
         ]))
         menu.addItem(submenu(title: "File", items: [
             item(.newTab, #selector(MainWindowController.newTab(_:))),
+            target(app, item(.newPrivateWindow, #selector(AppDelegate.newPrivateWindow(_:)))),
             item(.openCommandBar, #selector(MainWindowController.focusCommandBar(_:))),
             .separator(),
             item(.closeTab, #selector(MainWindowController.closeTab(_:))),
