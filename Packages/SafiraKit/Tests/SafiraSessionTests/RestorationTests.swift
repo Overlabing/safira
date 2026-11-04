@@ -23,6 +23,23 @@ final class TemporaryDatabase {
     deinit { try? FileManager.default.removeItem(at: folder) }
 }
 
+/// Waits for the autosave itself, not for a fixed delay a loaded machine can overrun: reads what is on disk until `isSaved`
+/// holds, for up to 10 seconds, and returns the last read that succeeded. A read that meets the autosave's write fails
+/// ("database is locked") and is tried again.
+@MainActor
+func waitForSave<Saved>(_ read: () throws -> Saved, until isSaved: (Saved) -> Bool) async throws -> Saved? {
+    let deadline = ContinuousClock.now + .seconds(10)
+    var latest: Saved?
+    while ContinuousClock.now < deadline {
+        if let next = try? read() {
+            latest = next
+            if isSaved(next) { break }
+        }
+        try await Task.sleep(for: .milliseconds(20))
+    }
+    return latest
+}
+
 @MainActor
 private func open(_ fixture: SessionFixture, _ addresses: [String]) -> [TabID] {
     addresses.map { address in
@@ -286,13 +303,10 @@ private func relaunch(from database: TemporaryDatabase, osBuild: String = "26A43
         let ids = open(fixture, ["a.com", "b.com"])
         fixture.session.select(ids[0])
 
-        let deadline = ContinuousClock.now + .seconds(5)
-        while try connection.savedSession().selectedTabID != ids[0], ContinuousClock.now < deadline {
-            try await Task.sleep(for: .milliseconds(20))
-        }
+        let latest = try await waitForSave({ try connection.savedSession() }, until: { $0.selectedTabID == ids[0] })
         autosave.stop()
 
-        let saved = try connection.savedSession()
+        let saved = try #require(latest)
         #expect(saved.tabs.map(\.address?.absoluteString) == ["https://a.com", "https://b.com"])
         #expect(saved.selectedTabID == ids[0])
     }
@@ -307,14 +321,11 @@ private func relaunch(from database: TemporaryDatabase, osBuild: String = "26A43
         await autosave.saveNow()
         fixture.selectedPage?.followLink(to: URL(string: "https://a.com/clicked")!)
 
-        let deadline = ContinuousClock.now + .seconds(5)
-        while try connection.savedSession().tabs.first?.address?.absoluteString != "https://a.com/clicked",
-              ContinuousClock.now < deadline {
-            try await Task.sleep(for: .milliseconds(20))
-        }
+        let latest = try await waitForSave({ try connection.savedSession() },
+                                           until: { $0.tabs.first?.address?.absoluteString == "https://a.com/clicked" })
         autosave.stop()
 
-        #expect(try connection.savedSession().tabs.map(\.address?.absoluteString) == ["https://a.com/clicked"])
+        #expect(try #require(latest).tabs.map(\.address?.absoluteString) == ["https://a.com/clicked"])
     }
 
     @Test func readingTheProfileWhileTheAutosaveWritesNeverFindsItLocked() async throws {

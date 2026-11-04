@@ -481,7 +481,7 @@ private func schema(_ file: URL) throws -> [String] {
     }
 
     private static let latestMigrations = ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions",
-                                           "v6-pinned-tabs-folders", "v7-downloads", "v8-space-themes"]
+                                           "v6-pinned-tabs-folders", "v7-downloads", "v8-space-themes", "v9-download-folders"]
 
     /// What every later feature needs from a database that was left by an older schema: the same tables as a fresh one,
     /// and a working history, site permissions, Pinned tabs, downloads and Space themes.

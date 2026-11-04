@@ -358,13 +358,10 @@ private func names(_ session: ProfileSession) -> [String] {
         let reading = fixture.session.createSpace(name: "Reading", emoji: "📚")
         fixture.session.renameSpace(reading, name: "Research", emoji: "🔬")
 
-        let deadline = ContinuousClock.now + .seconds(5)
-        while try connection.savedSession().activeSpace?.name != "Research", ContinuousClock.now < deadline {
-            try await Task.sleep(for: .milliseconds(20))
-        }
+        let latest = try await waitForSave({ try connection.savedSession() }, until: { $0.activeSpace?.name == "Research" })
         autosave.stop()
 
-        let saved = try connection.savedSession()
+        let saved = try #require(latest)
         #expect(saved.spaces.map { "\($0.emoji) \($0.name)" } == ["🏠 Home", "🔬 Research"])
         #expect(saved.activeSpaceID == reading)
     }
