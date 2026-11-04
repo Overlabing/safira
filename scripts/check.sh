@@ -2,17 +2,18 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # Copyright (c) 2026 Antonin Carlin
 #
-# One command, the gate before every commit and in CI: generate the project, guard against shared singletons, run the
-# SafiraKit tests, build the app, and check that it is signed and sandboxed.
-# Prints OK:/FAILED: lines and stops at the first failure.
+# One command, the gate before every commit and in CI: scan for leaks, generate the project, guard against shared
+# singletons, run the SafiraKit tests, build the app, and check that it is signed and sandboxed.
+# Prints OK:/FAILED: lines and stops at the first failure. `step` and the scanners come from AppTooling, fetched at the
+# version and checksum pinned in scripts/apptooling.pin.
 set -u
 set -o pipefail
 cd "$(dirname "$0")/.."
-mkdir -p .build
-log=".build/check-$$.log"
-trap 'rm -f "$log"' EXIT
 
-. scripts/step.sh
+tools=$(scripts/tools.sh) || exit 1
+. "$tools/lib/gate.sh"
+. scripts/isolated.sh
+trap gate_clean_log EXIT
 
 app=.build/dd/Build/Products/Debug/Safira.app
 updates_opt_in() {
@@ -67,20 +68,30 @@ signed_and_sandboxed() {
     done
 }
 
+terms=${OVERLABING_PRIVATE_TERMS:-$HOME/.config/overlabing/private-terms}
+
+step "leak scan, public patterns (working tree)" scripts/leak-scan-public.sh tree
+if [ -r "$terms" ]; then
+    step "leak scan, private terms (working tree)" "$tools/bin/leak-scan" tree
+else
+    echo "SKIPPED: leak scan, private terms (no terms file here; CI has none, a Mac that has it runs this step)"
+fi
 step "xcodegen generate" xcodegen generate
 step "step helper self test (a failing or unset-variable step prints FAILED)" scripts/test-step.sh
 step "singleton guard self test (fixtures)" scripts/test-guard-singletons.sh
-step "singleton guard (App, Packages)" scripts/guard-singletons.sh "$allowed" App Packages
+step "attribution check self test" scripts/test-check-attribution.sh
+step "singleton guard (App, Packages)" "$tools/bin/guard-pattern.sh" --patterns scripts/singleton-patterns.txt \
+    --allow "$allowed" --message "Shared singletons are allowed only in $allowed" App Packages
 step "swift test (SafiraKit)" swift test --package-path Packages/SafiraKit
 step "xcodebuild Safira (Debug)" \
     xcodebuild -project Safira.xcodeproj -scheme Safira -configuration Debug -derivedDataPath .build/dd build
-step "Safira.app signed, hardened runtime, sandboxed" signed_and_sandboxed "$app"
+step "Safira.app signed, hardened runtime, sandboxed" isolated signed_and_sandboxed "$app"
 step "xcodebuild Safira (Benchmark)" \
     xcodebuild -project Safira.xcodeproj -scheme Safira -configuration Benchmark -derivedDataPath .build/dd build
 step "xcodebuild Safira (Release)" \
     xcodebuild -project Safira.xcodeproj -scheme Safira -configuration Release -derivedDataPath .build/dd build
-step "Release Safira.app signed, hardened runtime, sandboxed" signed_and_sandboxed .build/dd/Build/Products/Release/Safira.app
-step "benchmark mode only in the Benchmark build, absent from Release" benchmark_only_in_benchmark
-step "registered for http, https and HTML files in every configuration" registered_as_browser
-step "Sparkle opt-in: automatic checks off, no system profiling" updates_opt_in
+step "Release Safira.app signed, hardened runtime, sandboxed" isolated signed_and_sandboxed .build/dd/Build/Products/Release/Safira.app
+step "benchmark mode only in the Benchmark build, absent from Release" isolated benchmark_only_in_benchmark
+step "registered for http, https and HTML files in every configuration" isolated registered_as_browser
+step "Sparkle opt-in: automatic checks off, no system profiling" isolated updates_opt_in
 echo "OK: all checks passed"

@@ -7,7 +7,7 @@ import SafiraSession
 import WebKit
 
 /// The only owner of a Profile's website data store, and the only place that builds web view configurations.
-/// This file is the one place allowed to name website data stores (scripts/guard-singletons.sh).
+/// This file is the one place allowed to name website data stores (scripts/singleton-patterns.txt).
 @MainActor
 public final class ProfileWebContext {
     /// The Profile this context belongs to; for a Private window, the Profile it is attached to.
