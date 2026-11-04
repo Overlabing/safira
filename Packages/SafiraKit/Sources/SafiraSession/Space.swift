@@ -12,7 +12,8 @@ public final class Space: Identifiable {
     public let id: SpaceID
     public internal(set) var name: String
     public internal(set) var emoji: String
-    /// The Space's Theme, picked from a Palette; nil until Themes exist.
+    /// The id of the Space's Theme, picked from the Palette; nil for a Space made before Themes existed, which then wears
+    /// its Profile's.
     public internal(set) var paletteID: String?
     /// The pinned area above the other Tabs: Pinned tabs and Folders, in order. It belongs to this Space alone.
     public internal(set) var pinned: [PinnedItem] = []

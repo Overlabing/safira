@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Antonin Carlin
 
+import Appearance
 import Diagnostics
 import Foundation
 import Observation
@@ -60,7 +61,8 @@ public final class ProfileRegistry {
                 let database = try AppDatabase(file: layout.appDatabaseFile)
                 profiles = try database.profiles()
                 if profiles.isEmpty {
-                    let first = Profile(id: ProfileID(rawValue: UUID()), name: Self.firstProfileName)
+                    let first = Profile(id: ProfileID(rawValue: UUID()), name: Self.firstProfileName,
+                                        paletteID: ThemeCatalog.first.id)
                     try database.add(first)
                     try database.setOnboardingPending(true)
                     profiles = [first]
@@ -75,7 +77,8 @@ public final class ProfileRegistry {
             }
         }
         if app == nil {
-            profiles = [Profile(id: ProfileID(rawValue: UUID()), name: Self.firstProfileName)]
+            profiles = [Profile(id: ProfileID(rawValue: UUID()), name: Self.firstProfileName,
+                                paletteID: ThemeCatalog.first.id)]
         }
         appDatabase = app
         self.layout = app == nil ? nil : layout
@@ -197,11 +200,14 @@ public final class ProfileRegistry {
     // MARK: Creating and renaming
 
     /// Adds a Profile after the others and shows it. A Profile cannot be created without a search engine, which the
-    /// user picks with nothing preselected. Its identifier is new, so it starts with an empty data store.
+    /// user picks with nothing preselected. Its identifier is new, so it starts with an empty data store. Its Theme is
+    /// `paletteID` when the Palette has it, otherwise the first Theme no other Profile uses, so Profiles differ.
     @discardableResult
-    public func createProfile(name: String, symbol: String, searchEngine: SearchEngine) -> ProfileID {
+    public func createProfile(name: String, symbol: String, searchEngine: SearchEngine,
+                              paletteID: String? = nil) -> ProfileID {
+        let theme = ThemeCatalog.theme(id: paletteID)?.id ?? ThemeCatalog.nextID(avoiding: profiles.map(\.paletteID))
         let profile = Profile(id: ProfileID(rawValue: UUID()), name: Self.cleanName(name) ?? Self.firstProfileName,
-                              symbol: Self.cleanSymbol(symbol) ?? Profile.defaultSymbol)
+                              symbol: Self.cleanSymbol(symbol) ?? Profile.defaultSymbol, paletteID: theme)
         let settings = ProfileSettings(searchEngine: searchEngine)
         do {
             try appDatabase?.add(profile)
@@ -214,11 +220,13 @@ public final class ProfileRegistry {
         return profile.id
     }
 
-    /// Renames a Profile. A blank name or symbol keeps the current one; a symbol keeps its first character only.
-    public func renameProfile(_ id: ProfileID, name: String, symbol: String) {
+    /// Renames a Profile and gives it a Theme. A blank name or symbol keeps the current one; a symbol keeps its first
+    /// character only; a `paletteID` the Palette does not have, or none, keeps the current Theme.
+    public func renameProfile(_ id: ProfileID, name: String, symbol: String, paletteID: String? = nil) {
         guard let index = profiles.firstIndex(where: { $0.id == id }) else { return }
         if let name = Self.cleanName(name) { profiles[index].name = name }
         if let symbol = Self.cleanSymbol(symbol) { profiles[index].symbol = symbol }
+        if let theme = ThemeCatalog.theme(id: paletteID) { profiles[index].paletteID = theme.id }
         do {
             try appDatabase?.update(profiles[index])
         } catch {

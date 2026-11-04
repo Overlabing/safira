@@ -63,6 +63,40 @@ private final class TemporaryRoot {
         await cleanUp(ids)
     }
 
+    @Test func eachProfileKeepsItsOwnPaletteAcrossARelaunchAndANewOneDiffersFromTheOthers() async throws {
+        let root = TemporaryRoot()
+        var ids: [ProfileID] = []
+        do {
+            let registry = ProfileRegistry(layout: root.layout)
+            let first = registry.activeProfileID
+            let work = registry.createProfile(name: "Work", symbol: "💼", searchEngine: .kagi)
+            let school = registry.createProfile(name: "School", symbol: "🎓", searchEngine: .ecosia, paletteID: "mint-cyan")
+            let unknown = registry.createProfile(name: "Odd", symbol: "🧪", searchEngine: .ecosia, paletteID: "ocean")
+            ids = registry.profiles.map(\.id)
+            registry.renameProfile(first, name: "Default", symbol: "👤", paletteID: "purple-pink")
+            registry.renameProfile(work, name: "Work", symbol: "💼")
+            registry.renameProfile(unknown, name: "Odd", symbol: "🧪", paletteID: "ocean")
+
+            #expect(registry.profiles.map(\.paletteID) == ["purple-pink", "orange-pink", "mint-cyan", "teal-green"])
+            let relaunched = ProfileRegistry(layout: root.layout)
+            #expect(relaunched.profiles.map(\.paletteID) == ["purple-pink", "orange-pink", "mint-cyan", "teal-green"])
+            #expect(relaunched.profiles.first { $0.id == school }?.paletteID == "mint-cyan")
+        }
+        await cleanUp(ids)
+    }
+
+    @Test func aFirstLaunchProfileHasTheFirstTheme() async throws {
+        let root = TemporaryRoot()
+        var ids: [ProfileID] = []
+        do {
+            let registry = ProfileRegistry(layout: root.layout)
+            ids = registry.profiles.map(\.id)
+
+            #expect(registry.activeProfile.paletteID == "indigo-blue")
+        }
+        await cleanUp(ids)
+    }
+
     @Test func switchingByOffsetWrapsAroundAndTheActiveProfileComesBackAfterARelaunch() async throws {
         let root = TemporaryRoot()
         var ids: [ProfileID] = []

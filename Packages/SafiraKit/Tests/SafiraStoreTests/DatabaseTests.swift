@@ -72,9 +72,9 @@ private func schema(_ file: URL) throws -> [String] {
         #expect(saved.activeSpaceID == space.id)
         #expect(space.name == "Home")
         #expect(space.emoji == "🏠")
-        #expect(space.paletteID == nil)
+        #expect(space.paletteID == "indigo-blue")
         #expect(space.tabs == [])
-        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads"])
+        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads", "v8-space-themes"])
     }
 
     @Test func savedSpacesComeBackInOrderWithTheirTabsSelectionAndTheActiveSpace() throws {
@@ -346,7 +346,7 @@ private func schema(_ file: URL) throws -> [String] {
         let database = try ProfileDatabase(file: file)
 
         #expect(try database.savedSession() == SavedSession(spaces: [
-            SpaceRecord(id: Self.existingSpace, name: "Home", emoji: "🏠", tabs: [
+            SpaceRecord(id: Self.existingSpace, name: "Home", emoji: "🏠", paletteID: "indigo-blue", tabs: [
                 TabRecord(id: firstTab, address: URL(string: "https://a.com/"), title: "A"),
                 TabRecord(id: secondTab, address: URL(string: "https://b.com/"), title: "B"),
             ], selectedTabID: secondTab),
@@ -360,9 +360,9 @@ private func schema(_ file: URL) throws -> [String] {
 
         let database = try ProfileDatabase(file: file)
 
-        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads"])
+        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads", "v8-space-themes"])
         #expect(try database.savedSession() == SavedSession(spaces: [
-            SpaceRecord(id: Self.existingSpace, name: "Home", emoji: "🏠", tabs: [
+            SpaceRecord(id: Self.existingSpace, name: "Home", emoji: "🏠", paletteID: "indigo-blue", tabs: [
                 TabRecord(id: firstTab, address: URL(string: "https://a.com/"), title: "A",
                           navigationState: Data([1, 2]), navigationStateOSBuild: "26A434"),
                 TabRecord(id: secondTab, address: URL(string: "https://b.com/"), title: "B"),
@@ -388,7 +388,7 @@ private func schema(_ file: URL) throws -> [String] {
 
         let database = try ProfileDatabase(file: file)
 
-        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads"])
+        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads", "v8-space-themes"])
         #expect(try database.sitePermissions() == [])
         #expect(try database.settings().searchEngine == .kagi)
         #expect(try database.savedSession().spaces.flatMap(\.tabs).count == 2)
@@ -408,6 +408,33 @@ private func schema(_ file: URL) throws -> [String] {
         #expect(try ProfileDatabase(file: file).savedSession() == saved)
     }
 
+    @Test func theSpacesSavedBeforeThemesTakeThePalettesInTurnAndKeepAnyThemeAlreadyChosen() throws {
+        let root = TemporaryRoot()
+        let file = root.layout.profileDatabaseFile(for: work)
+        try write(Self.version1 + Self.version2 + Self.version3 + """
+            INSERT INTO space (id, position, name, emoji, palette_id) VALUES ('AAAAAAAA-AAAA-4AAA-8AAA-AAAAAAAAAAAA', 1, 'Reading', '📚', NULL);
+            INSERT INTO space (id, position, name, emoji, palette_id) VALUES ('BBBBBBBB-BBBB-4BBB-8BBB-BBBBBBBBBBBB', 2, 'Music', '🎵', 'ocean');
+            INSERT INTO space (id, position, name, emoji, palette_id) VALUES ('CCCCCCCC-CCCC-4CCC-8CCC-CCCCCCCCCCCC', 9, 'Far', '🌍', NULL);
+            """, at: file)
+
+        let saved = try ProfileDatabase(file: file).savedSession()
+
+        #expect(try migrations(file).last == "v8-space-themes")
+        #expect(saved.spaces.map(\.name) == ["Home", "Reading", "Music", "Far"])
+        #expect(saved.spaces.map(\.paletteID) == ["indigo-blue", "orange-pink", "ocean", "teal-green"])
+    }
+
+    @Test func aThemeChosenForASpaceComesBackAfterAReopen() throws {
+        let root = TemporaryRoot()
+        let file = root.layout.profileDatabaseFile(for: work)
+        var saved = try ProfileDatabase(file: file).savedSession()
+        saved.spaces.append(SpaceRecord(id: readingSpace, name: "Reading", emoji: "📚", paletteID: "mint-cyan"))
+        saved.spaces[0].paletteID = "brown-yellow"
+        try ProfileDatabase(file: file).save(saved)
+
+        #expect(try ProfileDatabase(file: file).savedSession().spaces.map(\.paletteID) == ["brown-yellow", "mint-cyan"])
+    }
+
     @Test func aVersion3DatabaseUpgradesWithEveryTabStillPlainAndNoFolder() throws {
         let root = TemporaryRoot()
         let file = root.layout.profileDatabaseFile(for: work)
@@ -415,7 +442,7 @@ private func schema(_ file: URL) throws -> [String] {
 
         let saved = try ProfileDatabase(file: file).savedSession()
 
-        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads"])
+        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads", "v8-space-themes"])
         let space = try #require(saved.spaces.first)
         #expect(space.pinned == [])
         #expect(space.tabs.map(\.id) == [firstTab, secondTab])
@@ -431,7 +458,7 @@ private func schema(_ file: URL) throws -> [String] {
         let database = try ProfileDatabase(file: file)
         let saved = try database.savedSession()
 
-        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads"])
+        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads", "v8-space-themes"])
         let space = try #require(saved.spaces.first)
         #expect(space.pinned == [])
         #expect(space.tabs.map(\.id) == [firstTab, secondTab])
@@ -461,7 +488,7 @@ private func schema(_ file: URL) throws -> [String] {
         let database = try ProfileDatabase(file: file)
         let saved = try database.savedSession()
 
-        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads"])
+        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads", "v8-space-themes"])
         let space = try #require(saved.spaces.first)
         #expect(space.pinned == [])
         #expect(space.tabs.map(\.id) == [firstTab, secondTab])
@@ -503,7 +530,7 @@ private func schema(_ file: URL) throws -> [String] {
 
         let database = try ProfileDatabase(file: file)
 
-        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads"])
+        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads", "v8-space-themes"])
         #expect(try database.downloads() == [])
         let space = try #require(try database.savedSession().spaces.first)
         #expect(space.pinned.count == 1)
@@ -540,7 +567,7 @@ private func schema(_ file: URL) throws -> [String] {
         let file = root.layout.profileDatabaseFile(for: work)
         try write(Self.version1 + Self.version1Tabs, at: file)
         let saved = SavedSession(spaces: [
-            SpaceRecord(id: Self.existingSpace, name: "Home", emoji: "🏠", tabs: [
+            SpaceRecord(id: Self.existingSpace, name: "Home", emoji: "🏠", paletteID: "indigo-blue", tabs: [
                 TabRecord(id: firstTab, address: URL(string: "https://a.com/"), navigationState: Data([7]),
                           navigationStateOSBuild: "26A434"),
             ], selectedTabID: firstTab),
@@ -677,9 +704,9 @@ private let notesFolder = FolderID(rawValue: UUID(uuidString: "DDDDDDDD-DDDD-4DD
 
         let database = try AppDatabase(file: file)
 
-        #expect(try database.profiles() == [Profile(id: work, name: "Default", symbol: "👤")])
+        #expect(try database.profiles() == [Profile(id: work, name: "Default", symbol: "👤", paletteID: "indigo-blue")])
         #expect(try database.lastActiveProfileID() == work)
-        #expect(try migrations(file) == ["v1-profiles", "v2-profile-details", "v3-onboarding"])
+        #expect(try migrations(file) == ["v1-profiles", "v2-profile-details", "v3-onboarding", "v4-profile-palettes"])
     }
 
     @Test func aRenamedProfileKeepsItsPlaceAndItsNewNameAfterAReopen() throws {
@@ -750,6 +777,46 @@ private let notesFolder = FolderID(rawValue: UUID(uuidString: "DDDDDDDD-DDDD-4DD
 
         #expect(try database.isOnboardingPending() == false)
         #expect(try database.lastActiveProfileID() == work)
+    }
+
+    @Test func theProfilesListedBeforePalettesTakeThemInTurnAndKeepAnyThemeAlreadyChosen() throws {
+        let root = TemporaryRoot()
+        let file = root.layout.appDatabaseFile
+        try FileManager.default.createDirectory(at: root.layout.root, withIntermediateDirectories: true)
+        let queue = try DatabaseQueue(path: file.path(percentEncoded: false))
+        try queue.write { db in
+            try db.execute(sql: """
+                CREATE TABLE grdb_migrations (identifier TEXT NOT NULL PRIMARY KEY);
+                INSERT INTO grdb_migrations VALUES ('v1-profiles');
+                INSERT INTO grdb_migrations VALUES ('v2-profile-details');
+                INSERT INTO grdb_migrations VALUES ('v3-onboarding');
+                CREATE TABLE profile (id TEXT PRIMARY KEY, name TEXT NOT NULL, position INTEGER NOT NULL,
+                    symbol TEXT NOT NULL DEFAULT '👤', palette_id TEXT, network_config TEXT,
+                    pending_deletion BOOLEAN NOT NULL DEFAULT 0);
+                CREATE TABLE app_state (id INTEGER PRIMARY KEY CHECK (id = 1), last_profile_id TEXT,
+                    onboarding_pending BOOLEAN NOT NULL DEFAULT 0);
+                INSERT INTO profile (id, name, position) VALUES ('0B4E2C1A-5D3F-4E8B-9A7C-1F2E3D4C5B6A', 'Work', 0);
+                INSERT INTO profile (id, name, position) VALUES ('7C8D9E0F-1A2B-4C3D-8E5F-6A7B8C9D0E1F', 'Personal', 1);
+                INSERT INTO profile (id, name, position, palette_id)
+                    VALUES ('11111111-2222-4333-8444-555555555555', 'Family', 2, 'ocean');
+                """)
+        }
+        try queue.close()
+
+        let database = try AppDatabase(file: file)
+
+        #expect(try database.profiles().map(\.paletteID) == ["indigo-blue", "orange-pink", "ocean"])
+        #expect(try migrations(file).last == "v4-profile-palettes")
+    }
+
+    @Test func aProfilesPaletteComesBackAfterAReopen() throws {
+        let root = TemporaryRoot()
+        let database = try AppDatabase(file: root.layout.appDatabaseFile)
+        try database.add(Profile(id: work, name: "Work", paletteID: "red-orange"))
+        try database.add(Profile(id: personal, name: "Personal", paletteID: "purple-pink"))
+        try database.update(Profile(id: personal, name: "Personal", paletteID: "teal-green"))
+
+        #expect(try AppDatabase(file: root.layout.appDatabaseFile).profiles().map(\.paletteID) == ["red-orange", "teal-green"])
     }
 
     @Test func aProfileBeingDeletedLeavesTheListButStaysRecordedUntilItIsErased() throws {

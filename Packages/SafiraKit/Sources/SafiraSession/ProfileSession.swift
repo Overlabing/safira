@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Antonin Carlin
 
 import Foundation
+import Appearance
 import Observation
 import SafiraCore
 import SafiraStore
@@ -179,22 +180,26 @@ public final class ProfileSession {
     // MARK: Spaces
 
     /// Adds a Space after the others and makes it active. It starts with no Tab. A session without Spaces adds none and
-    /// answers its only one.
+    /// answers its only one. Its Theme is `paletteID` when the Palette has it, otherwise the first Theme of the Palette
+    /// no other Space of the Profile uses.
     @discardableResult
-    public func createSpace(name: String, emoji: String) -> SpaceID {
+    public func createSpace(name: String, emoji: String, paletteID: String? = nil) -> SpaceID {
         guard hasSpaces else { return activeSpaceID }
+        let theme = ThemeCatalog.theme(id: paletteID)?.id ?? ThemeCatalog.nextID(avoiding: spaces.map(\.paletteID))
         let space = Space(id: SpaceID(), name: Self.cleanName(name) ?? Self.initialSpaceName,
-                          emoji: Self.cleanEmoji(emoji) ?? Self.initialSpaceEmoji)
+                          emoji: Self.cleanEmoji(emoji) ?? Self.initialSpaceEmoji, paletteID: theme)
         spaces.append(space)
         activeSpaceID = space.id
         return space.id
     }
 
-    /// Renames a Space. A blank name or emoji keeps the current one; an emoji keeps its first character only.
-    public func renameSpace(_ id: SpaceID, name: String, emoji: String) {
+    /// Renames a Space and gives it a Theme. A blank name or emoji keeps the current one; an emoji keeps its first
+    /// character only; a `paletteID` the Palette does not have, or none, keeps the current Theme.
+    public func renameSpace(_ id: SpaceID, name: String, emoji: String, paletteID: String? = nil) {
         guard hasSpaces, let space = space(id) else { return }
         if let name = Self.cleanName(name) { space.name = name }
         if let emoji = Self.cleanEmoji(emoji) { space.emoji = emoji }
+        if let theme = ThemeCatalog.theme(id: paletteID) { space.paletteID = theme.id }
     }
 
     /// Moves a Space so that it ends at `index` in the list; an index past either end is clamped to it.

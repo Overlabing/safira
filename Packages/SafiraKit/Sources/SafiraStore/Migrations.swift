@@ -108,8 +108,20 @@ enum Migrations {
                 table.column("finished_at", .double)
             }
         }
+        // Every Space has a Theme from the Palette (#10). The Spaces saved so far have none, so they take the Palette's
+        // Themes in turn by position, which is what the Space editor would have offered them. The ids are written out:
+        // a migration must not move when the Palette does.
+        migrator.registerMigration("v8-space-themes") { db in
+            try db.execute(sql: "UPDATE space SET palette_id = \(Self.paletteByPosition) WHERE palette_id IS NULL")
+        }
         return migrator
     }
+
+    /// An SQL expression that picks one of the Palette's Theme ids by the row's `position`, cycling.
+    private static let paletteByPosition = """
+        CASE position % 7 WHEN 0 THEN 'indigo-blue' WHEN 1 THEN 'orange-pink' WHEN 2 THEN 'teal-green' \
+        WHEN 3 THEN 'red-orange' WHEN 4 THEN 'purple-pink' WHEN 5 THEN 'mint-cyan' ELSE 'brown-yellow' END
+        """
 
     static var app: DatabaseMigrator {
         var migrator = DatabaseMigrator()
@@ -144,6 +156,11 @@ enum Migrations {
             try db.alter(table: "app_state") { table in
                 table.add(column: "onboarding_pending", .boolean).notNull().defaults(to: false)
             }
+        }
+        // Every Profile has a Palette Theme (#10), which tints the sidebar and the Dock icon. The Profiles listed so far
+        // have none, so they take the Palette's Themes in turn by position, which keeps them apart.
+        migrator.registerMigration("v4-profile-palettes") { db in
+            try db.execute(sql: "UPDATE profile SET palette_id = \(Self.paletteByPosition) WHERE palette_id IS NULL")
         }
         return migrator
     }
