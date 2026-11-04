@@ -72,6 +72,38 @@
     "showDownloads": {
       "shortcut": "command+shift+y",
       "from": "Open Downloads (Shift+Ctrl+Y)"
+    },
+    "selectTab1": {
+      "shortcut": "command+1",
+      "from": "Select tab #1 - #8 (Alt + 1/2/.../8); read as ⌘, the key Firefox uses for it on macOS, since ⌥ and a digit types a character on a Mac"
+    },
+    "selectTab2": {
+      "shortcut": "command+2",
+      "from": "Select tab #1 - #8 (Alt + 1/2/.../8); read as ⌘, the key Firefox uses for it on macOS, since ⌥ and a digit types a character on a Mac"
+    },
+    "selectTab3": {
+      "shortcut": "command+3",
+      "from": "Select tab #1 - #8 (Alt + 1/2/.../8); read as ⌘, the key Firefox uses for it on macOS, since ⌥ and a digit types a character on a Mac"
+    },
+    "selectTab4": {
+      "shortcut": "command+4",
+      "from": "Select tab #1 - #8 (Alt + 1/2/.../8); read as ⌘, the key Firefox uses for it on macOS, since ⌥ and a digit types a character on a Mac"
+    },
+    "selectTab5": {
+      "shortcut": "command+5",
+      "from": "Select tab #1 - #8 (Alt + 1/2/.../8); read as ⌘, the key Firefox uses for it on macOS, since ⌥ and a digit types a character on a Mac"
+    },
+    "selectTab6": {
+      "shortcut": "command+6",
+      "from": "Select tab #1 - #8 (Alt + 1/2/.../8); read as ⌘, the key Firefox uses for it on macOS, since ⌥ and a digit types a character on a Mac"
+    },
+    "selectTab7": {
+      "shortcut": "command+7",
+      "from": "Select tab #1 - #8 (Alt + 1/2/.../8); read as ⌘, the key Firefox uses for it on macOS, since ⌥ and a digit types a character on a Mac"
+    },
+    "selectTab8": {
+      "shortcut": "command+8",
+      "from": "Select tab #1 - #8 (Alt + 1/2/.../8); read as ⌘, the key Firefox uses for it on macOS, since ⌥ and a digit types a character on a Mac"
     }
   },
   "unbound": {
@@ -92,6 +124,16 @@
     "deleteProfile": "The page lists no Profile command.",
     "sitePermissions": "The page lists no command for the permissions a site has been granted.",
     "previousProfile": "The page lists no Profile command.",
-    "nextProfile": "The page lists no Profile command."
+    "nextProfile": "The page lists no Profile command.",
+    "selectTab9": "Zen's Alt+9 selects the last tab, not the ninth; Safira's own key applies.",
+    "selectSpace1": "Switch to Workspace (1-10) is not set by default.",
+    "selectSpace2": "Switch to Workspace (1-10) is not set by default.",
+    "selectSpace3": "Switch to Workspace (1-10) is not set by default.",
+    "selectSpace4": "Switch to Workspace (1-10) is not set by default.",
+    "selectSpace5": "Switch to Workspace (1-10) is not set by default.",
+    "selectSpace6": "Switch to Workspace (1-10) is not set by default.",
+    "selectSpace7": "Switch to Workspace (1-10) is not set by default.",
+    "selectSpace8": "Switch to Workspace (1-10) is not set by default.",
+    "selectSpace9": "Switch to Workspace (1-10) is not set by default."
   }
 }

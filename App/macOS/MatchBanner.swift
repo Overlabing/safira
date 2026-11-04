@@ -3,51 +3,55 @@
 
 import AppKit
 import Observation
+import ColorCore
+import ColorUI
+import DesignKit
 import SafiraSession
 import SwiftUI
 
-/// What the banner under the toolbar shows: nothing, or the offer that follows a link a Matching tab answered.
+/// What the banner over the page shows: nothing, or the offer that follows a link a Matching tab answered.
 @MainActor
 @Observable
 final class MatchBannerModel {
     var banner: MatchBanner?
 }
 
-/// The discreet bar that says a link was already open and offers to open it in a new Tab anyway.
+/// ThemeKit's banner, floating over the top of the page: the link was already open, and it can still open in a new Tab.
 struct MatchBannerBar: View {
     let model: MatchBannerModel
+    let theme: () -> Theme
     let openInNewTab: () -> Void
     let dismiss: () -> Void
+    @Environment(\.designTokens) private var tokens
 
     var body: some View {
         if model.banner != nil {
-            HStack(spacing: 10) {
-                Image(systemName: "arrow.uturn.backward.circle")
-                    .foregroundStyle(.secondary)
-                    .accessibilityHidden(true)
-                Text("This link was already open, so Safira showed that Tab.")
-                    .font(.callout)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-                Spacer(minLength: 8)
+            Banner(systemImage: "arrow.uturn.backward.circle",
+                   message: String(localized: "This link was already open, so Safira showed that Tab.")) {
                 Button("Open in New Tab", action: openInNewTab)
                     .controlSize(.small)
-                Button(action: dismiss) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 9, weight: .bold))
-                        .frame(width: 18, height: 18)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(Text("Dismiss"))
-                .help("Dismiss")
+                IconButton(String(localized: "Dismiss"), systemImage: "xmark", action: dismiss)
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 5)
-            .frame(maxWidth: .infinity)
-            .background(.bar)
-            .overlay(alignment: .bottom) { Divider() }
-            .accessibilityElement(children: .contain)
+            .theme(theme())
             .accessibilityLabel(Text("Link already open"))
         }
+    }
+}
+
+/// The banner's hosting view lets clicks beside the banner through to the page.
+final class MatchBannerHostingView: NSHostingView<MatchBannerBar> {
+    required init(rootView: MatchBannerBar) {
+        super.init(rootView: rootView)
+        sizingOptions = [.intrinsicContentSize]
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) is not used")
+    }
+
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        let hit = super.hitTest(point)
+        return hit === self ? nil : hit
     }
 }

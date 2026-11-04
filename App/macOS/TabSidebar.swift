@@ -3,223 +3,185 @@
 
 import Appearance
 import ColorCore
+import ColorUI
+import DesignKit
 import SafiraCore
 import SafiraSession
 import SafiraWeb
 import SwiftUI
 
-/// The sidebar: the Active profile at the top, the active Space's name, its pinned area with its Folders, the list of
-/// its other Tabs, and the row of Spaces at the bottom. In the list, arrow keys move the selection, which shows the
-/// Tab; Delete closes it; Return or Escape goes to its page; Tabs can be dragged to reorder, and Pinned tabs and
-/// Folders into Folders.
+/// The Main window's column, from top to bottom: the address and Back, Forward and Reload; the active Space's name;
+/// its pinned area with its Folders; a hairline; the New Tab row and the other Tabs; the Space switcher; the Active
+/// profile's band. Arrow keys in the list move the selection, which shows the Tab; Delete closes it; Return or Escape
+/// goes to its page. Tabs can be dragged to reorder, and Pinned tabs and Folders into Folders.
 struct TabSidebar: View {
     let registry: ProfileRegistry
+    let focus: ColumnFocus
+    let pageActions: PageActions
     let profileActions: ProfileActions
     let spaceActions: SpaceActions
     let folderActions: FolderActions
-    let showPage: () -> Void
+    let newTabShortcut: () -> String?
+    @Environment(\.designTokens) private var tokens
 
     private var session: ProfileSession { registry.active.session }
-    /// The Active profile's Theme tints the sidebar; the Space's Theme is its gradient, and a Space with none wears the Profile's.
-    private var profileTheme: Theme { ThemeCatalog.theme(id: registry.activeProfile.paletteID, fallback: ThemeCatalog.first) }
-    private var spaceTheme: Theme { ThemeCatalog.theme(id: session.activeSpace.paletteID, fallback: profileTheme) }
 
     var body: some View {
         VStack(spacing: 0) {
-            ProfileSwitcher(registry: registry, actions: profileActions)
-                .modifier(ProfileBand(theme: profileTheme))
-            Divider()
-            Text(verbatim: "\(session.activeSpace.emoji) \(session.activeSpace.name)")
-                .font(.headline)
-                .lineLimit(1)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .accessibilityLabel(String(localized: "Space: \(session.activeSpace.name)"))
-                .accessibilityAddTraits(.isHeader)
-            tabList
-            Divider()
-            SpaceBar(session: session, actions: spaceActions)
-        }
-        .frame(minWidth: 180)
-        .sidebarAppearance(profile: profileTheme, space: spaceTheme)
-    }
-
-    private var tabList: some View {
-        List(selection: selection) {
-            if !session.pinnedItems.isEmpty {
-                Section {
-                    ForEach(PinnedRow.rows(session.pinnedItems)) { row in
-                        switch row.content {
-                        case .folder(let folder, let depth):
-                            FolderRow(folder: folder, depth: depth, session: session, actions: folderActions)
-                        case .tab(let tab, let depth):
-                            let pinned = session.activeSpace.pinnedTabs
-                            TabRow(
-                                tab: tab,
-                                position: (pinned.firstIndex { $0.id == tab.id } ?? 0) + 1,
-                                count: pinned.count,
-                                depth: depth,
-                                session: session
-                            )
-                            .tag(tab.id)
-                        }
+            BrowserControls(session: session, actions: pageActions)
+            ScrollView {
+                VStack(spacing: 0) {
+                    SectionHeader(String(localized: "\(session.activeSpace.emoji) \(session.activeSpace.name)"),
+                                  isGroupHeader: true)
+                        .accessibilityLabel(String(localized: "Space: \(session.activeSpace.name)"))
+                    PinnedSection(session: session, focus: focus, actions: folderActions)
+                    if !session.pinnedItems.isEmpty { ColumnSeparator() }
+                    NewTabRow(shortcut: newTabShortcut(), newTab: pageActions.newTab)
+                    ForEach(Array(session.tabs.enumerated()), id: \.element.id) { index, tab in
+                        TabRowView(tab: tab, isSelected: session.selectedTabID == tab.id,
+                                   isListFocused: focus.isListFocused, placement: .free(firstInSection: false),
+                                   position: session.activeSpace.pinnedTabs.count + index + 1,
+                                   count: session.activeSpace.allTabs.count,
+                                   select: { session.select(tab.id) }, close: { session.close(tab.id) })
+                            .modifier(TabDrag(tab: tab, session: session))
+                            .contextMenu { TabMenu(tab: tab, session: session) }
                     }
-                } header: {
-                    Text("Pinned")
-                        .dropDestination(for: String.self) { texts, _ in
-                            guard let item = texts.first.flatMap(PinnedDrag.item(from:)) else { return false }
-                            return session.movePinned(item, into: nil)
-                        }
                 }
+                .modifier(TabListKeyboard(session: session, focus: focus, showPage: pageActions.showPage))
             }
-            Section {
-                ForEach(session.tabs) { tab in
-                    TabRow(
-                        tab: tab,
-                        position: (session.tabs.firstIndex { $0.id == tab.id } ?? 0) + 1,
-                        count: session.tabs.count,
-                        depth: 0,
-                        session: session
-                    )
-                    .tag(tab.id)
-                }
-                .onMove { source, destination in
-                    guard let from = source.first else { return }
-                    // SwiftUI gives the place before the move; the session takes the place after it.
-                    session.move(session.tabs[from].id, to: destination > from ? destination - 1 : destination)
-                }
-            } header: {
-                if !session.pinnedItems.isEmpty {
-                    Text("Tabs")
-                }
-            }
+            .scrollContentBackground(.hidden)
+            SpaceSwitcher(session: session, actions: spaceActions)
+            ProfileBar(registry: registry, profileActions: profileActions, spaceActions: spaceActions)
         }
-        .listStyle(.sidebar)
-        .accessibilityLabel("Tabs")
-        .onDeleteCommand {
-            session.closeSelectedTab()
-        }
-        .onKeyPress(.return) {
-            showPage()
-            return .handled
-        }
-        .onKeyPress(.escape) {
-            showPage()
-            return .handled
-        }
+        .theme(spaceTheme)
     }
 
-    private var selection: Binding<TabID?> {
-        Binding(
-            get: { session.selectedTabID },
-            set: { id in
-                if let id { session.select(id) }
-            }
-        )
+    /// The Space's Theme colours the column; a Space with none wears its Profile's.
+    private var spaceTheme: Theme {
+        let profile = ThemeCatalog.theme(id: registry.activeProfile.paletteID, fallback: ThemeCatalog.first)
+        return ThemeCatalog.theme(id: session.activeSpace.paletteID, fallback: profile)
     }
 }
 
-private struct TabRow: View {
+/// The context menu of a Tab row.
+struct TabMenu: View {
     let tab: SafiraSession.Tab
-    let position: Int
-    let count: Int
-    let depth: Int
     let session: ProfileSession
-    @State private var isHovered = false
-    @Environment(\.sidebarSecondary) private var secondary
 
     var body: some View {
-        HStack(spacing: 6) {
-            Group {
-                if tab.state.isLoading {
-                    ProgressView().controlSize(.small)
-                } else {
-                    Image(systemName: "globe").foregroundStyle(secondary)
-                }
-            }
-            .frame(width: 16, height: 16)
-            if tab.isPinned {
-                Image(systemName: "pin.fill")
-                    .font(.caption2)
-                    .foregroundStyle(secondary)
-                    .accessibilityHidden(true)
-            }
-            Text(title)
-                .lineLimit(1)
-                .truncationMode(.tail)
-            Spacer(minLength: 0)
-            if tab.state.isPlayingMedia {
-                Image(systemName: "speaker.wave.2.fill")
-                    .foregroundStyle(secondary)
-            }
-            if isHovered {
-                Button {
-                    session.close(tab.id)
-                } label: {
-                    Image(systemName: "xmark")
-                }
-                .buttonStyle(.borderless)
-                .help("Close Tab")
-            }
-        }
-        .padding(.leading, CGFloat(depth) * 14)
-        .padding(.vertical, 2)
-        .contentShape(Rectangle())
-        .onHover { isHovered = $0 }
-        .modifier(PinnedDragSource(tab: tab, session: session))
-        .contextMenu {
-            Button(tab.isPinned ? "Unpin Tab" : "Pin Tab") { session.togglePin(tab.id) }
-            Divider()
-            Button("Move Up") { session.move(tab.id, by: -1) }
-                .disabled(!session.canMove(tab.id, by: -1))
-            Button("Move Down") { session.move(tab.id, by: 1) }
-                .disabled(!session.canMove(tab.id, by: 1))
-            Divider()
-            Button("Close Tab") { session.close(tab.id) }
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(title)
-        .accessibilityValue(accessibilityState)
-        .accessibilityAddTraits(session.selectedTabID == tab.id ? [.isButton, .isSelected] : .isButton)
-        .accessibilityAction(named: tab.isPinned ? "Unpin Tab" : "Pin Tab") { session.togglePin(tab.id) }
-        .accessibilityAction(named: "Close Tab") { session.close(tab.id) }
-        .accessibilityAction(named: "Move Up") { session.move(tab.id, by: -1) }
-        .accessibilityAction(named: "Move Down") { session.move(tab.id, by: 1) }
-    }
-
-    private var title: String {
-        if let title = tab.state.title, !title.isEmpty { return title }
-        return tab.address?.host() ?? String(localized: "New Tab")
-    }
-
-    /// The Tab's state then its place, as VoiceOver reads it after the title: "Loading, Playing media, 2 of 5".
-    private var accessibilityState: String {
-        var parts: [String] = []
-        if tab.state.isLoading { parts.append(String(localized: "Loading")) }
-        if tab.state.isPlayingMedia { parts.append(String(localized: "Playing media")) }
-        if tab.isPinned { parts.append(String(localized: "Pinned")) }
-        parts.append(String(localized: "\(position) of \(count)"))
-        return parts.joined(separator: ", ")
+        Button(tab.isPinned ? "Unpin Tab" : "Pin Tab") { session.togglePin(tab.id) }
+        Divider()
+        Button("Move Up") { session.move(tab.id, by: -1) }
+            .disabled(!session.canMove(tab.id, by: -1))
+        Button("Move Down") { session.move(tab.id, by: 1) }
+            .disabled(!session.canMove(tab.id, by: 1))
+        Divider()
+        Button("Close Tab") { session.close(tab.id) }
     }
 }
 
-/// A Pinned tab can be dragged into a Folder, or before another Pinned tab. A plain Tab is left to the list's own
-/// reordering: it is not offered to any Folder.
-private struct PinnedDragSource: ViewModifier {
+/// The Space switcher: ThemeKit's glass bar of the Profile's Spaces, each its emoji on its Theme's colour; absent with
+/// one Space. Its context menu renames, moves or deletes the active Space.
+private struct SpaceSwitcher: View {
+    let session: ProfileSession
+    let actions: SpaceActions
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        let profileTheme = ThemeCatalog.first
+        GlassSwitcher(
+            session.spaces.map { space in
+                SwitcherItem(id: space.id.rawValue.uuidString, name: "\(space.emoji) \(space.name)",
+                             theme: ThemeCatalog.theme(id: space.paletteID, fallback: profileTheme))
+            },
+            selection: session.activeSpaceID.rawValue.uuidString,
+            label: String(localized: "Spaces")
+        ) { id in
+            guard let space = session.spaces.first(where: { $0.id.rawValue.uuidString == id }) else { return }
+            withAnimation(MotionRole.themeChange.animation(reduceMotion: reduceMotion)) {
+                session.selectSpace(space.id)
+            }
+        }
+        .contextMenu {
+            Button("Rename Space…") { actions.edit(session.activeSpaceID) }
+            Divider()
+            Button("Move Left") { session.moveSpace(session.activeSpaceID, by: -1) }
+                .disabled(session.spaces.first?.id == session.activeSpaceID)
+            Button("Move Right") { session.moveSpace(session.activeSpaceID, by: 1) }
+                .disabled(session.spaces.last?.id == session.activeSpaceID)
+            Divider()
+            Button("Delete Space…") { actions.delete(session.activeSpaceID) }
+                .disabled(!session.canDeleteSpace)
+        }
+    }
+}
+
+/// The Active profile's band, a menu that switches Profile, and the button that adds a Space. It sits at the other end
+/// of the column from the address, apart from the Space switcher's glass, so that a Profile never changes by accident.
+private struct ProfileBar: View {
+    let registry: ProfileRegistry
+    let profileActions: ProfileActions
+    let spaceActions: SpaceActions
+    @Environment(\.designTokens) private var tokens
+
+    var body: some View {
+        let profile = registry.activeProfile
+        HStack(spacing: tokens.spacing.pillActionGap) {
+            Menu {
+                ForEach(registry.profiles) { item in
+                    Toggle(isOn: Binding(get: { registry.activeProfileID == item.id },
+                                         set: { if $0 { profileActions.select(item.id) } })) {
+                        Text(verbatim: "\(item.symbol) \(item.name)")
+                    }
+                }
+                Divider()
+                Button("New Profile…") { profileActions.edit(nil) }
+                Button("Rename Profile…") { profileActions.edit(registry.activeProfileID) }
+                Button("Delete Profile…") { profileActions.delete(registry.activeProfileID) }
+                    .disabled(!registry.canDeleteProfile)
+                Divider()
+                Button("Clear History and Website Data…") { profileActions.clearBrowsingData(registry.activeProfileID) }
+            } label: {
+                ThemeBand {
+                    HStack(spacing: DesignTokens.Spacing.xs) {
+                        Text(verbatim: "\(profile.symbol) \(profile.name)")
+                        Spacer(minLength: 0)
+                        Image(systemName: "chevron.up.chevron.down")
+                            .font(tokens.type.accessory.font)
+                            .accessibilityHidden(true)
+                    }
+                }
+                .theme(ThemeCatalog.theme(id: profile.paletteID, fallback: ThemeCatalog.first))
+            }
+            .menuStyle(.button)
+            .buttonStyle(.plain)
+            .menuIndicator(.hidden)
+            .help("Switch Profile")
+            .accessibilityLabel(String(localized: "Profile: \(profile.name)"))
+            .accessibilityHint("Opens the list of Profiles")
+            IconButton(String(localized: "New Space"), systemImage: "plus") { spaceActions.edit(nil) }
+        }
+        .padding(.horizontal, tokens.spacing.listMargin)
+        .padding(.bottom, tokens.spacing.switcherBottom)
+    }
+}
+
+/// A Tab can be dragged before another one of its kind: a Pinned tab before a Pinned tab or into a Folder, a plain Tab
+/// before a plain Tab. A drop that does not parse is refused, so text dragged in from elsewhere does nothing.
+struct TabDrag: ViewModifier {
     let tab: SafiraSession.Tab
     let session: ProfileSession
 
     func body(content: Content) -> some View {
-        if tab.isPinned {
-            content
-                .draggable(PinnedDrag.text(for: .tab(tab.id)))
-                .dropDestination(for: String.self) { texts, _ in
-                    guard let item = texts.first.flatMap(PinnedDrag.item(from:)) else { return false }
-                    return session.movePinned(item, before: .tab(tab.id))
-                }
-        } else {
-            content
-        }
+        content
+            .draggable(PinnedDrag.text(for: .tab(tab.id)))
+            .dropDestination(for: String.self) { texts, _ in
+                guard let item = texts.first.flatMap(PinnedDrag.item(from:)) else { return false }
+                if tab.isPinned { return session.movePinned(item, before: .tab(tab.id)) }
+                guard case .tab(let dragged) = item, let index = session.tabs.firstIndex(where: { $0.id == tab.id }),
+                      session.tabs.contains(where: { $0.id == dragged }) else { return false }
+                session.move(dragged, to: index)
+                return true
+            }
     }
 }
