@@ -61,13 +61,13 @@ public struct MatchingTab: Hashable, Sendable {
 }
 
 extension SavedSession {
-    /// The saved Tab of this Profile whose last address is `address`: the active Space is searched first, then the
-    /// others in sidebar order.
+    /// The saved Tab of this Profile, pinned or not, whose last address is `address`: the active Space is searched
+    /// first, then the others in sidebar order.
     public func matchingTab(for address: NormalizedAddress, in profile: ProfileID) -> MatchingTab? {
         let active = activeSpace
         let ordered = (active.map { [$0] } ?? []) + spaces.filter { $0.id != active?.id }
         for space in ordered {
-            if let tab = space.tabs.first(where: { $0.address.flatMap(NormalizedAddress.init) == address }) {
+            if let tab = space.allTabs.first(where: { $0.address.flatMap(NormalizedAddress.init) == address }) {
                 return MatchingTab(profile: profile, space: space.id, tab: tab.id)
             }
         }

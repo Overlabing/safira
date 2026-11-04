@@ -118,13 +118,19 @@ private struct PinnedFolder: View {
     }
 }
 
-/// Names a new Folder or renames one.
+/// Names a new Folder or renames one. The field has the keyboard when the sheet opens, with the current name selected,
+/// so what the user types replaces it; Return saves what the field holds.
 struct FolderEditor: View {
     let title: String
     let confirmTitle: String
     @State var name: String
     let save: (_ name: String) -> Void
     let cancel: () -> Void
+    @FocusState private var nameHasFocus: Bool
+
+    private var canSave: Bool {
+        !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -132,17 +138,29 @@ struct FolderEditor: View {
                 .font(.headline)
             Form {
                 TextField("Name", text: $name)
+                    .focused($nameHasFocus)
+                    .onSubmit(commit)
             }
             HStack {
                 Spacer()
                 Button("Cancel", role: .cancel, action: cancel)
                     .keyboardShortcut(.cancelAction)
-                Button(confirmTitle) { save(name) }
+                Button(confirmTitle, action: commit)
                     .keyboardShortcut(.defaultAction)
-                    .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .disabled(!canSave)
             }
         }
         .padding(20)
         .frame(width: 320)
+        .task {
+            nameHasFocus = true
+            // The field editor exists once the field has focus.
+            try? await Task.sleep(for: .milliseconds(50))
+            NSApp.sendAction(#selector(NSText.selectAll(_:)), to: nil, from: nil)
+        }
+    }
+
+    private func commit() {
+        if canSave { save(name) }
     }
 }

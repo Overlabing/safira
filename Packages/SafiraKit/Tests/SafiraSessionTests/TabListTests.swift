@@ -336,6 +336,106 @@ private func openTabs(_ fixture: SessionFixture, _ addresses: [String]) -> [TabI
                                       "https://c.com"])
     }
 
+    @Test func successiveLinksOfOneOpenerLandInClickOrder() throws {
+        let fixture = SessionFixture()
+        let ids = openTabs(fixture, ["a.com", "z.com"])
+        fixture.session.select(ids[0])
+        let opener = fixture.selectedPage
+
+        try opener?.commandClickLink(to: #require(URL(string: "https://a.com/1")))
+        try fixture.clickTargetBlankLink(in: opener, to: #require(URL(string: "https://a.com/2")))
+        try opener?.commandClickLink(to: #require(URL(string: "https://a.com/3")))
+
+        #expect(fixture.addresses == ["https://a.com", "https://a.com/1", "https://a.com/2", "https://a.com/3",
+                                      "https://z.com"])
+        #expect(fixture.session.selectedTabID == ids[0])
+    }
+
+    @Test func eachOpenerKeepsItsOwnLinksInClickOrder() throws {
+        let fixture = SessionFixture()
+        let ids = openTabs(fixture, ["a.com", "b.com"])
+        let pageA = fixture.pages[ids[0]]
+        let pageB = fixture.pages[ids[1]]
+
+        try pageA?.commandClickLink(to: #require(URL(string: "https://a.com/1")))
+        try pageB?.commandClickLink(to: #require(URL(string: "https://b.com/1")))
+        try pageA?.commandClickLink(to: #require(URL(string: "https://a.com/2")))
+        try pageB?.commandClickLink(to: #require(URL(string: "https://b.com/2")))
+
+        #expect(fixture.addresses == ["https://a.com", "https://a.com/1", "https://a.com/2", "https://b.com",
+                                      "https://b.com/1", "https://b.com/2"])
+    }
+
+    @Test func aLinkLandsRightAfterItsOpenerOnceThePreviousChildIsClosed() throws {
+        let fixture = SessionFixture()
+        let ids = openTabs(fixture, ["a.com", "z.com"])
+        let opener = fixture.pages[ids[0]]
+        opener?.commandClickLink(to: URL(string: "https://a.com/1")!)
+        opener?.commandClickLink(to: URL(string: "https://a.com/2")!)
+        fixture.session.close(fixture.session.tabs[2].id)
+
+        opener?.commandClickLink(to: URL(string: "https://a.com/3")!)
+
+        #expect(fixture.addresses == ["https://a.com", "https://a.com/3", "https://a.com/1", "https://z.com"])
+    }
+
+    @Test func successiveLinksOfAPinnedTabLandInClickOrderBelowThePinnedArea() throws {
+        let fixture = SessionFixture()
+        let ids = openTabs(fixture, ["a.com", "z.com"])
+        fixture.session.pin(ids[0])
+        let opener = fixture.pages[ids[0]]
+
+        opener?.commandClickLink(to: URL(string: "https://a.com/1")!)
+        opener?.commandClickLink(to: URL(string: "https://a.com/2")!)
+
+        #expect(fixture.addresses == ["https://a.com/1", "https://a.com/2", "https://z.com"])
+    }
+
+    @Test func aLinkThatDownloadsLeavesNoEmptyBackgroundTab() throws {
+        let fixture = SessionFixture()
+        let ids = openTabs(fixture, ["a.com", "z.com"])
+        let opener = fixture.pages[ids[0]]
+        fixture.preparePage = { $0.commitsLoads = false }
+
+        opener?.commandClickLink(to: URL(string: "https://a.com/report.zip")!)
+        let child = fixture.session.tabs[1].id
+        #expect(fixture.pages[child]?.loads.map(\.url.absoluteString) == ["https://a.com/report.zip"])
+        fixture.pages[child]?.startDownload()
+
+        #expect(fixture.addresses == ["https://a.com", "https://z.com"])
+        #expect(fixture.pages[child]?.isClosed == true)
+        #expect(fixture.session.selectedTabID == ids[1])
+        #expect(!fixture.session.canReopenClosedTab)
+    }
+
+    @Test func aTargetBlankLinkThatDownloadsLeavesNoEmptyTabEither() {
+        let fixture = SessionFixture()
+        let ids = openTabs(fixture, ["a.com", "z.com"])
+        let blank = SimulatedPage()
+        blank.commitsLoads = false
+        let id = TabID()
+
+        fixture.pages[ids[0]]?.onNewTab?(.page(id, blank))
+        #expect(fixture.addresses == ["https://a.com", nil, "https://z.com"])
+        blank.startDownload()
+
+        #expect(fixture.addresses == ["https://a.com", "https://z.com"])
+        #expect(blank.isClosed)
+    }
+
+    @Test func aDownloadFromATabThatAlreadyShowsAPageLeavesItOpen() {
+        let fixture = SessionFixture()
+        let ids = openTabs(fixture, ["a.com"])
+        fixture.pages[ids[0]]?.commandClickLink(to: URL(string: "https://a.com/1")!)
+        let child = fixture.session.tabs[1].id
+
+        fixture.pages[child]?.startDownload()
+        fixture.pages[ids[0]]?.startDownload()
+
+        #expect(fixture.addresses == ["https://a.com", "https://a.com/1"])
+        #expect(fixture.pages[child]?.isClosed == false)
+    }
+
     @Test func aBackgroundTabIsAPlainTabThatClosesAndReopens() throws {
         let fixture = SessionFixture()
         _ = openTabs(fixture, ["example.com"])

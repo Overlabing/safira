@@ -12,7 +12,7 @@ extension ProfileDatabase {
         try queue.read { db in
             try Row.fetchAll(db, sql: """
                 SELECT id, source_url, file_name, file_bookmark, state, bytes, total_bytes, resume_data, started_at,
-                       finished_at
+                       finished_at, folder_path
                 FROM download ORDER BY started_at DESC, rowid DESC
                 """).compactMap { row in
                 guard let id = UUID(uuidString: row["id"]), let source = URL(string: row["source_url"]),
@@ -21,6 +21,7 @@ extension ProfileDatabase {
                     id: DownloadID(rawValue: id), sourceURL: source, fileName: row["file_name"],
                     fileBookmark: row["file_bookmark"], state: state, receivedBytes: row["bytes"],
                     totalBytes: row["total_bytes"], resumeData: row["resume_data"],
+                    folder: (row["folder_path"] as String?).map { URL(fileURLWithPath: $0, isDirectory: true) },
                     startedAt: Date(timeIntervalSince1970: row["started_at"]),
                     finishedAt: (row["finished_at"] as Double?).map(Date.init(timeIntervalSince1970:)))
             }
@@ -33,12 +34,13 @@ extension ProfileDatabase {
             try db.execute(sql: """
                 INSERT OR REPLACE INTO download
                     (id, source_url, file_name, file_bookmark, state, bytes, total_bytes, resume_data, started_at,
-                     finished_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     finished_at, folder_path)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, arguments: [download.id.rawValue.uuidString, download.sourceURL.absoluteString, download.fileName,
                                  download.fileBookmark, download.state.rawValue, download.receivedBytes,
                                  download.totalBytes, download.resumeData, download.startedAt.timeIntervalSince1970,
-                                 download.finishedAt?.timeIntervalSince1970])
+                                 download.finishedAt?.timeIntervalSince1970,
+                                 download.folder?.path(percentEncoded: false)])
         }
     }
 

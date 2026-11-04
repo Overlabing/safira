@@ -48,6 +48,11 @@ public final class Space: Identifiable {
         pinnedTabs + tabs
     }
 
+    /// The Tabs the sidebar shows, in order: the Pinned tabs a collapsed Folder does not hide, then the others.
+    public var visibleTabs: [Tab] {
+        pinned.visiblePinnedTabs + tabs
+    }
+
     public func folder(_ id: FolderID) -> Folder? {
         folders.first { $0.id == id }
     }

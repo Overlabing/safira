@@ -17,6 +17,8 @@ final class SimulatedPage: WebPageHandle {
     /// Every load the session asked for, in order, with the policy it asked for.
     private(set) var loads: [(url: URL, httpsFirst: Bool)] = []
     private(set) var shownWarnings: [InsecureConnectionWarning] = []
+    /// False while a load commits nothing, as with a navigation the engine turns into a download.
+    var commitsLoads = true
     /// Makes `restore` fail, as the engine does with a state it cannot read.
     var refusesNavigationState = false
     private var history: [Entry] = []
@@ -31,6 +33,7 @@ final class SimulatedPage: WebPageHandle {
     var onContinueOverHTTP: (@MainActor () -> Void)?
     var onNonWebLink: (@MainActor (NonWebLink) -> Void)?
     var onDidClose: (@MainActor () -> Void)?
+    var onDownloadStarted: (@MainActor () -> Void)?
 
     private struct Entry: Codable {
         var id = UUID()
@@ -62,7 +65,7 @@ final class SimulatedPage: WebPageHandle {
     func load(_ url: URL, httpsFirst: Bool) {
         loadCount += 1
         loads.append((url, httpsFirst))
-        navigate(to: url)
+        if commitsLoads { navigate(to: url) }
     }
 
     func showInsecureConnectionWarning(_ warning: InsecureConnectionWarning) {
@@ -114,6 +117,11 @@ final class SimulatedPage: WebPageHandle {
     /// real engine the page refuses the navigation itself: it stays where it was.
     func followNonWebLink(to address: String) {
         onNonWebLink?(NonWebLink(URL(string: address)!)!)
+    }
+
+    /// The navigation that was under way turns into a download: nothing commits, the page keeps what it showed.
+    func startDownload() {
+        onDownloadStarted?()
     }
 
     /// The page calls `window.close()`.
