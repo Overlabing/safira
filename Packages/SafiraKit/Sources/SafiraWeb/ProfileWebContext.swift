@@ -50,6 +50,11 @@ public final class ProfileWebContext {
         try await WKWebsiteDataStore.remove(forIdentifier: profileID.rawValue)
     }
 
+    /// Whether WebKit keeps a data store for this Profile on disk.
+    public static func dataStoreExists(for profileID: ProfileID) async -> Bool {
+        await WKWebsiteDataStore.allDataStoreIdentifiers.contains(profileID.rawValue)
+    }
+
     /// `configuration` is either this Profile's or the copy WebKit hands over for a `target=_blank` link, which
     /// WebKit derives from the opener's, so both use this Profile's data store.
     private func register(_ tabID: TabID, configuration: WKWebViewConfiguration) -> WebKitPage {

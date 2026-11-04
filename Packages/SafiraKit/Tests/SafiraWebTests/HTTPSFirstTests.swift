@@ -54,7 +54,7 @@ import WebKit
             let pages = pages
             let windows = WindowBox()
             self.windowBox = windows
-            session = ProfileSession(profile: Profile(id: profileID, name: "Test")) { id in
+            session = ProfileSession(profileID: profileID) { id in
                 let page = context.makePage(for: id)
                 windows.show(page.webView)
                 page.httpsFirstPolicy = policy

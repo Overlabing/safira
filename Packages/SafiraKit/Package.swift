@@ -30,8 +30,10 @@ let package = Package(
         ]),
         .target(name: "SafiraSession", dependencies: ["SafiraCore", "SafiraStore", "Diagnostics"]),
         .testTarget(name: "SafiraSessionTests", dependencies: ["SafiraSession", "SafiraStore", "Diagnostics"]),
-        .target(name: "SafiraWeb", dependencies: ["SafiraCore", "SafiraSession", "Diagnostics"]),
-        .testTarget(name: "SafiraWebTests", dependencies: ["SafiraWeb", "SafiraSession", "SafiraCore", "Diagnostics"]),
+        .target(name: "SafiraWeb", dependencies: ["SafiraCore", "SafiraStore", "SafiraSession", "Diagnostics"]),
+        .testTarget(name: "SafiraWebTests", dependencies: [
+            "SafiraWeb", "SafiraStore", "SafiraSession", "SafiraCore", "Diagnostics",
+        ]),
         .target(name: "Commands", dependencies: ["SafiraCore"], resources: [.copy("Presets")]),
         .testTarget(name: "CommandsTests", dependencies: ["Commands"]),
         .target(name: "LinkRouting", dependencies: ["SafiraCore"]),

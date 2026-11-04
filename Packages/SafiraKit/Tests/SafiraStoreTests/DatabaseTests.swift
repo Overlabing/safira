@@ -257,6 +257,122 @@ private func tabRowCount(_ file: URL) throws -> Int {
         let tables = try DatabaseQueue(path: root.layout.appDatabaseFile.path(percentEncoded: false)).read { db in
             try String.fetchAll(db, sql: "SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name")
         }
-        #expect(tables == ["grdb_migrations", "profile"])
+        #expect(tables == ["app_state", "grdb_migrations", "profile"])
+    }
+
+    @Test func aProfileListedBeforeProfilesExistedKeepsItsIdentifierAndBecomesActive() throws {
+        let root = TemporaryRoot()
+        let file = root.layout.appDatabaseFile
+        try FileManager.default.createDirectory(at: root.layout.root, withIntermediateDirectories: true)
+        let queue = try DatabaseQueue(path: file.path(percentEncoded: false))
+        try queue.write { db in
+            try db.execute(sql: """
+                CREATE TABLE grdb_migrations (identifier TEXT NOT NULL PRIMARY KEY);
+                INSERT INTO grdb_migrations VALUES ('v1-profiles');
+                CREATE TABLE profile (id TEXT PRIMARY KEY, name TEXT NOT NULL, position INTEGER NOT NULL);
+                INSERT INTO profile VALUES ('0B4E2C1A-5D3F-4E8B-9A7C-1F2E3D4C5B6A', 'Default', 0);
+                """)
+        }
+        try queue.close()
+
+        let database = try AppDatabase(file: file)
+
+        #expect(try database.profiles() == [Profile(id: work, name: "Default", symbol: "👤")])
+        #expect(try database.lastActiveProfileID() == work)
+        #expect(try migrations(file) == ["v1-profiles", "v2-profile-details"])
+    }
+
+    @Test func aRenamedProfileKeepsItsPlaceAndItsNewNameAfterAReopen() throws {
+        let root = TemporaryRoot()
+        let database = try AppDatabase(file: root.layout.appDatabaseFile)
+        try database.add(Profile(id: work, name: "Work"))
+        try database.add(Profile(id: personal, name: "Personal"))
+
+        try database.update(Profile(id: work, name: "Office", symbol: "💼", paletteID: "ocean"))
+
+        #expect(try AppDatabase(file: root.layout.appDatabaseFile).profiles() == [
+            Profile(id: work, name: "Office", symbol: "💼", paletteID: "ocean"),
+            Profile(id: personal, name: "Personal"),
+        ])
+    }
+
+    @Test func theActiveProfileIsRememberedUntilItIsDeleted() throws {
+        let root = TemporaryRoot()
+        let database = try AppDatabase(file: root.layout.appDatabaseFile)
+        try database.add(Profile(id: work, name: "Work"))
+        try database.add(Profile(id: personal, name: "Personal"))
+        #expect(try database.lastActiveProfileID() == nil)
+
+        try database.setLastActiveProfileID(personal)
+        #expect(try AppDatabase(file: root.layout.appDatabaseFile).lastActiveProfileID() == personal)
+
+        try database.markForDeletion(personal)
+        #expect(try database.lastActiveProfileID() == nil)
+    }
+
+    @Test func aProfileBeingDeletedLeavesTheListButStaysRecordedUntilItIsErased() throws {
+        let root = TemporaryRoot()
+        let database = try AppDatabase(file: root.layout.appDatabaseFile)
+        try database.add(Profile(id: work, name: "Work"))
+        try database.add(Profile(id: personal, name: "Personal"))
+
+        try database.markForDeletion(work)
+        #expect(try database.profiles() == [Profile(id: personal, name: "Personal")])
+        #expect(try AppDatabase(file: root.layout.appDatabaseFile).profilesPendingDeletion() == [work])
+
+        try database.delete(work)
+        #expect(try database.profilesPendingDeletion() == [])
+        #expect(try database.profiles() == [Profile(id: personal, name: "Personal")])
+    }
+}
+
+@Suite struct ProfileSettingsTests {
+    @Test func aNewProfileHasNoSearchEngineAndTheDefaultWebContentSettings() throws {
+        let root = TemporaryRoot()
+        let settings = try ProfileDatabase(file: root.layout.profileDatabaseFile(for: work)).settings()
+        #expect(settings == ProfileSettings(searchEngine: nil, webContent: WebContentSettings(
+            isFraudulentSiteWarningEnabled: true, isAutoplayingSoundAllowed: false)))
+    }
+
+    @Test func settingsAreSavedWithTheProfileAndComeBackAfterAReopen() async throws {
+        let root = TemporaryRoot()
+        let file = root.layout.profileDatabaseFile(for: work)
+        let saved = ProfileSettings(searchEngine: .kagi, webContent: WebContentSettings(
+            isFraudulentSiteWarningEnabled: false, isAutoplayingSoundAllowed: true))
+
+        try await ProfileDatabase(file: file).save(saved)
+
+        #expect(try ProfileDatabase(file: file).settings() == saved)
+    }
+
+    @Test func savingTheTabsKeepsTheSettingsAndTheOtherWayRound() throws {
+        let root = TemporaryRoot()
+        let database = try ProfileDatabase(file: root.layout.profileDatabaseFile(for: work))
+        let settings = ProfileSettings(searchEngine: .ecosia)
+        try database.save(settings)
+        let tabs = oneSpace([TabRecord(id: firstTab)], selected: firstTab)
+
+        try database.save(tabs)
+        try database.save(settings)
+
+        #expect(try database.settings() == settings)
+        #expect(try database.savedSession() == tabs)
+    }
+
+    @Test func oneProfilesSearchEngineIsNotAnotherProfiles() throws {
+        let root = TemporaryRoot()
+        try ProfileDatabase(file: root.layout.profileDatabaseFile(for: work)).save(ProfileSettings(searchEngine: .google))
+
+        #expect(try ProfileDatabase(file: root.layout.profileDatabaseFile(for: personal)).settings().searchEngine == nil)
+    }
+
+    @Test func clearingTheSearchEngineForgetsIt() throws {
+        let root = TemporaryRoot()
+        let database = try ProfileDatabase(file: root.layout.profileDatabaseFile(for: work))
+        try database.save(ProfileSettings(searchEngine: .google))
+
+        try database.save(ProfileSettings(searchEngine: nil))
+
+        #expect(try database.settings().searchEngine == nil)
     }
 }

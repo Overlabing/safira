@@ -59,6 +59,24 @@ enum Migrations {
                 table.column("position", .integer).notNull()
             }
         }
+        // A Profile gets the symbol and Theme slot that mark it in the sidebar, and the reserved network configuration
+        // (docs/scope-v1.md §3); a deletion is recorded until the Profile's files are gone; the app remembers which Profile was active. Profiles already listed keep their
+        // identifier, so their folder and data store stay theirs.
+        migrator.registerMigration("v2-profile-details") { db in
+            try db.alter(table: "profile") { table in
+                table.add(column: "symbol", .text).notNull().defaults(to: "👤")
+                table.add(column: "palette_id", .text)
+                table.add(column: "network_config", .text)
+                // Set while a deleted Profile's files are being erased, so that an erase cut short finishes at the
+                // next launch instead of leaving a Profile half erased.
+                table.add(column: "pending_deletion", .boolean).notNull().defaults(to: false)
+            }
+            try db.create(table: "app_state") { table in
+                table.primaryKey("id", .integer).check { $0 == 1 }
+                table.column("last_profile_id", .text)
+            }
+            try db.execute(sql: "INSERT INTO app_state (id, last_profile_id) SELECT 1, id FROM profile ORDER BY position LIMIT 1")
+        }
         return migrator
     }
 }

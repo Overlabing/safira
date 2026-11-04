@@ -72,6 +72,11 @@
     "renameSpace": "The page lists no command to rename a workspace.",
     "deleteSpace": "The page lists no command to delete a workspace.",
     "moveSpaceLeft": "The page lists no command to move a workspace.",
-    "moveSpaceRight": "The page lists no command to move a workspace."
+    "moveSpaceRight": "The page lists no command to move a workspace.",
+    "newProfile": "The page lists no Profile command.",
+    "renameProfile": "The page lists no Profile command.",
+    "deleteProfile": "The page lists no Profile command.",
+    "previousProfile": "The page lists no Profile command.",
+    "nextProfile": "The page lists no Profile command."
   }
 }

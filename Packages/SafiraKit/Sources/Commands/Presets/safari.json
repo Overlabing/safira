@@ -66,6 +66,11 @@
     "previousSpace": "The cited page lists no Tab Group shortcuts, Safari's nearest equivalent of a Space.",
     "nextSpace": "The cited page lists no Tab Group shortcuts, Safari's nearest equivalent of a Space.",
     "moveSpaceLeft": "The cited page lists no Tab Group shortcuts, Safari's nearest equivalent of a Space.",
-    "moveSpaceRight": "The cited page lists no Tab Group shortcuts, Safari's nearest equivalent of a Space."
+    "moveSpaceRight": "The cited page lists no Tab Group shortcuts, Safari's nearest equivalent of a Space.",
+    "newProfile": "The cited page lists no Profile shortcut.",
+    "renameProfile": "The cited page lists no Profile shortcut.",
+    "deleteProfile": "The cited page lists no Profile shortcut.",
+    "previousProfile": "The cited page lists no Profile shortcut.",
+    "nextProfile": "The cited page lists no Profile shortcut."
   }
 }

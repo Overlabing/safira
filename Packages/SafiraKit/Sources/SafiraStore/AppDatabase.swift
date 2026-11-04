@@ -5,8 +5,8 @@ import Foundation
 import GRDB
 import SafiraCore
 
-/// App-level data, `app.sqlite` at the root of Safira's folder: the list of Profiles. A Profile's own data never
-/// lives here.
+/// App-level data, `app.sqlite` at the root of Safira's folder: the list of Profiles and which one was active. A
+/// Profile's own data never lives here.
 public final class AppDatabase: Sendable {
     private let queue: DatabaseQueue
 
@@ -14,12 +14,17 @@ public final class AppDatabase: Sendable {
         queue = try .opened(at: file, migrator: Migrations.app)
     }
 
-    /// The Profiles in their order. Only the identifier and the name are kept for now.
+    /// The Profiles in their order, without those being deleted.
     public func profiles() throws -> [Profile] {
         try queue.read { db in
-            try Row.fetchAll(db, sql: "SELECT id, name FROM profile ORDER BY position").compactMap { row in
-                ProfileID(uuidString: row["id"]).map { Profile(id: $0, name: row["name"]) }
-            }
+            try Row.fetchAll(db, sql: """
+                SELECT id, name, symbol, palette_id FROM profile WHERE NOT pending_deletion ORDER BY position
+                """)
+                .compactMap { row in
+                    ProfileID(uuidString: row["id"]).map {
+                        Profile(id: $0, name: row["name"], symbol: row["symbol"], paletteID: row["palette_id"])
+                    }
+                }
         }
     }
 
@@ -27,8 +32,61 @@ public final class AppDatabase: Sendable {
     public func add(_ profile: Profile) throws {
         try queue.write { db in
             let position = try Int.fetchOne(db, sql: "SELECT COALESCE(MAX(position) + 1, 0) FROM profile") ?? 0
-            try db.execute(sql: "INSERT INTO profile (id, name, position) VALUES (?, ?, ?)",
-                           arguments: [profile.id.rawValue.uuidString, profile.name, position])
+            try db.execute(sql: "INSERT INTO profile (id, name, symbol, palette_id, position) VALUES (?, ?, ?, ?, ?)",
+                           arguments: [profile.id.rawValue.uuidString, profile.name, profile.symbol,
+                                       profile.paletteID, position])
+        }
+    }
+
+    /// Saves a Profile's name, symbol and Theme; its place in the list does not change.
+    public func update(_ profile: Profile) throws {
+        try queue.write { db in
+            try db.execute(sql: "UPDATE profile SET name = ?, symbol = ?, palette_id = ? WHERE id = ?",
+                           arguments: [profile.name, profile.symbol, profile.paletteID,
+                                       profile.id.rawValue.uuidString])
+        }
+    }
+
+    /// Takes a Profile out of the list before its files are erased; it stays recorded until `delete` so that an
+    /// erase cut short can be finished.
+    public func markForDeletion(_ id: ProfileID) throws {
+        try queue.write { db in
+            try db.execute(sql: "UPDATE profile SET pending_deletion = 1 WHERE id = ?", arguments: [id.rawValue.uuidString])
+            try db.execute(sql: "UPDATE app_state SET last_profile_id = NULL WHERE last_profile_id = ?",
+                           arguments: [id.rawValue.uuidString])
+        }
+    }
+
+    /// The Profiles whose erase has not finished.
+    public func profilesPendingDeletion() throws -> [ProfileID] {
+        try queue.read { db in
+            try String.fetchAll(db, sql: "SELECT id FROM profile WHERE pending_deletion ORDER BY position")
+                .compactMap(ProfileID.init(uuidString:))
+        }
+    }
+
+    /// Forgets a Profile for good, once its folder and data store are erased.
+    public func delete(_ id: ProfileID) throws {
+        try queue.write { db in
+            try db.execute(sql: "DELETE FROM profile WHERE id = ?", arguments: [id.rawValue.uuidString])
+            try db.execute(sql: "UPDATE app_state SET last_profile_id = NULL WHERE last_profile_id = ?",
+                           arguments: [id.rawValue.uuidString])
+        }
+    }
+
+    /// The Profile that was active last, if it is still listed.
+    public func lastActiveProfileID() throws -> ProfileID? {
+        try queue.read { db in
+            try String.fetchOne(db, sql: """
+                SELECT last_profile_id FROM app_state JOIN profile ON profile.id = app_state.last_profile_id
+                """).flatMap(ProfileID.init(uuidString:))
+        }
+    }
+
+    public func setLastActiveProfileID(_ id: ProfileID) throws {
+        try queue.write { db in
+            try db.execute(sql: "INSERT OR REPLACE INTO app_state (id, last_profile_id) VALUES (1, ?)",
+                           arguments: [id.rawValue.uuidString])
         }
     }
 }

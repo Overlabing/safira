@@ -66,7 +66,7 @@ private final class LoginServer: @unchecked Sendable {
 @Suite(.serialized) struct SpaceLoginTests {
     private func makeSession(_ profile: ProfileID) -> (ProfileSession, ProfileWebContext) {
         let context = ProfileWebContext(profileID: profile)
-        let session = ProfileSession(profile: Profile(id: profile, name: "Test")) { context.makePage(for: $0) }
+        let session = ProfileSession(profileID: profile) { context.makePage(for: $0) }
         return (session, context)
     }
 

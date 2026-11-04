@@ -131,7 +131,7 @@ import WebKit
     private func openPage(_ profile: ProfileID, body: String) async throws
         -> (ProfileSession, ProfileWebContext, TabID) {
         let context = ProfileWebContext(profileID: profile)
-        let session = ProfileSession(profile: Profile(id: profile, name: "Test")) { context.makePage(for: $0) }
+        let session = ProfileSession(profileID: profile) { context.makePage(for: $0) }
         session.submitCommandBar(Self.base)
         let opener = try #require(session.selectedTabID)
         let webView = try #require(context.webView(for: opener))

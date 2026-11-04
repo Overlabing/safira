@@ -147,9 +147,9 @@ final class SessionFixture {
     /// Applied to every page as it is created.
     var preparePage: (SimulatedPage) -> Void = { _ in }
 
-    init(searchEngine: SearchEngine? = nil, osBuild: String = "26A434") {
-        let id = ProfileID(rawValue: UUID(uuidString: "6F9619FF-8B86-D011-B42D-00C04FC964FF")!)
-        session = ProfileSession(profile: Profile(id: id, name: "Personal", searchEngine: searchEngine),
+    init(searchEngine: SearchEngine? = nil, osBuild: String = "26A434",
+         id: ProfileID = ProfileID(rawValue: UUID(uuidString: "6F9619FF-8B86-D011-B42D-00C04FC964FF")!)) {
+        session = ProfileSession(profileID: id, settings: ProfileSettings(searchEngine: searchEngine),
                                  osBuild: osBuild) { [unowned self] tabID in
             let page = SimulatedPage()
             preparePage(page)
