@@ -32,12 +32,15 @@ public final class LinkPickerPresenter: ProfileChoosing {
 
     public init() {}
 
-    public func chooseProfile(for link: IncomingLink, among profiles: [Profile]) async -> ProfileID? {
+    public func chooseProfile(for link: IncomingLink, among profiles: [Profile],
+                              alreadyOpenIn: Set<ProfileID>) async -> ProfileID? {
         guard !profiles.isEmpty else { return nil }
+        let open = profiles.filter { alreadyOpenIn.contains($0.id) }.map(\.name).formatted(.list(type: .and))
         let announcement = Self.announcement(for: link, rowCount: profiles.count) {
             String(localized: "Choose a Profile for the link to \($0)")
-        }
-        return await ask(LinkPickerModel(link: link, profiles: profiles), wording: .profile, announcement: announcement)
+        } + (open.isEmpty ? "" : " " + String(localized: "Already open in \(open)."))
+        return await ask(LinkPickerModel(link: link, profiles: profiles, alreadyOpenIn: alreadyOpenIn),
+                         wording: .profile, announcement: announcement)
     }
 
     public func chooseSpace(for link: IncomingLink, in profile: Profile, among spaces: [SpaceChoice]) async -> SpaceID? {

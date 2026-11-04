@@ -127,6 +127,34 @@ public final class ProfileRegistry {
         return true
     }
 
+    /// The Tab of the Profile, in any Space, that shows the address. A Profile not shown since launch is read from its
+    /// saved Tabs: no owner is created and no page loads. Nil for a Profile that does not exist.
+    public func matchingTab(for address: NormalizedAddress, in id: ProfileID) -> MatchingTab? {
+        guard profiles.contains(where: { $0.id == id }) else { return nil }
+        if let context = contexts[id] {
+            let searchable: any MatchingTabSearchable = context
+            return searchable.matchingTab(for: address)
+        }
+        guard let file = layout?.profileDatabaseFile(for: id),
+              FileManager.default.fileExists(atPath: file.path(percentEncoded: false)),
+              let saved = try? ProfileDatabase(file: file).savedSession() else { return nil }
+        return saved.matchingTab(for: address, in: id)
+    }
+
+    /// Shows a Matching tab: its Profile, its Space and the Tab itself, with the banner that offers to open `link` in
+    /// a new Tab. False, and nothing changes, when the Profile or the Tab no longer exists.
+    @discardableResult
+    public func focus(_ match: MatchingTab, openedFrom link: URL) -> Bool {
+        guard profiles.contains(where: { $0.id == match.profile }) else { return false }
+        let previous = activeProfileID
+        selectProfile(match.profile)
+        guard active.session.focus(match, openedFrom: link) else {
+            selectProfile(previous)
+            return false
+        }
+        return true
+    }
+
     // MARK: Creating and renaming
 
     /// Adds a Profile after the others and shows it. A Profile cannot be created without a search engine, which the
