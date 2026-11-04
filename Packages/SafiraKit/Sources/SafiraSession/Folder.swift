@@ -70,6 +70,16 @@ extension [PinnedItem] {
         }
     }
 
+    /// The Pinned tabs the sidebar shows, depth first: a collapsed Folder hides what it holds, sub-Folders included.
+    @MainActor var visiblePinnedTabs: [Tab] {
+        flatMap { item -> [Tab] in
+            switch item {
+            case .tab(let tab): [tab]
+            case .folder(let folder): folder.isExpanded ? folder.items.visiblePinnedTabs : []
+            }
+        }
+    }
+
     /// Every Folder, depth first.
     @MainActor var folders: [Folder] {
         flatMap { item -> [Folder] in
