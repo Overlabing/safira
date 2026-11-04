@@ -114,6 +114,13 @@ enum Migrations {
         migrator.registerMigration("v8-space-themes") { db in
             try db.execute(sql: "UPDATE space SET palette_id = \(Self.paletteByPosition) WHERE palette_id IS NULL")
         }
+        // The folder each download is saved in (#66): when the user declines access to the Downloads folder, files go to
+        // another one, and a retry or a resume after a relaunch has to look in the one the download actually used.
+        migrator.registerMigration("v9-download-folders") { db in
+            try db.alter(table: "download") { table in
+                table.add(column: "folder_path", .text)
+            }
+        }
         return migrator
     }
 

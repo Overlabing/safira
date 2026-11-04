@@ -15,15 +15,30 @@ final class DownloadController: NSObject, WKDownloadDelegate, DownloadEngine {
     let downloads: ProfileDownloads
     /// Where files are saved. The user's Downloads folder unless a test chooses another.
     var directory: URL
+    /// Where files are saved when the user declines access to `directory`: a real folder inside the app's own
+    /// container, which needs no consent.
+    var fallbackDirectory: URL
+    /// The app's container: the fallback folder must stay inside it once symbolic links are resolved.
+    var container: URL
+    /// Whether Safira may use a folder. Asking can take as long as the user takes to answer macOS's prompt, so it runs
+    /// off the main actor: a closure that is not isolated to it.
+    var access: @Sendable (URL) async -> Bool
+    private var accessCheck: Task<Bool, Never>?
     /// A web view of the Profile that can start or resume a download when no page is there to do it.
     private let makeHost: @MainActor () -> WKWebView
     private var host: WKWebView?
     private var transfers: [ObjectIdentifier: Transfer] = [:]
 
     init(downloads: ProfileDownloads, directory: URL = DownloadController.userDownloadsDirectory(),
+         fallbackDirectory: URL = FallbackFolder.defaultFolder(),
+         container: URL = URL(fileURLWithPath: NSHomeDirectory(), isDirectory: true),
+         access: @escaping @Sendable (URL) async -> Bool = { await FolderAccess.isAllowed($0) },
          makeHost: @escaping @MainActor () -> WKWebView) {
         self.downloads = downloads
         self.directory = directory
+        self.fallbackDirectory = fallbackDirectory
+        self.container = container
+        self.access = access
         self.makeHost = makeHost
     }
 
@@ -37,6 +52,34 @@ final class DownloadController: NSObject, WKDownloadDelegate, DownloadEngine {
         return FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask)[0]
     }
 
+    /// Settles where files are saved, asking macOS for access to the folder when it has not been asked yet. Suspends
+    /// while the prompt is open without holding the main thread, so pages and windows keep running. A refusal is
+    /// re-asked at the next download, which costs nothing and notices the user allowing it in System Settings.
+    /// - Returns: The folder to save in, or nil when access was declined and the fallback folder cannot be used either.
+    @discardableResult
+    func resolveDirectory() async -> URL? {
+        let folder = directory
+        let access = self.access
+        let check = accessCheck ?? Task { await access(folder) }
+        accessCheck = check
+        let allowed = await check.value
+        accessCheck = nil
+        downloads.setSavesInAppFolder(!allowed)
+        if allowed { return folder }
+        return FallbackFolder.prepare(fallbackDirectory, declined: folder, container: container)
+    }
+
+    /// The folder a download's file is saved in: the one recorded when its destination was chosen, the Profile's own
+    /// for a download that predates the record.
+    func folder(for record: DownloadRecord) -> URL {
+        record.folder ?? directory
+    }
+
+    /// Whether a running download of another record writes to this file.
+    private func isInUse(_ file: URL, byAnotherThan id: DownloadID) -> Bool {
+        transfers.values.contains { $0.id != id && $0.partial?.standardizedFileURL == file.standardizedFileURL }
+    }
+
     /// A download a page of this Profile has just started.
     func adopt(_ download: WKDownload) {
         let url = download.originalRequest?.url ?? URL(string: "about:blank")!
@@ -45,9 +88,12 @@ final class DownloadController: NSObject, WKDownloadDelegate, DownloadEngine {
     }
 
     func restart(_ record: DownloadRecord) {
-        let partial = partialFile(named: record.fileName)
+        let folder = folder(for: record)
+        let partial = partialFile(named: record.fileName, in: folder)
         // A transfer started over cannot reuse the broken one's file; one resumed carries on in it.
-        if record.resumeData == nil { try? FileManager.default.removeItem(at: partial) }
+        if record.resumeData == nil, !isInUse(partial, byAnotherThan: record.id) {
+            try? FileManager.default.removeItem(at: partial)
+        }
         Task { @MainActor in
             let host = self.host ?? makeHost()
             self.host = host
@@ -62,12 +108,15 @@ final class DownloadController: NSObject, WKDownloadDelegate, DownloadEngine {
             if record.resumeData != nil {
                 transfer.finalName = record.fileName
                 transfer.partial = partial
+                transfer.folder = folder
             }
         }
     }
 
     func discardPartialFile(of record: DownloadRecord) {
-        try? FileManager.default.removeItem(at: partialFile(named: record.fileName))
+        let partial = partialFile(named: record.fileName, in: folder(for: record))
+        guard !isInUse(partial, byAnotherThan: record.id) else { return }
+        try? FileManager.default.removeItem(at: partial)
     }
 
     /// Stops every transfer and deletes the unfinished files, for a Profile that goes away.
@@ -89,33 +138,37 @@ final class DownloadController: NSObject, WKDownloadDelegate, DownloadEngine {
 
     /// Bytes arrive in `name.part` and the file takes its name when the download is complete, so that a download that
     /// stopped halfway never looks like a finished file.
-    private func partialFile(named name: String) -> URL {
-        directory.appending(path: name + Self.partialSuffix)
+    private func partialFile(named name: String, in folder: URL) -> URL {
+        folder.appending(path: name + Self.partialSuffix)
     }
 
     private static let partialSuffix = ".part"
 
-    private func exists(_ name: String) -> Bool {
-        FileManager.default.fileExists(atPath: directory.appending(path: name).path(percentEncoded: false))
+    private func exists(_ name: String, in folder: URL) -> Bool {
+        FileManager.default.fileExists(atPath: folder.appending(path: name).path(percentEncoded: false))
     }
 
     // MARK: WKDownloadDelegate
 
     func download(_ download: WKDownload, decideDestinationUsing response: URLResponse,
                   suggestedFilename: String) async -> URL? {
+        guard transfers[ObjectIdentifier(download)] != nil else { return nil }
+        guard let folder = await resolveDirectory() else { return nil }
+        // The download may have been cancelled while the prompt was open.
         guard let transfer = transfers[ObjectIdentifier(download)] else { return nil }
         do {
-            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         } catch {
             return nil
         }
         let reserved = Set(transfers.values.compactMap(\.finalName))
         let name = DownloadFileName.unique(DownloadFileName.sanitized(suggestedFilename)) { candidate in
-            reserved.contains(candidate) || exists(candidate) || exists(candidate + Self.partialSuffix)
+            reserved.contains(candidate) || exists(candidate, in: folder) || exists(candidate + Self.partialSuffix, in: folder)
         }
         transfer.finalName = name
-        transfer.partial = partialFile(named: name)
-        downloads.named(transfer.id, fileName: name)
+        transfer.folder = folder
+        transfer.partial = partialFile(named: name, in: folder)
+        downloads.named(transfer.id, fileName: name, folder: folder)
         return transfer.partial
     }
 
@@ -126,8 +179,9 @@ final class DownloadController: NSObject, WKDownloadDelegate, DownloadEngine {
             return
         }
         // Something else may have taken the name while the bytes came in.
-        let name = DownloadFileName.unique(wanted) { exists($0) }
-        let file = directory.appending(path: name)
+        let folder = transfer.folder ?? directory
+        let name = DownloadFileName.unique(wanted) { exists($0, in: folder) }
+        let file = folder.appending(path: name)
         do {
             try FileManager.default.moveItem(at: partial, to: file)
         } catch {
@@ -153,6 +207,8 @@ private final class Transfer: DownloadTransfer {
     /// The name the file takes when the download is complete, and the file the bytes arrive in until then.
     var finalName: String?
     var partial: URL?
+    /// The folder both live in.
+    var folder: URL?
     var didCancel: (() -> Void)?
     private var observations: [NSKeyValueObservation] = []
 
