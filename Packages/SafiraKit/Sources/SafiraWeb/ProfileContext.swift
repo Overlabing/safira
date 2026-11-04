@@ -26,7 +26,8 @@ public final class ProfileContext {
             onError("The Profile's settings could not be read", error)
             settings = ProfileSettings()
         }
-        let web = ProfileWebContext(profileID: id, webContentSettings: settings.webContent)
+        let permissions = SitePermissions(database: database) { onError($0, $1) }
+        let web = ProfileWebContext(profileID: id, webContentSettings: settings.webContent, permissions: permissions)
         web.diagnostics = diagnostics
         let session = ProfileSession(profileID: id, settings: settings) { [unowned web] in web.makePage(for: $0) }
         do {
@@ -42,6 +43,9 @@ public final class ProfileContext {
         self.session = session
         self.autosave = autosave
     }
+
+    /// What the Profile remembers about the sites that asked for the camera, the microphone or the location.
+    public var permissions: SitePermissions { web.permissions }
 
     /// The Profile's web content settings. A change is saved with the Profile and reaches the pages created after it.
     public var webContentSettings: WebContentSettings {

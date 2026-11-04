@@ -53,7 +53,7 @@ private func tabRowCount(_ file: URL) throws -> Int {
         #expect(space.emoji == "🏠")
         #expect(space.paletteID == nil)
         #expect(space.tabs == [])
-        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces"])
+        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-site-permissions"])
     }
 
     @Test func savedSpacesComeBackInOrderWithTheirTabsSelectionAndTheActiveSpace() throws {
@@ -122,6 +122,41 @@ private func tabRowCount(_ file: URL) throws -> Int {
             "Profiles/0B4E2C1A-5D3F-4E8B-9A7C-1F2E3D4C5B6A/profile.sqlite",
             "Profiles/7C8D9E0F-1A2B-4C3D-8E5F-6A7B8C9D0E1F/profile.sqlite",
         ])
+    }
+
+    @Test func rememberedSitePermissionsComeBackInOrderAfterAReopenAndNeverReachAnotherProfile() throws {
+        let root = TemporaryRoot()
+        let shop = try #require(SiteOrigin(identifier: "https://shop.example"))
+        let meet = try #require(SiteOrigin(identifier: "https://meet.example:8443"))
+        let at = Date(timeIntervalSince1970: 1_700_000_000)
+        let database = try ProfileDatabase(file: root.layout.profileDatabaseFile(for: work))
+
+        try database.save(SitePermission(origin: meet, kind: .microphone, decision: .allow, decidedAt: at))
+        try database.save(SitePermission(origin: meet, kind: .camera, decision: .deny, decidedAt: at))
+        try database.save(SitePermission(origin: shop, kind: .location, decision: .allow, decidedAt: at))
+        try database.save(SitePermission(origin: meet, kind: .camera, decision: .allow, decidedAt: at.addingTimeInterval(60)))
+
+        let reopened = try ProfileDatabase(file: root.layout.profileDatabaseFile(for: work))
+        #expect(try reopened.sitePermissions() == [
+            SitePermission(origin: meet, kind: .camera, decision: .allow, decidedAt: at.addingTimeInterval(60)),
+            SitePermission(origin: meet, kind: .microphone, decision: .allow, decidedAt: at),
+            SitePermission(origin: shop, kind: .location, decision: .allow, decidedAt: at),
+        ])
+        #expect(try ProfileDatabase(file: root.layout.profileDatabaseFile(for: personal)).sitePermissions() == [])
+    }
+
+    @Test func removingSitePermissionsForgetsOnlyTheOnesNamed() throws {
+        let database = try ProfileDatabase.inMemory()
+        let shop = try #require(SiteOrigin(identifier: "https://shop.example"))
+        let at = Date(timeIntervalSince1970: 1_700_000_000)
+        try database.save(SitePermission(origin: shop, kind: .camera, decision: .allow, decidedAt: at))
+        try database.save(SitePermission(origin: shop, kind: .location, decision: .deny, decidedAt: at))
+
+        try database.removeSitePermission(origin: shop, kind: .camera)
+        #expect(try database.sitePermissions().map(\.id) == ["https://shop.example location"])
+
+        try database.removeAllSitePermissions()
+        #expect(try database.sitePermissions() == [])
     }
 
     @Test func anInMemoryDatabaseKeepsTabsWhileOpen() throws {
@@ -194,7 +229,7 @@ private func tabRowCount(_ file: URL) throws -> Int {
 
         let database = try ProfileDatabase(file: file)
 
-        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces"])
+        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-site-permissions"])
         #expect(try database.savedSession() == SavedSession(spaces: [
             SpaceRecord(id: Self.existingSpace, name: "Home", emoji: "🏠", tabs: [
                 TabRecord(id: firstTab, address: URL(string: "https://a.com/"), title: "A",
@@ -202,6 +237,30 @@ private func tabRowCount(_ file: URL) throws -> Int {
                 TabRecord(id: secondTab, address: URL(string: "https://b.com/"), title: "B"),
             ], selectedTabID: secondTab),
         ], activeSpaceID: Self.existingSpace))
+    }
+
+    /// `v3-spaces` as it shipped: a named Space with an emoji, the active Space remembered, and one saved setting.
+    private static let version3 = """
+        INSERT INTO grdb_migrations VALUES ('v3-spaces');
+        ALTER TABLE space ADD COLUMN name TEXT NOT NULL DEFAULT 'Home';
+        ALTER TABLE space ADD COLUMN emoji TEXT NOT NULL DEFAULT '🏠';
+        ALTER TABLE space ADD COLUMN palette_id TEXT;
+        CREATE TABLE profile_setting (key TEXT PRIMARY KEY NOT NULL, value TEXT NOT NULL);
+        INSERT INTO profile_setting VALUES ('active_space_id', '9A1F0C3E-0000-4000-8000-000000000000');
+        INSERT INTO profile_setting VALUES ('search_engine', 'kagi');
+        """
+
+    @Test func aVersion3DatabaseUpgradesWithNoRememberedPermissionAndKeepsItsSettings() throws {
+        let root = TemporaryRoot()
+        let file = root.layout.profileDatabaseFile(for: work)
+        try write(Self.version1 + Self.version2 + Self.version3, at: file)
+
+        let database = try ProfileDatabase(file: file)
+
+        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-site-permissions"])
+        #expect(try database.sitePermissions() == [])
+        #expect(try database.settings().searchEngine == .kagi)
+        #expect(try database.savedSession().spaces.flatMap(\.tabs).count == 2)
     }
 
     @Test func anUpgradedVersion2DatabaseSavesNewSpaces() throws {

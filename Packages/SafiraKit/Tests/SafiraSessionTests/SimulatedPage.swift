@@ -26,6 +26,7 @@ final class SimulatedPage: WebPageHandle {
     var onNewTab: (@MainActor (NewTabRequest) -> Void)?
     var onLoadFailure: (@MainActor (LoadFailure) -> Void)?
     var onContinueOverHTTP: (@MainActor () -> Void)?
+    var onDidClose: (@MainActor () -> Void)?
 
     private struct Entry: Codable {
         var id = UUID()
@@ -104,6 +105,11 @@ final class SimulatedPage: WebPageHandle {
         onNewTab?(.address(url))
     }
 
+    /// The page calls `window.close()`.
+    func closeWindow() {
+        onDidClose?()
+    }
+
     func setPlayingMedia(_ playing: Bool) {
         isPlayingMedia = playing
         onStateChange?(state)
@@ -169,6 +175,20 @@ final class SessionFixture {
         newPage.followLink(to: url)
         return id
     }
+
+    /// A scripted `window.open` with window features in `page`: the engine builds the popup page and loads the link in it.
+    @discardableResult
+    func openPopup(from page: SimulatedPage?, to url: URL, window: RequestedWindow = RequestedWindow(width: 480, height: 640))
+        -> (id: PopupID, page: SimulatedPage) {
+        let id = PopupID()
+        let popupPage = SimulatedPage()
+        popups[id] = popupPage
+        page?.onNewTab?(.popup(id, popupPage, window))
+        popupPage.followLink(to: url)
+        return (id, popupPage)
+    }
+
+    private(set) var popups: [PopupID: SimulatedPage] = [:]
 
     var selectedPage: SimulatedPage? {
         session.selectedTabID.flatMap { pages[$0] }

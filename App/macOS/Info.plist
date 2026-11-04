@@ -25,6 +25,14 @@
 		<key>NSAllowsArbitraryLoadsInWebContent</key>
 		<true/>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>A website you allow in the current Profile can use the camera. Safira never uses it for itself.</string>
+	<key>NSLocationUsageDescription</key>
+	<string>A website you allow in the current Profile can read your location. Safira never uses it for itself.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>A website you allow in the current Profile can read your location. Safira never uses it for itself.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>A website you allow in the current Profile can use the microphone. Safira never uses it for itself.</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 	<key>SUAutomaticallyUpdate</key>

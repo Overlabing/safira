@@ -47,6 +47,16 @@ enum Migrations {
                 SELECT 'active_space_id', id FROM space ORDER BY position LIMIT 1
                 """)
         }
+        // What a site may use, per Profile: camera, microphone and location, and later the apps a link may open.
+        migrator.registerMigration("v4-site-permissions") { db in
+            try db.create(table: "site_permission") { table in
+                table.column("origin", .text).notNull()
+                table.column("kind", .text).notNull()
+                table.column("decision", .text).notNull()
+                table.column("decided_at", .double).notNull()
+                table.primaryKey(["origin", "kind"])
+            }
+        }
         return migrator
     }
 
