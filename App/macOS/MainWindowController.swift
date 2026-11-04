@@ -117,6 +117,12 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         commandBar.open(for: .selectedTab, text: session.selectedTab?.address?.absoluteString ?? "")
     }
 
+    /// At launch and after onboarding: the keyboard goes to the shown page, or to the Command bar when there is none,
+    /// so a restored page is never covered by the panel.
+    func showStartPage() {
+        if !showPage() { focusCommandBar(nil) }
+    }
+
     /// Moves the keyboard focus to the list of Tabs, where the arrow keys select a Tab. In Compact mode it shows the
     /// sidebar first.
     @objc func focusTabList(_ sender: Any?) {

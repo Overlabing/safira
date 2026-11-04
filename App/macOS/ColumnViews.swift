@@ -54,11 +54,10 @@ struct BrowserControls: View {
             }
             .buttonStyle(PressedOpacityStyle())
             .help(address?.absoluteString ?? FloatingCommandBar.placeholder)
-            .accessibilityElement(children: .ignore)
+            // On the button itself, so that VoiceOver keeps its press action: the full address, not the host.
             .accessibilityLabel(Text("Address"))
             .accessibilityValue(Text(verbatim: address?.absoluteString ?? ""))
             .accessibilityHint(Text("Opens the Command bar"))
-            .accessibilityAddTraits(.isButton)
             HStack(spacing: 0) {
                 IconButton(String(localized: "Back"), systemImage: "chevron.left") { session.goBack() }
                     .disabled(tab?.state.canGoBack != true)

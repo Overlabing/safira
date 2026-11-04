@@ -28,7 +28,11 @@ public enum SidebarComposition {
     /// The Active profile's band: `ColorRoles.bandText` on `ColorRoles.bandFill`, the Profile's hue, opaque.
     public static let profileBand = Text(name: "Profile band", role: .textOnHue, surfaces: [.solidHue])
 
-    public static let texts = [tabTitle, tabSubtitle, address, profileBand]
+    /// The selected Tab row's marker, drawn by the kit at its leading edge (`ColorRoles.selectionMarker`, 3:1); under
+    /// Increase Contrast the row's outline takes its place.
+    public static let selectedTabMarker = Text(name: "Selected Tab marker", role: .selectionMarker, surfaces: [.selectedRow])
+
+    public static let texts = [tabTitle, tabSubtitle, address, profileBand, selectedTabMarker]
 
     /// A Private window wears this Theme, always in the dark appearance: the purple that tells it from the Main window.
     public static let privateTheme = Theme(id: "private", primary: .purple, secondary: .indigo)

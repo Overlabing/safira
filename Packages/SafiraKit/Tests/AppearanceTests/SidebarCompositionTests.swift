@@ -41,10 +41,20 @@ struct SidebarCompositionTests {
         expectLegible(SidebarComposition.profileBand, theme, appearance, count: 1)
     }
 
+    @Test(arguments: SidebarCompositionTests.cases)
+    func theSelectedTabMarkerReachesThreeOutsideIncreaseContrast(_ theme: Theme, _ appearance: Appearance) {
+        let cases = SidebarComposition.cases(of: SidebarComposition.selectedTabMarker, for: theme, in: appearance)
+        #expect(cases.count == (appearance.isIncreasedContrast ? 0 : 1))
+        for found in cases {
+            #expect(found.threshold == 3)
+            #expect(found.after >= 3, "\(found)")
+        }
+    }
+
     @Test func theTextsAreMeasuredAgainstTheKitsThresholds() {
         let tokens = DesignTokens.standard
         #expect(tokens.emphasis.textContrast == 4.5)
-        #expect(SidebarComposition.texts.map(\.name) == ["Tab title", "Tab subtitle", "Address", "Profile band"])
+        #expect(SidebarComposition.texts.map(\.name) == ["Tab title", "Tab subtitle", "Address", "Profile band", "Selected Tab marker"])
         #expect(SidebarComposition.themes.count == 8)
         #expect(SidebarComposition.privateTheme.primary == .purple)
     }

@@ -80,8 +80,9 @@ struct TabMenu: View {
     }
 }
 
-/// The Space switcher: ThemeKit's glass bar of the Profile's Spaces, each its emoji on its Theme's colour; absent with
-/// one Space. Its context menu renames, moves or deletes the active Space.
+/// The Space switcher: ThemeKit's glass bar of the Profile's Spaces, each its initial on its Theme's colour and the
+/// active one named; absent with one Space. The emoji stays in the Space header: a glyph that shows it would show it
+/// twice next to the name. Its context menu renames, moves or deletes the active Space.
 private struct SpaceSwitcher: View {
     let session: ProfileSession
     let actions: SpaceActions
@@ -91,7 +92,7 @@ private struct SpaceSwitcher: View {
         let profileTheme = ThemeCatalog.first
         GlassSwitcher(
             session.spaces.map { space in
-                SwitcherItem(id: space.id.rawValue.uuidString, name: "\(space.emoji) \(space.name)",
+                SwitcherItem(id: space.id.rawValue.uuidString, name: space.name,
                              theme: ThemeCatalog.theme(id: space.paletteID, fallback: profileTheme))
             },
             selection: session.activeSpaceID.rawValue.uuidString,

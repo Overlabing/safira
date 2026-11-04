@@ -79,9 +79,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         #endif
         if !launchedInBackground { NSApp.activate() }
         if onboarding.isPending, let window = controller.window {
-            onboarding.present(over: window) { [weak controller] in controller?.focusCommandBar(nil) }
+            onboarding.present(over: window) { [weak controller] in controller?.showStartPage() }
         } else {
-            controller.focusCommandBar(nil)
+            controller.showStartPage()
         }
     }
 
