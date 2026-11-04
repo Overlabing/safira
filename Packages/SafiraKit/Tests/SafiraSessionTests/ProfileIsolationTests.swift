@@ -104,19 +104,19 @@ private func open(_ address: String, in fixture: SessionFixture) -> TabID {
     @Test func aChosenSearchEngineIsSavedWithTheProfileShortlyAfterwards() async throws {
         let database = TemporaryDatabase()
         let fixture = SessionFixture(id: workID)
-        let autosave = SessionAutosave(session: fixture.session, database: try database.open(), delay: .milliseconds(10))
+        let connection = try database.open()
+        let autosave = SessionAutosave(session: fixture.session, database: connection, delay: .milliseconds(10))
         autosave.start()
         await autosave.saveNow()
 
         fixture.session.submitCommandBar("weather")
         fixture.session.chooseSearchEngine(.braveSearch)
 
-        let reader = try database.open()
         let deadline = ContinuousClock.now + .seconds(5)
-        while (try reader.settings().searchEngine) == nil, ContinuousClock.now < deadline {
+        while (try connection.settings().searchEngine) == nil, ContinuousClock.now < deadline {
             try await Task.sleep(for: .milliseconds(20))
         }
         autosave.stop()
-        #expect(try reader.settings().searchEngine == .braveSearch)
+        #expect(try connection.settings().searchEngine == .braveSearch)
     }
 }
