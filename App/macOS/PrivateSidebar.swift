@@ -17,6 +17,7 @@ struct PrivateSidebar: View {
     let parent: Profile
     let focus: ColumnFocus
     let pageActions: PageActions
+    let side: SidebarSideSetting
     @Environment(\.designTokens) private var tokens
 
     var body: some View {
@@ -52,6 +53,7 @@ struct PrivateSidebar: View {
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(String(localized: "Private window, attached to the Profile \(parent.name). Nothing is saved."))
         }
+        .columnSurface(side: side.side == .right ? .right : .left)
         .theme(SidebarComposition.privateTheme)
         .environment(\.colorScheme, .dark)
     }

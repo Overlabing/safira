@@ -283,7 +283,8 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSMen
             newTab: { [weak self] in self?.newTab(nil) },
             showPage: { [weak self] in self?.showPage() })
         let sidebar = NSHostingController(rootView: PrivateSidebar(
-            session: session, parent: context.parent, focus: columnFocus, pageActions: pageActions))
+            session: session, parent: context.parent, focus: columnFocus, pageActions: pageActions,
+            side: sideSetting))
         sidebar.sizingOptions = []
         // The column starts at the window's top edge: the title bar's buttons only show on demand.
         sidebar.safeAreaRegions = []

@@ -43,8 +43,18 @@ struct SidebarCompositionTests {
     }
 
     @Test(arguments: SidebarCompositionTests.cases)
-    func theProfilePillReachesFourPointFiveOnGlass(_ theme: Theme, _ appearance: Appearance) {
-        expectLegible(SidebarComposition.profilePill, theme, appearance, count: 1)
+    func theProfileChooserReachesFourPointFiveInTheColumn(_ theme: Theme, _ appearance: Appearance) {
+        expectLegible(SidebarComposition.profileChooser, theme, appearance, count: 2)
+    }
+
+    @Test(arguments: SidebarCompositionTests.cases)
+    func theColumnEdgeReachesThreeAgainstTheGradientAndItsFill(_ theme: Theme, _ appearance: Appearance) {
+        let cases = SidebarComposition.cases(of: SidebarComposition.columnEdge, for: theme, in: appearance)
+        #expect(!cases.isEmpty)
+        for found in cases {
+            #expect(found.threshold == 3)
+            #expect(found.after >= 3, "\(found)")
+        }
     }
 
     /// The worst page behind the Command bar is white in dark and black in light: the field's text, a suggestion's
@@ -72,7 +82,7 @@ struct SidebarCompositionTests {
     @Test func theTextsAreMeasuredAgainstTheKitsThresholds() {
         let tokens = DesignTokens.standard
         #expect(tokens.emphasis.textContrast == 4.5)
-        #expect(SidebarComposition.texts.map(\.name) == ["Tab title", "Tab subtitle", "Address", "Private band", "Profile pill", "Selected Tab marker"])
+        #expect(SidebarComposition.texts.map(\.name) == ["Tab title", "Tab subtitle", "Address", "Private band", "Profile chooser", "Selected Tab marker", "Column edge"])
         #expect(SidebarComposition.themes.count == 8)
         #expect(SidebarComposition.privateTheme.primary == .purple)
     }

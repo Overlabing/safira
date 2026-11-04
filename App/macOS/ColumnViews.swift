@@ -69,10 +69,9 @@ struct BrowserControls: View {
             .padding(.trailing, tokens.spacing.listMargin - tokens.spacing.rowInsetHorizontal)
         }
         .frame(minHeight: tokens.size.statusLine)
-        // The row sits at the window's top edge, level with the page's canvas; its empty space moves the window, as a
-        // title bar would.
+        // The row sits near the window's top edge (`Spacing.columnTop`, set by the column's surface); its empty space
+        // moves the window, as a title bar would.
         .background { Color.clear.contentShape(.rect).gesture(WindowDragGesture()) }
-        .padding(.top, tokens.spacing.canvasInset)
         .padding(.bottom, tokens.spacing.statusLineToList)
     }
 

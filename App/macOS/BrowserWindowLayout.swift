@@ -45,12 +45,14 @@ final class BrowserWindowLayout: NSViewController {
         self.canvas = canvas
         self.side = side
         overlay = OverlayView(background: overlayBackground)
-        overlayWidth = SafiraDesign.tokens.size.columnIdeal
+        // The column's surface is inset on its outer side, so the split item is that much wider than the column.
+        let tokens = SafiraDesign.tokens
+        overlayWidth = tokens.size.columnIdeal + tokens.spacing.columnInset
         split.splitView = ClearDividerSplitView()
         split.splitView.isVertical = true
         columnItem = NSSplitViewItem(viewController: column)
-        columnItem.minimumThickness = SafiraDesign.tokens.size.columnMin
-        columnItem.maximumThickness = SafiraDesign.tokens.size.columnMax
+        columnItem.minimumThickness = tokens.size.columnMin + tokens.spacing.columnInset
+        columnItem.maximumThickness = tokens.size.columnMax + tokens.spacing.columnInset
         columnItem.holdingPriority = .defaultLow + 10
         columnItem.canCollapse = false
         let page = NSViewController()

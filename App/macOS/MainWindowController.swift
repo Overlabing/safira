@@ -783,7 +783,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         let sidebar = NSHostingController(rootView: TabSidebar(
             registry: registry, focus: columnFocus, pageActions: pageActions, profileActions: profileActions,
             spaceActions: spaceActions, folderActions: folderActions,
-            newTabShortcut: { [weak self] in self?.shortcuts.bindings[.newTab]?.display }))
+            side: sideSetting, shortcut: { [weak self] id in self?.shortcuts.bindings[id]?.display }))
         sidebar.sizingOptions = []
         // The column starts at the window's top edge: the title bar's buttons only show on demand.
         sidebar.safeAreaRegions = []

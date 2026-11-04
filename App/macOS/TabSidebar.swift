@@ -4,6 +4,7 @@
 import Appearance
 import ColorCore
 import ColorUI
+import Commands
 import DesignKit
 import SafiraCore
 import SafiraSession
@@ -21,7 +22,9 @@ struct TabSidebar: View {
     let profileActions: ProfileActions
     let spaceActions: SpaceActions
     let folderActions: FolderActions
-    let newTabShortcut: () -> String?
+    let side: SidebarSideSetting
+    /// The shortcut a menu item shows for a command, in the bindings in force ("⌘T", "⌃1").
+    let shortcut: (CommandID) -> String?
     @Environment(\.designTokens) private var tokens
 
     private var session: ProfileSession { registry.active.session }
@@ -33,7 +36,7 @@ struct TabSidebar: View {
                 VStack(spacing: 0) {
                     PinnedSection(session: session, focus: focus, actions: folderActions)
                     if !session.pinnedItems.isEmpty { ColumnSeparator() }
-                    NewTabRow(shortcut: newTabShortcut(), newTab: pageActions.newTab)
+                    NewTabRow(shortcut: shortcut(.newTab), newTab: pageActions.newTab)
                     ForEach(Array(session.tabs.enumerated()), id: \.element.id) { index, tab in
                         TabRowView(tab: tab, isSelected: session.selectedTabID == tab.id,
                                    isListFocused: focus.isListFocused, placement: .free(firstInSection: false),
@@ -47,9 +50,10 @@ struct TabSidebar: View {
                 .modifier(TabListKeyboard(session: session, focus: focus, showPage: pageActions.showPage))
             }
             .scrollContentBackground(.hidden)
-            SpaceSwitcher(session: session, actions: spaceActions)
+            SpaceSwitcher(session: session, actions: spaceActions, shortcut: shortcut)
             ProfileBar(registry: registry, profileActions: profileActions, spaceActions: spaceActions)
         }
+        .columnSurface(side: side.side == .right ? .right : .left)
         .theme(spaceTheme)
     }
 
@@ -83,14 +87,17 @@ struct TabMenu: View {
 private struct SpaceSwitcher: View {
     let session: ProfileSession
     let actions: SpaceActions
+    let shortcut: (CommandID) -> String?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         let profileTheme = ThemeCatalog.first
+        let keys = CommandID.selectSpaceCommands
         GlassSwitcher(
-            session.spaces.map { space in
+            session.spaces.enumerated().map { index, space in
                 SwitcherItem(id: space.id.rawValue.uuidString, name: space.name,
-                             theme: ThemeCatalog.theme(id: space.paletteID, fallback: profileTheme))
+                             theme: ThemeCatalog.theme(id: space.paletteID, fallback: profileTheme),
+                             shortcut: index < keys.count ? shortcut(keys[index]) : nil)
             },
             selection: session.activeSpaceID.rawValue.uuidString,
             label: String(localized: "Spaces")
@@ -114,13 +121,15 @@ private struct SpaceSwitcher: View {
     }
 }
 
-/// The Active profile's chooser, a menu that switches Profile, and the button that adds a Space. It is a kit field pill:
-/// glass, with the Profile's hue only in its circle, so it does not outweigh the Tabs. It sits at the other end of the
-/// column from the address, apart from the Space switcher, so that a Profile never changes by accident.
+/// The Active profile's chooser, a menu that switches Profile, and the button that adds a Space. It is a kit status
+/// line: the Profile's own symbol on a tile of its hue, then its name, on the column's fill, so it does not outweigh
+/// the Tabs. It sits at the other end of the column from the address, apart from the Space switcher, so that a Profile
+/// never changes by accident.
 private struct ProfileBar: View {
     let registry: ProfileRegistry
     let profileActions: ProfileActions
     let spaceActions: SpaceActions
+    @State private var isHovered = false
     @Environment(\.designTokens) private var tokens
 
     var body: some View {
@@ -141,19 +150,14 @@ private struct ProfileBar: View {
                 Divider()
                 Button("Clear History and Website Data…") { profileActions.clearBrowsingData(registry.activeProfileID) }
             } label: {
-                WithColorRoles { roles in
-                    FieldPill(systemImage: "person.fill", title: "\(profile.symbol) \(profile.name)",
-                              placeholder: String(localized: "Profile")) {
-                        Image(systemName: "chevron.up.chevron.down")
-                            .font(tokens.type.accessory.font)
-                            .foregroundStyle(roles.secondaryText)
-                    }
-                }
-                .theme(ThemeCatalog.theme(id: profile.paletteID, fallback: ThemeCatalog.first))
+                StatusLine(tile: .initial(profile.symbol), title: profile.name, isOpen: false,
+                           state: RowState(isHovered: isHovered))
+                    .theme(ThemeCatalog.theme(id: profile.paletteID, fallback: ThemeCatalog.first))
             }
             .menuStyle(.button)
             .buttonStyle(.plain)
             .menuIndicator(.hidden)
+            .onHover { isHovered = $0 }
             .help("Switch Profile")
             .accessibilityLabel(String(localized: "Profile: \(profile.name)"))
             .accessibilityHint("Opens the list of Profiles")
