@@ -15,13 +15,21 @@ public protocol LinkDestination: AnyObject {
     /// and shows that Profile. False when the Profile or the Space no longer exists.
     @discardableResult
     func open(_ url: URL, in target: LinkTarget) -> Bool
+    /// The Tab of the Profile, in any Space, that shows the address; a Tab not loaded since launch counts by its last
+    /// saved address. Asking neither loads a page nor shows the Profile.
+    func matchingTab(for address: NormalizedAddress, in profile: ProfileID) -> MatchingTab?
+    /// Shows the Matching tab, switching Profile and Space as needed, with a banner offering to open `link` in a new
+    /// Tab. False when the Tab no longer exists.
+    @discardableResult
+    func focus(_ match: MatchingTab, openedFrom link: URL) -> Bool
 }
 
 /// Asks the user which Profile receives a link.
 @MainActor
 public protocol ProfileChoosing: AnyObject {
-    /// Returns once the user has chosen, or nil when they dismissed the question. Nothing is preselected.
-    func chooseProfile(for link: IncomingLink, among profiles: [Profile]) async -> ProfileID?
+    /// Returns once the user has chosen, or nil when they dismissed the question. Nothing is preselected;
+    /// `alreadyOpenIn` only marks the Profiles that have a Tab showing the link.
+    func chooseProfile(for link: IncomingLink, among profiles: [Profile], alreadyOpenIn: Set<ProfileID>) async -> ProfileID?
     /// Returns once the user has chosen one of the Profile's Spaces, or nil when they dismissed the question.
     func chooseSpace(for link: IncomingLink, in profile: Profile, among spaces: [SpaceChoice]) async -> SpaceID?
 }
@@ -74,23 +82,33 @@ public final class ExternalLinkCoordinator {
         let profiles = destination.profiles
         let destination = destination
         let spacesOf: (ProfileID) -> [SpaceChoice] = { destination.spaces(in: $0) }
-        var decision = router.decide(for: link, among: profiles, spacesOf: spacesOf)
+        let matchingTab: MatchingTabLookup = { destination.matchingTab(for: $1, in: $0) }
+        var decision = router.decide(for: link, among: profiles, spacesOf: spacesOf, matchingTab: matchingTab)
         if case .openNative(let native) = decision {
             if await nativeApplications.open(native.url, bundleIdentifier: native.app.bundleIdentifier) { return }
-            decision = router.decide(for: link, among: profiles, spacesOf: spacesOf, includingNativeApps: false)
+            decision = router.decide(for: link, among: profiles, spacesOf: spacesOf, matchingTab: matchingTab,
+                                     includingNativeApps: false)
         }
         switch decision {
         case .open(let target):
             destination.open(link.url, in: target)
+        case .focus(let match):
+            destination.focus(match, openedFrom: link.url)
         case .ask, .openNative:  // `includingNativeApps: false` never yields .openNative
-            guard let target = await askTarget(for: link, among: profiles),
-                  destination.open(link.url, in: target) else { return }
-            choiceLog?.record(link.url, chosen: target.profile)
+            guard let target = await askTarget(for: link, among: profiles, matchingTab: matchingTab) else { return }
+            let delivered = if let match = router.matchingTab(for: link, in: target, lookup: matchingTab) {
+                destination.focus(match, openedFrom: link.url)
+            } else {
+                destination.open(link.url, in: target)
+            }
+            if delivered { choiceLog?.record(link.url, chosen: target.profile) }
         }
     }
 
-    private func askTarget(for link: IncomingLink, among profiles: [Profile]) async -> LinkTarget? {
-        guard let id = await chooser.chooseProfile(for: link, among: profiles) else { return nil }
+    private func askTarget(for link: IncomingLink, among profiles: [Profile],
+                           matchingTab: MatchingTabLookup) async -> LinkTarget? {
+        let alreadyOpen = router.profilesShowing(link, among: profiles, lookup: matchingTab)
+        guard let id = await chooser.chooseProfile(for: link, among: profiles, alreadyOpenIn: alreadyOpen) else { return nil }
         guard asksForSpace(), let profile = profiles.first(where: { $0.id == id }) else { return LinkTarget(profile: id) }
         let spaces = destination.spaces(in: id)
         // A Profile with one Space has nothing to choose.

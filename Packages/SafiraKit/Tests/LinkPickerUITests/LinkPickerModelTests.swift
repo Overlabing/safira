@@ -24,6 +24,25 @@ private func picker(_ profiles: [Profile] = [work, home, school]) -> LinkPickerM
 
 @MainActor
 @Suite struct LinkPickerModelTests {
+    @Test func rowsMarkTheProfilesWhereTheLinkIsAlreadyOpenAndNothingMore() {
+        let model = LinkPickerModel(link: IncomingLink(url: URL(string: "https://example.com/a")!),
+                                    profiles: [work, home, school], alreadyOpenIn: [home.id])
+
+        #expect(model.rows.map(\.isLinkOpen) == [false, true, false])
+        #expect(model.highlightedIndex == nil)
+        #expect(model.handle(.return) == .none)
+    }
+
+    @Test func markedRowsAreChosenLikeAnyOtherRow() {
+        let model = LinkPickerModel(link: IncomingLink(url: URL(string: "https://example.com/a")!),
+                                    profiles: [work, home, school], alreadyOpenIn: [home.id])
+
+        #expect(model.handle(.down) == .none)
+        #expect(model.highlightedRow?.name == "Work")
+        #expect(model.handle(.character("1")) == .chose(work.id))
+        #expect(picker().rows.map(\.isLinkOpen) == [false, false, false])
+    }
+
     @Test func theRowsFollowTheSidebarOrderAndAreNumberedFromOne() {
         let model = picker()
 
