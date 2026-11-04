@@ -26,7 +26,7 @@ public final class ProfileSession {
     /// The Profile's Spaces, in sidebar order; never empty.
     public private(set) var spaces: [Space]
     public private(set) var activeSpaceID: SpaceID
-    /// Nil while the Command bar is closed.
+    /// Nil while the Command bar is closed. The Command bar is a floating panel, so this is also whether it is shown.
     public private(set) var commandBarTarget: CommandBarTarget?
     /// A search typed while the Profile has no search engine; the user is asked to pick one before it runs.
     public private(set) var searchAwaitingEngine: String?
@@ -529,6 +529,8 @@ public final class ProfileSession {
 
     // MARK: Command bar
 
+    public var isCommandBarOpen: Bool { commandBarTarget != nil }
+
     public func openCommandBar(for target: CommandBarTarget) {
         commandBarTarget = target
     }
@@ -538,12 +540,12 @@ public final class ProfileSession {
         commandBarTarget = nil
     }
 
-    /// Opens what was typed in the Command bar where its target says, then closes it. With the Command bar closed,
-    /// the text goes to the selected Tab.
+    /// Opens what was typed in the Command bar where its target says, then closes it. Blank text closes it and opens
+    /// nothing. With the Command bar closed, the text goes to the selected Tab.
     public func submitCommandBar(_ text: String) {
         let target = commandBarTarget ?? .selectedTab
-        guard let input = CommandBarInput(text) else { return }
         commandBarTarget = nil
+        guard let input = CommandBarInput(text) else { return }
         switch input {
         case .address(let url, let scheme):
             open(url, in: target, httpsFirst: scheme == .defaultedToHTTPS)
