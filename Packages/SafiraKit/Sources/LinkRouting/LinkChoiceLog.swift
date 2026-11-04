@@ -26,7 +26,8 @@ public struct LinkChoiceLogSettings: Hashable, Sendable, Codable {
                 title: title,
                 value: LinkChoiceLogSettings().isEnabled ? "On" : "Off",
                 explanation: explanation,
-                whereToChange: "Safira menu"
+                whereToChange: "Safira menu",
+                control: .toggle(isOn: LinkChoiceLogSettings().isEnabled)
             ),
         ]
     }

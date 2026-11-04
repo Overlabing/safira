@@ -42,7 +42,7 @@ let package = Package(
         .testTarget(name: "LinkPickerUITests", dependencies: ["LinkPickerUI", "LinkRouting", "SafiraCore"]),
         .target(name: "Diagnostics", dependencies: ["SafiraCore"]),
         .testTarget(name: "DiagnosticsTests", dependencies: ["Diagnostics", "SafiraCore"]),
-        .target(name: "Onboarding", dependencies: ["SafiraCore", "SafiraStore", "Commands"]),
-        .testTarget(name: "OnboardingTests", dependencies: ["Onboarding", "Commands"]),
+        .target(name: "Onboarding", dependencies: ["SafiraCore", "Commands", "LinkRouting", "Diagnostics"]),
+        .testTarget(name: "OnboardingTests", dependencies: ["Onboarding", "Commands", "SafiraCore"]),
     ]
 )

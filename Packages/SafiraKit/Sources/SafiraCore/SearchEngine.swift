@@ -52,3 +52,20 @@ public enum SearchEngine: String, CaseIterable, Sendable, Codable {
 
     private static let queryValueAllowed = CharacterSet.urlQueryAllowed.subtracting(CharacterSet(charactersIn: "&+=#?/"))
 }
+
+extension SearchEngine {
+    /// The entry for the search engine: every Profile needs one, and none is chosen for the user.
+    public static var defaultEntries: [DefaultEntry] {
+        [
+            DefaultEntry(
+                id: "search.engine",
+                title: "Search engine",
+                value: "Chosen by you",
+                explanation: "Each Profile has its own search engine, and none is chosen for you. A Profile cannot be "
+                    + "created without one; if you skip it, the Command bar asks at the first search.",
+                whereToChange: "Defaults window",
+                control: .choice
+            ),
+        ]
+    }
+}

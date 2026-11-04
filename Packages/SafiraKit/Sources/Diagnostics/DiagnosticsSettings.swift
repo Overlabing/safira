@@ -24,7 +24,8 @@ public struct DiagnosticsSettings: Hashable, Sendable, Codable {
                 title: debugModeTitle,
                 value: DiagnosticsSettings().isDebugModeEnabled ? "On" : "Off",
                 explanation: debugModeExplanation,
-                whereToChange: "Help menu"
+                whereToChange: "Help menu",
+                control: .toggle(isOn: DiagnosticsSettings().isDebugModeEnabled)
             ),
         ]
     }

@@ -424,3 +424,67 @@ private final class TemporaryRoot {
         await cleanUp(ids)
     }
 }
+
+/// The first launch: onboarding is pending exactly when the launch created the first Profile.
+extension ProfileRegistryTests {
+    @Test func aFirstLaunchHasOnboardingPendingUntilItIsCompletedAndTheFirstProfileTakesTheChoices() async throws {
+        let root = TemporaryRoot()
+        var ids: [ProfileID] = []
+        do {
+            let registry = ProfileRegistry(layout: root.layout)
+            ids = registry.profiles.map(\.id)
+            #expect(registry.isOnboardingPending)
+            #expect(ProfileRegistry(layout: root.layout).isOnboardingPending, "cut short, it is offered again")
+
+            registry.completeOnboarding(name: "  Work ", symbol: "💼🏢", searchEngine: .kagi,
+                                        webContent: WebContentSettings(isFraudulentSiteWarningEnabled: false,
+                                                                       isAutoplayingSoundAllowed: true))
+            await registry.saveAll()
+
+            #expect(registry.isOnboardingPending == false)
+            #expect(registry.profiles.map { "\($0.symbol) \($0.name)" } == ["💼 Work"])
+            #expect(registry.profiles.map(\.id) == ids)
+            let relaunched = ProfileRegistry(layout: root.layout)
+            #expect(relaunched.isOnboardingPending == false)
+            #expect(relaunched.profiles.map { "\($0.symbol) \($0.name)" } == ["💼 Work"])
+            let saved = try ProfileDatabase(file: root.layout.profileDatabaseFile(for: ids[0])).settings()
+            #expect(saved.searchEngine == .kagi)
+            #expect(saved.webContent == WebContentSettings(isFraudulentSiteWarningEnabled: false,
+                                                           isAutoplayingSoundAllowed: true))
+        }
+        await cleanUp(ids)
+    }
+
+    @Test func anAppThatAlreadyHadAProfileNeverGetsAnOnboardingAndCompletingChangesNothing() async throws {
+        let root = TemporaryRoot()
+        let existing = Profile(id: ProfileID(rawValue: UUID()), name: "Mine", symbol: "🏠")
+        try AppDatabase(file: root.layout.appDatabaseFile).add(existing)
+        var ids: [ProfileID] = []
+        do {
+            let registry = ProfileRegistry(layout: root.layout)
+            ids = registry.profiles.map(\.id)
+            #expect(registry.isOnboardingPending == false)
+
+            registry.completeOnboarding(name: "Other", symbol: "💼", searchEngine: .kagi, webContent: WebContentSettings())
+
+            #expect(registry.profiles == [existing])
+            #expect(registry.active.session.settings.searchEngine == nil)
+        }
+        await cleanUp(ids)
+    }
+
+    @Test func aDeletedProfileDoesNotBringOnboardingBack() async throws {
+        let root = TemporaryRoot()
+        var ids: [ProfileID] = []
+        do {
+            let registry = ProfileRegistry(layout: root.layout)
+            registry.completeOnboarding(name: "One", symbol: "1", searchEngine: .google, webContent: WebContentSettings())
+            let second = registry.createProfile(name: "Two", symbol: "2", searchEngine: .ecosia)
+            ids = registry.profiles.map(\.id)
+            try await registry.deleteProfile(second)
+
+            #expect(ProfileRegistry(layout: root.layout).isOnboardingPending == false)
+        }
+        await cleanUp(ids)
+    }
+}

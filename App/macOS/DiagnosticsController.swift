@@ -30,11 +30,16 @@ final class DiagnosticsController: NSObject, NSMenuItemValidation {
         restartSampling()
     }
 
-    @objc func toggleDebugMode(_ sender: Any?) {
-        let enabled = !logger.isEnabled
+    var isDebugModeEnabled: Bool { logger.isEnabled }
+
+    func setDebugMode(_ enabled: Bool) {
         logger.setEnabled(enabled)
         settings.save(DiagnosticsSettings(isDebugModeEnabled: enabled))
         restartSampling()
+    }
+
+    @objc func toggleDebugMode(_ sender: Any?) {
+        setDebugMode(!logger.isEnabled)
     }
 
     @objc func exportDiagnosticLogs(_ sender: Any?) {

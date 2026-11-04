@@ -25,6 +25,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var privateWindows: [PrivateWindowController] = []
     private var registry: ProfileRegistry?
     private var links: LinkController?
+    private var defaults: DefaultsController?
+    private var onboarding: OnboardingController?
     /// Links that arrived before the Profiles were open, as on a launch started by a link.
     private var earlyLinks: [IncomingLink] = []
     private let openers = OpenerIdentifier(lookup: WorkspaceApplicationLookup(),
@@ -52,6 +54,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         mainWindow = controller
         let links = LinkController(registry: registry, mainWindow: controller, diagnostics: diagnostics)
         self.links = links
+        let defaults = DefaultsController(registry: registry, updates: updates, diagnostics: diagnostics, links: links,
+                                          shortcuts: shortcuts)
+        self.defaults = defaults
+        let onboarding = OnboardingController(registry: registry, defaults: defaults)
+        self.onboarding = onboarding
         earlyLinks.forEach(links.receive)
         earlyLinks = []
         rebuildMenu()
@@ -65,13 +72,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
         #endif
-        controller.focusCommandBar(nil)
         NSApp.activate()
+        if onboarding.isPending, let window = controller.window {
+            onboarding.present(over: window) { [weak controller] in controller?.focusCommandBar(nil) }
+        } else {
+            controller.focusCommandBar(nil)
+        }
     }
 
     func rebuildMenu() {
-        guard let links else { return }
-        NSApp.mainMenu = MainMenu.make(updates: updates, diagnostics: diagnostics, links: links,
+        guard let links, let defaults else { return }
+        NSApp.mainMenu = MainMenu.make(updates: updates, diagnostics: diagnostics, links: links, defaults: defaults,
                                        shortcuts: shortcuts.bindings, shortcutsWindow: shortcutsWindow, app: self)
     }
 

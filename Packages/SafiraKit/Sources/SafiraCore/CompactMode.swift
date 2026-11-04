@@ -55,7 +55,9 @@ public struct SidebarPresentation: Equatable, Sendable {
                 title: compactModeTitle,
                 value: SidebarPresentation().isCompact ? "On" : "Off",
                 explanation: compactModeExplanation,
-                whereToChange: "View menu"
+                whereToChange: "View menu",
+                control: .toggle(isOn: SidebarPresentation().isCompact),
+                isUserFacing: false
             )
         ]
     }

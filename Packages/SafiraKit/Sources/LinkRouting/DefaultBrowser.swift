@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Antonin Carlin
 
 import Foundation
+import SafiraCore
 
 /// What the system can tell and do about the default application for web links. The app backs it with `NSWorkspace`;
 /// tests record the calls.
@@ -45,5 +46,22 @@ public struct DefaultBrowser {
             do { try await registry.setDefaultApplication(toOpenContentType: type) } catch { firstError = firstError ?? error }
         }
         if let firstError { throw firstError }
+    }
+}
+
+extension DefaultBrowser {
+    /// The entry for the default browser: offered, never set without the user's confirmation in the system dialog.
+    nonisolated public static var defaultEntries: [DefaultEntry] {
+        [
+            DefaultEntry(
+                id: "linkPicker.defaultBrowser",
+                title: "Make Safira the default browser",
+                value: "Offered",
+                explanation: "Links from other apps then come to Safira, and the Link picker asks which Profile receives "
+                    + "each one, unless a Link rule decides. macOS asks you to confirm.",
+                whereToChange: "Safira menu",
+                control: .action
+            ),
+        ]
     }
 }

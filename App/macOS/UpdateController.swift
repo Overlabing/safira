@@ -21,9 +21,13 @@ final class UpdateController: NSObject, SPUUpdaterDelegate, NSMenuItemValidation
         standardController?.checkForUpdates(sender)
     }
 
+    var automaticallyChecks: Bool {
+        get { updater?.automaticallyChecksForUpdates ?? false }
+        set { updater?.automaticallyChecksForUpdates = newValue }
+    }
+
     @objc func toggleAutomaticChecks(_ sender: Any?) {
-        guard let updater else { return }
-        updater.automaticallyChecksForUpdates.toggle()
+        automaticallyChecks.toggle()
     }
 
     func validateMenuItem(_ item: NSMenuItem) -> Bool {

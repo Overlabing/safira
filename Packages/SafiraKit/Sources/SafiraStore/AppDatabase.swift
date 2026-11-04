@@ -85,8 +85,26 @@ public final class AppDatabase: Sendable {
 
     public func setLastActiveProfileID(_ id: ProfileID) throws {
         try queue.write { db in
-            try db.execute(sql: "INSERT OR REPLACE INTO app_state (id, last_profile_id) VALUES (1, ?)",
-                           arguments: [id.rawValue.uuidString])
+            try db.execute(sql: """
+                INSERT INTO app_state (id, last_profile_id) VALUES (1, ?)
+                ON CONFLICT (id) DO UPDATE SET last_profile_id = excluded.last_profile_id
+                """, arguments: [id.rawValue.uuidString])
+        }
+    }
+
+    /// Whether the first launch's onboarding has not finished. False for an app that never had one.
+    public func isOnboardingPending() throws -> Bool {
+        try queue.read { db in
+            try Bool.fetchOne(db, sql: "SELECT onboarding_pending FROM app_state WHERE id = 1") ?? false
+        }
+    }
+
+    public func setOnboardingPending(_ pending: Bool) throws {
+        try queue.write { db in
+            try db.execute(sql: """
+                INSERT INTO app_state (id, onboarding_pending) VALUES (1, ?)
+                ON CONFLICT (id) DO UPDATE SET onboarding_pending = excluded.onboarding_pending
+                """, arguments: [pending])
         }
     }
 }

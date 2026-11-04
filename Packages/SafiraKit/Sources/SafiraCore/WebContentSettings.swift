@@ -32,14 +32,16 @@ public struct WebContentSettings: Hashable, Sendable, Codable {
                 title: fraudulentSiteWarningTitle,
                 value: defaults.isFraudulentSiteWarningEnabled ? "On" : "Off",
                 explanation: fraudulentSiteWarningExplanation,
-                whereToChange: "View menu"
+                whereToChange: "View menu",
+                control: .toggle(isOn: defaults.isFraudulentSiteWarningEnabled)
             ),
             DefaultEntry(
                 id: "web.autoplayingSound",
                 title: autoplayingSoundTitle,
                 value: defaults.isAutoplayingSoundAllowed ? "Allowed" : "Blocked",
                 explanation: autoplayingSoundExplanation,
-                whereToChange: "View menu"
+                whereToChange: "View menu",
+                control: .toggle(isOn: defaults.isAutoplayingSoundAllowed)
             ),
         ]
     }

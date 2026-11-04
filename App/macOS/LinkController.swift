@@ -172,19 +172,42 @@ final class LinkController: NSObject, NSMenuItemValidation {
         coordinator.receive(link)
     }
 
+    var logsChoices: Bool {
+        get { choiceLog.isEnabled }
+        set {
+            choiceLog.isEnabled = newValue
+            settings.save(LinkChoiceLogSettings(isEnabled: newValue))
+        }
+    }
+
+    var focusesMatchingTab: Bool {
+        get { matchesOpenTabs }
+        set {
+            matchesOpenTabs = newValue
+            matchingStore.save(MatchingTabSettings(isEnabled: newValue))
+        }
+    }
+
+    var asksForSpaceToo: Bool {
+        get { asksForSpace }
+        set {
+            asksForSpace = newValue
+            askForSpaceStore.save(AskForSpaceSettings(isEnabled: newValue))
+        }
+    }
+
+    var isDefaultBrowser: Bool { defaultBrowser.isDefault }
+
     @objc func toggleChoiceLog(_ sender: Any?) {
-        choiceLog.isEnabled.toggle()
-        settings.save(LinkChoiceLogSettings(isEnabled: choiceLog.isEnabled))
+        logsChoices.toggle()
     }
 
     @objc func toggleMatchingTabs(_ sender: Any?) {
-        matchesOpenTabs.toggle()
-        matchingStore.save(MatchingTabSettings(isEnabled: matchesOpenTabs))
+        focusesMatchingTab.toggle()
     }
 
     @objc func toggleAskForSpace(_ sender: Any?) {
-        asksForSpace.toggle()
-        askForSpaceStore.save(AskForSpaceSettings(isEnabled: asksForSpace))
+        asksForSpaceToo.toggle()
     }
 
     /// Slack's own folder, which the sandbox hides: the user picks it once, and Slack links then open in the app.
