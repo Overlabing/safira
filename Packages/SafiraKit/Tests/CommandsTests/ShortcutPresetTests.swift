@@ -112,3 +112,12 @@ func showPreviousAndNextProfileFallBackToSafirasDefaultInEveryPreset(preset: Sho
     #expect(throws: (any Error).self) { try decode(valid.replacingOccurrences(of: "https://example.org", with: "http://example.org")) }
     #expect(throws: (any Error).self) { try decode(valid.replacingOccurrences(of: "\"zen\"", with: "\"vivaldi\"")) }
 }
+
+@Test func eachPresetOpensAPrivateWindowWithThePrivateWindowKeyOfItsSource() {
+    func display(_ preset: ShortcutPreset) -> String? { ShortcutConfiguration(preset: preset).bindings[.newPrivateWindow]?.display }
+    #expect(display(.safari) == "⇧⌘N")
+    #expect(display(.arc) == "⇧⌘N")
+    #expect(display(.zen) == "⇧⌘P")
+    #expect(ShortcutPreset.zen.data.bindings[.newPrivateWindow]?.from == "Open Private Browsing Window (Shift+Ctrl+P)")
+    #expect(ShortcutPreset.arc.data.bindings[.newPrivateWindow]?.from == "New incognito window (Command-Shift-N)")
+}

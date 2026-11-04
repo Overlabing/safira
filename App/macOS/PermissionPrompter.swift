@@ -10,11 +10,14 @@ import SafiraCore
 final class PermissionPrompter {
     private let window: () -> NSWindow?
     private let profileName: (ProfileID) -> String
+    /// A Private window's prompter: a choice is remembered only until the window closes.
+    private let isPrivate: Bool
     private var tail: Task<Void, Never>?
 
-    init(window: @escaping () -> NSWindow?, profileName: @escaping (ProfileID) -> String) {
+    init(window: @escaping () -> NSWindow?, profileName: @escaping (ProfileID) -> String, isPrivate: Bool = false) {
         self.window = window
         self.profileName = profileName
+        self.isPrivate = isPrivate
     }
 
     func ask(_ prompt: PermissionPrompt) async -> PermissionAnswer {
@@ -30,13 +33,17 @@ final class PermissionPrompter {
     private func show(_ prompt: PermissionPrompt) async -> PermissionAnswer {
         let alert = NSAlert()
         alert.messageText = Self.question(for: prompt)
-        alert.informativeText = String(localized: """
-            This is the Profile “\(profileName(prompt.profileID))”. Another Profile is asked on its own.
-            """)
+        alert.informativeText = isPrivate
+            ? String(localized: "This is a Private window. Nothing is kept once it closes.")
+            : String(localized: """
+                This is the Profile “\(profileName(prompt.profileID))”. Another Profile is asked on its own.
+                """)
         alert.addButton(withTitle: String(localized: "Allow"))
         alert.addButton(withTitle: String(localized: "Don’t Allow")).keyEquivalent = "\u{1b}"
-        let remember = NSButton(checkboxWithTitle: String(localized: "Remember my choice for this site in this Profile"),
-                                target: nil, action: nil)
+        let remember = NSButton(
+            checkboxWithTitle: isPrivate ? String(localized: "Remember my choice for this site until this window closes")
+                                         : String(localized: "Remember my choice for this site in this Profile"),
+            target: nil, action: nil)
         remember.sizeToFit()
         alert.accessoryView = remember
         let response: NSApplication.ModalResponse

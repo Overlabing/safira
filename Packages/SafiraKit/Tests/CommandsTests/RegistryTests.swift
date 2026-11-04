@@ -53,7 +53,7 @@ import Testing
     }
     #expect(CommandRegistry.command(.compactMode).title == "Compact Mode")
     #expect(CommandRegistry.command(.showSidebar).title == "Show Sidebar")
-    #expect(CommandRegistry.commands.count == 35)
+    #expect(CommandRegistry.commands.count == 36)
 }
 
 @Test func theSpaceCommandsAreRebindableWindowCommandsOnControlCommandKeys() {
@@ -104,6 +104,16 @@ import Testing
     #expect(ShortcutPreset.safari.data.unbound[.clearBrowsingData]?.isEmpty == false)
     #expect(display(.arc) == "⇧⌘⌫")
     #expect(display(.safari) == "⇧⌘⌫")
+}
+
+@Test func newPrivateWindowIsAnUnreservedWindowCommandOnShiftCommandN() {
+    let command = CommandRegistry.command(.newPrivateWindow)
+    #expect(command.title == "New Private Window")
+    #expect(command.scope == .window)
+    #expect(command.isRebindable)
+    #expect(command.isImplemented)
+    #expect(!command.isReserved)
+    #expect(command.defaultShortcut?.display == "⇧⌘N")
 }
 
 @Test func thePinCommandsAreRebindableWindowCommandsWithNoDefaultShortcut() {

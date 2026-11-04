@@ -39,7 +39,9 @@ public final class ProfileSession {
     @ObservationIgnored private var searchAwaitingEngineTarget = CommandBarTarget.selectedTab
     @ObservationIgnored private let makePage: @MainActor (TabID) -> any WebPageHandle
     @ObservationIgnored private let osBuild: String
-    /// Nil for a session that keeps no history, as a Private window's will.
+    /// False for a Private window's session: its one Space is internal, never shown, and no other can be added.
+    public let hasSpaces: Bool
+    /// Nil for a session that keeps no history, as a Private window's does.
     @ObservationIgnored let history: ProfileDatabase?
     @ObservationIgnored private let historyRecorder: HistoryRecorder?
     /// Called when the Profile's history could not be written or searched.
@@ -60,12 +62,15 @@ public final class ProfileSession {
     /// - Parameters:
     ///   - osBuild: the macOS build, which decides whether a saved navigation state can be restored.
     ///   - history: the Profile's database, where the pages its Tabs visit are recorded and searched; nil keeps no history.
+    ///   - hasSpaces: false for a Private window, which has a single internal Space the user never sees.
     ///   - makePage: builds the page of a Tab, called once per Tab on its first load or its first selection.
     public init(profileID: ProfileID, settings: ProfileSettings = ProfileSettings(), osBuild: String = OSBuild.current,
-                history: ProfileDatabase? = nil, makePage: @escaping @MainActor (TabID) -> any WebPageHandle) {
+                history: ProfileDatabase? = nil, hasSpaces: Bool = true,
+                makePage: @escaping @MainActor (TabID) -> any WebPageHandle) {
         self.profileID = profileID
         self.settings = settings
         self.osBuild = osBuild
+        self.hasSpaces = hasSpaces
         self.history = history
         historyRecorder = history.map(HistoryRecorder.init(database:))
         self.makePage = makePage
@@ -168,9 +173,11 @@ public final class ProfileSession {
 
     // MARK: Spaces
 
-    /// Adds a Space after the others and makes it active. It starts with no Tab.
+    /// Adds a Space after the others and makes it active. It starts with no Tab. A session without Spaces adds none and
+    /// answers its only one.
     @discardableResult
     public func createSpace(name: String, emoji: String) -> SpaceID {
+        guard hasSpaces else { return activeSpaceID }
         let space = Space(id: SpaceID(), name: Self.cleanName(name) ?? Self.initialSpaceName,
                           emoji: Self.cleanEmoji(emoji) ?? Self.initialSpaceEmoji)
         spaces.append(space)
@@ -180,7 +187,7 @@ public final class ProfileSession {
 
     /// Renames a Space. A blank name or emoji keeps the current one; an emoji keeps its first character only.
     public func renameSpace(_ id: SpaceID, name: String, emoji: String) {
-        guard let space = space(id) else { return }
+        guard hasSpaces, let space = space(id) else { return }
         if let name = Self.cleanName(name) { space.name = name }
         if let emoji = Self.cleanEmoji(emoji) { space.emoji = emoji }
     }

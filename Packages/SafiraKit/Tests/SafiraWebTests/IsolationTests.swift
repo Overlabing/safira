@@ -12,7 +12,7 @@ import WebKit
 
 /// A loopback origin for the isolation suite: `/` is a blank page, `/sw.js` a service worker script, and `/cookie`
 /// sets an HttpOnly cookie from the server.
-private final class StorageServer: @unchecked Sendable {
+final class StorageServer: @unchecked Sendable {
     private let listener: NWListener
     let port: UInt16
 
@@ -60,7 +60,7 @@ private final class StorageServer: @unchecked Sendable {
 }
 
 /// What one page of an origin can read of each kind of website data.
-private struct StoredData: Decodable, Equatable {
+struct StoredData: Decodable, Equatable {
     var cookie: String
     var local: String?
     var session: String?
@@ -71,7 +71,7 @@ private struct StoredData: Decodable, Equatable {
     static let none = StoredData(cookie: "", local: nil, session: nil, indexedDB: [], serviceWorkers: 0, caches: [])
 }
 
-private let writeEverything = """
+let writeEverything = """
     document.cookie = "script=A; path=/";
     localStorage.setItem("key", "A");
     sessionStorage.setItem("key", "A");
@@ -93,7 +93,7 @@ private let writeEverything = """
     return "written";
     """
 
-private let readEverything = """
+let readEverything = """
     const databases = await indexedDB.databases();
     const workers = await navigator.serviceWorker.getRegistrations();
     return JSON.stringify({
