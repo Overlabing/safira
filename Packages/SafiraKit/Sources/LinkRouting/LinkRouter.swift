@@ -22,8 +22,7 @@ public struct LinkTarget: Hashable, Sendable {
     public let profile: ProfileID
     /// Nil opens it in the Profile's last active Space.
     public let space: SpaceID?
-    /// Set by a Link rule. Without it, a Matching tab will be focused instead once those exist; today every link is a
-    /// new Tab either way.
+    /// Set by a Link rule: the link opens a new Tab even when a Matching tab shows it.
     public let forcesNewTab: Bool
 
     public init(profile: ProfileID, space: SpaceID? = nil, forcesNewTab: Bool = false) {
@@ -39,6 +38,8 @@ public enum LinkDecision: Hashable, Sendable {
     case openNative(NativeLink)
     /// Open it here without asking.
     case open(LinkTarget)
+    /// Show the Tab that already has this address, in its Profile and Space, instead of opening a new Tab.
+    case focus(MatchingTab)
     /// Show the Link picker.
     case ask
 }
@@ -59,27 +60,36 @@ public protocol LinkRoutingReporting: AnyObject {
     func ruleWasSkipped(index: Int, because problem: LinkRuleProblem)
 }
 
+/// The Tab of a Profile that shows an address, if any.
+public typealias MatchingTabLookup = (ProfileID, NormalizedAddress) -> MatchingTab?
+
 /// Decides where an incoming link goes, in this order: the installed app that can show it, the first Link rule that
-/// matches and resolves, the only Profile, and last the Link picker. Matching tabs will decide before the Link picker
-/// does, here.
+/// matches and resolves, the only Profile, and last the Link picker. Once the Target profile is known, a Matching tab
+/// there is focused instead of opening a new Tab, unless the Link rule forces a new Tab.
 @MainActor
 public struct LinkRouter {
     private let rules: any LinkRulesProviding
     private let nativeApps: NativeAppLinks
     private let reporter: any LinkRoutingReporting
+    private let isMatchingEnabled: @MainActor () -> Bool
 
-    public init(rules: any LinkRulesProviding, nativeApps: NativeAppLinks, reporter: any LinkRoutingReporting) {
+    /// - Parameter isMatchingEnabled: whether Matching tabs are looked for; read for each link.
+    public init(rules: any LinkRulesProviding, nativeApps: NativeAppLinks, reporter: any LinkRoutingReporting,
+                isMatchingEnabled: @escaping @MainActor () -> Bool = { true }) {
         self.rules = rules
         self.nativeApps = nativeApps
         self.reporter = reporter
+        self.isMatchingEnabled = isMatchingEnabled
     }
 
     /// - Parameters:
     ///   - spacesOf: the Spaces of a Profile, asked only when a matching rule names a Space.
+    ///   - matchingTab: asked once the Target profile is known, unless the setting is off or the rule forces a new Tab.
     ///   - includingNativeApps: false once the installed app refused the link.
     ///
     /// With a rules file that is invalid, no rule and no native app applies: the Link picker decides.
     public func decide(for link: IncomingLink, among profiles: [Profile], spacesOf: (ProfileID) -> [SpaceChoice],
+                       matchingTab: MatchingTabLookup = { _, _ in nil },
                        includingNativeApps: Bool = true) -> LinkDecision {
         switch rules.load() {
         case .invalid(let error):
@@ -91,16 +101,33 @@ public struct LinkRouter {
             for (index, rule) in set.rules.enumerated()
             where rule.matches(link.url, openerBundleIdentifier: link.openerBundleIdentifier) {
                 switch resolve(rule, among: profiles, spacesOf: spacesOf) {
-                case .success(let target): return .open(target)
+                case .success(let target): return open(target, link, matchingTab)
                 case .failure(let problem): reporter.ruleWasSkipped(index: index, because: problem)
                 }
             }
         }
         // With one Profile there is nothing to choose; with several, the user always chooses, and nothing is preselected.
         if profiles.count == 1, let only = profiles.first {
-            return .open(LinkTarget(profile: only.id))
+            return open(LinkTarget(profile: only.id), link, matchingTab)
         }
         return .ask
+    }
+
+    /// The Tab of the Target profile, in any Space, that a link to `link` should focus; nil when the setting is off,
+    /// the target forces a new Tab, or no Tab shows the address.
+    public func matchingTab(for link: IncomingLink, in target: LinkTarget, lookup: MatchingTabLookup) -> MatchingTab? {
+        guard !target.forcesNewTab, isMatchingEnabled(), let address = NormalizedAddress(link.url) else { return nil }
+        return lookup(target.profile, address)
+    }
+
+    /// The Profiles that have a Tab showing the link, for the Link picker to mark; empty when the setting is off.
+    public func profilesShowing(_ link: IncomingLink, among profiles: [Profile], lookup: MatchingTabLookup) -> Set<ProfileID> {
+        guard isMatchingEnabled(), let address = NormalizedAddress(link.url) else { return [] }
+        return Set(profiles.map(\.id).filter { lookup($0, address) != nil })
+    }
+
+    private func open(_ target: LinkTarget, _ link: IncomingLink, _ lookup: MatchingTabLookup) -> LinkDecision {
+        matchingTab(for: link, in: target, lookup: lookup).map(LinkDecision.focus) ?? .open(target)
     }
 
     private func resolve(_ rule: LinkRule, among profiles: [Profile],

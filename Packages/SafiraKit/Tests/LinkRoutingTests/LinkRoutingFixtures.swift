@@ -16,6 +16,9 @@ final class RecordingDestination: LinkDestination {
     var profiles: [Profile]
     var spacesByProfile: [ProfileID: [SpaceChoice]]
     private(set) var opened: [(url: String, target: LinkTarget)] = []
+    private(set) var focused: [(match: MatchingTab, link: String)] = []
+    private(set) var lookups = 0
+    private var shown: [(address: String, match: MatchingTab)] = []
 
     init(profiles: [Profile], spaces: [ProfileID: [SpaceChoice]] = defaultSpaces) {
         self.profiles = profiles
@@ -31,6 +34,25 @@ final class RecordingDestination: LinkDestination {
         opened.append((url.absoluteString, target))
         return true
     }
+
+    /// A Tab of `profile`, in `space`, that shows `address`.
+    @discardableResult
+    func showTab(_ address: String, in profile: Profile, space: SpaceChoice) -> MatchingTab {
+        let match = MatchingTab(profile: profile.id, space: space.id, tab: TabID())
+        shown.append((NormalizedAddress(URL(string: address)!)!.value, match))
+        return match
+    }
+
+    func matchingTab(for address: NormalizedAddress, in profile: ProfileID) -> MatchingTab? {
+        lookups += 1
+        return shown.first { $0.match.profile == profile && $0.address == address.value }?.match
+    }
+
+    func focus(_ match: MatchingTab, openedFrom link: URL) -> Bool {
+        guard shown.contains(where: { $0.match == match }) else { return false }
+        focused.append((match, link.absoluteString))
+        return true
+    }
 }
 
 /// Holds each question open until the test answers it, so the order of events is under the test's control.
@@ -38,13 +60,15 @@ final class RecordingDestination: LinkDestination {
 final class ScriptedChooser: ProfileChoosing {
     private(set) var asked: [IncomingLink] = []
     private(set) var offered: [[Profile]] = []
+    private(set) var markedOpen: [Set<ProfileID>] = []
     private(set) var spacesAsked: [(profile: ProfileID, spaces: [SpaceChoice])] = []
     private var waiting: [CheckedContinuation<ProfileID?, Never>] = []
     private var waitingForSpace: [CheckedContinuation<SpaceID?, Never>] = []
 
-    func chooseProfile(for link: IncomingLink, among profiles: [Profile]) async -> ProfileID? {
+    func chooseProfile(for link: IncomingLink, among profiles: [Profile], alreadyOpenIn: Set<ProfileID>) async -> ProfileID? {
         asked.append(link)
         offered.append(profiles)
+        markedOpen.append(alreadyOpenIn)
         return await withCheckedContinuation { waiting.append($0) }
     }
 
@@ -122,18 +146,20 @@ final class RecordingReporter: LinkRoutingReporting {
 
 @MainActor
 func makeRouter(rules: StubRules = StubRules(), applications: StubApplications = StubApplications(),
-                slack: StubSlack = StubSlack(), reporter: RecordingReporter = RecordingReporter()) -> LinkRouter {
-    LinkRouter(rules: rules, nativeApps: NativeAppLinks(applications: applications, slack: slack), reporter: reporter)
+                slack: StubSlack = StubSlack(), reporter: RecordingReporter = RecordingReporter(),
+                matching: Bool = true) -> LinkRouter {
+    LinkRouter(rules: rules, nativeApps: NativeAppLinks(applications: applications, slack: slack), reporter: reporter,
+               isMatchingEnabled: { matching })
 }
 
 @MainActor
 func makeCoordinator(_ destination: RecordingDestination, _ chooser: ScriptedChooser, rules: StubRules = StubRules(),
                      applications: StubApplications = StubApplications(), slack: StubSlack = StubSlack(),
                      reporter: RecordingReporter = RecordingReporter(), choiceLog: LinkChoiceLog? = nil,
-                     asksForSpace: Bool = false) -> ExternalLinkCoordinator {
+                     asksForSpace: Bool = false, matching: Bool = true) -> ExternalLinkCoordinator {
     ExternalLinkCoordinator(
         destination: destination, chooser: chooser,
-        router: makeRouter(rules: rules, applications: applications, slack: slack, reporter: reporter),
+        router: makeRouter(rules: rules, applications: applications, slack: slack, reporter: reporter, matching: matching),
         nativeApplications: applications, choiceLog: choiceLog, asksForSpace: { asksForSpace })
 }
 

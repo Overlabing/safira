@@ -25,6 +25,8 @@ enum MainMenu {
                                      keyEquivalent: "")),
             target(links, NSMenuItem(title: LinkChoiceLogSettings.title, action: #selector(LinkController.toggleChoiceLog(_:)),
                                      keyEquivalent: "")),
+            target(links, NSMenuItem(title: MatchingTabSettings.title, action: #selector(LinkController.toggleMatchingTabs(_:)),
+                                     keyEquivalent: "")),
             target(links, NSMenuItem(title: AskForSpaceSettings.title, action: #selector(LinkController.toggleAskForSpace(_:)),
                                      keyEquivalent: "")),
             target(links, NSMenuItem(title: "Show Link Rules in Finder", action: #selector(LinkController.showLinkRules(_:)),
