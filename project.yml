@@ -9,6 +9,12 @@ options:
   developmentLanguage: en
   # XcodeGen 2.45.3 knows no Xcode 27 format; xcode16_3 is the newest it can write and Xcode 27.1 opens it.
   projectFormat: xcode16_3
+# Benchmark is Release with the benchmark mode compiled in, a throwaway bundle id and the browser declaration, for the
+# memory measurement (scripts/bench-memory.sh). It is never distributed; scripts/check.sh proves Release has none of it.
+configs:
+  Debug: debug
+  Release: release
+  Benchmark: release
 packages:
   SafiraKit:
     path: Packages/SafiraKit
@@ -36,6 +42,10 @@ targets:
         # Re-signs Sparkle.framework with the app's identity on copy: an ad hoc app refuses a framework that keeps
         # Sparkle's own Team ID (library validation), and the release export needs the copy re-signed anyway.
         codeSign: true
+    postBuildScripts:
+      - name: Declare http and https handling (Benchmark only)
+        script: scripts/bench/declare-browser.sh
+        basedOnDependencyAnalysis: false
     info:
       path: App/macOS/Info.plist
       properties:
@@ -75,6 +85,12 @@ targets:
         # add disable-library-validation through a hand-kept copy of the entitlements; Release (Developer ID, one Team
         # ID for the app and Sparkle) uses the generated file and keeps library validation on.
         "CODE_SIGN_ENTITLEMENTS[config=Debug]": App/macOS/Safira.Debug.entitlements
+        # Ad hoc like Debug, so the same library validation exception; plus read access to the folder that holds the
+        # list of addresses, which exists only in this configuration.
+        "CODE_SIGN_ENTITLEMENTS[config=Benchmark]": App/macOS/Safira.Benchmark.entitlements
+        "SWIFT_ACTIVE_COMPILATION_CONDITIONS[config=Benchmark]": BENCHMARK
+        # Another identity than the app Antonin uses (its container and defaults stay untouched).
+        "PRODUCT_BUNDLE_IDENTIFIER[config=Benchmark]": com.overlabing.safira.bench
         ENABLE_HARDENED_RUNTIME: YES
         # Ad hoc signing needs no certificate or secret, so the same build runs signed and sandboxed locally and in CI.
         # Developer ID signing for distribution belongs to the release script (docs/architecture-v1.md §8.3).
