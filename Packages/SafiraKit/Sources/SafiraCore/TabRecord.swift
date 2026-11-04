@@ -25,13 +25,39 @@ public struct TabRecord: Hashable, Sendable {
     }
 }
 
-/// The saved Tabs of a Profile, in sidebar order, and the one that was selected.
-public struct SavedSession: Hashable, Sendable {
+/// What is saved of one Space: its own fields and its Tabs, in sidebar order.
+public struct SpaceRecord: Hashable, Sendable {
+    public let id: SpaceID
+    public var name: String
+    public var emoji: String
+    /// The Space's Theme, picked from a Palette; nil until Themes exist.
+    public var paletteID: String?
     public var tabs: [TabRecord]
     public var selectedTabID: TabID?
 
-    public init(tabs: [TabRecord] = [], selectedTabID: TabID? = nil) {
+    public init(id: SpaceID, name: String, emoji: String, paletteID: String? = nil, tabs: [TabRecord] = [],
+                selectedTabID: TabID? = nil) {
+        self.id = id
+        self.name = name
+        self.emoji = emoji
+        self.paletteID = paletteID
         self.tabs = tabs
         self.selectedTabID = selectedTabID
+    }
+}
+
+/// The saved Spaces of a Profile, in sidebar order, and the one that was active.
+public struct SavedSession: Hashable, Sendable {
+    public var spaces: [SpaceRecord]
+    public var activeSpaceID: SpaceID?
+
+    public init(spaces: [SpaceRecord] = [], activeSpaceID: SpaceID? = nil) {
+        self.spaces = spaces
+        self.activeSpaceID = activeSpaceID
+    }
+
+    /// The active Space, or the first one when none is named.
+    public var activeSpace: SpaceRecord? {
+        spaces.first { $0.id == activeSpaceID } ?? spaces.first
     }
 }
