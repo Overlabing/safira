@@ -36,7 +36,8 @@ public struct PresetData: Sendable {
     public let checked: String
     public let note: String?
     public let bindings: [CommandID: Binding]
-    /// Commands the browser has no equivalent for, each with the reason; they stay unbound.
+    /// Commands the browser has no equivalent for, each with the reason. Such a command takes Safira's default shortcut
+    /// when the preset leaves that key free (see `ShortcutConfiguration.bindings`).
     public let unbound: [CommandID: String]
 
     public struct Malformed: Error, CustomStringConvertible {

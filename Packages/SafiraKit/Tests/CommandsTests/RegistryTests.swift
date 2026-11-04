@@ -81,5 +81,5 @@ import Testing
     #expect(display(.arc, .nextSpace) == "⌥⌘→")
     #expect(display(.zen, .previousSpace) == "⌥⌘Q")
     #expect(display(.zen, .nextSpace) == "⌥⌘E")
-    #expect(display(.safari, .nextSpace) == nil)
+    #expect(display(.safari, .nextSpace) == "⌃⌘→")
 }
