@@ -36,6 +36,8 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
     private let suggestionModel = CommandBarSuggestionModel()
     private var suggestionHost: CommandBarSuggestionHostingView?
     private var suggestionTask: Task<Void, Never>?
+    /// The text the shown suggestions were computed for: Return opens a highlighted one only while the text still is it.
+    private var suggestionText: String?
 
     init(registry: ProfileRegistry, shortcuts: ShortcutController) {
         self.registry = registry
@@ -250,7 +252,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
     func control(_ control: NSControl, textView: NSTextView, doCommandBy selector: Selector) -> Bool {
         switch selector {
         case #selector(NSResponder.insertNewline(_:)):
-            if let suggestion = suggestionModel.highlighted {
+            if suggestionText == commandBar.stringValue, let suggestion = suggestionModel.highlighted {
                 openSuggestion(suggestion)
                 return true
             }
@@ -262,12 +264,12 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
             }
             return true
         case #selector(NSResponder.moveDown(_:)):
-            guard !suggestionModel.suggestions.isEmpty else { return false }
+            guard !suggestionModel.suggestions.isEmpty, suggestionText == commandBar.stringValue else { return false }
             suggestionModel.moveDown()
             announceHighlight()
             return true
         case #selector(NSResponder.moveUp(_:)):
-            guard !suggestionModel.suggestions.isEmpty else { return false }
+            guard !suggestionModel.suggestions.isEmpty, suggestionText == commandBar.stringValue else { return false }
             suggestionModel.moveUp()
             announceHighlight()
             return true
@@ -319,6 +321,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
             guard let self, !Task.isCancelled, registry.activeProfileID == profile,
                   commandBar.stringValue == text, commandBar.currentEditor() != nil else { return }
             suggestionModel.show(found, typing: text)
+            suggestionText = text
             suggestionHost?.isHidden = found.isEmpty
             if !found.isEmpty {
                 announce(String(AttributedString(localized: "^[\(found.count) suggestion](inflect: true)").characters))
@@ -329,6 +332,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
     private func hideSuggestions() {
         suggestionTask?.cancel()
         suggestionTask = nil
+        suggestionText = nil
         suggestionModel.clear()
         suggestionHost?.isHidden = true
     }
