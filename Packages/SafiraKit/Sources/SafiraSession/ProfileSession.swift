@@ -32,6 +32,8 @@ public final class ProfileSession {
     public private(set) var searchAwaitingEngine: String?
     /// The windows pages opened with window features (sign-in popups), oldest first. They are not Tabs and are never saved.
     public private(set) var popups: [Popup] = []
+    /// Set while the Main window offers to open a link in a new Tab that a Matching tab answered.
+    public internal(set) var matchBanner: MatchBanner?
     /// The Tabs closed during this session, the last one closed at the end. Kept in memory only.
     private var closedTabs: [ClosedTab] = []
     @ObservationIgnored private var searchAwaitingEngineTarget = CommandBarTarget.selectedTab
@@ -177,6 +179,7 @@ public final class ProfileSession {
         guard space(id) != nil else { return }
         activeSpaceID = id
         activeSpace.selectedTab?.wake()
+        dropStaleMatchBanner()
     }
 
     /// Shows the Space `offset` places away from the active one, wrapping around the ends of the list.
@@ -266,6 +269,7 @@ public final class ProfileSession {
             space.selectedTabID = space.tabs.isEmpty ? nil : space.tabs[min(index, space.tabs.count - 1)].id
             if space.id == activeSpaceID { space.selectedTab?.wake() }
         }
+        dropStaleMatchBanner()
     }
 
     /// Closes every Tab of every Space for good, releasing their pages; none can be reopened. For a Profile being
@@ -279,6 +283,7 @@ public final class ProfileSession {
             space.selectedTabID = nil
         }
         closedTabs = []
+        matchBanner = nil
     }
 
     public func closeSelectedTab() {
@@ -323,6 +328,7 @@ public final class ProfileSession {
             if source.id == activeSpaceID { source.selectedTab?.wake() }
         }
         if destination.selectedTabID == nil { destination.selectedTabID = id }
+        dropStaleMatchBanner()
         return true
     }
 
@@ -451,6 +457,7 @@ public final class ProfileSession {
     private func setSelection(_ id: TabID?) {
         activeSpace.selectedTabID = id
         selectedTab?.wake()
+        dropStaleMatchBanner()
     }
 
     private func makeTab(id: TabID, page: (any WebPageHandle)? = nil) -> Tab {
