@@ -37,3 +37,17 @@ func waitUntil(_ what: Comment, timeout: Duration = .seconds(10), _ condition: (
         try await Task.sleep(for: .milliseconds(20))
     }
 }
+
+/// `waitUntil` for a condition that has to be read asynchronously, such as the cookies WebKit has persisted.
+/// A page script's `document.cookie` write reaches the data store a moment later, so read it through this and not at once.
+@MainActor
+func waitUntilAsync(_ what: Comment, timeout: Duration = .seconds(10), _ condition: () async -> Bool) async throws {
+    let deadline = ContinuousClock.now + timeout
+    while await !condition() {
+        guard ContinuousClock.now < deadline else {
+            Issue.record("timed out waiting until \(what)")
+            return
+        }
+        try await Task.sleep(for: .milliseconds(20))
+    }
+}
