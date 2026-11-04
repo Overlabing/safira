@@ -13,6 +13,10 @@
       "shortcut": "command+n",
       "from": "Safari File menu: New Window; not on the cited page"
     },
+    "newPrivateWindow": {
+      "shortcut": "command+shift+n",
+      "from": "Safari File menu: New Private Window; not on the cited page"
+    },
     "closeTab": {
       "shortcut": "command+w",
       "from": "Close active tab (Command-W)"
