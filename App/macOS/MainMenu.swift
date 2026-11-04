@@ -47,6 +47,10 @@ enum MainMenu {
             .separator(),
             item(.closeTab, #selector(MainWindowController.closeTab(_:))),
             item(.reopenClosedTab, #selector(MainWindowController.reopenClosedTab(_:))),
+            .separator(),
+            item(.togglePin, #selector(MainWindowController.togglePin(_:))),
+            item(.newFolder, #selector(MainWindowController.newFolder(_:))),
+            .separator(),
             item(.closeWindow, #selector(NSWindow.performClose(_:))),
         ]))
         menu.addItem(submenu(title: "Edit", items: [

@@ -163,7 +163,9 @@ private func webKitFolders() -> [URL] {
             let storeFolders = webKitFolders().flatMap { folder in
                 (try? FileManager.default.contentsOfDirectory(at: folder.appending(path: "WebsiteDataStore"),
                                                               includingPropertiesForKeys: nil)) ?? []
-            }.filter { $0.lastPathComponent == profile.rawValue.uuidString }
+            }.filter { $0.lastPathComponent.lowercased() == profile.rawValue.uuidString.lowercased() }
+            // WebKit names the data store's folder in lower case; without it the diff below would cover nothing.
+            #expect(!storeFolders.isEmpty)
             let profileFolders = [root.layout.profileDirectory(for: profile)] + storeFolders
             let before = Tree(profileFolders)
 

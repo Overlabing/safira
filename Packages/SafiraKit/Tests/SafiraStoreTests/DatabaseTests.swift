@@ -39,6 +39,27 @@ private func tabRowCount(_ file: URL) throws -> Int {
         .read { db in try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM tab") ?? -1 }
 }
 
+/// Every table with its columns, foreign keys and indexes, by name: two databases with the same schema give the same
+/// text whatever order their migrations or hand-written fixtures declared things in.
+private func schema(_ file: URL) throws -> [String] {
+    try DatabaseQueue(path: file.path(percentEncoded: false)).read { db in
+        let tables = try String.fetchAll(db, sql: """
+            SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name
+            """)
+        return try tables.flatMap { table -> [String] in
+            let columns = try Row.fetchAll(db, sql: "SELECT name, type, \"notnull\", dflt_value, pk FROM pragma_table_info(?) ORDER BY name",
+                                           arguments: [table])
+                .map { "\(table).\($0["name"] as String) \($0["type"] as String) \($0["notnull"] as Int) \($0["dflt_value"] as String? ?? "-") \($0["pk"] as Int)" }
+            let keys = try Row.fetchAll(db, sql: "SELECT \"from\", \"table\", \"to\", on_delete FROM pragma_foreign_key_list(?) ORDER BY \"from\"",
+                                        arguments: [table])
+                .map { "\(table) fk \($0["from"] as String)->\($0["table"] as String).\($0["to"] as String? ?? "-") \($0["on_delete"] as String)" }
+            let indexes = try String.fetchAll(db, sql: "SELECT name FROM pragma_index_list(?) ORDER BY name", arguments: [table])
+                .map { "\(table) index \($0)" }
+            return columns + keys + indexes
+        }
+    }
+}
+
 @Suite struct ProfileDatabaseTests {
     @Test func anEmptyDatabaseIsCreatedWithTheLatestSchemaAndOneActiveEmptySpace() throws {
         let root = TemporaryRoot()
@@ -53,7 +74,7 @@ private func tabRowCount(_ file: URL) throws -> Int {
         #expect(space.emoji == "🏠")
         #expect(space.paletteID == nil)
         #expect(space.tabs == [])
-        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions"])
+        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders"])
     }
 
     @Test func savedSpacesComeBackInOrderWithTheirTabsSelectionAndTheActiveSpace() throws {
@@ -200,6 +221,47 @@ private func tabRowCount(_ file: URL) throws -> Int {
         INSERT INTO tab VALUES ('22222222-2222-4222-8222-222222222222', '9A1F0C3E-0000-4000-8000-000000000000',
                                 1, 'https://b.com/', 'B', NULL, NULL);
         """
+    /// `v4-history` as it shipped: the visits and the external-content full-text index kept in step by triggers.
+    private static let version4 = """
+        INSERT INTO grdb_migrations VALUES ('v4-history');
+        CREATE TABLE history_visit (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            url TEXT NOT NULL,
+            host TEXT NOT NULL,
+            title TEXT,
+            visited_at DOUBLE NOT NULL
+        );
+        CREATE INDEX history_visit_on_url ON history_visit(url);
+        CREATE INDEX history_visit_on_visited_at ON history_visit(visited_at);
+        CREATE VIRTUAL TABLE history_visit_search USING fts5(
+            title, url, content='history_visit', content_rowid='id', tokenize='unicode61 remove_diacritics 2'
+        );
+        CREATE TRIGGER history_visit_search_ai AFTER INSERT ON history_visit BEGIN
+            INSERT INTO history_visit_search(rowid, title, url) VALUES (new.id, new.title, new.url);
+        END;
+        CREATE TRIGGER history_visit_search_ad AFTER DELETE ON history_visit BEGIN
+            INSERT INTO history_visit_search(history_visit_search, rowid, title, url)
+            VALUES ('delete', old.id, old.title, old.url);
+        END;
+        CREATE TRIGGER history_visit_search_au AFTER UPDATE ON history_visit BEGIN
+            INSERT INTO history_visit_search(history_visit_search, rowid, title, url)
+            VALUES ('delete', old.id, old.title, old.url);
+            INSERT INTO history_visit_search(rowid, title, url) VALUES (new.id, new.title, new.url);
+        END;
+        INSERT INTO history_visit (url, host, title, visited_at) VALUES ('https://a.com/', 'a.com', 'Alpha', 1000);
+        """
+    /// `v5-site-permissions` as it shipped, with one remembered decision.
+    private static let version5 = """
+        INSERT INTO grdb_migrations VALUES ('v5-site-permissions');
+        CREATE TABLE site_permission (
+            origin TEXT NOT NULL,
+            kind TEXT NOT NULL,
+            decision TEXT NOT NULL,
+            decided_at DOUBLE NOT NULL,
+            PRIMARY KEY (origin, kind)
+        );
+        INSERT INTO site_permission VALUES ('https://meet.example', 'camera', 'allow', 1700000000);
+        """
     private static let existingSpace = SpaceID(uuidString: "9A1F0C3E-0000-4000-8000-000000000000")!
 
     private func write(_ sql: String, at file: URL) throws {
@@ -229,7 +291,7 @@ private func tabRowCount(_ file: URL) throws -> Int {
 
         let database = try ProfileDatabase(file: file)
 
-        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions"])
+        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders"])
         #expect(try database.savedSession() == SavedSession(spaces: [
             SpaceRecord(id: Self.existingSpace, name: "Home", emoji: "🏠", tabs: [
                 TabRecord(id: firstTab, address: URL(string: "https://a.com/"), title: "A",
@@ -257,7 +319,7 @@ private func tabRowCount(_ file: URL) throws -> Int {
 
         let database = try ProfileDatabase(file: file)
 
-        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions"])
+        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders"])
         #expect(try database.sitePermissions() == [])
         #expect(try database.settings().searchEngine == .kagi)
         #expect(try database.savedSession().spaces.flatMap(\.tabs).count == 2)
@@ -277,6 +339,91 @@ private func tabRowCount(_ file: URL) throws -> Int {
         #expect(try ProfileDatabase(file: file).savedSession() == saved)
     }
 
+    @Test func aVersion3DatabaseUpgradesWithEveryTabStillPlainAndNoFolder() throws {
+        let root = TemporaryRoot()
+        let file = root.layout.profileDatabaseFile(for: work)
+        try write(Self.version1 + Self.version2 + Self.version3, at: file)
+
+        let saved = try ProfileDatabase(file: file).savedSession()
+
+        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders"])
+        let space = try #require(saved.spaces.first)
+        #expect(space.pinned == [])
+        #expect(space.tabs.map(\.id) == [firstTab, secondTab])
+        #expect(space.tabs.allSatisfy { $0.pinnedAddress == nil })
+        #expect(space.selectedTabID == secondTab)
+    }
+
+    @Test func aVersion4DatabaseUpgradesKeepingItsTabsPlainItsHistoryAndAbleToPinThem() throws {
+        let root = TemporaryRoot()
+        let file = root.layout.profileDatabaseFile(for: work)
+        try write(Self.version1 + Self.version2 + Self.version3 + Self.version4, at: file)
+
+        let database = try ProfileDatabase(file: file)
+        let saved = try database.savedSession()
+
+        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders"])
+        let space = try #require(saved.spaces.first)
+        #expect(space.pinned == [])
+        #expect(space.tabs.map(\.id) == [firstTab, secondTab])
+        #expect(space.tabs.allSatisfy { $0.pinnedAddress == nil })
+        #expect(space.selectedTabID == secondTab)
+        let visits = try DatabaseQueue(path: file.path(percentEncoded: false)).read { db in
+            try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM history_visit_search WHERE history_visit_search MATCH 'alpha'")
+        }
+        #expect(visits == 1)
+
+        var pinned = space
+        pinned.pinned = [.folder(FolderRecord(id: docsFolder, name: "Docs", items: [
+            .tab(TabRecord(id: firstTab, address: URL(string: "https://a.com/"), title: "A",
+                           pinnedAddress: URL(string: "https://a.com/"))),
+        ]))]
+        pinned.tabs = [space.tabs[1]]
+        let session = SavedSession(spaces: [pinned], activeSpaceID: Self.existingSpace)
+        try database.save(session)
+        #expect(try ProfileDatabase(file: file).savedSession() == session)
+    }
+
+    @Test func aVersion5DatabaseUpgradesKeepingItsTabAndSitePermissionAndEndsWithTheSchemaOfAFreshDatabase() throws {
+        let root = TemporaryRoot()
+        let file = root.layout.profileDatabaseFile(for: work)
+        try write(Self.version1 + Self.version2 + Self.version3 + Self.version4 + Self.version5, at: file)
+
+        let database = try ProfileDatabase(file: file)
+        let saved = try database.savedSession()
+
+        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders"])
+        let space = try #require(saved.spaces.first)
+        #expect(space.pinned == [])
+        #expect(space.tabs.map(\.id) == [firstTab, secondTab])
+        #expect(space.tabs.allSatisfy { $0.pinnedAddress == nil })
+        let meet = try #require(SiteOrigin(identifier: "https://meet.example"))
+        #expect(try database.sitePermissions() == [
+            SitePermission(origin: meet, kind: .camera, decision: .allow, decidedAt: Date(timeIntervalSince1970: 1_700_000_000)),
+        ])
+
+        let fresh = root.layout.profileDatabaseFile(for: personal)
+        _ = try ProfileDatabase(file: fresh)
+        #expect(try schema(file) == schema(fresh))
+    }
+
+    @Test func aVersion5DatabaseCanPinItsTabAndKeepsThePinAfterReopening() throws {
+        let root = TemporaryRoot()
+        let file = root.layout.profileDatabaseFile(for: work)
+        try write(Self.version1 + Self.version2 + Self.version3 + Self.version4 + Self.version5, at: file)
+        var session = try ProfileDatabase(file: file).savedSession()
+        var space = try #require(session.spaces.first)
+        let pinnedTab = TabRecord(id: firstTab, address: URL(string: "https://a.com/"), title: "A",
+                                  pinnedAddress: URL(string: "https://a.com/"))
+        space.pinned = [.folder(FolderRecord(id: docsFolder, name: "Docs", items: [.tab(pinnedTab)]))]
+        space.tabs = space.tabs.filter { $0.id != firstTab }
+        session.spaces = [space]
+
+        try ProfileDatabase(file: file).save(session)
+
+        #expect(try ProfileDatabase(file: file).savedSession() == session)
+    }
+
     @Test func aMigratedVersion1DatabaseSavesNavigationState() throws {
         let root = TemporaryRoot()
         let file = root.layout.profileDatabaseFile(for: work)
@@ -291,6 +438,89 @@ private func tabRowCount(_ file: URL) throws -> Int {
         try ProfileDatabase(file: file).save(saved)
 
         #expect(try ProfileDatabase(file: file).savedSession() == saved)
+    }
+}
+
+private let docsFolder = FolderID(rawValue: UUID(uuidString: "CCCCCCCC-CCCC-4CCC-8CCC-CCCCCCCCCCCC")!)
+private let notesFolder = FolderID(rawValue: UUID(uuidString: "DDDDDDDD-DDDD-4DDD-8DDD-DDDDDDDDDDDD")!)
+
+@Suite struct PinnedAreaDatabaseTests {
+    private func tab(_ id: TabID, _ address: String, pinnedAt: String? = nil) -> TabRecord {
+        TabRecord(id: id, address: URL(string: address), pinnedAddress: pinnedAt.flatMap(URL.init(string:)))
+    }
+
+    @Test func thePinnedAreaComesBackWithItsFoldersTheirOrderAndWhatTheyHold() throws {
+        let root = TemporaryRoot()
+        let file = root.layout.profileDatabaseFile(for: work)
+        let pinned: [PinnedItemRecord] = [
+            .tab(tab(firstTab, "https://a.com/next", pinnedAt: "https://a.com/")),
+            .folder(FolderRecord(id: docsFolder, name: "Docs", isExpanded: false, items: [
+                .folder(FolderRecord(id: notesFolder, name: "Notes", items: [
+                    .tab(tab(secondTab, "https://b.com/", pinnedAt: "https://b.com/")),
+                ])),
+                .tab(tab(thirdTab, "https://c.com/", pinnedAt: "https://c.com/")),
+            ])),
+        ]
+        let saved = SavedSession(spaces: [
+            SpaceRecord(id: homeSpace, name: "Home", emoji: "🏠", pinned: pinned,
+                        tabs: [TabRecord(id: TabID(), address: URL(string: "https://plain.com/"))],
+                        selectedTabID: secondTab),
+        ], activeSpaceID: homeSpace)
+
+        try ProfileDatabase(file: file).save(saved)
+
+        #expect(try ProfileDatabase(file: file).savedSession() == saved)
+    }
+
+    @Test func eachSpaceKeepsItsOwnPinnedAreaAndSavingAgainReplacesIt() throws {
+        let database = try ProfileDatabase.inMemory()
+        let home = SpaceRecord(id: homeSpace, name: "Home", emoji: "🏠", pinned: [.tab(tab(firstTab, "https://a.com/"))])
+        let reading = SpaceRecord(id: readingSpace, name: "Reading", emoji: "📚", pinned: [
+            .folder(FolderRecord(id: docsFolder, name: "Docs", items: [.tab(tab(secondTab, "https://b.com/"))])),
+        ])
+        try database.save(SavedSession(spaces: [home, reading], activeSpaceID: homeSpace))
+        #expect(try database.savedSession().spaces == [home, reading])
+
+        let unpinned = SpaceRecord(id: readingSpace, name: "Reading", emoji: "📚", tabs: [tab(secondTab, "https://b.com/")])
+        try database.save(SavedSession(spaces: [home, unpinned], activeSpaceID: homeSpace))
+        #expect(try database.savedSession().spaces == [home, unpinned])
+    }
+
+    @Test func aPlainTabWithAFolderReferenceIsStillReadAsPlain() throws {
+        let root = TemporaryRoot()
+        let file = root.layout.profileDatabaseFile(for: work)
+        try ProfileDatabase(file: file).save(SavedSession(spaces: [
+            SpaceRecord(id: homeSpace, name: "Home", emoji: "🏠", pinned: [
+                .folder(FolderRecord(id: docsFolder, name: "Docs")),
+            ], tabs: [TabRecord(id: firstTab)]),
+        ], activeSpaceID: homeSpace))
+        try DatabaseQueue(path: file.path(percentEncoded: false)).write { db in
+            try db.execute(sql: "UPDATE tab SET folder_id = ?", arguments: [docsFolder.rawValue.uuidString])
+        }
+
+        let space = try #require(try ProfileDatabase(file: file).savedSession().spaces.first)
+
+        #expect(space.pinned == [.folder(FolderRecord(id: docsFolder, name: "Docs"))])
+        #expect(space.tabs.map(\.id) == [firstTab])
+    }
+
+    @Test func deletingASpaceDeletesItsFolders() throws {
+        let root = TemporaryRoot()
+        let file = root.layout.profileDatabaseFile(for: work)
+        let database = try ProfileDatabase(file: file)
+        try database.save(SavedSession(spaces: [
+            SpaceRecord(id: homeSpace, name: "Home", emoji: "🏠"),
+            SpaceRecord(id: readingSpace, name: "Reading", emoji: "📚", pinned: [
+                .folder(FolderRecord(id: docsFolder, name: "Docs")),
+            ]),
+        ], activeSpaceID: homeSpace))
+        try database.save(SavedSession(spaces: [SpaceRecord(id: homeSpace, name: "Home", emoji: "🏠")],
+                                       activeSpaceID: homeSpace))
+
+        let count = try DatabaseQueue(path: file.path(percentEncoded: false)).read { db in
+            try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM folder") ?? -1
+        }
+        #expect(count == 0)
     }
 }
 
