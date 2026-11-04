@@ -5,3 +5,5 @@ DerivedData/
 xcuserdata/
 .DS_Store
 /Config/Release.local.xcconfig
+# Dependencies are pinned to exact versions in Package.swift and project.yml; xcodebuild and swift test each rewrite this.
+/Packages/SafiraKit/Package.resolved

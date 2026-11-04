@@ -17,9 +17,19 @@ public struct StoreLayout: Sendable {
         root.appending(path: "Logs", directoryHint: .isDirectory)
     }
 
+    /// App-level data: the list of Profiles.
+    public var appDatabaseFile: URL {
+        root.appending(path: "app.sqlite", directoryHint: .notDirectory)
+    }
+
     public func profileDirectory(for profile: ProfileID) -> URL {
         root
             .appending(path: "Profiles", directoryHint: .isDirectory)
             .appending(path: profile.rawValue.uuidString, directoryHint: .isDirectory)
+    }
+
+    /// Everything a Profile saves lives in this database, inside the Profile's own folder.
+    public func profileDatabaseFile(for profile: ProfileID) -> URL {
+        profileDirectory(for: profile).appending(path: "profile.sqlite", directoryHint: .notDirectory)
     }
 }
