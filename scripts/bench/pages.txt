@@ -1,0 +1,23 @@
+# The frozen list for the memory measurement: category, then the address copied once by freeze-fixtures.sh.
+# Protocol: docs/research-tab-discarding.md §5.1 (10 documents, 6 single-page apps, 2 pages with a video that is not
+# started, 2 heavy pages). Change this file and the numbers of earlier runs stop being comparable.
+document https://en.wikipedia.org/wiki/WebKit
+document https://en.wikipedia.org/wiki/Safari_(web_browser)
+document https://en.wikipedia.org/wiki/Swift_(programming_language)
+document https://en.wikipedia.org/wiki/SQLite
+document https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol
+document https://en.wikipedia.org/wiki/Unicode
+document https://developer.mozilla.org/en-US/docs/Web/HTML
+document https://developer.mozilla.org/en-US/docs/Web/CSS
+document https://www.gnu.org/licenses/gpl-3.0.html
+document https://www.rfc-editor.org/rfc/rfc9110.html
+app https://todomvc.com/examples/react/dist/
+app https://todomvc.com/examples/vue/dist/
+app https://react.dev/
+app https://vuejs.org/
+app https://svelte.dev/
+app https://angular.dev/
+video https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4
+video https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4
+heavy https://en.wikipedia.org/wiki/List_of_programming_languages
+heavy https://en.wikipedia.org/wiki/Apple_Inc.

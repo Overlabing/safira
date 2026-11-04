@@ -27,6 +27,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private(set) lazy var shortcutsWindow = ShortcutsWindowController(shortcuts: shortcuts)
     private var mainWindow: MainWindowController?
     private var autosave: SessionAutosave?
+    #if BENCHMARK
+    private var benchmark: BenchmarkRun?
+    #endif
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         let layout = StoreLayout.application
@@ -46,8 +49,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         diagnostics.attach(to: session)
         let controller = MainWindowController(session: session, webContext: context, shortcuts: shortcuts)
         controller.showWindow(nil)
-        controller.focusCommandBar(nil)
         mainWindow = controller
+        #if BENCHMARK
+        // A measurement run leaves the foreground to whatever the user is doing.
+        if let run = BenchmarkRun(statusDirectory: layout.root) {
+            benchmark = run
+            run.start(session: session)
+            return
+        }
+        #endif
+        controller.focusCommandBar(nil)
         NSApp.activate()
         keepMenuInStepWithShortcuts()
     }
