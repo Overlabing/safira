@@ -123,6 +123,7 @@ final class DownloadsWindowController: NSWindowController {
         window.title = String(localized: "Downloads")
         window.styleMask = [.titled, .closable, .resizable]
         window.isReleasedWhenClosed = false
+        window.isRestorable = false
         window.setFrameAutosaveName("DownloadsWindow")
         super.init(window: window)
     }

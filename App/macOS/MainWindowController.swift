@@ -64,6 +64,8 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         window.shortcuts = shortcuts
         window.tabbingMode = .disallowed
         window.isReleasedWhenClosed = false
+        // Safira rebuilds the Main window itself at launch; the system's window restoration would order a copy front.
+        window.isRestorable = false
         super.init(window: window)
         window.delegate = self
         registry.permissionPrompt = { [unowned self] prompt in await permissionPrompter.ask(prompt) }
@@ -227,7 +229,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         let view = SitePermissionsView(profileName: registry.activeProfile.name, permissions: registry.active.permissions) {
             [weak self] in self?.endPermissionsSheet()
         }
-        let sheet = NSWindow(contentViewController: NSHostingController(rootView: view))
+        let sheet = NSWindow.sheet(view)
         permissionsSheet = sheet
         window.beginSheet(sheet)
     }
@@ -381,7 +383,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
             },
             cancel: { [weak self] in self?.endSpaceSheet() }
         )
-        let sheet = NSWindow(contentViewController: NSHostingController(rootView: editor))
+        let sheet = NSWindow.sheet(editor)
         spaceSheet = sheet
         window.beginSheet(sheet)
     }
@@ -413,7 +415,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
             },
             cancel: { [weak self] in self?.endFolderSheet() }
         )
-        let sheet = NSWindow(contentViewController: NSHostingController(rootView: editor))
+        let sheet = NSWindow.sheet(editor)
         folderSheet = sheet
         window.beginSheet(sheet)
     }
@@ -484,7 +486,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
             },
             cancel: { [weak self] in self?.endProfileSheet() }
         )
-        let sheet = NSWindow(contentViewController: NSHostingController(rootView: editor))
+        let sheet = NSWindow.sheet(editor)
         profileSheet = sheet
         window.beginSheet(sheet)
     }
@@ -549,7 +551,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
             },
             cancel: { [weak self] in self?.endClearSheet() }
         )
-        let hosting = NSWindow(contentViewController: NSHostingController(rootView: sheet))
+        let hosting = NSWindow.sheet(sheet)
         clearSheet = hosting
         window.beginSheet(hosting)
     }
@@ -714,7 +716,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
                 choose: { [weak session] engine in session?.chooseSearchEngine(engine) },
                 cancel: { [weak session] in session?.cancelSearchEngineChoice() }
             )
-            let sheet = NSWindow(contentViewController: NSHostingController(rootView: picker))
+            let sheet = NSWindow.sheet(picker)
             searchEngineSheet = sheet
             window.beginSheet(sheet)
         case (nil, let sheet?):

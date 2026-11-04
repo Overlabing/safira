@@ -50,6 +50,8 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSMen
         window.shortcuts = shortcuts
         window.tabbingMode = .disallowed
         window.isReleasedWhenClosed = false
+        // A Private window keeps nothing: it never comes back after a relaunch.
+        window.isRestorable = false
         window.setAccessibilityLabel(Self.title(for: nil))
         super.init(window: window)
         window.delegate = self
@@ -245,7 +247,7 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSMen
                 choose: { [weak session] engine in session?.chooseSearchEngine(engine) },
                 cancel: { [weak session] in session?.cancelSearchEngineChoice() }
             )
-            let sheet = NSWindow(contentViewController: NSHostingController(rootView: picker))
+            let sheet = NSWindow.sheet(picker)
             searchEngineSheet = sheet
             window.beginSheet(sheet)
         case (nil, let sheet?):

@@ -24,6 +24,7 @@ final class LinkRulesWindowController: NSWindowController, NSWindowDelegate {
         window.title = String(localized: "Link Rules")
         window.isReleasedWhenClosed = false
         window.minSize = NSSize(width: 600, height: 540)
+        window.isRestorable = false
         super.init(window: window)
         window.delegate = self
         window.contentViewController = NSHostingController(rootView: LinkRulesView(model: model, actions: LinkRulesActions(

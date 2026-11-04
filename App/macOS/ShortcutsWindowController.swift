@@ -5,16 +5,16 @@ import AppKit
 import Commands
 import SwiftUI
 
-/// The window where the user picks a Shortcut preset and changes individual shortcuts.
+/// The window where the user picks a Shortcut preset and changes individual shortcuts. The window is built the first
+/// time it is shown: the menu creates this controller at launch, and a window that exists without ever being shown
+/// still counts among the app's windows.
 @MainActor
 final class ShortcutsWindowController: NSWindowController {
+    private let shortcuts: ShortcutController
+
     init(shortcuts: ShortcutController) {
-        let window = NSWindow(contentViewController: NSHostingController(rootView: ShortcutsSettingsView(shortcuts: shortcuts)))
-        window.title = "Shortcuts"
-        window.styleMask = [.titled, .closable, .resizable]
-        window.isReleasedWhenClosed = false
-        window.setContentSize(NSSize(width: 560, height: 640))
-        super.init(window: window)
+        self.shortcuts = shortcuts
+        super.init(window: nil)
     }
 
     @available(*, unavailable)
@@ -23,6 +23,15 @@ final class ShortcutsWindowController: NSWindowController {
     }
 
     @objc func show(_ sender: Any?) {
+        if window == nil {
+            let window = NSWindow(contentViewController: NSHostingController(rootView: ShortcutsSettingsView(shortcuts: shortcuts)))
+            window.title = "Shortcuts"
+            window.styleMask = [.titled, .closable, .resizable]
+            window.isReleasedWhenClosed = false
+            window.isRestorable = false
+            window.setContentSize(NSSize(width: 560, height: 640))
+            self.window = window
+        }
         window?.center()
         showWindow(nil)
         NSApp.activate()

@@ -104,6 +104,7 @@ final class DefaultsController: NSObject {
             let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 600, height: 640),
                                   styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
             window.title = String(localized: "Defaults")
+            window.isRestorable = false
             window.isReleasedWhenClosed = false
             window.center()
             return window
