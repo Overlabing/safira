@@ -18,6 +18,11 @@ public final class ProfileRegistry {
     public private(set) var profiles: [Profile]
     public private(set) var activeProfileID: ProfileID
     @ObservationIgnored private var contexts: [ProfileID: ProfileContext] = [:]
+    /// Asks the user about a camera, microphone or location request no Profile has a decision for. Every Profile's
+    /// owner uses it, the ones created later included; without it such requests are refused.
+    @ObservationIgnored public var permissionPrompt: (@MainActor (PermissionPrompt) async -> PermissionAnswer)? {
+        didSet { loadedContexts.forEach { $0.web.permissionPrompt = permissionPrompt } }
+    }
     @ObservationIgnored private let appDatabase: AppDatabase?
     @ObservationIgnored private let layout: StoreLayout?
     @ObservationIgnored private let diagnostics: DiagnosticLogger?
@@ -200,7 +205,9 @@ public final class ProfileRegistry {
                 onError("The new Profile's settings could not be saved", error)
             }
         }
-        return ProfileContext(id: id, database: database, diagnostics: diagnostics, onError: onError)
+        let context = ProfileContext(id: id, database: database, diagnostics: diagnostics, onError: onError)
+        context.web.permissionPrompt = permissionPrompt
+        return context
     }
 
     /// The Profile's database in its folder, or one in memory when there is no folder or it cannot be opened.

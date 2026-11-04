@@ -16,6 +16,7 @@ public final class WebKitPage: NSObject, WebPageHandle {
     public var onNewTab: (@MainActor (NewTabRequest) -> Void)?
     public var onLoadFailure: (@MainActor (LoadFailure) -> Void)?
     public var onContinueOverHTTP: (@MainActor () -> Void)?
+    public var onDidClose: (@MainActor () -> Void)?
     private var isPlayingMedia = false
     /// The warning the page currently shows; only its own "Continue over HTTP" link is intercepted.
     private var showing: InsecureConnectionWarning?
@@ -31,14 +32,20 @@ public final class WebKitPage: NSObject, WebPageHandle {
     private var mainFrameIsPosting = false
     private var observations: [NSKeyValueObservation] = []
     private let makeNewTabPage: @MainActor (WKWebViewConfiguration) -> (TabID, WebKitPage)?
+    private let makePopupPage: @MainActor (WKWebViewConfiguration) -> (PopupID, WebKitPage)?
+    private let decidePermission: @MainActor (SiteOrigin, [PermissionKind]) async -> PermissionDecision
     private let onClose: @MainActor () -> Void
     private let navigationDiagnostics: NavigationDiagnostics?
 
     init(configuration: WKWebViewConfiguration, diagnostics: DiagnosticLogger? = nil,
          makeNewTabPage: @escaping @MainActor (WKWebViewConfiguration) -> (TabID, WebKitPage)?,
+         makePopupPage: @escaping @MainActor (WKWebViewConfiguration) -> (PopupID, WebKitPage)?,
+         decidePermission: @escaping @MainActor (SiteOrigin, [PermissionKind]) async -> PermissionDecision,
          onClose: @escaping @MainActor () -> Void) {
         webView = WKWebView(frame: .zero, configuration: configuration)
         self.makeNewTabPage = makeNewTabPage
+        self.makePopupPage = makePopupPage
+        self.decidePermission = decidePermission
         // Public API: the page shows in Safari's Develop menu. Safira has no in-app inspector (ADR 0001).
         webView.isInspectable = true
         self.onClose = onClose
@@ -108,6 +115,7 @@ public final class WebKitPage: NSObject, WebPageHandle {
         onNewTab = nil
         onLoadFailure = nil
         onContinueOverHTTP = nil
+        onDidClose = nil
         webView.stopLoading()
         webView.removeFromSuperview()
         webView.navigationDelegate = nil
@@ -217,12 +225,55 @@ extension WebKitPage: WKNavigationDelegate {
 }
 
 extension WebKitPage: WKUIDelegate {
-    /// WebKit requires the returned view to be built from `configuration`, a copy of this page's: the new Tab keeps
-    /// the Profile's data store.
+    /// WebKit requires the returned view to be built from `configuration`, a copy of this page's: the new Tab or popup
+    /// keeps the Profile's data store, and a popup keeps `window.opener`. A scripted `window.open` with dimensions
+    /// opens a popup; every other request (`target=_blank`, `window.open` without features) opens a background Tab.
     public func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration,
                         for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
-        guard let onNewTab, let (id, page) = makeNewTabPage(configuration) else { return nil }
+        guard let onNewTab else { return nil }
+        let requested = RequestedWindow(width: windowFeatures.width?.doubleValue,
+                                        height: windowFeatures.height?.doubleValue)
+        if requested.opensFloatingPanel {
+            guard let (id, page) = makePopupPage(configuration) else { return nil }
+            onNewTab(.popup(id, page, requested))
+            return page.webView
+        }
+        guard let (id, page) = makeNewTabPage(configuration) else { return nil }
         onNewTab(.page(id, page))
         return page.webView
+    }
+
+    /// `window.close()` from a page a script opened.
+    public func webViewDidClose(_ webView: WKWebView) {
+        onDidClose?()
+    }
+
+    public func webView(_ webView: WKWebView, decideMediaCapturePermissionsFor origin: WKSecurityOrigin,
+                        initiatedBy frame: WKFrameInfo, type: WKMediaCaptureType) async -> WKPermissionDecision {
+        let kinds: [PermissionKind] = switch type {
+        case .camera: [.camera]
+        case .microphone: [.microphone]
+        case .cameraAndMicrophone: [.camera, .microphone]
+        @unknown default: []
+        }
+        return await decide(kinds, for: origin)
+    }
+
+    public func webView(_ webView: WKWebView, requestGeolocationPermissionFor origin: WKSecurityOrigin,
+                        initiatedBy frame: WKFrameInfo) async -> WKPermissionDecision {
+        await decide([.location], for: origin)
+    }
+
+    /// WebKit is never left to ask by itself: the answer is the Profile's remembered decision or the user's.
+    private func decide(_ kinds: [PermissionKind], for origin: WKSecurityOrigin) async -> WKPermissionDecision {
+        guard let origin = SiteOrigin(origin) else { return .deny }
+        return await decidePermission(origin, kinds) == .allow ? .grant : .deny
+    }
+}
+
+extension SiteOrigin {
+    @MainActor
+    init?(_ origin: WKSecurityOrigin) {
+        self.init(scheme: origin.protocol, host: origin.host, port: origin.port)
     }
 }

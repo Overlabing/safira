@@ -82,6 +82,44 @@ public final class ProfileDatabase: Sendable {
         }
     }
 
+    // MARK: Site permissions
+
+    /// Every remembered decision of this Profile, by site then capability. A row this build does not understand (a
+    /// capability from a newer version) is left out of the list.
+    public func sitePermissions() throws -> [SitePermission] {
+        try queue.read { db in
+            try Row.fetchAll(db, sql: "SELECT origin, kind, decision, decided_at FROM site_permission").compactMap { row in
+                guard let origin = SiteOrigin(identifier: row["origin"]),
+                      let kind = PermissionKind(rawValue: row["kind"]),
+                      let decision = PermissionDecision(rawValue: row["decision"]) else { return nil }
+                return SitePermission(origin: origin, kind: kind, decision: decision,
+                                      decidedAt: Date(timeIntervalSince1970: row["decided_at"]))
+            }
+            .sorted { ($0.origin, $0.kind.rawValue) < ($1.origin, $1.kind.rawValue) }
+        }
+    }
+
+    /// Remembers a decision, replacing the one for the same site and capability.
+    public func save(_ permission: SitePermission) throws {
+        try queue.write { db in
+            try db.execute(sql: """
+                INSERT OR REPLACE INTO site_permission (origin, kind, decision, decided_at) VALUES (?, ?, ?, ?)
+                """, arguments: [permission.origin.identifier, permission.kind.rawValue, permission.decision.rawValue,
+                                 permission.decidedAt.timeIntervalSince1970])
+        }
+    }
+
+    public func removeSitePermission(origin: SiteOrigin, kind: PermissionKind) throws {
+        try queue.write { db in
+            try db.execute(sql: "DELETE FROM site_permission WHERE origin = ? AND kind = ?",
+                           arguments: [origin.identifier, kind.rawValue])
+        }
+    }
+
+    public func removeAllSitePermissions() throws {
+        try queue.write { db in try db.execute(sql: "DELETE FROM site_permission") }
+    }
+
     private static let activeSpaceKey = "active_space_id"
 
     private enum SettingKey {
