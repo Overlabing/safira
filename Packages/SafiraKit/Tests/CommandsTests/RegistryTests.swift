@@ -53,7 +53,7 @@ import Testing
     }
     #expect(CommandRegistry.command(.compactMode).title == "Compact Mode")
     #expect(CommandRegistry.command(.showSidebar).title == "Show Sidebar")
-    #expect(CommandRegistry.commands.count == 31)
+    #expect(CommandRegistry.commands.count == 32)
 }
 
 @Test func theSpaceCommandsAreRebindableWindowCommandsOnControlCommandKeys() {

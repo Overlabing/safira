@@ -64,6 +64,12 @@ targets:
         # A browser loads the HTTP pages the user chose to continue to; the system does not stop web content for lack of TLS.
         NSAppTransportSecurity:
           NSAllowsArbitraryLoadsInWebContent: true
+        # Camera, microphone and location are asked for by the sites a Profile visits, never at launch: the system asks
+        # once, the first time a site the user allowed really uses one (docs/architecture-v1.md §4.7).
+        NSCameraUsageDescription: A website you allow in the current Profile can use the camera. Safira never uses it for itself.
+        NSMicrophoneUsageDescription: A website you allow in the current Profile can use the microphone. Safira never uses it for itself.
+        NSLocationUsageDescription: A website you allow in the current Profile can read your location. Safira never uses it for itself.
+        NSLocationWhenInUseUsageDescription: A website you allow in the current Profile can read your location. Safira never uses it for itself.
         # Sparkle, opt-in (docs/architecture-v1.md §8.4). A missing SUEnableAutomaticChecks makes Sparkle ask the user on
         # the second launch, which would be an unrequested update prompt, so it is explicit. SUEnableSystemProfiling is
         # deliberately absent (off by default) and an update never installs without the user's click.
@@ -82,6 +88,11 @@ targets:
         # The Debug mode export is saved where the user chooses, through the save panel. Debug builds use the hand-kept
         # Safira.Debug.entitlements, which carries the same key.
         com.apple.security.files.user-selected.read-write: true
+        # What WebKit needs for a site the user allowed to use the camera, the microphone or the location; sites ask per
+        # Profile and nothing is allowed by default (docs/architecture-v1.md §4.7, §8.2).
+        com.apple.security.device.camera: true
+        com.apple.security.device.audio-input: true
+        com.apple.security.personal-information.location: true
         # Sparkle's installer launcher and status connections (Sparkle sandboxing guide); the only entitlements added for updates.
         com.apple.security.temporary-exception.mach-lookup.global-name:
           - $(PRODUCT_BUNDLE_IDENTIFIER)-spks

@@ -79,6 +79,8 @@ enum MainMenu {
             item(.renameProfile, #selector(MainWindowController.renameProfile(_:))),
             item(.deleteProfile, #selector(MainWindowController.deleteProfile(_:))),
             .separator(),
+            item(.sitePermissions, #selector(MainWindowController.showSitePermissions(_:))),
+            .separator(),
             item(.previousProfile, #selector(MainWindowController.showPreviousProfile(_:))),
             item(.nextProfile, #selector(MainWindowController.showNextProfile(_:))),
         ]))

@@ -14,6 +14,7 @@ private final class LoadingPage: WebPageHandle {
     var onNewTab: (@MainActor (NewTabRequest) -> Void)?
     var onLoadFailure: (@MainActor (LoadFailure) -> Void)?
     var onContinueOverHTTP: (@MainActor () -> Void)?
+    var onDidClose: (@MainActor () -> Void)?
     let navigationState: Data? = nil
     let sensitiveContent: SensitiveContent = []
 
