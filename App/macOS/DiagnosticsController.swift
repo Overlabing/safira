@@ -18,10 +18,8 @@ final class DiagnosticsController: NSObject, NSMenuItemValidation {
     private var sampling: Task<Void, Never>?
 
     override init() {
-        let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-        let bundleID = Bundle.main.bundleIdentifier ?? "com.overlabing.safira"
-        let layout = StoreLayout(root: support.appending(path: bundleID, directoryHint: .isDirectory))
-        logger = DiagnosticLogger(subsystem: bundleID, logsDirectory: layout.logsDirectory)
+        logger = DiagnosticLogger(subsystem: Bundle.main.bundleIdentifier ?? "com.overlabing.safira",
+                                  logsDirectory: StoreLayout.application.logsDirectory)
         super.init()
         logger.setEnabled(settings.load().isDebugModeEnabled)
     }

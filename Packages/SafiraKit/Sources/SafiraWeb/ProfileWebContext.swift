@@ -17,13 +17,13 @@ public final class ProfileWebContext {
     public var webContentSettings: WebContentSettings
     /// The live pages of this Profile's Tabs. They live here, outside the views, until their Tab closes.
     private var pages: [TabID: WebKitPage] = [:]
-    private let mediaEvents = MediaEventHandler()
+    private let pageEvents = PageEventHandler()
 
     public init(profileID: ProfileID, webContentSettings: WebContentSettings = WebContentSettings()) {
         self.profileID = profileID
         self.webContentSettings = webContentSettings
         self.dataStore = WKWebsiteDataStore(forIdentifier: profileID.rawValue)
-        mediaEvents.context = self
+        pageEvents.context = self
     }
 
     public func makeConfiguration() -> WKWebViewConfiguration {
@@ -31,7 +31,7 @@ public final class ProfileWebContext {
         configuration.websiteDataStore = dataStore
         // Explicit, so hidden Tabs do not depend on the default linked to the SDK version (architecture §4.1).
         configuration.preferences.inactiveSchedulingPolicy = .suspend
-        mediaEvents.install(in: configuration.userContentController)
+        pageEvents.install(in: configuration.userContentController)
         configuration.preferences.isFraudulentWebsiteWarningEnabled = webContentSettings.isFraudulentSiteWarningEnabled
         configuration.mediaTypesRequiringUserActionForPlayback = webContentSettings.isAutoplayingSoundAllowed ? [] : .audio
         return configuration
@@ -82,31 +82,59 @@ public final class ProfileWebContext {
     }
 }
 
-/// Tells a page to ask WebKit for its media playback state whenever a media element starts or stops. The script runs
-/// in its own content world, out of the page's reach, and sends no data.
+/// The page events Safira listens to, sent by scripts that run in Safira's own content world, out of the page's reach,
+/// and that send no page data:
+/// - a media element starts or stops, so the page asks WebKit for its playback state;
+/// - a frame has a password field, so the Tab's navigation state stays off the disk (decision D1). Fields added later,
+///   for example by a sign-in dialog, count too; fields inside a shadow root are not seen.
 @MainActor
-private final class MediaEventHandler: NSObject, WKScriptMessageHandler {
+private final class PageEventHandler: NSObject, WKScriptMessageHandler {
     weak var context: ProfileWebContext?
     private static let world = WKContentWorld.world(name: "Safira")
-    private static let name = "media"
-    private static let script = WKUserScript(
-        source: """
-        for (const type of ["play", "playing", "pause", "ended", "emptied"]) {
-            document.addEventListener(type, () => window.webkit.messageHandlers.media.postMessage(null), true);
-        }
-        """,
-        injectionTime: .atDocumentStart,
-        forMainFrameOnly: false,
-        in: world
-    )
+    private static let media = "media"
+    private static let passwordField = "passwordField"
+    private static let scripts = [
+        WKUserScript(
+            source: """
+            for (const type of ["play", "playing", "pause", "ended", "emptied"]) {
+                document.addEventListener(type, () => window.webkit.messageHandlers.media.postMessage(null), true);
+            }
+            """,
+            injectionTime: .atDocumentStart,
+            forMainFrameOnly: false,
+            in: world
+        ),
+        WKUserScript(
+            source: """
+            (() => {
+                const found = () => document.querySelector('input[type="password" i]') !== null;
+                const report = () => window.webkit.messageHandlers.passwordField.postMessage(null);
+                if (found()) { report(); return; }
+                const observer = new MutationObserver(() => {
+                    if (found()) { observer.disconnect(); report(); }
+                });
+                observer.observe(document, { subtree: true, childList: true, attributes: true, attributeFilter: ["type"] });
+            })();
+            """,
+            injectionTime: .atDocumentStart,
+            forMainFrameOnly: false,
+            in: world
+        ),
+    ]
 
     func install(in controller: WKUserContentController) {
-        controller.addUserScript(Self.script)
-        controller.add(self, contentWorld: Self.world, name: Self.name)
+        Self.scripts.forEach(controller.addUserScript)
+        controller.add(self, contentWorld: Self.world, name: Self.media)
+        controller.add(self, contentWorld: Self.world, name: Self.passwordField)
     }
 
     func userContentController(_ userContentController: WKUserContentController,
                                didReceive message: WKScriptMessage) {
-        context?.page(showing: message.webView)?.refreshMediaState()
+        guard let page = context?.page(showing: message.webView) else { return }
+        switch message.name {
+        case Self.media: page.refreshMediaState()
+        case Self.passwordField: page.passwordFieldFound()
+        default: break
+        }
     }
 }
