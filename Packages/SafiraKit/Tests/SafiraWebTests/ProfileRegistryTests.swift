@@ -305,7 +305,9 @@ private final class TemporaryRoot {
         try await waitUntil("the page loads") { webView.url == url && !webView.isLoading }
         _ = try await webView.callAsyncJavaScript("localStorage.setItem('k', 'v'); document.cookie = 'c=v'",
                                                   contentWorld: .page)
-        #expect(await registry.active.web.dataStore.httpCookieStore.allCookies().map(\.name) == ["c"])
+        let store = registry.active.web.dataStore.httpCookieStore
+        try await waitUntilAsync("the cookie is stored") { await store.allCookies().map(\.name) == ["c"] }
+        #expect(await store.allCookies().map(\.name) == ["c"])
     }
 
     @Test func anEraseCutShortIsFinishedAtTheNextLaunch() async throws {
@@ -437,6 +439,8 @@ private final class TemporaryRoot {
             try await signIn(personalContext, through: personalTab)
             registry.selectProfile(work)
 
+            try await waitUntilAsync("the first Profile's cookie is stored") { await cookies(workContext) == ["session=signed-in"] }
+            try await waitUntilAsync("the second Profile's cookie is stored") { await cookies(personalContext) == ["session=signed-in"] }
             #expect(await cookies(workContext) == ["session=signed-in"])
             #expect(await suggested(workContext) == ["tab: /reading", "tab: /home", "history: /visited"])
 

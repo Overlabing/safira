@@ -152,6 +152,7 @@ let readEverything = """
             #expect(workSees == StoredData(cookie: "script=A", local: "A", session: nil, indexedDB: ["isolation"],
                                            serviceWorkers: 1, caches: ["isolation"]))
             #expect(try await read(in: writer).session == "A")
+            try await waitUntilAsync("the cookies are stored") { await cookieNames(workContext) == ["script", "server"] }
             #expect(await cookieNames(workContext) == ["script", "server"])
 
             let personalPage = try await page(at: server.url("/"), in: personalContext, tab: TabID())
@@ -208,6 +209,12 @@ let readEverything = """
             let personalWriter = try await page(at: server.url("/cookie"), in: personalContext, tab: TabID())
             #expect(try await run(writeEverything, in: workWriter) == "written")
             #expect(try await run(writeEverything, in: personalWriter) == "written")
+            try await waitUntilAsync("the first Profile's cookies are stored") {
+                await cookieNames(workContext) == ["script", "server"]
+            }
+            try await waitUntilAsync("the second Profile's cookies are stored") {
+                await cookieNames(personalContext) == ["script", "server"]
+            }
             #expect(await cookieNames(workContext) == ["script", "server"])
             #expect(await cookieNames(personalContext) == ["script", "server"])
 
