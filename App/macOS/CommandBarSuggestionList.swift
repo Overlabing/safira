@@ -74,11 +74,11 @@ struct CommandBarSuggestionList: View {
                     Text(suggestion.address.absoluteString)
                         .lineLimit(1)
                         .truncationMode(.middle)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.primary.opacity(0.65))
                         .layoutPriority(-1)
                     Spacer(minLength: 0)
                     if let emoji = suggestion.spaceEmoji {
-                        Text("Switch to Tab").foregroundStyle(.secondary)
+                        Text("Switch to Tab").foregroundStyle(Color.primary.opacity(0.65))
                         Text(verbatim: emoji)
                     }
                 }

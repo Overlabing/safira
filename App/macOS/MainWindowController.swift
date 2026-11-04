@@ -647,6 +647,11 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         })
         suggestions.translatesAutoresizingMaskIntoConstraints = false
         suggestions.isHidden = true
+        // Its width follows the Command bar's: the default min and max size constraints of a hosting view would cap
+        // the field at the width of an empty list.
+        suggestions.sizingOptions = [.intrinsicContentSize]
+        suggestions.setContentHuggingPriority(NSLayoutConstraint.Priority(1), for: .horizontal)
+        suggestions.setContentCompressionResistancePriority(NSLayoutConstraint.Priority(1), for: .horizontal)
         content.addSubview(suggestions)
         NSLayoutConstraint.activate([
             suggestions.topAnchor.constraint(equalTo: toolbar.bottomAnchor, constant: -4),
