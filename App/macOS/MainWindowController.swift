@@ -33,6 +33,9 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
     private var spaceSheet: NSWindow?
     private var profileSheet: NSWindow?
     private var renderedTabID: TabID?
+    private let suggestionModel = CommandBarSuggestionModel()
+    private var suggestionHost: CommandBarSuggestionHostingView?
+    private var suggestionTask: Task<Void, Never>?
 
     init(registry: ProfileRegistry, shortcuts: ShortcutController) {
         self.registry = registry
@@ -247,16 +250,33 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
     func control(_ control: NSControl, textView: NSTextView, doCommandBy selector: Selector) -> Bool {
         switch selector {
         case #selector(NSResponder.insertNewline(_:)):
+            if let suggestion = suggestionModel.highlighted {
+                openSuggestion(suggestion)
+                return true
+            }
+            hideSuggestions()
             session.submitCommandBar(commandBar.stringValue)
             render()
             if session.commandBarTarget == nil {
                 showPage()
             }
             return true
+        case #selector(NSResponder.moveDown(_:)):
+            guard !suggestionModel.suggestions.isEmpty else { return false }
+            suggestionModel.moveDown()
+            announceHighlight()
+            return true
+        case #selector(NSResponder.moveUp(_:)):
+            guard !suggestionModel.suggestions.isEmpty else { return false }
+            suggestionModel.moveUp()
+            announceHighlight()
+            return true
         case #selector(NSResponder.insertTab(_:)), #selector(NSResponder.insertBacktab(_:)):
+            hideSuggestions()
             focusTabList(nil)
             return true
         case #selector(NSResponder.cancelOperation(_:)):
+            hideSuggestions()
             session.dismissCommandBar()
             commandBar.placeholderString = Self.placeholder
             commandBar.stringValue = session.selectedTab?.address?.absoluteString ?? ""
@@ -269,11 +289,62 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         }
     }
 
+    /// Typing asks the Active profile for local suggestions: its open Tabs and its history. Nothing leaves the app, and
+    /// no page loads until Return.
+    func controlTextDidChange(_ notification: Notification) {
+        updateSuggestions()
+    }
+
     func controlTextDidEndEditing(_ notification: Notification) {
         // Leaving the field abandons a pending new Tab, as Escape does.
+        hideSuggestions()
         session.dismissCommandBar()
         commandBar.placeholderString = Self.placeholder
         render()
+    }
+
+    private func updateSuggestions() {
+        suggestionTask?.cancel()
+        let text = commandBar.stringValue
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            hideSuggestions()
+            return
+        }
+        // Results go to the Profile that was active when the text was typed, and are dropped if another one is shown by
+        // the time they arrive or the text moved on.
+        let profile = registry.activeProfileID
+        let session = session
+        suggestionTask = Task { [weak self] in
+            let found = await session.suggestions(for: text)
+            guard let self, !Task.isCancelled, registry.activeProfileID == profile,
+                  commandBar.stringValue == text, commandBar.currentEditor() != nil else { return }
+            suggestionModel.show(found, typing: text)
+            suggestionHost?.isHidden = found.isEmpty
+            if !found.isEmpty {
+                announce(String(AttributedString(localized: "^[\(found.count) suggestion](inflect: true)").characters))
+            }
+        }
+    }
+
+    private func hideSuggestions() {
+        suggestionTask?.cancel()
+        suggestionTask = nil
+        suggestionModel.clear()
+        suggestionHost?.isHidden = true
+    }
+
+    private func openSuggestion(_ suggestion: CommandBarSuggestion) {
+        hideSuggestions()
+        session.openSuggestion(suggestion)
+        render()
+        if session.commandBarTarget == nil {
+            showPage()
+        }
+    }
+
+    /// The keyboard stays in the text field, so VoiceOver is told which suggestion the arrows reached.
+    private func announceHighlight() {
+        announce(suggestionModel.highlighted?.title ?? commandBar.stringValue)
     }
 
     /// Setting the text or the focus ends an edit in progress, which dismisses the Command bar: the target comes last.
@@ -355,6 +426,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         let before = registry.activeProfileID
         change(registry)
         guard registry.activeProfileID != before else { return }
+        hideSuggestions()
         session.dismissCommandBar()
         render()
         announce(String(localized: "Profile: \(registry.activeProfile.name)"))
@@ -565,6 +637,19 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         content.alignment = .leading
         toolbar.widthAnchor.constraint(equalTo: content.widthAnchor).isActive = true
         pageArea.widthAnchor.constraint(equalTo: content.widthAnchor).isActive = true
+
+        let suggestions = CommandBarSuggestionHostingView(rootView: CommandBarSuggestionList(model: suggestionModel) {
+            [weak self] in self?.openSuggestion($0)
+        })
+        suggestions.translatesAutoresizingMaskIntoConstraints = false
+        suggestions.isHidden = true
+        content.addSubview(suggestions)
+        NSLayoutConstraint.activate([
+            suggestions.topAnchor.constraint(equalTo: toolbar.bottomAnchor, constant: -4),
+            suggestions.leadingAnchor.constraint(equalTo: commandBar.leadingAnchor, constant: -8),
+            suggestions.trailingAnchor.constraint(equalTo: commandBar.trailingAnchor, constant: 8),
+        ])
+        suggestionHost = suggestions
 
         let spaceActions = SpaceActions(
             edit: { [weak self] id in self?.editSpace(id) },

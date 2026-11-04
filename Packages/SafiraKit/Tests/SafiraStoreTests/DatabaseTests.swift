@@ -53,7 +53,7 @@ private func tabRowCount(_ file: URL) throws -> Int {
         #expect(space.emoji == "🏠")
         #expect(space.paletteID == nil)
         #expect(space.tabs == [])
-        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces"])
+        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history"])
     }
 
     @Test func savedSpacesComeBackInOrderWithTheirTabsSelectionAndTheActiveSpace() throws {
@@ -194,7 +194,7 @@ private func tabRowCount(_ file: URL) throws -> Int {
 
         let database = try ProfileDatabase(file: file)
 
-        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces"])
+        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history"])
         #expect(try database.savedSession() == SavedSession(spaces: [
             SpaceRecord(id: Self.existingSpace, name: "Home", emoji: "🏠", tabs: [
                 TabRecord(id: firstTab, address: URL(string: "https://a.com/"), title: "A",
