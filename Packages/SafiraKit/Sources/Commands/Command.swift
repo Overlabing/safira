@@ -11,7 +11,7 @@ public enum CommandID: String, CaseIterable, Hashable, Sendable {
     case commandBarNext, commandBarPrevious
     case newSpace, renameSpace, deleteSpace, previousSpace, nextSpace, moveSpaceLeft, moveSpaceRight
     case togglePin, newFolder
-    case newProfile, renameProfile, deleteProfile, previousProfile, nextProfile
+    case newProfile, renameProfile, deleteProfile, previousProfile, nextProfile, sitePermissions
 }
 
 /// Where a shortcut is heard. A window shortcut works whatever has the keyboard focus (it is a menu key equivalent);
@@ -73,6 +73,7 @@ public enum CommandRegistry {
         window(.newProfile, "New Profile…", nil),
         window(.renameProfile, "Rename Profile…", nil),
         window(.deleteProfile, "Delete Profile…", nil),
+        window(.sitePermissions, "Site Permissions…", nil),
         window(.previousProfile, "Show Previous Profile", Shortcut(.left, [.command, .control, .option])),
         window(.nextProfile, "Show Next Profile", Shortcut(.right, [.command, .control, .option])),
         Command(id: .commandBarNext, title: "Command Bar: Move to the Tab List", scope: .commandBar,

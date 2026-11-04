@@ -33,7 +33,12 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
     private var spaceSheet: NSWindow?
     private var folderSheet: NSWindow?
     private var profileSheet: NSWindow?
+    private var permissionsSheet: NSWindow?
+    private var popupPanels: [PopupID: PopupPanelController] = [:]
     private var renderedTabID: TabID?
+    private lazy var permissionPrompter = PermissionPrompter(
+        window: { [weak self] in self?.window },
+        profileName: { [weak self] id in self?.registry.profiles.first { $0.id == id }?.name ?? "" })
     private let suggestionModel = CommandBarSuggestionModel()
     private var suggestionHost: CommandBarSuggestionHostingView?
     private var suggestionTask: Task<Void, Never>?
@@ -55,6 +60,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         window.isReleasedWhenClosed = false
         super.init(window: window)
         window.delegate = self
+        registry.permissionPrompt = { [unowned self] prompt in await permissionPrompter.ask(prompt) }
         layOut(in: window)
         layout?.apply(presentation, animated: false)
         window.center()
@@ -177,6 +183,23 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
 
     @objc func deleteProfile(_ sender: Any?) {
         confirmDeletion(ofProfile: registry.activeProfileID)
+    }
+
+    /// The sites the Active profile remembers a camera, microphone or location decision for.
+    @objc func showSitePermissions(_ sender: Any?) {
+        guard let window, permissionsSheet == nil else { return }
+        let view = SitePermissionsView(profileName: registry.activeProfile.name, permissions: registry.active.permissions) {
+            [weak self] in self?.endPermissionsSheet()
+        }
+        let sheet = NSWindow(contentViewController: NSHostingController(rootView: view))
+        permissionsSheet = sheet
+        window.beginSheet(sheet)
+    }
+
+    private func endPermissionsSheet() {
+        guard let sheet = permissionsSheet else { return }
+        window?.endSheet(sheet)
+        permissionsSheet = nil
     }
 
     @objc func showPreviousProfile(_ sender: Any?) {
@@ -648,6 +671,27 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         window?.title = tab?.state.title.flatMap { $0.isEmpty ? nil : $0 } ?? "Safira"
         pageArea.show(tab.flatMap { webContext.webView(for: $0.id) })
         updateSearchEngineSheet(query: session.searchAwaitingEngine)
+        showPopups()
+    }
+
+    /// A popup shows in a floating panel while the Tab that opened it is the shown Tab of the Active profile, and is
+    /// tucked away otherwise; its panel is made the first time it is wanted and goes when the popup ends.
+    private func showPopups() {
+        let shown = session.popups.filter { $0.openerTabID == session.selectedTabID }
+        for popup in shown where popupPanels[popup.id] == nil {
+            guard let webView = webContext.webView(forPopup: popup.id) else { continue }
+            let session = session
+            popupPanels[popup.id] = PopupPanelController(
+                popup: popup, webView: webView,
+                close: { [weak session] id in session?.closePopup(id) },
+                onEnd: { [weak self] id in
+                    self?.popupPanels[id] = nil
+                    self?.showPage()
+                })
+        }
+        for (id, panel) in popupPanels {
+            panel.setVisible(shown.contains { $0.id == id }, over: window)
+        }
     }
 
     private func updateSearchEngineSheet(query: String?) {

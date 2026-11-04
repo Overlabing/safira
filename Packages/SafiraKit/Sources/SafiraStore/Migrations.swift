@@ -64,10 +64,20 @@ enum Migrations {
                 table.column("url")
             }
         }
+        // What a site may use, per Profile: camera, microphone and location, and later the apps a link may open.
+        migrator.registerMigration("v5-site-permissions") { db in
+            try db.create(table: "site_permission") { table in
+                table.column("origin", .text).notNull()
+                table.column("kind", .text).notNull()
+                table.column("decision", .text).notNull()
+                table.column("decided_at", .double).notNull()
+                table.primaryKey(["origin", "kind"])
+            }
+        }
         // Each Space gets a pinned area. A Folder lives in a Space, inside another Folder or at the top of the area; a Tab
         // is pinned with `is_pinned` and then sits in a Folder or at the top. Pinned items and Folders share one
         // `position` sequence per container. Every Tab that exists stays a plain Tab.
-        migrator.registerMigration("v5-pinned-tabs-folders") { db in
+        migrator.registerMigration("v6-pinned-tabs-folders") { db in
             try db.create(table: "folder") { table in
                 table.primaryKey("id", .text)
                 table.column("space_id", .text).notNull().indexed().references("space", onDelete: .cascade)

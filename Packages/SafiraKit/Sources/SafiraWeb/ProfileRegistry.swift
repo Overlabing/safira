@@ -5,6 +5,7 @@ import Diagnostics
 import Foundation
 import Observation
 import SafiraCore
+import SafiraSession
 import SafiraStore
 
 /// The Profiles of the app, in sidebar order, and the Active profile. It alone creates and deletes Profile owners. A
@@ -17,6 +18,11 @@ public final class ProfileRegistry {
     public private(set) var profiles: [Profile]
     public private(set) var activeProfileID: ProfileID
     @ObservationIgnored private var contexts: [ProfileID: ProfileContext] = [:]
+    /// Asks the user about a camera, microphone or location request no Profile has a decision for. Every Profile's
+    /// owner uses it, the ones created later included; without it such requests are refused.
+    @ObservationIgnored public var permissionPrompt: (@MainActor (PermissionPrompt) async -> PermissionAnswer)? {
+        didSet { loadedContexts.forEach { $0.web.permissionPrompt = permissionPrompt } }
+    }
     @ObservationIgnored private let appDatabase: AppDatabase?
     @ObservationIgnored private let layout: StoreLayout?
     @ObservationIgnored private let diagnostics: DiagnosticLogger?
@@ -100,14 +106,24 @@ public final class ProfileRegistry {
         selectProfile(profiles[((index + offset) % count + count) % count].id)
     }
 
-    /// Opens a link from another app as a new Tab in the Profile's last active Space and shows that Profile. The Tab
-    /// is made by the Profile's own owner, so the link reaches that Profile's logins and nothing else. False when the
-    /// Profile does not exist.
+    /// The Spaces of a Profile, in sidebar order; empty for a Profile that does not exist. This creates the Profile's
+    /// owner if it has none yet, without showing the Profile.
+    public func spaces(in id: ProfileID) -> [Space] {
+        guard profiles.contains(where: { $0.id == id }) else { return [] }
+        return context(for: id).session.spaces
+    }
+
+    /// Opens a link from another app as a new Tab in a Space of the Profile, or in its last active Space when `space`
+    /// is nil, and shows that Profile. The Tab is made by the Profile's own owner, so the link reaches that Profile's
+    /// logins and nothing else. False, and nothing changes, when the Profile does not exist or has no such Space.
     @discardableResult
-    public func openExternalLink(_ url: URL, in id: ProfileID) -> Bool {
+    public func openExternalLink(_ url: URL, in id: ProfileID, space: SpaceID? = nil) -> Bool {
         guard profiles.contains(where: { $0.id == id }) else { return false }
+        if let space, !context(for: id).session.spaces.contains(where: { $0.id == space }) { return false }
         selectProfile(id)
-        active.session.openExternalLink(url)
+        let session = active.session
+        if let space { session.selectSpace(space) }
+        session.openExternalLink(url)
         return true
     }
 
@@ -189,7 +205,9 @@ public final class ProfileRegistry {
                 onError("The new Profile's settings could not be saved", error)
             }
         }
-        return ProfileContext(id: id, database: database, diagnostics: diagnostics, onError: onError)
+        let context = ProfileContext(id: id, database: database, diagnostics: diagnostics, onError: onError)
+        context.web.permissionPrompt = permissionPrompt
+        return context
     }
 
     /// The Profile's database in its folder, or one in memory when there is no folder or it cannot be opened.
