@@ -33,6 +33,28 @@ private struct Tree: Equatable {
     }
 }
 
+/// The files under `folders` that contain `token`, as ASCII or as UTF-16, which is how WebKit's databases and caches store
+/// the strings a page writes.
+private func filesContaining(_ token: String, in folders: [URL]) -> [String] {
+    let needles = [Data(token.utf8), token.data(using: .utf16LittleEndian)!]
+    var found: [String] = []
+    for folder in folders {
+        guard let walker = FileManager.default.enumerator(at: folder, includingPropertiesForKeys: [.isRegularFileKey]) else { continue }
+        for case let url as URL in walker {
+            guard (try? url.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true,
+                  let data = try? Data(contentsOf: url, options: .mappedIfSafe) else { continue }
+            if needles.contains(where: { data.range(of: $0) != nil }) { found.append(url.path(percentEncoded: false)) }
+        }
+    }
+    return found.sorted()
+}
+
+/// `writeEverything` with `token` as the value of the cookie, local storage and IndexedDB entries.
+private func writing(_ token: String) -> String {
+    writeEverything.replacingOccurrences(of: "\"A\"", with: "\"\(token)\"")
+        .replacingOccurrences(of: "script=A", with: "script=\(token)")
+}
+
 /// A fresh Application Support folder for one test, removed when the test ends.
 private final class TemporaryRoot {
     let layout = StoreLayout(root: FileManager.default.temporaryDirectory
@@ -122,57 +144,68 @@ private func webKitFolders() -> [URL] {
         await removeDataStoreWhenReleased(profile)
     }
 
-    @Test func closingAPrivateWindowLeavesNoNewFileInTheProfileFolderOrTheWebKitFolders() async throws {
+    /// The Profile's folder and its data store's folder are the Profile's alone, so they must not change at all. The
+    /// folders WebKit shares with every other process of the test run cannot be told from other tests' writes by a
+    /// tree comparison; there the proof is that nothing the Private window wrote, a token only it knows, is in any file.
+    @Test func closingAPrivateWindowLeavesNoFileInTheProfileAndNothingOfItsDataAnywhere() async throws {
         let server = try await StorageServer()
         let root = TemporaryRoot()
+        let token = "private-\(UUID().uuidString)"
         var profile = ProfileID(rawValue: UUID())
         do {
             let registry = ProfileRegistry(layout: root.layout)
             profile = registry.activeProfileID
-            // The Profile has been used, so its own files exist before the Private window opens.
             let main = registry.active
             let mainPage = try await load(server.url("/"), in: main.web)
             await registry.saveAll()
             mainPage.close()
-            let watched = [root.layout.profileDirectory(for: profile)] + webKitFolders()
-            let before = Tree(watched)
+            try await Task.sleep(for: .seconds(1))
+            let storeFolders = webKitFolders().flatMap { folder in
+                (try? FileManager.default.contentsOfDirectory(at: folder.appending(path: "WebsiteDataStore"),
+                                                              includingPropertiesForKeys: nil)) ?? []
+            }.filter { $0.lastPathComponent == profile.rawValue.uuidString }
+            let profileFolders = [root.layout.profileDirectory(for: profile)] + storeFolders
+            let before = Tree(profileFolders)
 
             let privateWindow = try #require(registry.makePrivateContext(attachedTo: profile))
             let writer = try await load(server.url("/cookie"), in: privateWindow.web)
-            #expect(try await run(writeEverything, in: writer) == "written")
+            #expect(try await run(writing(token), in: writer) == "written")
             let session = privateWindow.session
             session.openCommandBar(for: .newTab)
             session.submitCommandBar(server.url("/").absoluteString)
             try await waitUntil("the Tab loads") { session.selectedTab?.state.title == "storage" }
-            #expect(await privateWindow.web.dataStore.httpCookieStore.allCookies().map(\.name).sorted() == ["script", "server"])
+            #expect(await privateWindow.web.dataStore.httpCookieStore.allCookies().map(\.value).contains(token))
             writer.close()
             await privateWindow.close()
-            try await Task.sleep(for: .seconds(2))
+            try await Task.sleep(for: .seconds(3))
 
-            let after = Tree(watched + webKitFolders())
+            let after = Tree(profileFolders)
             #expect(after.newFiles(since: before) == [])
             #expect(after.changedFiles(since: before).filter { !$0.hasSuffix("-wal") && !$0.hasSuffix("-shm") } == [])
+            #expect(filesContaining(token, in: [root.layout.root] + webKitFolders()) == [])
         }
         await removeDataStoreWhenReleased(profile)
     }
 
-    @Test func theTreeComparisonSeesWhatAProfilesPagesWrite() async throws {
+    @Test func theSearchForAPagesDataFindsWhatAProfilesPagesWrite() async throws {
         let server = try await StorageServer()
         let root = TemporaryRoot()
+        let token = "profile-\(UUID().uuidString)"
         var profile = ProfileID(rawValue: UUID())
         do {
             let registry = ProfileRegistry(layout: root.layout)
             profile = registry.activeProfileID
-            let watched = [root.layout.profileDirectory(for: profile)] + webKitFolders()
-            let before = Tree(watched)
-
-            let writer = try await load(server.url("/cookie"), in: registry.active.web)
-            #expect(try await run(writeEverything, in: writer) == "written")
+            var writer: WebKitPage? = try await load(server.url("/cookie"), in: registry.active.web)
+            #expect(try await run(writing(token), in: try #require(writer)) == "written")
             await registry.saveAll()
-            try await Task.sleep(for: .seconds(2))
-            writer.close()
-
-            #expect(Tree(watched + webKitFolders()).newFiles(since: before).isEmpty == false)
+            writer?.close()
+            writer = nil
+            var found: [String] = []
+            for _ in 0..<150 where found.isEmpty {
+                found = filesContaining(token, in: webKitFolders())
+                if found.isEmpty { try await Task.sleep(for: .milliseconds(100)) }
+            }
+            #expect(found.isEmpty == false, "WebKit writes a Profile's data where the search looks")
         }
         await removeDataStoreWhenReleased(profile)
     }
@@ -249,6 +282,9 @@ private func webKitFolders() -> [URL] {
             #expect(registry.spaces(in: profile).flatMap(\.tabs).isEmpty)
             #expect(registry.active.session.tabs.isEmpty)
             #expect(registry.makePrivateContext(attachedTo: ProfileID(rawValue: UUID())) == nil)
+            #expect(privateWindow.web.diagnostics == nil)
+            #expect(privateWindow.web.isPrivate)
+            #expect(registry.active.web.isPrivate == false)
             await privateWindow.close()
         }
         await removeDataStoreWhenReleased(profile)
