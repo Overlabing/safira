@@ -60,6 +60,10 @@
     "nextSpace": {
       "shortcut": "command+option+right",
       "from": "Switch between Spaces (Command-Option-Left Arrow or Option-Command-Right Arrow)"
+    },
+    "togglePin": {
+      "shortcut": "command+d",
+      "from": "Pin/Unpin current tab (Command-D)"
     }
   },
   "unbound": {
@@ -73,6 +77,7 @@
     "deleteSpace": "The page lists no command to delete a Space.",
     "moveSpaceLeft": "The page lists no command to move a Space.",
     "moveSpaceRight": "The page lists no command to move a Space.",
+    "newFolder": "The page lists no command to create a folder.",
     "newProfile": "The page lists no Profile command; Arc attaches a Profile to Spaces and switches it with them.",
     "renameProfile": "The page lists no Profile command; Arc attaches a Profile to Spaces and switches it with them.",
     "deleteProfile": "The page lists no Profile command; Arc attaches a Profile to Spaces and switches it with them.",

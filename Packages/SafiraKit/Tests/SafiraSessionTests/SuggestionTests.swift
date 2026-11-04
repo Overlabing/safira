@@ -73,6 +73,22 @@ private func fixtureWithHistory(id: ProfileID = workID) throws -> SessionFixture
         #expect(fixture.session.spaces.first { $0.id == reading }?.tabs.count == 1)
     }
 
+    @Test func aPinnedTabInAFolderIsSuggestedAndTheSuggestionJumpsToIt() async throws {
+        let fixture = try fixtureWithHistory()
+        let docs = fixture.visit("https://docs.example.com/", titled: "Reference Manual")
+        fixture.visit("https://news.example.com/", titled: "Morning News")
+        let folder = try #require(fixture.session.createFolder(name: "Work"))
+        #expect(fixture.session.pin(docs))
+        #expect(fixture.session.movePinned(.tab(docs), into: folder))
+
+        let suggestions = await fixture.session.suggestions(for: "manual")
+        fixture.session.openSuggestion(try #require(suggestions.first))
+
+        #expect(described(suggestions) == ["tab: Reference Manual"])
+        #expect(fixture.session.selectedTabID == docs)
+        #expect(fixture.session.activeSpace.pinnedTabs.map(\.id) == [docs])
+    }
+
     @Test func tabsAreMatchedWithAccentsAndLetterCaseIgnored() async throws {
         let fixture = try fixtureWithHistory()
         fixture.visit("https://cafe.example/", titled: "Le Café de la Gare")

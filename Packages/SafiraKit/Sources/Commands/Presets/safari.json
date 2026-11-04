@@ -67,6 +67,8 @@
     "nextSpace": "The cited page lists no Tab Group shortcuts, Safari's nearest equivalent of a Space.",
     "moveSpaceLeft": "The cited page lists no Tab Group shortcuts, Safari's nearest equivalent of a Space.",
     "moveSpaceRight": "The cited page lists no Tab Group shortcuts, Safari's nearest equivalent of a Space.",
+    "togglePin": "The page lists no command to pin a tab.",
+    "newFolder": "The page lists a New Folder button for bookmarks (Option-click), which is not a Folder of Pinned tabs.",
     "newProfile": "The cited page lists no Profile shortcut.",
     "renameProfile": "The cited page lists no Profile shortcut.",
     "deleteProfile": "The cited page lists no Profile shortcut.",

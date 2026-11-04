@@ -74,6 +74,24 @@ enum Migrations {
                 table.primaryKey(["origin", "kind"])
             }
         }
+        // Each Space gets a pinned area. A Folder lives in a Space, inside another Folder or at the top of the area; a Tab
+        // is pinned with `is_pinned` and then sits in a Folder or at the top. Pinned items and Folders share one
+        // `position` sequence per container. Every Tab that exists stays a plain Tab.
+        migrator.registerMigration("v6-pinned-tabs-folders") { db in
+            try db.create(table: "folder") { table in
+                table.primaryKey("id", .text)
+                table.column("space_id", .text).notNull().indexed().references("space", onDelete: .cascade)
+                table.column("parent_folder_id", .text).references("folder", onDelete: .cascade)
+                table.column("name", .text).notNull()
+                table.column("position", .integer).notNull()
+                table.column("is_expanded", .boolean).notNull().defaults(to: true)
+            }
+            try db.alter(table: "tab") { table in
+                table.add(column: "folder_id", .text).references("folder", onDelete: .cascade)
+                table.add(column: "is_pinned", .boolean).notNull().defaults(to: false)
+                table.add(column: "pinned_url", .text)
+            }
+        }
         return migrator
     }
 

@@ -53,7 +53,7 @@ import Testing
     }
     #expect(CommandRegistry.command(.compactMode).title == "Compact Mode")
     #expect(CommandRegistry.command(.showSidebar).title == "Show Sidebar")
-    #expect(CommandRegistry.commands.count == 32)
+    #expect(CommandRegistry.commands.count == 34)
 }
 
 @Test func theSpaceCommandsAreRebindableWindowCommandsOnControlCommandKeys() {
@@ -82,4 +82,27 @@ import Testing
     #expect(display(.zen, .previousSpace) == "⌥⌘Q")
     #expect(display(.zen, .nextSpace) == "⌥⌘E")
     #expect(display(.safari, .nextSpace) == "⌃⌘→")
+}
+
+@Test func thePinCommandsAreRebindableWindowCommandsWithNoDefaultShortcut() {
+    for id in [CommandID.togglePin, .newFolder] {
+        let command = CommandRegistry.command(id)
+        #expect(command.scope == .window)
+        #expect(command.isRebindable)
+        #expect(command.isImplemented)
+        #expect(!command.isReserved)
+        #expect(command.defaultShortcut == nil)
+    }
+}
+
+@Test func onlyArcHasAShortcutToPinATab() {
+    func display(_ preset: ShortcutPreset, _ id: CommandID) -> String? {
+        ShortcutConfiguration(preset: preset).bindings[id]?.display
+    }
+    #expect(display(.arc, .togglePin) == "⌘D")
+    #expect(display(.zen, .togglePin) == nil)
+    #expect(display(.safari, .togglePin) == nil)
+    for preset in ShortcutPreset.allCases {
+        #expect(display(preset, .newFolder) == nil)
+    }
 }
