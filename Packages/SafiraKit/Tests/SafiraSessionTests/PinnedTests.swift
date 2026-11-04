@@ -238,6 +238,22 @@ private func plain(_ session: ProfileSession) -> [String?] {
         #expect(outline(fixture.session.pinnedItems) == "[Docs: a.com b.com] c.com")
     }
 
+    @Test func aPinnedItemCanBeDroppedBeforeAnotherPinnedItem() {
+        let fixture = SessionFixture()
+        let ids = openTabs(fixture, ["a.com", "b.com", "c.com"])
+        ids.forEach { fixture.session.pin($0) }
+        let docs = fixture.session.createFolder(name: "Docs")!
+        fixture.session.movePinned(.tab(ids[1]), into: docs)
+
+        #expect(fixture.session.movePinned(.tab(ids[2]), before: .tab(ids[0])))
+        #expect(outline(fixture.session.pinnedItems) == "c.com a.com [Docs: b.com]")
+        #expect(fixture.session.movePinned(.tab(ids[0]), before: .tab(ids[1])))
+        #expect(outline(fixture.session.pinnedItems) == "c.com [Docs: a.com b.com]")
+        #expect(!fixture.session.movePinned(.tab(ids[0]), before: .tab(ids[0])))
+        #expect(!fixture.session.movePinned(.folder(docs), before: .tab(ids[1])))
+        #expect(outline(fixture.session.pinnedItems) == "c.com [Docs: a.com b.com]")
+    }
+
     @Test func moveUpAndDownReorderAPinnedTabAmongItsSiblings() {
         let fixture = SessionFixture()
         let ids = openTabs(fixture, ["a.com", "b.com", "c.com"])

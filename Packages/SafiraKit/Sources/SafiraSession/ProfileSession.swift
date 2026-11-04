@@ -411,6 +411,17 @@ public final class ProfileSession {
         return true
     }
 
+    /// Moves a Pinned tab or a Folder to the place right before another pinned item, in the pinned area or Folder that
+    /// holds it. Refused like `movePinned(_:into:at:)`, and when both are the same item.
+    @discardableResult
+    public func movePinned(_ item: PinnedItemID, before target: PinnedItemID) -> Bool {
+        guard item != target, let space = spaces.first(where: { $0.holds(target) }), space.holds(item) else { return false }
+        let container = space.container(of: target)?.id
+        let others = (space.items(in: container) ?? []).filter { $0.id != item }
+        guard let index = others.firstIndex(where: { $0.id == target }) else { return false }
+        return movePinned(item, into: container, at: index)
+    }
+
     private func folder(_ id: FolderID) -> Folder? {
         spaces.lazy.compactMap { $0.folder(id) }.first
     }

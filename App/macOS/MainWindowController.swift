@@ -29,6 +29,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
     private var presentation: SidebarPresentation
     private var searchEngineSheet: NSWindow?
     private var spaceSheet: NSWindow?
+    private var folderSheet: NSWindow?
     private var renderedTabID: TabID?
 
     init(session: ProfileSession, webContext: ProfileWebContext, shortcuts: ShortcutController) {
@@ -76,6 +77,15 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
     @objc func reopenClosedTab(_ sender: Any?) {
         session.reopenClosedTab()
         render()
+    }
+
+    @objc func togglePin(_ sender: Any?) {
+        session.toggleSelectedTabPin()
+    }
+
+    /// Opens the naming sheet for a new Folder at the top of the active Space's pinned area.
+    @objc func newFolder(_ sender: Any?) {
+        editFolder(creatingIn: nil)
     }
 
     @objc func focusCommandBar(_ sender: Any?) {
@@ -189,12 +199,15 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         switch menuItem.action {
         case #selector(closeTab(_:)): return tab != nil
         case #selector(reopenClosedTab(_:)): return session.canReopenClosedTab
-        case #selector(moveTabUp(_:)): return tab != nil && session.tabs.first?.id != tab?.id
-        case #selector(moveTabDown(_:)): return tab != nil && session.tabs.last?.id != tab?.id
+        case #selector(togglePin(_:)):
+            menuItem.title = tab?.isPinned == true ? String(localized: "Unpin Tab") : String(localized: "Pin Tab")
+            return tab != nil
+        case #selector(moveTabUp(_:)): return tab.map { session.canMove($0.id, by: -1) } ?? false
+        case #selector(moveTabDown(_:)): return tab.map { session.canMove($0.id, by: 1) } ?? false
         case #selector(goBack(_:)): return tab?.state.canGoBack == true
         case #selector(goForward(_:)): return tab?.state.canGoForward == true
         case #selector(reload(_:)): return tab?.address != nil
-        case #selector(showNextTab(_:)), #selector(showPreviousTab(_:)): return session.tabs.count > 1
+        case #selector(showNextTab(_:)), #selector(showPreviousTab(_:)): return session.activeSpace.allTabs.count > 1
         case #selector(deleteSpace(_:)): return session.canDeleteSpace
         case #selector(showNextSpace(_:)), #selector(showPreviousSpace(_:)): return session.spaces.count > 1
         case #selector(moveSpaceLeft(_:)): return session.spaces.first?.id != session.activeSpaceID
@@ -303,13 +316,46 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         spaceSheet = nil
     }
 
+    /// A new Folder when `renaming` is nil, created inside `parent` or at the top of the pinned area; otherwise that
+    /// Folder is renamed.
+    private func editFolder(creatingIn parent: FolderID?, renaming id: FolderID? = nil) {
+        guard let window, folderSheet == nil else { return }
+        let existing = id.flatMap { id in session.activeSpace.folder(id) }
+        if id != nil, existing == nil { return }
+        let editor = FolderEditor(
+            title: existing == nil ? String(localized: "New Folder") : String(localized: "Rename Folder"),
+            confirmTitle: existing == nil ? String(localized: "Create") : String(localized: "Rename"),
+            name: existing?.name ?? String(localized: "New Folder"),
+            save: { [weak self] name in
+                guard let self else { return }
+                if let id {
+                    session.renameFolder(id, name: name)
+                } else {
+                    session.createFolder(name: name, in: parent)
+                }
+                endFolderSheet()
+            },
+            cancel: { [weak self] in self?.endFolderSheet() }
+        )
+        let sheet = NSWindow(contentViewController: NSHostingController(rootView: editor))
+        folderSheet = sheet
+        window.beginSheet(sheet)
+    }
+
+    private func endFolderSheet() {
+        guard let sheet = folderSheet else { return }
+        window?.endSheet(sheet)
+        folderSheet = nil
+    }
+
     /// Deleting a Space closes its Tabs for good, so it is confirmed first. The last Space cannot be deleted.
     private func confirmDeletion(of id: SpaceID) {
         guard let window, session.canDeleteSpace, let space = session.spaces.first(where: { $0.id == id }) else { return }
         let alert = NSAlert()
         alert.messageText = String(localized: "Delete the Space “\(space.name)”?")
-        let tabs = space.tabs.isEmpty ? String(localized: "It has no Tab.")
-            : String(AttributedString(localized: "Its ^[\(space.tabs.count) Tab](inflect: true) will close.").characters)
+        let count = space.allTabs.count
+        let tabs = count == 0 ? String(localized: "It has no Tab.")
+            : String(AttributedString(localized: "Its ^[\(count) Tab](inflect: true) will close.").characters)
         alert.informativeText = tabs + " " + String(localized: "The Profile's logins and history are kept.")
         alert.addButton(withTitle: String(localized: "Delete Space")).hasDestructiveAction = true
         alert.addButton(withTitle: String(localized: "Cancel"))
@@ -451,7 +497,12 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
             edit: { [weak self] id in self?.editSpace(id) },
             delete: { [weak self] id in self?.confirmDeletion(of: id) }
         )
-        let sidebar = NSHostingController(rootView: TabSidebar(session: session, spaceActions: spaceActions) { [weak self] in
+        let folderActions = FolderActions(
+            create: { [weak self] parent in self?.editFolder(creatingIn: parent) },
+            rename: { [weak self] id in self?.editFolder(creatingIn: nil, renaming: id) }
+        )
+        let sidebar = NSHostingController(rootView: TabSidebar(session: session, spaceActions: spaceActions,
+                                                               folderActions: folderActions) { [weak self] in
             self?.leaveSidebar()
         })
         self.sidebar = sidebar
