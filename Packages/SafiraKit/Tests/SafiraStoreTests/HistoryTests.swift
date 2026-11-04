@@ -126,3 +126,55 @@ private func titles(_ entries: [HistoryEntry]) -> [String?] { entries.map(\.titl
         #expect(try await ProfileDatabase(file: layout.profileDatabaseFile(for: personal)).searchHistory("equipe", limit: 10).isEmpty)
     }
 }
+
+/// Clearing the history by time range.
+@Suite struct ClearHistoryTests {
+    private let now = Date(timeIntervalSince1970: 1_800_000_000)
+
+    private func database() async throws -> ProfileDatabase {
+        let database = try ProfileDatabase.inMemory()
+        // 30 minutes ago, 5 hours ago and 3 days ago.
+        for (address, title, age) in [("https://recent.example/", "Recent news", 1_800.0),
+                                      ("https://today.example/", "Today news", 18_000.0),
+                                      ("https://old.example/", "Old news", 259_200.0)] {
+            try await database.recordVisit(to: url(address), at: now.addingTimeInterval(-age))
+            try await database.setTitle(title, ofLatestVisitTo: url(address))
+        }
+        return database
+    }
+
+    @Test func theLastHourRemovesOnlyTheVisitsOfTheLastHour() async throws {
+        let database = try await database()
+
+        try await database.clearHistory(since: ClearRange.lastHour.start(now: now))
+
+        #expect(titles(try await database.searchHistory("news", limit: 10)) == ["Old news", "Today news"])
+    }
+
+    @Test func theLastDayKeepsWhatIsOlder() async throws {
+        let database = try await database()
+
+        try await database.clearHistory(since: ClearRange.lastDay.start(now: now))
+
+        #expect(titles(try await database.searchHistory("news", limit: 10)) == ["Old news"])
+    }
+
+    @Test func allTimeRemovesEveryVisitAndTheSearchFindsNothing() async throws {
+        let database = try await database()
+
+        try await database.clearHistory(since: ClearRange.allTime.start(now: now))
+
+        #expect(try await database.searchHistory("news", limit: 10).isEmpty)
+        #expect(try await database.searchHistory("example", limit: 10).isEmpty)
+    }
+
+    @Test func aPageVisitedBeforeAndInsideTheRangeKeepsItsEarlierVisit() async throws {
+        let database = try await database()
+        try await database.recordVisit(to: url("https://old.example/"), at: now.addingTimeInterval(-60))
+        try await database.setTitle("Old news again", ofLatestVisitTo: url("https://old.example/"))
+
+        try await database.clearHistory(since: ClearRange.lastHour.start(now: now))
+
+        #expect(titles(try await database.searchHistory("old", limit: 10)) == ["Old news"])
+    }
+}

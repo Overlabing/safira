@@ -13,6 +13,8 @@ struct ProfileActions {
     let edit: (ProfileID?) -> Void
     /// Asks, naming the Profile, before deleting it.
     let delete: (ProfileID) -> Void
+    /// Asks which range of the Profile's history and website data to clear.
+    let clearBrowsingData: (ProfileID) -> Void
 }
 
 /// The Active profile at the top of the sidebar, a menu that switches Profile. It is a different control, at the other
@@ -34,6 +36,8 @@ struct ProfileSwitcher: View {
             Button("Rename Profile…") { actions.edit(registry.activeProfileID) }
             Button("Delete Profile…") { actions.delete(registry.activeProfileID) }
                 .disabled(!registry.canDeleteProfile)
+            Divider()
+            Button("Clear History and Website Data…") { actions.clearBrowsingData(registry.activeProfileID) }
         } label: {
             Text(verbatim: "\(registry.activeProfile.symbol) \(registry.activeProfile.name)")
                 .font(.headline)

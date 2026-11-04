@@ -16,6 +16,7 @@ public final class WebKitPage: NSObject, WebPageHandle {
     public var onNewTab: (@MainActor (NewTabRequest) -> Void)?
     public var onLoadFailure: (@MainActor (LoadFailure) -> Void)?
     public var onContinueOverHTTP: (@MainActor () -> Void)?
+    public var onNonWebLink: (@MainActor (NonWebLink) -> Void)?
     public var onDidClose: (@MainActor () -> Void)?
     private var isPlayingMedia = false
     /// The warning the page currently shows; only its own "Continue over HTTP" link is intercepted.
@@ -115,6 +116,7 @@ public final class WebKitPage: NSObject, WebPageHandle {
         onNewTab = nil
         onLoadFailure = nil
         onContinueOverHTTP = nil
+        onNonWebLink = nil
         onDidClose = nil
         webView.stopLoading()
         webView.removeFromSuperview()
@@ -126,6 +128,14 @@ public final class WebKitPage: NSObject, WebPageHandle {
     /// A frame of the shown page has a password field.
     func passwordFieldFound() {
         markShownEntry(.passwordField)
+    }
+
+    /// The link a request would open in another app, if WebKit cannot show its scheme itself.
+    private func nonWebLink(in request: URLRequest) -> NonWebLink? {
+        guard let url = request.url, let scheme = url.scheme?.lowercased(), !WKWebView.handlesURLScheme(scheme) else {
+            return nil
+        }
+        return NonWebLink(url)
     }
 
     private func markShownEntry(_ content: SensitiveContent) {
@@ -163,6 +173,13 @@ public final class WebKitPage: NSObject, WebPageHandle {
 extension WebKitPage: WKNavigationDelegate {
     public func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction,
                         preferences: WKWebpagePreferences) async -> (WKNavigationActionPolicy, WKWebpagePreferences) {
+        // First, so that a ⌘-click on a mailto link opens no empty Tab. Every frame and every kind of navigation gets
+        // here (click, script, form, redirect), and returning .cancel is what stops WebKit from handing the link to
+        // the system: only the session's confirmation may open an app.
+        if let link = nonWebLink(in: navigationAction.request) {
+            onNonWebLink?(link)
+            return (.cancel, preferences)
+        }
         if navigationAction.navigationType == .linkActivated, navigationAction.modifierFlags.contains(.command),
            let url = navigationAction.request.url, let onNewTab {
             onNewTab(.address(url))
@@ -230,6 +247,11 @@ extension WebKitPage: WKUIDelegate {
     /// opens a popup; every other request (`target=_blank`, `window.open` without features) opens a background Tab.
     public func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration,
                         for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
+        // `window.open("mailto:…")` must not leave a blank Tab or popup behind.
+        if let link = nonWebLink(in: navigationAction.request) {
+            onNonWebLink?(link)
+            return nil
+        }
         guard let onNewTab else { return nil }
         let requested = RequestedWindow(width: windowFeatures.width?.doubleValue,
                                         height: windowFeatures.height?.doubleValue)

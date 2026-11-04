@@ -118,8 +118,46 @@ public final class ProfileDatabase: Sendable {
         }
     }
 
+    /// Every site permission and every remembered app choice of this Profile.
     public func removeAllSitePermissions() throws {
         try queue.write { db in try db.execute(sql: "DELETE FROM site_permission") }
+    }
+
+    // MARK: App link choices
+
+    /// The apps a link may open without asking, or never, are rows of the same table as the site permissions: the
+    /// `kind` is `openApp` and the `origin` is the scheme. `sitePermissions()` does not know that kind and leaves them out.
+    private static let appLinkKind = "openApp"
+
+    /// Every remembered choice of this Profile, by scheme.
+    public func appLinkChoices() throws -> [AppLinkChoice] {
+        try queue.read { db in
+            try Row.fetchAll(db, sql: "SELECT origin, decision, decided_at FROM site_permission WHERE kind = ?",
+                             arguments: [Self.appLinkKind]).compactMap { row in
+                guard let scheme = URLScheme(row["origin"]),
+                      let decision = PermissionDecision(rawValue: row["decision"]) else { return nil }
+                return AppLinkChoice(scheme: scheme, decision: decision,
+                                     decidedAt: Date(timeIntervalSince1970: row["decided_at"]))
+            }
+            .sorted { $0.scheme < $1.scheme }
+        }
+    }
+
+    /// Remembers a choice, replacing the one for the same scheme.
+    public func save(_ choice: AppLinkChoice) throws {
+        try queue.write { db in
+            try db.execute(sql: """
+                INSERT OR REPLACE INTO site_permission (origin, kind, decision, decided_at) VALUES (?, ?, ?, ?)
+                """, arguments: [choice.scheme.rawValue, Self.appLinkKind, choice.decision.rawValue,
+                                 choice.decidedAt.timeIntervalSince1970])
+        }
+    }
+
+    public func removeAppLinkChoice(for scheme: URLScheme) throws {
+        try queue.write { db in
+            try db.execute(sql: "DELETE FROM site_permission WHERE origin = ? AND kind = ?",
+                           arguments: [scheme.rawValue, Self.appLinkKind])
+        }
     }
 
     private static let activeSpaceKey = "active_space_id"

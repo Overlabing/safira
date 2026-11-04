@@ -29,6 +29,8 @@ public final class Tab: Identifiable {
     @ObservationIgnored private var visits = VisitTracker()
     /// Called when the Tab visits a web address or learns the title of the page it shows; the session sets it.
     @ObservationIgnored var onVisitEvent: (@MainActor (VisitEvent) -> Void)?
+    /// Called when the Tab's page follows a non-web link, with the host of the page that asked; the session sets it.
+    @ObservationIgnored var onNonWebLink: (@MainActor (NonWebLink, String?) -> Void)?
 
     init(id: TabID, page: (any WebPageHandle)? = nil, osBuild: String,
          makePage: @escaping @MainActor (TabID) -> any WebPageHandle,
@@ -155,6 +157,7 @@ public final class Tab: Identifiable {
         page?.onNewTab = nil
         page?.onLoadFailure = nil
         page?.onContinueOverHTTP = nil
+        page?.onNonWebLink = nil
         page?.close()
         page = nil
     }
@@ -165,6 +168,7 @@ public final class Tab: Identifiable {
         page.onNewTab = { [onNewTab] request in onNewTab(request) }
         page.onLoadFailure = { [weak self] failure in self?.pageFailed(failure) }
         page.onContinueOverHTTP = { [weak self] in self?.continueOverHTTP() }
+        page.onNonWebLink = { [weak self] link in self?.onNonWebLink?(link, self?.state.url?.host) }
         self.page = page
         pageChanged(page.state)
         return page

@@ -31,6 +31,7 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSTex
     private var popupPanels: [PopupID: PopupPanelController] = [:]
     private var renderedTabID: TabID?
     private var isClosed = false
+    private let externalApps = WorkspaceExternalApps()
     private lazy var permissionPrompter = PermissionPrompter(
         window: { [weak self] in self?.window }, profileName: { _ in "" }, isPrivate: true)
 
@@ -50,6 +51,11 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSTex
         super.init(window: window)
         window.delegate = self
         context.web.permissionPrompt = { [unowned self] prompt in await permissionPrompter.ask(prompt) }
+        context.session.appLinks.handlers = AppLinkHandlers(
+            launcher: externalApps,
+            prompt: { [unowned self] prompt in await permissionPrompter.confirmOpen(prompt) },
+            refusal: { [unowned self] refusal in await permissionPrompter.refuseOpen(refusal) },
+            openFailure: { [unowned self] app, _ in await permissionPrompter.reportOpenFailure(of: app) })
         layOut(in: window)
         window.center()
         observeSession()
