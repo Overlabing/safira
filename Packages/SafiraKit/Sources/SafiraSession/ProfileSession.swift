@@ -364,10 +364,19 @@ public final class ProfileSession {
         return true
     }
 
-    /// Moves a Tab `offset` places up (negative) or down (positive), stopping at the ends of the list.
+    /// Moves a Tab `offset` places up (negative) or down (positive), stopping at the ends of the list. Places are
+    /// counted in Tabs: a Pinned tab takes the place of the Tab it passes, whatever Folders sit between them.
     public func move(_ id: TabID, by offset: Int) {
-        guard let from = siblings(of: id)?.firstIndex(where: { $0 == id }) else { return }
-        move(id, to: from + offset)
+        guard let siblings = siblings(of: id), let from = siblings.firstIndex(of: id) else { return }
+        let space = activeSpace
+        guard space.holds(.tab(id)) else {
+            move(id, to: from + offset)
+            return
+        }
+        let target = siblings[max(0, min(from + offset, siblings.count - 1))]
+        let container = space.container(of: .tab(id))?.id
+        guard let index = space.items(in: container)?.firstIndex(where: { $0.id == .tab(target) }) else { return }
+        movePinned(.tab(id), into: container, at: index)
     }
 
     /// Whether `move(_:by:)` would change anything.
