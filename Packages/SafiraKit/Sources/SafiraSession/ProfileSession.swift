@@ -27,7 +27,7 @@ public final class ProfileSession {
     /// The Profile's Spaces, in sidebar order; never empty.
     public private(set) var spaces: [Space]
     public private(set) var activeSpaceID: SpaceID
-    /// Nil while the Command bar is closed.
+    /// Nil while the Command bar is closed. The Command bar is a floating panel, so this is also whether it is shown.
     public private(set) var commandBarTarget: CommandBarTarget?
     /// A search typed while the Profile has no search engine; the user is asked to pick one before it runs.
     public private(set) var searchAwaitingEngine: String?
@@ -233,6 +233,13 @@ public final class ProfileSession {
         selectSpace(spaces[((index + offset) % count + count) % count].id)
     }
 
+    /// Shows the Space at `number` (1 for the first) in the switcher's order. A number past the last Space does
+    /// nothing.
+    public func selectSpace(number: Int) {
+        guard number >= 1, number <= spaces.count else { return }
+        selectSpace(spaces[number - 1].id)
+    }
+
     public var canDeleteSpace: Bool {
         spaces.count > 1
     }
@@ -305,6 +312,14 @@ public final class ProfileSession {
             } while !shown.contains(order[index].id)
         }
         setSelection(order[index].id)
+    }
+
+    /// Shows the Tab at `number` (1 for the first) in the active Space's sidebar order, Pinned tabs first. A number
+    /// past the last Tab does nothing.
+    public func selectTab(number: Int) {
+        let order = activeSpace.allTabs
+        guard number >= 1, number <= order.count else { return }
+        setSelection(order[number - 1].id)
     }
 
     /// Closing discards the Tab and its page; a Tab that had an address can be reopened during this session.
@@ -545,6 +560,8 @@ public final class ProfileSession {
 
     // MARK: Command bar
 
+    public var isCommandBarOpen: Bool { commandBarTarget != nil }
+
     public func openCommandBar(for target: CommandBarTarget) {
         commandBarTarget = target
     }
@@ -554,12 +571,12 @@ public final class ProfileSession {
         commandBarTarget = nil
     }
 
-    /// Opens what was typed in the Command bar where its target says, then closes it. With the Command bar closed,
-    /// the text goes to the selected Tab.
+    /// Opens what was typed in the Command bar where its target says, then closes it. Blank text closes it and opens
+    /// nothing. With the Command bar closed, the text goes to the selected Tab.
     public func submitCommandBar(_ text: String) {
         let target = commandBarTarget ?? .selectedTab
-        guard let input = CommandBarInput(text) else { return }
         commandBarTarget = nil
+        guard let input = CommandBarInput(text) else { return }
         switch input {
         case .address(let url, let scheme):
             open(url, in: target, httpsFirst: scheme == .defaultedToHTTPS)

@@ -56,6 +56,38 @@
     "nextTab": {
       "shortcut": "command+shift+]",
       "from": "Go to next tab (Shift-Command-]; also Control-Tab)"
+    },
+    "selectTab1": {
+      "shortcut": "command+1",
+      "from": "Select one of your first eight tabs (Command-1 to Command-8)"
+    },
+    "selectTab2": {
+      "shortcut": "command+2",
+      "from": "Select one of your first eight tabs (Command-1 to Command-8)"
+    },
+    "selectTab3": {
+      "shortcut": "command+3",
+      "from": "Select one of your first eight tabs (Command-1 to Command-8)"
+    },
+    "selectTab4": {
+      "shortcut": "command+4",
+      "from": "Select one of your first eight tabs (Command-1 to Command-8)"
+    },
+    "selectTab5": {
+      "shortcut": "command+5",
+      "from": "Select one of your first eight tabs (Command-1 to Command-8)"
+    },
+    "selectTab6": {
+      "shortcut": "command+6",
+      "from": "Select one of your first eight tabs (Command-1 to Command-8)"
+    },
+    "selectTab7": {
+      "shortcut": "command+7",
+      "from": "Select one of your first eight tabs (Command-1 to Command-8)"
+    },
+    "selectTab8": {
+      "shortcut": "command+8",
+      "from": "Select one of your first eight tabs (Command-1 to Command-8)"
     }
   },
   "unbound": {
@@ -80,6 +112,16 @@
     "showDownloads": "The cited page lists no shortcut for the download list; it says to click the Show Downloads button.",
     "previousProfile": "The cited page lists no Profile shortcut.",
     "nextProfile": "The cited page lists no Profile shortcut.",
-    "clearBrowsingData": "The cited page lists no shortcut to clear history or website data."
+    "clearBrowsingData": "The cited page lists no shortcut to clear history or website data.",
+    "selectTab9": "Safari's Command-9 selects the last tab, not the ninth; Safira's own key applies.",
+    "selectSpace1": "The page lists no command to show a tab group by its number.",
+    "selectSpace2": "The page lists no command to show a tab group by its number.",
+    "selectSpace3": "The page lists no command to show a tab group by its number.",
+    "selectSpace4": "The page lists no command to show a tab group by its number.",
+    "selectSpace5": "The page lists no command to show a tab group by its number.",
+    "selectSpace6": "The page lists no command to show a tab group by its number.",
+    "selectSpace7": "The page lists no command to show a tab group by its number.",
+    "selectSpace8": "The page lists no command to show a tab group by its number.",
+    "selectSpace9": "The page lists no command to show a tab group by its number."
   }
 }

@@ -14,6 +14,26 @@ public enum CommandID: String, CaseIterable, Hashable, Sendable {
     case newProfile, renameProfile, deleteProfile, previousProfile, nextProfile, sitePermissions
     case clearBrowsingData
     case showDownloads
+    case selectTab1, selectTab2, selectTab3, selectTab4, selectTab5, selectTab6, selectTab7, selectTab8, selectTab9
+    case selectSpace1, selectSpace2, selectSpace3, selectSpace4, selectSpace5, selectSpace6, selectSpace7, selectSpace8
+    case selectSpace9
+
+    /// ⌘1…⌘9 and ⌃1…⌃9: the Tab or Space a numbered command shows, 1 for the first.
+    public var tabNumber: Int? { Self.numbered(rawValue, "selectTab") }
+    public var spaceNumber: Int? { Self.numbered(rawValue, "selectSpace") }
+
+    public static let selectTabCommands: [CommandID] = [
+        .selectTab1, .selectTab2, .selectTab3, .selectTab4, .selectTab5, .selectTab6, .selectTab7, .selectTab8, .selectTab9,
+    ]
+    public static let selectSpaceCommands: [CommandID] = [
+        .selectSpace1, .selectSpace2, .selectSpace3, .selectSpace4, .selectSpace5, .selectSpace6, .selectSpace7,
+        .selectSpace8, .selectSpace9,
+    ]
+
+    private static func numbered(_ raw: String, _ prefix: String) -> Int? {
+        guard raw.hasPrefix(prefix) else { return nil }
+        return Int(raw.dropFirst(prefix.count))
+    }
 }
 
 /// Where a shortcut is heard. A window shortcut works whatever has the keyboard focus (it is a menu key equivalent);
@@ -82,6 +102,12 @@ public enum CommandRegistry {
         window(.previousProfile, "Show Previous Profile", Shortcut(.left, [.command, .control, .option])),
         window(.nextProfile, "Show Next Profile", Shortcut(.right, [.command, .control, .option])),
         window(.clearBrowsingData, "Clear History and Website Data…", Shortcut(.delete, [.command, .shift])),
+        // ⌘1…⌘9 are Safari's and Firefox's tab keys; ⌃1…⌃9 are Arc's Space keys, and no other command uses them.
+    ] + CommandID.selectTabCommands.enumerated().map { index, id in
+        window(id, "Show Tab \(index + 1)", Shortcut(.character(Character("\(index + 1)")), .command))
+    } + CommandID.selectSpaceCommands.enumerated().map { index, id in
+        window(id, "Show Space \(index + 1)", Shortcut(.character(Character("\(index + 1)")), .control))
+    } + [
         Command(id: .commandBarNext, title: "Command Bar: Move to the Tab List", scope: .commandBar,
                 defaultShortcut: Shortcut(.tab), isReserved: false, isRebindable: false, isImplemented: true),
         Command(id: .commandBarPrevious, title: "Command Bar: Move to the Tab List, Backward", scope: .commandBar,

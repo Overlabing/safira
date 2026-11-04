@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Antonin Carlin
 
-import AppKit
+import DesignKit
 import Observation
 import SafiraCore
 import SwiftUI
 
-/// What the Command bar's suggestion list shows. The window sets it as the user types.
+/// What the Command bar's suggestion list shows. The Command bar sets it as the user types.
 @MainActor
 @Observable
 final class CommandBarSuggestionModel {
@@ -36,78 +36,61 @@ final class CommandBarSuggestionModel {
     }
 }
 
-/// The list under the Command bar. The keyboard stays in the text field: arrows move the highlight and Return opens it.
+/// The list under the Command bar's field, in the kit's rows. The keyboard stays in the text field: arrows move the
+/// highlight (the row's selection) and Return opens it.
 struct CommandBarSuggestionList: View {
     let model: CommandBarSuggestionModel
     let choose: (CommandBarSuggestion) -> Void
+    @Environment(\.designTokens) private var tokens
 
     var body: some View {
         VStack(spacing: 0) {
             ForEach(Array(model.suggestions.enumerated()), id: \.element.id) { index, suggestion in
-                Row(suggestion: suggestion, isHighlighted: model.highlight.index == index) { choose(suggestion) }
+                SuggestionRow(suggestion: suggestion, isHighlighted: model.highlight.index == index) { choose(suggestion) }
             }
         }
-        .padding(6)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
-        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(.separator))
-        .shadow(color: .black.opacity(0.2), radius: 8, y: 3)
-        .padding(.horizontal, 8)
-        .padding(.bottom, 12)
+        .padding(.vertical, tokens.spacing.rowGap)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Suggestions")
     }
+}
 
-    private struct Row: View {
-        let suggestion: CommandBarSuggestion
-        let isHighlighted: Bool
-        let choose: () -> Void
+private struct SuggestionRow: View {
+    let suggestion: CommandBarSuggestion
+    let isHighlighted: Bool
+    let choose: () -> Void
+    @State private var isHovered = false
+    @Environment(\.designTokens) private var tokens
 
-        var body: some View {
-            Button(action: choose) {
-                HStack(spacing: 8) {
-                    Image(systemName: isOpenTab ? "macwindow" : "clock")
-                        .foregroundStyle(isHighlighted ? .primary : .secondary)
-                        .frame(width: 18)
-                    Text(suggestion.title)
-                        .lineLimit(1)
-                        .truncationMode(.tail)
-                    Text(suggestion.address.absoluteString)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-                        .foregroundStyle(Color.primary.opacity(0.65))
-                        .layoutPriority(-1)
-                    Spacer(minLength: 0)
-                    if let emoji = suggestion.spaceEmoji {
-                        Text("Switch to Tab").foregroundStyle(Color.primary.opacity(0.65))
+    var body: some View {
+        WithColorRoles { roles in
+            ListRow(suggestion.title, details: [AddressDisplay(suggestion.address).hostAndPath],
+                    state: RowState(isSelected: isHighlighted, isHovered: isHovered)) {
+                Tile(.tintedSymbol(isOpenTab ? "macwindow" : "clock"), size: .compact)
+            } trailing: {
+                if let emoji = suggestion.spaceEmoji {
+                    HStack(spacing: tokens.spacing.pillActionGap) {
+                        Text("Switch to Tab").role(tokens.type.count).foregroundStyle(roles.secondaryText)
                         Text(verbatim: emoji)
                     }
                 }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 5)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(isHighlighted ? Color.accentColor.opacity(0.25) : .clear, in: RoundedRectangle(cornerRadius: 6))
-                .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
+            .onHover { isHovered = $0 }
+            .onTapGesture(perform: choose)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(suggestion.title)
             .accessibilityValue(accessibilityValue)
             .accessibilityAddTraits(isHighlighted ? [.isButton, .isSelected] : .isButton)
-        }
-
-        private var isOpenTab: Bool {
-            if case .openTab = suggestion.kind { true } else { false }
-        }
-
-        private var accessibilityValue: String {
-            let kind = isOpenTab ? String(localized: "Open Tab") : String(localized: "History")
-            return kind + ", " + suggestion.address.absoluteString
+            .accessibilityAction(.default, choose)
         }
     }
-}
 
-/// The list's hosting view never takes the keyboard focus, so clicking a suggestion leaves the Command bar's text
-/// field editing.
-final class CommandBarSuggestionHostingView: NSHostingView<CommandBarSuggestionList> {
-    override var acceptsFirstResponder: Bool { false }
+    private var isOpenTab: Bool {
+        if case .openTab = suggestion.kind { true } else { false }
+    }
+
+    private var accessibilityValue: String {
+        let kind = isOpenTab ? String(localized: "Open Tab") : String(localized: "History")
+        return kind + ", " + suggestion.address.absoluteString
+    }
 }

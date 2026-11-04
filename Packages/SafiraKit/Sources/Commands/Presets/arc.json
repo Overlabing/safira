@@ -89,6 +89,24 @@
     "sitePermissions": "The page lists no command for the permissions a site has been granted.",
     "previousProfile": "The page lists no Profile command; Arc attaches a Profile to Spaces and switches it with them.",
     "nextProfile": "The page lists no Profile command; Arc attaches a Profile to Spaces and switches it with them.",
-    "clearBrowsingData": "The page lists no command to clear history or browsing data."
+    "clearBrowsingData": "The page lists no command to clear history or browsing data.",
+    "selectTab1": "Not verified: the page could not be fetched on 2026-11-04 when this command was added, so no Arc shortcut is claimed; Safira's own key applies. Re-check the page.",
+    "selectSpace1": "Not verified: the page could not be fetched on 2026-11-04 when this command was added, so no Arc shortcut is claimed; Safira's own key applies. Re-check the page.",
+    "selectTab2": "Not verified: the page could not be fetched on 2026-11-04 when this command was added, so no Arc shortcut is claimed; Safira's own key applies. Re-check the page.",
+    "selectSpace2": "Not verified: the page could not be fetched on 2026-11-04 when this command was added, so no Arc shortcut is claimed; Safira's own key applies. Re-check the page.",
+    "selectTab3": "Not verified: the page could not be fetched on 2026-11-04 when this command was added, so no Arc shortcut is claimed; Safira's own key applies. Re-check the page.",
+    "selectSpace3": "Not verified: the page could not be fetched on 2026-11-04 when this command was added, so no Arc shortcut is claimed; Safira's own key applies. Re-check the page.",
+    "selectTab4": "Not verified: the page could not be fetched on 2026-11-04 when this command was added, so no Arc shortcut is claimed; Safira's own key applies. Re-check the page.",
+    "selectSpace4": "Not verified: the page could not be fetched on 2026-11-04 when this command was added, so no Arc shortcut is claimed; Safira's own key applies. Re-check the page.",
+    "selectTab5": "Not verified: the page could not be fetched on 2026-11-04 when this command was added, so no Arc shortcut is claimed; Safira's own key applies. Re-check the page.",
+    "selectSpace5": "Not verified: the page could not be fetched on 2026-11-04 when this command was added, so no Arc shortcut is claimed; Safira's own key applies. Re-check the page.",
+    "selectTab6": "Not verified: the page could not be fetched on 2026-11-04 when this command was added, so no Arc shortcut is claimed; Safira's own key applies. Re-check the page.",
+    "selectSpace6": "Not verified: the page could not be fetched on 2026-11-04 when this command was added, so no Arc shortcut is claimed; Safira's own key applies. Re-check the page.",
+    "selectTab7": "Not verified: the page could not be fetched on 2026-11-04 when this command was added, so no Arc shortcut is claimed; Safira's own key applies. Re-check the page.",
+    "selectSpace7": "Not verified: the page could not be fetched on 2026-11-04 when this command was added, so no Arc shortcut is claimed; Safira's own key applies. Re-check the page.",
+    "selectTab8": "Not verified: the page could not be fetched on 2026-11-04 when this command was added, so no Arc shortcut is claimed; Safira's own key applies. Re-check the page.",
+    "selectSpace8": "Not verified: the page could not be fetched on 2026-11-04 when this command was added, so no Arc shortcut is claimed; Safira's own key applies. Re-check the page.",
+    "selectTab9": "Not verified: the page could not be fetched on 2026-11-04 when this command was added, so no Arc shortcut is claimed; Safira's own key applies. Re-check the page.",
+    "selectSpace9": "Not verified: the page could not be fetched on 2026-11-04 when this command was added, so no Arc shortcut is claimed; Safira's own key applies. Re-check the page."
   }
 }

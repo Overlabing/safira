@@ -77,6 +77,8 @@ enum MainMenu {
             .separator(),
             item(.compactMode, #selector(MainWindowController.toggleCompactMode(_:))),
             item(.showSidebar, #selector(MainWindowController.toggleRevealedSidebar(_:))),
+            NSMenuItem(title: SidebarSide.title, action: #selector(MainWindowController.toggleSidebarSide(_:)),
+                       keyEquivalent: ""),
             item(.focusTabList, #selector(MainWindowController.focusTabList(_:))),
         ]))
         menu.addItem(submenu(title: "History", items: [
@@ -92,7 +94,10 @@ enum MainMenu {
             item(.nextSpace, #selector(MainWindowController.showNextSpace(_:))),
             item(.moveSpaceLeft, #selector(MainWindowController.moveSpaceLeft(_:))),
             item(.moveSpaceRight, #selector(MainWindowController.moveSpaceRight(_:))),
-        ]))
+            .separator(),
+        ] + CommandID.selectSpaceCommands.map { id in
+            numbered(item(id, #selector(MainWindowController.showSpaceNumber(_:))), id.spaceNumber)
+        }))
         menu.addItem(submenu(title: "Profiles", items: [
             item(.newProfile, #selector(MainWindowController.newProfile(_:))),
             item(.renameProfile, #selector(MainWindowController.renameProfile(_:))),
@@ -114,7 +119,10 @@ enum MainMenu {
             item(.nextTab, #selector(MainWindowController.showNextTab(_:))),
             item(.moveTabUp, #selector(MainWindowController.moveTabUp(_:))),
             item(.moveTabDown, #selector(MainWindowController.moveTabDown(_:))),
-        ])
+            .separator(),
+        ] + CommandID.selectTabCommands.map { id in
+            numbered(item(id, #selector(MainWindowController.showTabNumber(_:))), id.tabNumber)
+        })
         menu.addItem(window)
         NSApplication.shared.windowsMenu = window.submenu
         let help = submenu(title: "Help", items: [
@@ -144,6 +152,12 @@ enum MainMenu {
             item.keyEquivalent = shortcut.menuKeyEquivalent
             item.keyEquivalentModifierMask = shortcut.modifiers.eventFlags
         }
+        return item
+    }
+
+    /// The window reads the number of the Tab or Space a numbered item shows from its tag.
+    private static func numbered(_ item: NSMenuItem, _ number: Int?) -> NSMenuItem {
+        item.tag = number ?? 0
         return item
     }
 
