@@ -30,7 +30,8 @@ public struct MatchingTabSettings: Hashable, Sendable, Codable {
                 title: title,
                 value: MatchingTabSettings().isEnabled ? "On" : "Off",
                 explanation: explanation,
-                whereToChange: "Safira menu"
+                whereToChange: "Safira menu",
+                control: .toggle(isOn: MatchingTabSettings().isEnabled)
             ),
         ]
     }

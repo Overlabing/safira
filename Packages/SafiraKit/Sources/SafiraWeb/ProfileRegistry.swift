@@ -17,6 +17,9 @@ public final class ProfileRegistry {
     /// Never empty.
     public private(set) var profiles: [Profile]
     public private(set) var activeProfileID: ProfileID
+    /// True from the launch that created the first Profile until `completeOnboarding`, across relaunches. False for an
+    /// app that already had Profiles when onboarding was introduced.
+    public private(set) var isOnboardingPending = false
     @ObservationIgnored private var contexts: [ProfileID: ProfileContext] = [:]
     /// Asks the user about a camera, microphone or location request no Profile has a decision for. Every Profile's
     /// owner uses it, the ones created later included; without it such requests are refused.
@@ -51,6 +54,7 @@ public final class ProfileRegistry {
         var profiles: [Profile] = []
         var active: ProfileID?
         var pending: [ProfileID] = []
+        var onboardingPending = false
         if let layout {
             do {
                 let database = try AppDatabase(file: layout.appDatabaseFile)
@@ -58,8 +62,10 @@ public final class ProfileRegistry {
                 if profiles.isEmpty {
                     let first = Profile(id: ProfileID(rawValue: UUID()), name: Self.firstProfileName)
                     try database.add(first)
+                    try database.setOnboardingPending(true)
                     profiles = [first]
                 }
+                onboardingPending = try database.isOnboardingPending()
                 active = try database.lastActiveProfileID()
                 pending = try database.profilesPendingDeletion()
                 app = database
@@ -74,6 +80,7 @@ public final class ProfileRegistry {
         appDatabase = app
         self.layout = app == nil ? nil : layout
         self.profiles = profiles
+        isOnboardingPending = onboardingPending
         activeProfileID = active.flatMap { id in profiles.first { $0.id == id }?.id } ?? profiles[0].id
         for id in pending {
             Task { try? await self.erase(id) }
@@ -166,6 +173,25 @@ public final class ProfileRegistry {
             return false
         }
         return true
+    }
+
+    // MARK: Onboarding
+
+    /// Finishes the first launch: the first Profile takes the name, symbol, search engine and web content settings the
+    /// user chose, and onboarding is not offered again. Does nothing when onboarding is not pending.
+    public func completeOnboarding(name: String, symbol: String, searchEngine: SearchEngine,
+                                   webContent: WebContentSettings) {
+        guard isOnboardingPending, let first = profiles.first else { return }
+        renameProfile(first.id, name: name, symbol: symbol)
+        let context = context(for: first.id)
+        context.session.chooseSearchEngine(searchEngine)
+        context.webContentSettings = webContent
+        do {
+            try appDatabase?.setOnboardingPending(false)
+        } catch {
+            onError("The end of the onboarding could not be saved", error)
+        }
+        isOnboardingPending = false
     }
 
     // MARK: Creating and renaming

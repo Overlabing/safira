@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Antonin Carlin
 
 import Foundation
+import SafiraCore
 
 /// A named set of keyboard shortcuts, chosen at onboarding and editable afterwards.
 public enum ShortcutPreset: String, CaseIterable, Sendable, Codable {
@@ -89,5 +90,22 @@ public struct PresetData: Sendable {
         let note: String?
         let bindings: [String: Entry]
         let unbound: [String: String]
+    }
+}
+
+extension ShortcutPreset {
+    /// The entry for the Shortcut preset: the user picks Zen, Arc or Safari, and may keep Safira's own shortcuts.
+    public static var defaultEntries: [DefaultEntry] {
+        [
+            DefaultEntry(
+                id: "shortcuts.preset",
+                title: "Shortcut preset",
+                value: "Chosen by you",
+                explanation: "Zen, Arc or Safari shortcuts. A command the preset has no equivalent for keeps Safira's own "
+                    + "shortcut. Without a preset, Safira's own shortcuts apply. You can change any shortcut afterwards.",
+                whereToChange: "Safira menu, Shortcuts…",
+                control: .choice
+            ),
+        ]
     }
 }

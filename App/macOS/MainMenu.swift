@@ -9,7 +9,7 @@ import SafiraCore
 @MainActor
 enum MainMenu {
     static func make(updates: UpdateController, diagnostics: DiagnosticsController, links: LinkController,
-                     shortcuts: KeyBindings, shortcutsWindow: ShortcutsWindowController, app: AppDelegate) -> NSMenu {
+                     defaults: DefaultsController, shortcuts: KeyBindings, shortcutsWindow: ShortcutsWindowController, app: AppDelegate) -> NSMenu {
         func item(_ id: CommandID, _ action: Selector?) -> NSMenuItem { commandItem(id, action, shortcuts) }
         let menu = NSMenu()
         menu.addItem(submenu(title: "Safira", items: [
@@ -20,6 +20,8 @@ enum MainMenu {
             .separator(),
             target(shortcutsWindow, NSMenuItem(title: "Shortcuts…", action: #selector(ShortcutsWindowController.show(_:)),
                                                keyEquivalent: "")),
+            target(defaults, NSMenuItem(title: "Defaults…", action: #selector(DefaultsController.showDefaults(_:)),
+                                        keyEquivalent: "")),
             .separator(),
             target(links, NSMenuItem(title: "Make Safira the Default Browser…", action: #selector(LinkController.makeDefaultBrowser(_:)),
                                      keyEquivalent: "")),

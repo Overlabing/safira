@@ -27,7 +27,8 @@ public struct AskForSpaceSettings: Hashable, Sendable, Codable {
                 title: title,
                 value: AskForSpaceSettings().isEnabled ? "On" : "Off",
                 explanation: explanation,
-                whereToChange: "Safira menu"
+                whereToChange: "Safira menu",
+                control: .toggle(isOn: AskForSpaceSettings().isEnabled)
             ),
         ]
     }

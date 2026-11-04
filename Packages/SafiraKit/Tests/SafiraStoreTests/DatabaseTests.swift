@@ -679,7 +679,7 @@ private let notesFolder = FolderID(rawValue: UUID(uuidString: "DDDDDDDD-DDDD-4DD
 
         #expect(try database.profiles() == [Profile(id: work, name: "Default", symbol: "👤")])
         #expect(try database.lastActiveProfileID() == work)
-        #expect(try migrations(file) == ["v1-profiles", "v2-profile-details"])
+        #expect(try migrations(file) == ["v1-profiles", "v2-profile-details", "v3-onboarding"])
     }
 
     @Test func aRenamedProfileKeepsItsPlaceAndItsNewNameAfterAReopen() throws {
@@ -708,6 +708,48 @@ private let notesFolder = FolderID(rawValue: UUID(uuidString: "DDDDDDDD-DDDD-4DD
 
         try database.markForDeletion(personal)
         #expect(try database.lastActiveProfileID() == nil)
+    }
+
+    @Test func onboardingIsNotPendingUntilALaunchMarksItAndItsMarkSurvivesTheActiveProfileBeingRemembered() throws {
+        let root = TemporaryRoot()
+        let database = try AppDatabase(file: root.layout.appDatabaseFile)
+        try database.add(Profile(id: work, name: "Work"))
+        #expect(try database.isOnboardingPending() == false)
+
+        try database.setOnboardingPending(true)
+        try database.setLastActiveProfileID(work)
+
+        #expect(try AppDatabase(file: root.layout.appDatabaseFile).isOnboardingPending())
+        #expect(try database.lastActiveProfileID() == work)
+        try database.setOnboardingPending(false)
+        #expect(try AppDatabase(file: root.layout.appDatabaseFile).isOnboardingPending() == false)
+        #expect(try database.lastActiveProfileID() == work)
+    }
+
+    @Test func aProfileListYouAlreadyHadNeverGetsAnOnboarding() throws {
+        let root = TemporaryRoot()
+        let file = root.layout.appDatabaseFile
+        try FileManager.default.createDirectory(at: root.layout.root, withIntermediateDirectories: true)
+        let queue = try DatabaseQueue(path: file.path(percentEncoded: false))
+        try queue.write { db in
+            try db.execute(sql: """
+                CREATE TABLE grdb_migrations (identifier TEXT NOT NULL PRIMARY KEY);
+                INSERT INTO grdb_migrations VALUES ('v1-profiles');
+                INSERT INTO grdb_migrations VALUES ('v2-profile-details');
+                CREATE TABLE profile (id TEXT PRIMARY KEY, name TEXT NOT NULL, position INTEGER NOT NULL,
+                    symbol TEXT NOT NULL DEFAULT '👤', palette_id TEXT, network_config TEXT,
+                    pending_deletion BOOLEAN NOT NULL DEFAULT 0);
+                CREATE TABLE app_state (id INTEGER PRIMARY KEY CHECK (id = 1), last_profile_id TEXT);
+                INSERT INTO profile (id, name, position) VALUES ('0B4E2C1A-5D3F-4E8B-9A7C-1F2E3D4C5B6A', 'Default', 0);
+                INSERT INTO app_state (id, last_profile_id) VALUES (1, '0B4E2C1A-5D3F-4E8B-9A7C-1F2E3D4C5B6A');
+                """)
+        }
+        try queue.close()
+
+        let database = try AppDatabase(file: file)
+
+        #expect(try database.isOnboardingPending() == false)
+        #expect(try database.lastActiveProfileID() == work)
     }
 
     @Test func aProfileBeingDeletedLeavesTheListButStaysRecordedUntilItIsErased() throws {

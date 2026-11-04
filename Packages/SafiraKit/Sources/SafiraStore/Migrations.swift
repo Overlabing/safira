@@ -138,6 +138,13 @@ enum Migrations {
             }
             try db.execute(sql: "INSERT INTO app_state (id, last_profile_id) SELECT 1, id FROM profile ORDER BY position LIMIT 1")
         }
+        // Set when a first launch creates the first Profile and cleared when onboarding finishes, so that an onboarding cut
+        // short is offered again, and a Profile list that already existed never gets one.
+        migrator.registerMigration("v3-onboarding") { db in
+            try db.alter(table: "app_state") { table in
+                table.add(column: "onboarding_pending", .boolean).notNull().defaults(to: false)
+            }
+        }
         return migrator
     }
 }
