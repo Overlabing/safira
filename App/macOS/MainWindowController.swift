@@ -40,6 +40,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
     private lazy var permissionPrompter = PermissionPrompter(
         window: { [weak self] in self?.window },
         profileName: { [weak self] id in self?.registry.profiles.first { $0.id == id }?.name ?? "" })
+    private let externalApps = WorkspaceExternalApps()
     private let suggestionModel = CommandBarSuggestionModel()
     private var suggestionHost: CommandBarSuggestionHostingView?
     private var suggestionTask: Task<Void, Never>?
@@ -65,6 +66,11 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         super.init(window: window)
         window.delegate = self
         registry.permissionPrompt = { [unowned self] prompt in await permissionPrompter.ask(prompt) }
+        registry.appLinkHandlers = AppLinkHandlers(
+            launcher: externalApps,
+            prompt: { [unowned self] prompt in await permissionPrompter.confirmOpen(prompt) },
+            refusal: { [unowned self] refusal in await permissionPrompter.refuseOpen(refusal) },
+            openFailure: { [unowned self] app, _ in await permissionPrompter.reportOpenFailure(of: app) })
         layOut(in: window)
         layout?.apply(presentation, animated: false)
         window.center()

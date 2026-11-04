@@ -25,10 +25,12 @@ public final class Popup: Identifiable {
         state = page.state
     }
 
-    func attach(onClose: @escaping @MainActor () -> Void, onNewTab: @escaping @MainActor (NewTabRequest) -> Void) {
+    func attach(onClose: @escaping @MainActor () -> Void, onNewTab: @escaping @MainActor (NewTabRequest) -> Void,
+                onNonWebLink: @escaping @MainActor (NonWebLink, String?) -> Void) {
         page.onStateChange = { [weak self] state in self?.state = state }
         page.onDidClose = onClose
         page.onNewTab = onNewTab
+        page.onNonWebLink = { [weak self] link in onNonWebLink(link, self?.state.url?.host) }
     }
 
     func close() {
@@ -37,6 +39,7 @@ public final class Popup: Identifiable {
         page.onStateChange = nil
         page.onDidClose = nil
         page.onNewTab = nil
+        page.onNonWebLink = nil
         page.close()
     }
 }
