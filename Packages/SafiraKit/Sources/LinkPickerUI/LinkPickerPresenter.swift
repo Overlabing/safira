@@ -33,7 +33,7 @@ public final class LinkPickerPresenter: ProfileChoosing {
     public init() {}
 
     public func chooseProfile(for link: IncomingLink, among profiles: [Profile],
-                              alreadyOpenIn: Set<ProfileID>) async -> ProfileID? {
+                              alreadyOpenIn: Set<ProfileID>) async -> PickerAnswer<ProfileID>? {
         guard !profiles.isEmpty else { return nil }
         let open = profiles.filter { alreadyOpenIn.contains($0.id) }.map(\.name).formatted(.list(type: .and))
         let announcement = Self.announcement(for: link, rowCount: profiles.count) {
@@ -43,20 +43,22 @@ public final class LinkPickerPresenter: ProfileChoosing {
                          wording: .profile, announcement: announcement)
     }
 
-    public func chooseSpace(for link: IncomingLink, in profile: Profile, among spaces: [SpaceChoice]) async -> SpaceID? {
+    public func chooseSpace(for link: IncomingLink, in profile: Profile, among spaces: [SpaceChoice],
+                            remembering: Bool) async -> PickerAnswer<SpaceID>? {
         guard !spaces.isEmpty else { return nil }
         let announcement = Self.announcement(for: link, rowCount: spaces.count) {
             String(localized: "Choose a Space of \(profile.name) for the link to \($0)")
         }
-        return await ask(LinkPickerModel(link: link, spaces: spaces), wording: .space, announcement: announcement)
+        return await ask(LinkPickerModel(link: link, spaces: spaces, remembers: remembering), wording: .space,
+                         announcement: announcement)
     }
 
     private func ask<ID: Hashable & Sendable>(_ model: LinkPickerModel<ID>, wording: LinkPickerWording,
-                                              announcement: String) async -> ID? {
+                                              announcement: String) async -> PickerAnswer<ID>? {
         await withCheckedContinuation { continuation in
             let open = Session(model: model, wording: wording, announcement: announcement) { [weak self] choice in
                 self?.session = nil
-                continuation.resume(returning: choice)
+                continuation.resume(returning: choice.map { PickerAnswer($0, remembers: model.remembers) })
             }
             session = AnySession(open)
         }
@@ -64,7 +66,8 @@ public final class LinkPickerPresenter: ProfileChoosing {
 
     private static func announcement(for link: IncomingLink, rowCount: Int, question: (String) -> String) -> String {
         let from = link.opener?.name.map { String(localized: ", from \($0)") } ?? ""
-        return question(link.title) + from + String(localized: ". Press a number from 1 to \(min(rowCount, 9)), or use the arrow keys and Return. Escape dismisses it.")
+        let always = link.rememberableHost.map { String(localized: " Press A to always send links from \($0) there.") } ?? ""
+        return question(link.title) + from + String(localized: ". Press a number from 1 to \(min(rowCount, 9)), or use the arrow keys and Return.") + always + String(localized: " Escape dismisses it.")
     }
 
     /// Keeps the open question alive without naming its choice type.
@@ -89,7 +92,8 @@ public final class LinkPickerPresenter: ProfileChoosing {
             self.model = model
             self.finished = finished
             let screen = Self.screenForPanel()
-            let layout = LinkPickerLayout(closedSize: Self.closedSize(of: screen), rowCount: model.rows.count)
+            let layout = LinkPickerLayout(closedSize: Self.closedSize(of: screen), rowCount: model.rows.count,
+                                          hasRememberRow: model.rememberedHost != nil)
             // A fixed transparent canvas; only the notch shape inside it animates.
             let size = NSSize(width: layout.openSize.width + 80, height: layout.openSize.height + 60)
             panel = LinkPickerPanel(contentRect: NSRect(origin: .zero, size: size),
@@ -121,8 +125,13 @@ public final class LinkPickerPresenter: ProfileChoosing {
             // Menu shortcuts (⌘Q, ⌘H) are not the panel's to swallow.
             guard event.modifierFlags.intersection([.command, .control, .option]).isEmpty else { return false }
             let before = model.highlightedRow
+            let remembered = model.remembers
             if let input = Self.input(for: event) {
                 apply(model.handle(input))
+                if model.remembers != remembered {
+                    Self.announce(model.remembers ? String(localized: "Always on: the choice becomes a Link rule")
+                                                  : String(localized: "Always off"))
+                }
                 if let row = model.highlightedRow, row != before, !isDone {
                     Self.announce(String(localized: "\(row.name), key \(row.number)"))
                 }

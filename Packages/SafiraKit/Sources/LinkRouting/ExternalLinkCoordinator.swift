@@ -24,14 +24,35 @@ public protocol LinkDestination: AnyObject {
     func focus(_ match: MatchingTab, openedFrom link: URL) -> Bool
 }
 
+/// What the user chose in the Link picker, and whether they also asked for it to become a Link rule ("always").
+public struct PickerAnswer<Choice: Hashable & Sendable>: Hashable, Sendable {
+    public let choice: Choice
+    public let remembers: Bool
+
+    public init(_ choice: Choice, remembers: Bool = false) {
+        self.choice = choice
+        self.remembers = remembers
+    }
+}
+
 /// Asks the user which Profile receives a link.
 @MainActor
 public protocol ProfileChoosing: AnyObject {
     /// Returns once the user has chosen, or nil when they dismissed the question. Nothing is preselected;
     /// `alreadyOpenIn` only marks the Profiles that have a Tab showing the link.
-    func chooseProfile(for link: IncomingLink, among profiles: [Profile], alreadyOpenIn: Set<ProfileID>) async -> ProfileID?
+    func chooseProfile(for link: IncomingLink, among profiles: [Profile],
+                       alreadyOpenIn: Set<ProfileID>) async -> PickerAnswer<ProfileID>?
     /// Returns once the user has chosen one of the Profile's Spaces, or nil when they dismissed the question.
-    func chooseSpace(for link: IncomingLink, in profile: Profile, among spaces: [SpaceChoice]) async -> SpaceID?
+    /// `remembering` is what "always" was set to in the Profile step.
+    func chooseSpace(for link: IncomingLink, in profile: Profile, among spaces: [SpaceChoice],
+                     remembering: Bool) async -> PickerAnswer<SpaceID>?
+}
+
+/// Where a choice the user asked to keep becomes a Link rule. A failure is the implementation's to tell the user.
+@MainActor
+public protocol LinkRuleRemembering: AnyObject {
+    /// Adds a rule that sends links from `host` to the Profile, and to the Space when one was chosen.
+    func rememberChoice(host: String, profile: ProfileID, space: SpaceID?)
 }
 
 /// Takes the links other apps send and delivers them one at a time: a link that arrives while the Link picker is
@@ -43,6 +64,7 @@ public final class ExternalLinkCoordinator {
     private let router: LinkRouter
     private let nativeApplications: any NativeApplications
     private let choiceLog: LinkChoiceLog?
+    private let rememberer: (any LinkRuleRemembering)?
     private let asksForSpace: @MainActor () -> Bool
     private var pending: [IncomingLink] = []
     private var draining: Task<Void, Never>?
@@ -50,12 +72,13 @@ public final class ExternalLinkCoordinator {
     /// - Parameter asksForSpace: whether the Link picker asks for the Space after the Profile; read for each link.
     public init(destination: any LinkDestination, chooser: any ProfileChoosing, router: LinkRouter,
                 nativeApplications: any NativeApplications, choiceLog: LinkChoiceLog? = nil,
-                asksForSpace: @escaping @MainActor () -> Bool = { false }) {
+                rememberer: (any LinkRuleRemembering)? = nil, asksForSpace: @escaping @MainActor () -> Bool = { false }) {
         self.destination = destination
         self.chooser = chooser
         self.router = router
         self.nativeApplications = nativeApplications
         self.choiceLog = choiceLog
+        self.rememberer = rememberer
         self.asksForSpace = asksForSpace
     }
 
@@ -78,16 +101,27 @@ public final class ExternalLinkCoordinator {
         draining = nil
     }
 
+    /// Where `link` would go right now, by the very decision `deliver` makes, but without reporting an invalid rules file
+    /// and without waiting for an installed app: for the Link rules window's "Where would this link go?".
+    public func route(for link: IncomingLink) -> LinkRoute {
+        route(for: link, using: router.withoutReporting())
+    }
+
+    private func route(for link: IncomingLink, using router: LinkRouter, includingNativeApps: Bool = true) -> LinkRoute {
+        let destination = destination
+        return router.route(for: link, among: destination.profiles, spacesOf: { destination.spaces(in: $0) },
+                            matchingTab: { destination.matchingTab(for: $1, in: $0) },
+                            includingNativeApps: includingNativeApps)
+    }
+
     private func deliver(_ link: IncomingLink) async {
         let profiles = destination.profiles
         let destination = destination
-        let spacesOf: (ProfileID) -> [SpaceChoice] = { destination.spaces(in: $0) }
         let matchingTab: MatchingTabLookup = { destination.matchingTab(for: $1, in: $0) }
-        var decision = router.decide(for: link, among: profiles, spacesOf: spacesOf, matchingTab: matchingTab)
+        var decision = route(for: link, using: router).decision
         if case .openNative(let native) = decision {
             if await nativeApplications.open(native.url, bundleIdentifier: native.app.bundleIdentifier) { return }
-            decision = router.decide(for: link, among: profiles, spacesOf: spacesOf, matchingTab: matchingTab,
-                                     includingNativeApps: false)
+            decision = route(for: link, using: router, includingNativeApps: false).decision
         }
         switch decision {
         case .open(let target):
@@ -95,25 +129,34 @@ public final class ExternalLinkCoordinator {
         case .focus(let match):
             destination.focus(match, openedFrom: link.url)
         case .ask, .openNative:  // `includingNativeApps: false` never yields .openNative
-            guard let target = await askTarget(for: link, among: profiles, matchingTab: matchingTab) else { return }
+            guard let answer = await askTarget(for: link, among: profiles, matchingTab: matchingTab) else { return }
+            let target = answer.choice
             let delivered = if let match = router.matchingTab(for: link, in: target, lookup: matchingTab) {
                 destination.focus(match, openedFrom: link.url)
             } else {
                 destination.open(link.url, in: target)
             }
-            if delivered { choiceLog?.record(link.url, chosen: target.profile) }
+            guard delivered else { return }
+            choiceLog?.record(link.url, chosen: target.profile)
+            if answer.remembers, let host = link.rememberableHost {
+                rememberer?.rememberChoice(host: host, profile: target.profile, space: target.space)
+            }
         }
     }
 
     private func askTarget(for link: IncomingLink, among profiles: [Profile],
-                           matchingTab: MatchingTabLookup) async -> LinkTarget? {
+                           matchingTab: MatchingTabLookup) async -> PickerAnswer<LinkTarget>? {
         let alreadyOpen = router.profilesShowing(link, among: profiles, lookup: matchingTab)
-        guard let id = await chooser.chooseProfile(for: link, among: profiles, alreadyOpenIn: alreadyOpen) else { return nil }
-        guard asksForSpace(), let profile = profiles.first(where: { $0.id == id }) else { return LinkTarget(profile: id) }
+        guard let answer = await chooser.chooseProfile(for: link, among: profiles, alreadyOpenIn: alreadyOpen) else { return nil }
+        let id = answer.choice
+        guard asksForSpace(), let profile = profiles.first(where: { $0.id == id }) else {
+            return PickerAnswer(LinkTarget(profile: id), remembers: answer.remembers)
+        }
         let spaces = destination.spaces(in: id)
         // A Profile with one Space has nothing to choose.
-        guard spaces.count > 1 else { return LinkTarget(profile: id) }
-        guard let space = await chooser.chooseSpace(for: link, in: profile, among: spaces) else { return nil }
-        return LinkTarget(profile: id, space: space)
+        guard spaces.count > 1 else { return PickerAnswer(LinkTarget(profile: id), remembers: answer.remembers) }
+        guard let spaceAnswer = await chooser.chooseSpace(for: link, in: profile, among: spaces,
+                                                          remembering: answer.remembers) else { return nil }
+        return PickerAnswer(LinkTarget(profile: id, space: spaceAnswer.choice), remembers: spaceAnswer.remembers)
     }
 }

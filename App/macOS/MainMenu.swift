@@ -29,6 +29,8 @@ enum MainMenu {
                                      keyEquivalent: "")),
             target(links, NSMenuItem(title: AskForSpaceSettings.title, action: #selector(LinkController.toggleAskForSpace(_:)),
                                      keyEquivalent: "")),
+            target(links, NSMenuItem(title: "Link Rules…", action: #selector(LinkController.showLinkRulesWindow(_:)),
+                                     keyEquivalent: "")),
             target(links, NSMenuItem(title: "Show Link Rules in Finder", action: #selector(LinkController.showLinkRules(_:)),
                                      keyEquivalent: "")),
             target(links, NSMenuItem(title: "Grant Access to Slack's Folder…", action: #selector(LinkController.grantSlackFolder(_:)),

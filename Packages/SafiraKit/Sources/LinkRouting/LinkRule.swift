@@ -66,6 +66,15 @@ public struct LinkRule: Hashable, Sendable {
 public enum NativeApp: String, CaseIterable, Hashable, Sendable {
     case slack, linear, notion, figma
 
+    public var displayName: String {
+        switch self {
+        case .slack: "Slack"
+        case .linear: "Linear"
+        case .notion: "Notion"
+        case .figma: "Figma"
+        }
+    }
+
     public var bundleIdentifier: String {
         switch self {
         case .slack: "com.tinyspeck.slackmacgap"

@@ -45,3 +45,11 @@ public struct IncomingLink: Hashable, Sendable {
         isLocalFile ? url.path(percentEncoded: false) : url.absoluteString
     }
 }
+
+extension IncomingLink {
+    /// The host a Link rule made from "always" matches: only a web link has one.
+    public var rememberableHost: String? {
+        guard isWebLink, let host = url.host(percentEncoded: false)?.lowercased(), !host.isEmpty else { return nil }
+        return host
+    }
+}
