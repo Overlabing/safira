@@ -10,6 +10,7 @@ public enum CommandID: String, CaseIterable, Hashable, Sendable {
     case previousTab, nextTab, moveTabUp, moveTabDown
     case commandBarNext, commandBarPrevious
     case newSpace, renameSpace, deleteSpace, previousSpace, nextSpace, moveSpaceLeft, moveSpaceRight
+    case togglePin, newFolder
 }
 
 /// Where a shortcut is heard. A window shortcut works whatever has the keyboard focus (it is a menu key equivalent);
@@ -65,6 +66,8 @@ public enum CommandRegistry {
         window(.nextSpace, "Show Next Space", Shortcut(.right, [.command, .control])),
         window(.moveSpaceLeft, "Move Space Left", nil),
         window(.moveSpaceRight, "Move Space Right", nil),
+        window(.togglePin, "Pin or Unpin Tab", nil),
+        window(.newFolder, "New Folder…", nil),
         Command(id: .commandBarNext, title: "Command Bar: Move to the Tab List", scope: .commandBar,
                 defaultShortcut: Shortcut(.tab), isReserved: false, isRebindable: false, isImplemented: true),
         Command(id: .commandBarPrevious, title: "Command Bar: Move to the Tab List, Backward", scope: .commandBar,
