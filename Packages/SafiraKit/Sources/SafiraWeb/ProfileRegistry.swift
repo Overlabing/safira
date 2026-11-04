@@ -288,6 +288,11 @@ public final class ProfileRegistry {
             }
         }
         let context = ProfileContext(id: id, database: database, diagnostics: diagnostics, onError: onError)
+        // Inside the Profile's own folder, so it is erased with the Profile and never shared with another.
+        if let layout {
+            context.web.downloadsFallbackDirectory = layout.profileDirectory(for: id)
+                .appending(path: "Downloads", directoryHint: .isDirectory)
+        }
         context.web.permissionPrompt = permissionPrompt
         context.session.appLinks.handlers = appLinkHandlers
         return context

@@ -56,6 +56,13 @@ public final class ProfileDownloads {
         }
     }
 
+    /// True while files are saved in Safira's own folder because the user declined access to the Downloads folder.
+    public private(set) var savesInAppFolder = false
+
+    public func setSavesInAppFolder(_ value: Bool) {
+        if savesInAppFolder != value { savesInAppFolder = value }
+    }
+
     public var hasActiveDownload: Bool {
         all.contains { $0.state == .active }
     }
@@ -80,8 +87,12 @@ public final class ProfileDownloads {
         transfers[id] = transfer
     }
 
-    public func named(_ id: DownloadID, fileName: String) {
-        update(id) { $0.fileName = fileName }
+    /// The engine has chosen where and under which name the file is saved.
+    public func named(_ id: DownloadID, fileName: String, folder: URL? = nil) {
+        update(id) {
+            $0.fileName = fileName
+            if let folder { $0.folder = folder }
+        }
     }
 
     /// Progress is kept for this run only; the database learns the byte count when the transfer ends.

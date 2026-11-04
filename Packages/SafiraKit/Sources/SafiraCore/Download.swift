@@ -34,12 +34,16 @@ public struct DownloadRecord: Hashable, Sendable, Identifiable {
     public var totalBytes: Int64?
     /// What the engine needs to continue a cancelled or failed transfer where it stopped.
     public var resumeData: Data?
+    /// The folder the file is saved in, which a retry or a resume after a relaunch must look in even when the
+    /// Profile's folder has changed since. Nil until the destination is chosen, and for downloads saved before this
+    /// was recorded, which went to the Profile's folder.
+    public var folder: URL?
     public let startedAt: Date
     public var finishedAt: Date?
 
     public init(id: DownloadID = DownloadID(), sourceURL: URL, fileName: String, fileBookmark: Data? = nil,
                 state: DownloadState = .active, receivedBytes: Int64 = 0, totalBytes: Int64? = nil,
-                resumeData: Data? = nil, startedAt: Date, finishedAt: Date? = nil) {
+                resumeData: Data? = nil, folder: URL? = nil, startedAt: Date, finishedAt: Date? = nil) {
         self.id = id
         self.sourceURL = sourceURL
         self.fileName = fileName
@@ -48,6 +52,7 @@ public struct DownloadRecord: Hashable, Sendable, Identifiable {
         self.receivedBytes = receivedBytes
         self.totalBytes = totalBytes
         self.resumeData = resumeData
+        self.folder = folder
         self.startedAt = startedAt
         self.finishedAt = finishedAt
     }
