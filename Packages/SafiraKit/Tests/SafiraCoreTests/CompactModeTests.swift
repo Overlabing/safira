@@ -76,6 +76,21 @@ import Testing
     #expect(relaunched.isRevealed == false)
 }
 
+@Test func compactModeIsWhatIsSavedNotWhetherTheSidebarWasRevealed() throws {
+    let suite = "CompactModeTests-\(UUID().uuidString)"
+    let defaults = try #require(UserDefaults(suiteName: suite))
+    defer { defaults.removePersistentDomain(forName: suite) }
+    let presentation = SidebarPresentation(isCompact: true)
+    #expect(presentation.isRevealed == false)
+
+    CompactModeStore(defaults: defaults).save(presentation)
+    let relaunched = CompactModeStore(defaults: defaults).load()
+
+    #expect(relaunched == SidebarPresentation(isCompact: true))
+    #expect(relaunched.isCompact == true)
+    #expect(relaunched.isRevealed == false)
+}
+
 @Test func aFreshInstallStartsOutsideCompactMode() throws {
     let suite = "CompactModeTests-\(UUID().uuidString)"
     let defaults = try #require(UserDefaults(suiteName: suite))

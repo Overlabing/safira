@@ -7,6 +7,6 @@ MainActor.assumeIsolated {
     let application = NSApplication.shared
     let delegate = AppDelegate()
     application.delegate = delegate
-    application.mainMenu = MainMenu.make(updates: delegate.updates, diagnostics: delegate.diagnostics)
+    delegate.rebuildMenu()
     application.run()
 }
