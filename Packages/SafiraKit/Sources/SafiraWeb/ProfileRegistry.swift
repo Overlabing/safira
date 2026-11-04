@@ -111,7 +111,6 @@ public final class ProfileRegistry {
         let settings = ProfileSettings(searchEngine: searchEngine)
         do {
             try appDatabase?.add(profile)
-            try database(for: profile.id).save(settings)
         } catch {
             onError("The new Profile could not be saved", error)
         }
@@ -172,7 +171,13 @@ public final class ProfileRegistry {
 
     private func makeContext(_ id: ProfileID, settings: ProfileSettings?) -> ProfileContext {
         let database = database(for: id)
-        if let settings { try? database.save(settings) }
+        if let settings {
+            do {
+                try database.save(settings)
+            } catch {
+                onError("The new Profile's settings could not be saved", error)
+            }
+        }
         return ProfileContext(id: id, database: database, diagnostics: diagnostics, onError: onError)
     }
 

@@ -520,10 +520,12 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         guard let window else { return }
         switch (query, searchEngineSheet) {
         case (let query?, nil):
+            // The engine goes to the Profile the search was typed in, even if another one is shown by then.
+            let session = session
             let picker = SearchEnginePicker(
                 query: query,
-                choose: { [weak self] engine in self?.session.chooseSearchEngine(engine) },
-                cancel: { [weak self] in self?.session.cancelSearchEngineChoice() }
+                choose: { [weak session] engine in session?.chooseSearchEngine(engine) },
+                cancel: { [weak session] in session?.cancelSearchEngineChoice() }
             )
             let sheet = NSWindow(contentViewController: NSHostingController(rootView: picker))
             searchEngineSheet = sheet
