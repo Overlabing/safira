@@ -87,7 +87,7 @@ private final class Atomic: @unchecked Sendable {
             #expect(page.state.title == "Secret Quarterly Title")
             page.close()
         }
-        try await removeDataStore(profile)
+        await removeDataStoreWhenReleased(profile)
     }
 
     private func waitForLine(containing marker: String, in context: ProfileWebContext, logs: URL) async throws -> String {
@@ -106,14 +106,5 @@ private final class Atomic: @unchecked Sendable {
         guard FileManager.default.fileExists(atPath: logs.path) else { return "" }
         return try FileManager.default.contentsOfDirectory(at: logs, includingPropertiesForKeys: nil)
             .map { try String(contentsOf: $0, encoding: .utf8) }.joined()
-    }
-
-    private func removeDataStore(_ profile: ProfileID) async throws {
-        for _ in 1..<50 {
-            do { return try await ProfileWebContext.removeDataStore(of: profile) } catch {
-                try await Task.sleep(for: .milliseconds(100))
-            }
-        }
-        try await ProfileWebContext.removeDataStore(of: profile)
     }
 }
