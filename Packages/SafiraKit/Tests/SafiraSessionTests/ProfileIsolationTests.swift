@@ -112,11 +112,8 @@ private func open(_ address: String, in fixture: SessionFixture) -> TabID {
         fixture.session.submitCommandBar("weather")
         fixture.session.chooseSearchEngine(.braveSearch)
 
-        let deadline = ContinuousClock.now + .seconds(5)
-        while (try connection.settings().searchEngine) == nil, ContinuousClock.now < deadline {
-            try await Task.sleep(for: .milliseconds(20))
-        }
+        let latest = try await waitForSave({ try connection.settings() }, until: { $0.searchEngine != nil })
         autosave.stop()
-        #expect(try connection.settings().searchEngine == .braveSearch)
+        #expect(try #require(latest).searchEngine == .braveSearch)
     }
 }
