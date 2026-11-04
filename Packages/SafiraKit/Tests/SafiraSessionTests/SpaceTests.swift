@@ -351,20 +351,20 @@ private func names(_ session: ProfileSession) -> [String] {
     @Test func aSpaceChangeIsSavedShortlyAfterwardsWithoutAskingForIt() async throws {
         let database = TemporaryDatabase()
         let fixture = SessionFixture()
-        let autosave = SessionAutosave(session: fixture.session, database: try database.open(), delay: .milliseconds(10))
+        let connection = try database.open()
+        let autosave = SessionAutosave(session: fixture.session, database: connection, delay: .milliseconds(10))
         autosave.start()
         await autosave.saveNow()
         let reading = fixture.session.createSpace(name: "Reading", emoji: "📚")
         fixture.session.renameSpace(reading, name: "Research", emoji: "🔬")
 
-        let reader = try database.open()
         let deadline = ContinuousClock.now + .seconds(5)
-        while try reader.savedSession().activeSpace?.name != "Research", ContinuousClock.now < deadline {
+        while try connection.savedSession().activeSpace?.name != "Research", ContinuousClock.now < deadline {
             try await Task.sleep(for: .milliseconds(20))
         }
         autosave.stop()
 
-        let saved = try reader.savedSession()
+        let saved = try connection.savedSession()
         #expect(saved.spaces.map { "\($0.emoji) \($0.name)" } == ["🏠 Home", "🔬 Research"])
         #expect(saved.activeSpaceID == reading)
     }
