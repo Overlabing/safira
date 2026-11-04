@@ -27,6 +27,7 @@ public enum DefaultsRegistry {
             + BuiltInDefaults.entries.filter {
                 ["session.lazyRestoration", "nonWebLinks.confirmation", "downloads.folder"].contains($0.id)
             }
+            + SidebarSide.defaultEntries
             + SidebarPresentation.defaultEntries
     }
 

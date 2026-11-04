@@ -17,10 +17,12 @@ final class DefaultsController: NSObject {
     private let diagnostics: DiagnosticsController
     private let links: LinkController
     private let shortcuts: ShortcutController
+    private let sidebarSide: SidebarSideSetting
     private var window: NSWindow?
 
     init(registry: ProfileRegistry, updates: UpdateController, diagnostics: DiagnosticsController, links: LinkController,
-         shortcuts: ShortcutController) {
+         shortcuts: ShortcutController, sidebarSide: SidebarSideSetting) {
+        self.sidebarSide = sidebarSide
         self.registry = registry
         self.updates = updates
         self.diagnostics = diagnostics
@@ -38,6 +40,7 @@ final class DefaultsController: NSObject {
         case "linkMatching.focusOpenTab": links.focusesMatchingTab
         case "linkPicker.askForSpace": links.asksForSpaceToo
         case "linkPicker.choiceLog": links.logsChoices
+        case SidebarSideStore.key: sidebarSide.isRight
         default: nil
         }
     }
@@ -51,6 +54,7 @@ final class DefaultsController: NSObject {
         case "linkMatching.focusOpenTab": links.focusesMatchingTab = isOn
         case "linkPicker.askForSpace": links.asksForSpaceToo = isOn
         case "linkPicker.choiceLog": links.logsChoices = isOn
+        case SidebarSideStore.key: sidebarSide.isRight = isOn
         default: break
         }
     }
@@ -100,6 +104,7 @@ final class DefaultsController: NSObject {
             let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 600, height: 640),
                                   styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
             window.title = String(localized: "Defaults")
+            window.isRestorable = false
             window.isReleasedWhenClosed = false
             window.center()
             return window

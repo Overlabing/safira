@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Antonin Carlin
 
+import DesignKit
 import SafiraCore
 import SafiraSession
 import SwiftUI
@@ -11,30 +12,6 @@ struct FolderActions {
     /// Opens the naming sheet for a new Folder, inside the given Folder or at the top of the pinned area.
     let create: (FolderID?) -> Void
     let rename: (FolderID) -> Void
-}
-
-/// A row of the pinned area, flattened from the tree of Folders: a collapsed Folder hides what it holds.
-struct PinnedRow: Identifiable {
-    enum Content {
-        case folder(Folder, depth: Int)
-        case tab(SafiraSession.Tab, depth: Int)
-    }
-
-    let id: PinnedItemID
-    let content: Content
-
-    @MainActor
-    static func rows(_ items: [PinnedItem], depth: Int = 0) -> [PinnedRow] {
-        items.flatMap { item -> [PinnedRow] in
-            switch item {
-            case .tab(let tab):
-                [PinnedRow(id: .tab(tab.id), content: .tab(tab, depth: depth))]
-            case .folder(let folder):
-                [PinnedRow(id: .folder(folder.id), content: .folder(folder, depth: depth))]
-                    + (folder.isExpanded ? rows(folder.items, depth: depth + 1) : [])
-            }
-        }
-    }
 }
 
 /// What a drag carries: a Pinned tab or a Folder. Plain Tabs are never offered, and a drop that does not parse is
@@ -64,52 +41,80 @@ private extension String {
     }
 }
 
-struct FolderRow: View {
-    let folder: Folder
-    let depth: Int
+/// The active Space's pinned area: its Pinned tabs and its Folders, each Folder a kit `FolderRow` whose open content
+/// sits on one `LayerPanel`; a Folder inside a Folder is indented one level in the same panel.
+struct PinnedSection: View {
     let session: ProfileSession
+    let focus: ColumnFocus
     let actions: FolderActions
-    @State private var isDropTarget = false
-    @Environment(\.sidebarSecondary) private var secondary
 
     var body: some View {
-        HStack(spacing: 6) {
-            Image(systemName: "chevron.right")
-                .rotationEffect(.degrees(folder.isExpanded ? 90 : 0))
-                .foregroundStyle(secondary)
-                .frame(width: 12)
-            Image(systemName: folder.isExpanded ? "folder.fill" : "folder")
-                .foregroundStyle(secondary)
-            Text(folder.name)
-                .lineLimit(1)
-                .truncationMode(.tail)
-            Spacer(minLength: 0)
+        ForEach(session.pinnedItems) { item in
+            switch item {
+            case .tab(let tab):
+                pinnedTab(tab, placement: .free(firstInSection: false))
+            case .folder(let folder):
+                PinnedFolder(folder: folder, session: session, actions: actions)
+                if folder.isExpanded, !folder.items.isEmpty {
+                    LayerPanel { contents(of: folder, level: 1) }
+                }
+            }
         }
-        .padding(.leading, CGFloat(depth) * 14)
-        .padding(.vertical, 2)
-        .contentShape(Rectangle())
-        .background(isDropTarget ? Color.accentColor.opacity(0.25) : .clear, in: RoundedRectangle(cornerRadius: 4))
-        .onTapGesture { session.setFolderExpanded(folder.id, !folder.isExpanded) }
-        .draggable(PinnedDrag.text(for: .folder(folder.id)))
-        .dropDestination(for: String.self, action: { texts, _ in
-            guard let item = texts.first.flatMap(PinnedDrag.item(from:)) else { return false }
-            return session.movePinned(item, into: folder.id)
-        }, isTargeted: { isDropTarget = $0 })
-        .contextMenu {
-            Button("New Folder Inside…") { actions.create(folder.id) }
-            Button("Rename Folder…") { actions.rename(folder.id) }
-            Divider()
-            Button("Delete Folder") { session.deleteFolder(folder.id) }
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(folder.name)
-        .accessibilityValue(folder.isExpanded ? String(localized: "Expanded") : String(localized: "Collapsed"))
-        .accessibilityAddTraits(.isButton)
-        .accessibilityAction(named: folder.isExpanded ? "Collapse" : "Expand") {
-            session.setFolderExpanded(folder.id, !folder.isExpanded)
-        }
-        .accessibilityAction(named: "Rename Folder") { actions.rename(folder.id) }
-        .accessibilityAction(named: "Delete Folder") { session.deleteFolder(folder.id) }
+    }
+
+    private func contents(of folder: Folder, level: Int) -> AnyView {
+        AnyView(ForEach(folder.items) { item in
+            switch item {
+            case .tab(let tab):
+                pinnedTab(tab, placement: .layer(level: level))
+            case .folder(let inner):
+                PinnedFolder(folder: inner, session: session, actions: actions)
+                if inner.isExpanded { contents(of: inner, level: level + 1) }
+            }
+        })
+    }
+
+    private func pinnedTab(_ tab: SafiraSession.Tab, placement: RowPlacement) -> some View {
+        let pinned = session.activeSpace.pinnedTabs
+        return TabRowView(tab: tab, isSelected: session.selectedTabID == tab.id, isListFocused: focus.isListFocused,
+                          placement: placement, position: (pinned.firstIndex { $0.id == tab.id } ?? 0) + 1,
+                          count: session.activeSpace.allTabs.count,
+                          select: { session.select(tab.id) }, close: { session.close(tab.id) })
+            .modifier(TabDrag(tab: tab, session: session))
+            .contextMenu { TabMenu(tab: tab, session: session) }
+    }
+}
+
+private struct PinnedFolder: View {
+    let folder: Folder
+    let session: ProfileSession
+    let actions: FolderActions
+    @State private var isHovered = false
+    @State private var isDropTarget = false
+
+    var body: some View {
+        FolderRow(folder.name, count: folder.items.count, isOpen: folder.isExpanded,
+                  state: RowState(isCurrent: isDropTarget, isHovered: isHovered),
+                  symbol: folder.isExpanded ? "folder.fill" : "folder")
+            .onHover { isHovered = $0 }
+            .onTapGesture { session.setFolderExpanded(folder.id, !folder.isExpanded) }
+            .draggable(PinnedDrag.text(for: .folder(folder.id)))
+            .dropDestination(for: String.self, action: { texts, _ in
+                guard let item = texts.first.flatMap(PinnedDrag.item(from:)) else { return false }
+                return session.movePinned(item, into: folder.id)
+            }, isTargeted: { isDropTarget = $0 })
+            .contextMenu {
+                Button("New Folder Inside…") { actions.create(folder.id) }
+                Button("Rename Folder…") { actions.rename(folder.id) }
+                Divider()
+                Button("Delete Folder") { session.deleteFolder(folder.id) }
+            }
+            .accessibilityAction(.default) { session.setFolderExpanded(folder.id, !folder.isExpanded) }
+            .accessibilityAction(named: folder.isExpanded ? "Collapse" : "Expand") {
+                session.setFolderExpanded(folder.id, !folder.isExpanded)
+            }
+            .accessibilityAction(named: "Rename Folder") { actions.rename(folder.id) }
+            .accessibilityAction(named: "Delete Folder") { session.deleteFolder(folder.id) }
     }
 }
 

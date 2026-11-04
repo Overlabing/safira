@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Antonin Carlin
 
 import AppKit
+import DesignKit
 import SwiftUI
 
 /// Shows one page at a time. Swapping only moves views in and out of the window: the pages stay alive in the
@@ -29,8 +30,10 @@ final class TabHostView: NSView {
 }
 
 private struct EmptyPage: View {
+    @Environment(\.designTokens) private var tokens
+
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: DesignTokens.Spacing.s) {
             Text("Type an address or a search")
                 .font(.title2)
             Text("Press ⌘L to go to the Command bar.")

@@ -3,31 +3,32 @@
 
 import Appearance
 import AppKit
+import ColorCore
 import Commands
+import DesignKit
 import SafiraCore
 import SafiraSession
 import SafiraWeb
 import SwiftUI
 
-/// The Main window: AppKit owns the window, the Command bar field and the menu actions; SwiftUI draws the sidebar of
-/// Tabs; the page area shows the selected Tab's web view, taken from the Profile's registry, or SwiftUI content when
-/// there is no page.
+/// The Main window: AppKit owns the window, the Command bar field and the menu actions; SwiftUI draws the sidebar
+/// column from ThemeKit's kit; the page canvas shows the selected Tab's web view, taken from the Profile's registry, or
+/// SwiftUI content when there is no page. There is no bar above the page: the address and Back, Forward and Reload are
+/// at the top of the column, and the Command bar floats over the page.
 @MainActor
-final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFieldDelegate, NSMenuItemValidation {
+final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuItemValidation {
     private let registry: ProfileRegistry
     /// The Active profile's session: every Tab, Space and Command bar action reaches this Profile only.
     private var session: ProfileSession { registry.active.session }
     private var webContext: ProfileWebContext { registry.active.web }
-    private let commandBar = NSTextField()
-    private let backButton = MainWindowController.toolbarButton(symbol: "chevron.left", label: "Back",
-                                                               action: #selector(goBack(_:)))
-    private let forwardButton = MainWindowController.toolbarButton(symbol: "chevron.right", label: "Forward",
-                                                                  action: #selector(goForward(_:)))
-    private let reloadButton = MainWindowController.toolbarButton(symbol: "arrow.clockwise", label: "Reload",
-                                                                 action: #selector(reload(_:)))
+    private let shortcuts: ShortcutController
+    private let sideSetting: SidebarSideSetting
+    private lazy var commandBar = FloatingCommandBar { [unowned self] in session }
+    private let columnFocus = ColumnFocus()
+    private var windowButtons: WindowButtonsReveal?
     private let pageArea = TabHostView()
     private var sidebar: NSViewController?
-    private var layout: SidebarLayoutViewController?
+    private var layout: BrowserWindowLayout?
     private let compactModeStore = CompactModeStore()
     private var presentation: SidebarPresentation
     private var searchEngineSheet: NSWindow?
@@ -44,21 +45,18 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         window: { [weak self] in self?.window },
         profileName: { [weak self] id in self?.registry.profiles.first { $0.id == id }?.name ?? "" })
     private let externalApps = WorkspaceExternalApps()
-    private let suggestionModel = CommandBarSuggestionModel()
-    private var suggestionHost: CommandBarSuggestionHostingView?
-    private var suggestionTask: Task<Void, Never>?
-    /// The text the shown suggestions were computed for: Return opens a highlighted one only while the text still is it.
-    private var suggestionText: String?
     private let bannerModel = MatchBannerModel()
-    private var bannerHost: NSHostingView<MatchBannerBar>?
+    private var bannerHost: MatchBannerHostingView?
     private var announcedBannerID: UUID?
 
-    init(registry: ProfileRegistry, shortcuts: ShortcutController) {
+    init(registry: ProfileRegistry, shortcuts: ShortcutController, sideSetting: SidebarSideSetting) {
         self.registry = registry
+        self.shortcuts = shortcuts
+        self.sideSetting = sideSetting
         presentation = compactModeStore.load()
         let window = MainWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 1200, height: 800),
-            styleMask: [.titled, .closable, .miniaturizable, .resizable],
+            contentRect: NSRect(origin: .zero, size: SafiraDesign.mainWindowSize),
+            styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )
@@ -66,6 +64,8 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         window.shortcuts = shortcuts
         window.tabbingMode = .disallowed
         window.isReleasedWhenClosed = false
+        // Safira rebuilds the Main window itself at launch; the system's window restoration would order a copy front.
+        window.isRestorable = false
         super.init(window: window)
         window.delegate = self
         registry.permissionPrompt = { [unowned self] prompt in await permissionPrompter.ask(prompt) }
@@ -89,7 +89,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
 
     /// Opens the Command bar for a new Tab; the Tab is created only when the user presses Enter.
     @objc func newTab(_ sender: Any?) {
-        openCommandBar(for: .newTab, text: "", placeholder: Self.newTabPlaceholder)
+        commandBar.open(for: .newTab, text: "")
     }
 
     @objc func closeTab(_ sender: Any?) {
@@ -114,10 +114,16 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         editFolder(creatingIn: nil)
     }
 
+    /// Opens the floating Command bar on the shown Tab, its whole address selected: the way to see and change the
+    /// address in Compact mode too.
     @objc func focusCommandBar(_ sender: Any?) {
-        openCommandBar(for: .selectedTab, text: session.selectedTab?.address?.absoluteString ?? "",
-                       placeholder: Self.placeholder)
-        commandBar.currentEditor()?.selectAll(nil)
+        commandBar.open(for: .selectedTab, text: session.selectedTab?.address?.absoluteString ?? "")
+    }
+
+    /// At launch and after onboarding: the keyboard goes to the shown page, or to the Command bar when there is none,
+    /// so a restored page is never covered by the panel.
+    func showStartPage() {
+        if !showPage() { focusCommandBar(nil) }
     }
 
     /// Moves the keyboard focus to the list of Tabs, where the arrow keys select a Tab. In Compact mode it shows the
@@ -127,8 +133,28 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
             presentation.reveal()
             layout?.apply(presentation, animated: true)
         }
-        guard let list = sidebar.flatMap({ Self.firstTableView(in: $0.view) }) else { return }
-        window?.makeFirstResponder(list)
+        columnFocus.focusList()
+    }
+
+    /// ⌘1…⌘9: the menu item's tag is the Tab's place in the sidebar.
+    @objc func showTabNumber(_ sender: Any?) {
+        guard let number = (sender as? NSMenuItem)?.tag else { return }
+        session.selectTab(number: number)
+    }
+
+    /// ⌃1…⌃9: the menu item's tag is the Space's place in the switcher. The window's gradient moves to the Space's
+    /// Theme with the kit's Theme change.
+    @objc func showSpaceNumber(_ sender: Any?) {
+        guard let number = (sender as? NSMenuItem)?.tag else { return }
+        let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        withAnimation(MotionRole.themeChange.animation(reduceMotion: reduceMotion)) {
+            session.selectSpace(number: number)
+        }
+    }
+
+    /// The sidebar goes to the other side of every window; the choice is kept for the whole app.
+    @objc func toggleSidebarSide(_ sender: Any?) {
+        sideSetting.isRight.toggle()
     }
 
     /// Compact mode hides the sidebar and gives the page the full width; the choice is kept across launches.
@@ -140,8 +166,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         announce(presentation.isCompact ? String(localized: "Compact mode on, sidebar hidden")
                                         : String(localized: "Compact mode off, sidebar shown"))
         if hadFocus {
-            if presentation.isCompact, !showPage() { window?.makeFirstResponder(commandBar) }
-            else if !presentation.isCompact { focusTabList(nil) }
+            if presentation.isCompact { showPage() } else { focusTabList(nil) }
         }
     }
 
@@ -204,7 +229,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         let view = SitePermissionsView(profileName: registry.activeProfile.name, permissions: registry.active.permissions) {
             [weak self] in self?.endPermissionsSheet()
         }
-        let sheet = NSWindow(contentViewController: NSHostingController(rootView: view))
+        let sheet = NSWindow.sheet(view)
         permissionsSheet = sheet
         window.beginSheet(sheet)
     }
@@ -283,6 +308,11 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         case #selector(goForward(_:)): return tab?.state.canGoForward == true
         case #selector(reload(_:)): return tab?.address != nil
         case #selector(showNextTab(_:)), #selector(showPreviousTab(_:)): return session.activeSpace.allTabs.count > 1
+        case #selector(showTabNumber(_:)): return menuItem.tag <= session.activeSpace.allTabs.count
+        case #selector(showSpaceNumber(_:)): return menuItem.tag <= session.spaces.count
+        case #selector(toggleSidebarSide(_:)):
+            menuItem.state = sideSetting.isRight ? .on : .off
+            return true
         case #selector(deleteSpace(_:)): return session.canDeleteSpace
         case #selector(deleteProfile(_:)): return registry.canDeleteProfile
         case #selector(showNextProfile(_:)), #selector(showPreviousProfile(_:)): return registry.profiles.count > 1
@@ -311,122 +341,10 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         if window?.isMiniaturized == true { window?.deminiaturize(nil) }
         showWindow(nil)
         NSApp.activate()
-        session.dismissCommandBar()
+        commandBar.dismiss(returningFocus: false)
         render()
         announce(String(localized: "Profile: \(registry.activeProfile.name)"))
         showPage()
-    }
-
-    // MARK: Command bar
-
-    func control(_ control: NSControl, textView: NSTextView, doCommandBy selector: Selector) -> Bool {
-        switch selector {
-        case #selector(NSResponder.insertNewline(_:)):
-            if suggestionText == commandBar.stringValue, let suggestion = suggestionModel.highlighted {
-                openSuggestion(suggestion)
-                return true
-            }
-            hideSuggestions()
-            session.submitCommandBar(commandBar.stringValue)
-            render()
-            if session.commandBarTarget == nil {
-                showPage()
-            }
-            return true
-        case #selector(NSResponder.moveDown(_:)):
-            guard !suggestionModel.suggestions.isEmpty, suggestionText == commandBar.stringValue else { return false }
-            suggestionModel.moveDown()
-            announceHighlight()
-            return true
-        case #selector(NSResponder.moveUp(_:)):
-            guard !suggestionModel.suggestions.isEmpty, suggestionText == commandBar.stringValue else { return false }
-            suggestionModel.moveUp()
-            announceHighlight()
-            return true
-        case #selector(NSResponder.insertTab(_:)), #selector(NSResponder.insertBacktab(_:)):
-            hideSuggestions()
-            focusTabList(nil)
-            return true
-        case #selector(NSResponder.cancelOperation(_:)):
-            hideSuggestions()
-            session.dismissCommandBar()
-            commandBar.placeholderString = Self.placeholder
-            commandBar.stringValue = session.selectedTab?.address?.absoluteString ?? ""
-            if !showPage() {
-                commandBar.currentEditor()?.selectAll(nil)
-            }
-            return true
-        default:
-            return false
-        }
-    }
-
-    /// Typing asks the Active profile for local suggestions: its open Tabs and its history. Nothing leaves the app, and
-    /// no page loads until Return.
-    func controlTextDidChange(_ notification: Notification) {
-        updateSuggestions()
-    }
-
-    func controlTextDidEndEditing(_ notification: Notification) {
-        // Leaving the field abandons a pending new Tab, as Escape does.
-        hideSuggestions()
-        session.dismissCommandBar()
-        commandBar.placeholderString = Self.placeholder
-        render()
-    }
-
-    private func updateSuggestions() {
-        suggestionTask?.cancel()
-        let text = commandBar.stringValue
-        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            hideSuggestions()
-            return
-        }
-        // Results go to the Profile that was active when the text was typed, and are dropped if another one is shown by
-        // the time they arrive or the text moved on.
-        let profile = registry.activeProfileID
-        let session = session
-        suggestionTask = Task { [weak self] in
-            let found = await session.suggestions(for: text)
-            guard let self, !Task.isCancelled, registry.activeProfileID == profile,
-                  commandBar.stringValue == text, commandBar.currentEditor() != nil else { return }
-            suggestionModel.show(found, typing: text)
-            suggestionText = text
-            suggestionHost?.isHidden = found.isEmpty
-            if !found.isEmpty {
-                announce(String(AttributedString(localized: "^[\(found.count) suggestion](inflect: true)").characters))
-            }
-        }
-    }
-
-    private func hideSuggestions() {
-        suggestionTask?.cancel()
-        suggestionTask = nil
-        suggestionText = nil
-        suggestionModel.clear()
-        suggestionHost?.isHidden = true
-    }
-
-    private func openSuggestion(_ suggestion: CommandBarSuggestion) {
-        hideSuggestions()
-        session.openSuggestion(suggestion)
-        render()
-        if session.commandBarTarget == nil {
-            showPage()
-        }
-    }
-
-    /// The keyboard stays in the text field, so VoiceOver is told which suggestion the arrows reached.
-    private func announceHighlight() {
-        announce(suggestionModel.highlighted?.title ?? commandBar.stringValue)
-    }
-
-    /// Setting the text or the focus ends an edit in progress, which dismisses the Command bar: the target comes last.
-    private func openCommandBar(for target: CommandBarTarget, text: String, placeholder: String) {
-        commandBar.stringValue = text
-        commandBar.placeholderString = placeholder
-        window?.makeFirstResponder(commandBar)
-        session.openCommandBar(for: target)
     }
 
     /// Puts the keyboard focus in the selected Tab's page; false when it has none.
@@ -465,7 +383,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
             },
             cancel: { [weak self] in self?.endSpaceSheet() }
         )
-        let sheet = NSWindow(contentViewController: NSHostingController(rootView: editor))
+        let sheet = NSWindow.sheet(editor)
         spaceSheet = sheet
         window.beginSheet(sheet)
     }
@@ -497,7 +415,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
             },
             cancel: { [weak self] in self?.endFolderSheet() }
         )
-        let sheet = NSWindow(contentViewController: NSHostingController(rootView: editor))
+        let sheet = NSWindow.sheet(editor)
         folderSheet = sheet
         window.beginSheet(sheet)
     }
@@ -534,8 +452,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         let before = registry.activeProfileID
         change(registry)
         guard registry.activeProfileID != before else { return }
-        hideSuggestions()
-        session.dismissCommandBar()
+        commandBar.dismiss(returningFocus: false)
         render()
         announce(String(localized: "Profile: \(registry.activeProfile.name)"))
         if !showPage() { focusCommandBar(nil) }
@@ -569,7 +486,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
             },
             cancel: { [weak self] in self?.endProfileSheet() }
         )
-        let sheet = NSWindow(contentViewController: NSHostingController(rootView: editor))
+        let sheet = NSWindow.sheet(editor)
         profileSheet = sheet
         window.beginSheet(sheet)
     }
@@ -622,7 +539,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
             clear: { [weak self] range in
                 guard let self else { return }
                 endClearSheet()
-                hideSuggestions()
+                commandBar.dismiss(returningFocus: false)
                 Task { @MainActor in
                     do {
                         try await context.clearBrowsingData(range)
@@ -634,7 +551,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
             },
             cancel: { [weak self] in self?.endClearSheet() }
         )
-        let hosting = NSWindow(contentViewController: NSHostingController(rootView: sheet))
+        let hosting = NSWindow.sheet(sheet)
         clearSheet = hosting
         window.beginSheet(hosting)
     }
@@ -662,10 +579,10 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
     }
 
     /// Return or Escape in the Tab list. With no page to go to, a revealed sidebar that is hiding must not keep the
-    /// keyboard focus, so the Command bar takes it.
+    /// keyboard focus.
     private func leaveSidebar() {
         let wasRevealed = presentation.isRevealed
-        if !showPage(), wasRevealed { window?.makeFirstResponder(commandBar) }
+        if !showPage(), wasRevealed { window?.makeFirstResponder(nil) }
     }
 
     // MARK: Compact mode
@@ -681,7 +598,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         }
     }
 
-    /// The pointer touched the left edge.
+    /// The pointer touched the window's edge on the sidebar's side.
     private func revealSidebarFromEdge() {
         guard presentation.isCompact, !presentation.isRevealed else { return }
         presentation.reveal()
@@ -705,7 +622,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
     /// A hidden sidebar cannot keep the keyboard focus.
     private func returnFocusToPage() {
         guard layout?.sidebarHasFocus == true else { return }
-        if !showPage() { window?.makeFirstResponder(commandBar) }
+        if !showPage() { window?.makeFirstResponder(nil) }
     }
 
     private func announce(_ message: String) {
@@ -726,16 +643,16 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
 
     private func render() {
         let tab = session.selectedTab
-        backButton.isEnabled = tab?.state.canGoBack == true
-        forwardButton.isEnabled = tab?.state.canGoForward == true
-        reloadButton.isEnabled = tab?.address != nil
-        // While the Command bar is being edited its text is the user's, unless the shown Tab changed under it (another
-        // Space or Tab shown by a shortcut): text typed for a ⌘T new Tab stays.
+        commandBar.follow(session)
+        // While the Command bar is open on the shown Tab its text is the user's, unless the shown Tab changed under it
+        // (another Space or Tab shown by a shortcut): text typed for a ⌘T new Tab stays.
         let shownTabChanged = tab?.id != renderedTabID
         renderedTabID = tab?.id
-        if commandBar.currentEditor() == nil || (shownTabChanged && session.commandBarTarget != .newTab) {
-            commandBar.stringValue = tab?.address?.absoluteString ?? ""
+        if commandBar.isShown, shownTabChanged, session.commandBarTarget == .selectedTab {
+            commandBar.field.stringValue = tab?.address?.absoluteString ?? ""
         }
+        commandBar.appearance.theme = spaceTheme
+        layout?.setSide(sideSetting.side)
         window?.title = tab?.state.title.flatMap { $0.isEmpty ? nil : $0 } ?? "Safira"
         pageArea.show(tab.flatMap { webContext.webView(for: $0.id) })
         updateSearchEngineSheet(query: session.searchAwaitingEngine)
@@ -763,7 +680,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         announce(String(localized: "This link was already open, so Safira showed that Tab. A button offers to open it in a new Tab."))
         let session = session
         Task { @MainActor [weak session] in
-            try? await Task.sleep(for: .seconds(12))
+            try? await Task.sleep(for: SafiraDesign.matchBannerLifetime)
             if session?.matchBanner?.id == banner.id { session?.dismissMatchBanner() }
         }
     }
@@ -799,7 +716,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
                 choose: { [weak session] engine in session?.chooseSearchEngine(engine) },
                 cancel: { [weak session] in session?.cancelSearchEngineChoice() }
             )
-            let sheet = NSWindow(contentViewController: NSHostingController(rootView: picker))
+            let sheet = NSWindow.sheet(picker)
             searchEngineSheet = sheet
             window.beginSheet(sheet)
         case (nil, let sheet?):
@@ -815,60 +732,42 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
 
     // MARK: Layout
 
-    private static let placeholder = String(localized: "Search or enter an address")
-    private static let newTabPlaceholder = String(localized: "Search or enter an address to open in a new Tab")
+    /// The active Space's Theme, or the Active profile's for a Space with none: the window's gradient and the column.
+    private var spaceTheme: Theme {
+        let profile = ThemeCatalog.theme(id: registry.activeProfile.paletteID, fallback: ThemeCatalog.first)
+        return ThemeCatalog.theme(id: session.activeSpace.paletteID, fallback: profile)
+    }
 
     private func layOut(in window: NSWindow) {
-        commandBar.placeholderString = Self.placeholder
-        commandBar.setAccessibilityLabel("Command bar")
-        commandBar.delegate = self
-        commandBar.lineBreakMode = .byTruncatingTail
-        commandBar.usesSingleLineMode = true
+        // The content reaches the top edge under a transparent title bar; the title is still set, for the Window menu
+        // and VoiceOver.
+        window.titlebarAppearsTransparent = true
+        window.titleVisibility = .hidden
+        commandBar.suggestions = { session, text in await session.suggestions(for: text) }
+        commandBar.onClose = { [weak self] in
+            self?.render()
+            self?.showPage()
+        }
+        commandBar.onTabKey = { [weak self] in self?.focusTabList(nil) }
+        commandBar.announce = { [weak self] in self?.announce($0) }
 
-        let toolbar = NSStackView(views: [backButton, forwardButton, reloadButton, commandBar])
-        toolbar.orientation = .horizontal
-        toolbar.spacing = 6
-        toolbar.edgeInsets = NSEdgeInsets(top: 8, left: 10, bottom: 8, right: 10)
-        commandBar.setContentHuggingPriority(.defaultLow, for: .horizontal)
-
-        let banner = NSHostingView(rootView: MatchBannerBar(
+        let banner = MatchBannerHostingView(rootView: MatchBannerBar(
             model: bannerModel,
+            theme: { [weak self] in self?.spaceTheme ?? ThemeCatalog.first },
             openInNewTab: { [weak self] in
                 guard let self else { return }
                 session.openMatchBannerLinkInNewTab()
                 showPage()
             },
             dismiss: { [weak self] in self?.session.dismissMatchBanner() }))
-        banner.sizingOptions = [.intrinsicContentSize]
         banner.isHidden = true
         bannerHost = banner
+        let canvas = PageCanvasView(page: pageArea, banner: banner, commandBar: commandBar.overlay)
 
-        let content = NSStackView(views: [toolbar, banner, pageArea])
-        content.orientation = .vertical
-        content.spacing = 0
-        content.alignment = .leading
-        toolbar.widthAnchor.constraint(equalTo: content.widthAnchor).isActive = true
-        banner.widthAnchor.constraint(equalTo: content.widthAnchor).isActive = true
-        pageArea.widthAnchor.constraint(equalTo: content.widthAnchor).isActive = true
-
-        let suggestions = CommandBarSuggestionHostingView(rootView: CommandBarSuggestionList(model: suggestionModel) {
-            [weak self] in self?.openSuggestion($0)
-        })
-        suggestions.translatesAutoresizingMaskIntoConstraints = false
-        suggestions.isHidden = true
-        // Its width follows the Command bar's: the default min and max size constraints of a hosting view would cap
-        // the field at the width of an empty list.
-        suggestions.sizingOptions = [.intrinsicContentSize]
-        suggestions.setContentHuggingPriority(NSLayoutConstraint.Priority(1), for: .horizontal)
-        suggestions.setContentCompressionResistancePriority(NSLayoutConstraint.Priority(1), for: .horizontal)
-        content.addSubview(suggestions)
-        NSLayoutConstraint.activate([
-            suggestions.topAnchor.constraint(equalTo: toolbar.bottomAnchor, constant: -4),
-            suggestions.leadingAnchor.constraint(equalTo: commandBar.leadingAnchor, constant: -8),
-            suggestions.trailingAnchor.constraint(equalTo: commandBar.trailingAnchor, constant: 8),
-        ])
-        suggestionHost = suggestions
-
+        let pageActions = PageActions(
+            editAddress: { [weak self] in self?.focusCommandBar(nil) },
+            newTab: { [weak self] in self?.newTab(nil) },
+            showPage: { [weak self] in self?.leaveSidebar() })
         let spaceActions = SpaceActions(
             edit: { [weak self] id in self?.editSpace(id) },
             delete: { [weak self] id in self?.confirmDeletion(of: id) }
@@ -883,34 +782,25 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
             delete: { [weak self] id in self?.confirmDeletion(ofProfile: id) },
             clearBrowsingData: { [weak self] id in self?.askToClearBrowsingData(ofProfile: id) }
         )
-        let sidebar = NSHostingController(rootView: TabSidebar(registry: registry, profileActions: profileActions,
-                                                               spaceActions: spaceActions,
-                                                               folderActions: folderActions) { [weak self] in
-            self?.leaveSidebar()
-        })
+        let sidebar = NSHostingController(rootView: TabSidebar(
+            registry: registry, focus: columnFocus, pageActions: pageActions, profileActions: profileActions,
+            spaceActions: spaceActions, folderActions: folderActions,
+            side: sideSetting, shortcut: { [weak self] id in self?.shortcuts.bindings[id]?.display }))
+        sidebar.sizingOptions = []
+        // The column starts at the window's top edge: the title bar's buttons only show on demand.
+        sidebar.safeAreaRegions = []
         self.sidebar = sidebar
-        let page = NSViewController()
-        page.view = content
-        let layout = SidebarLayoutViewController(sidebar: sidebar, page: page)
-        layout.onPointerReachedLeftEdge = { [weak self] in self?.revealSidebarFromEdge() }
+        let theme: () -> Theme = { [weak self] in self?.spaceTheme ?? ThemeCatalog.first }
+        let layout = BrowserWindowLayout(
+            background: NSHostingView(rootView: WindowBackdrop(theme: theme)),
+            overlayBackground: NSHostingView(rootView: WindowBackdrop(theme: theme)),
+            column: sidebar, canvas: canvas, side: sideSetting.side)
+        layout.onPointerReachedEdge = { [weak self] in self?.revealSidebarFromEdge() }
         layout.onPointerLeftSidebar = { [weak self] in self?.hideSidebarAfterPointerLeft() }
         self.layout = layout
         window.contentViewController = layout
-        window.setContentSize(NSSize(width: 1200, height: 800))
-    }
-
-    /// SwiftUI draws a List with an AppKit table view; it is the view that takes the keyboard focus.
-    private static func firstTableView(in view: NSView) -> NSTableView? {
-        if let table = view as? NSTableView { return table }
-        return view.subviews.lazy.compactMap { firstTableView(in: $0) }.first
-    }
-
-    private static func toolbarButton(symbol: String, label: String, action: Selector) -> NSButton {
-        let image = NSImage(systemSymbolName: symbol, accessibilityDescription: label) ?? NSImage()
-        let button = NSButton(image: image, target: nil, action: action)
-        button.bezelStyle = .toolbar
-        button.toolTip = label
-        return button
+        windowButtons = WindowButtonsReveal(window: window, layout: layout)
+        window.setContentSize(SafiraDesign.mainWindowSize)
     }
 }
 

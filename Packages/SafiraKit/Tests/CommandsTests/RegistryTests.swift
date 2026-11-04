@@ -53,7 +53,7 @@ import Testing
     }
     #expect(CommandRegistry.command(.compactMode).title == "Compact Mode")
     #expect(CommandRegistry.command(.showSidebar).title == "Show Sidebar")
-    #expect(CommandRegistry.commands.count == 37)
+    #expect(CommandRegistry.commands.count == 55)
 }
 
 @Test func theSpaceCommandsAreRebindableWindowCommandsOnControlCommandKeys() {
@@ -150,4 +150,38 @@ import Testing
     #expect(display(.zen) == "⇧⌘Y")
     #expect(display(.arc) == "⌥⌘L")
     #expect(display(.safari) == "⌥⌘L")
+}
+
+@Test func commandOneToNineShowATabAndControlOneToNineShowASpace() {
+    func display(_ id: CommandID) -> String? { CommandRegistry.command(id).defaultShortcut?.display }
+    #expect(CommandID.selectTabCommands.map(display) == ["⌘1", "⌘2", "⌘3", "⌘4", "⌘5", "⌘6", "⌘7", "⌘8", "⌘9"])
+    #expect(CommandID.selectSpaceCommands.map(display) == ["⌃1", "⌃2", "⌃3", "⌃4", "⌃5", "⌃6", "⌃7", "⌃8", "⌃9"])
+    #expect(CommandRegistry.command(.selectTab1).title == "Show Tab 1")
+    #expect(CommandRegistry.command(.selectSpace9).title == "Show Space 9")
+    #expect(CommandID.selectTab4.tabNumber == 4)
+    #expect(CommandID.selectTab4.spaceNumber == nil)
+    #expect(CommandID.selectSpace7.spaceNumber == 7)
+    #expect(CommandID.newTab.tabNumber == nil)
+    for id in CommandID.selectTabCommands + CommandID.selectSpaceCommands {
+        let command = CommandRegistry.command(id)
+        #expect(command.scope == .window && command.isRebindable && command.isImplemented && !command.isReserved)
+    }
+}
+
+@Test func everyPresetKeepsTheNumberedKeysAndSafariAndZenCiteTheirTabKeys() {
+    func display(_ preset: ShortcutPreset, _ id: CommandID) -> String? {
+        ShortcutConfiguration(preset: preset).bindings[id]?.display
+    }
+    for preset in ShortcutPreset.allCases {
+        #expect(display(preset, .selectTab1) == "⌘1")
+        #expect(display(preset, .selectTab9) == "⌘9")
+        #expect(display(preset, .selectSpace1) == "⌃1")
+        #expect(display(preset, .selectSpace9) == "⌃9")
+        #expect(ShortcutConfiguration(preset: preset).bindings.conflicts == [])
+    }
+    #expect(ShortcutPreset.safari.data.bindings[.selectTab8]?.from == "Select one of your first eight tabs (Command-1 to Command-8)")
+    #expect(ShortcutPreset.safari.data.unbound[.selectTab9]?.isEmpty == false)
+    #expect(ShortcutPreset.zen.data.bindings[.selectTab1]?.shortcut.display == "⌘1")
+    #expect(ShortcutPreset.zen.data.unbound[.selectSpace1] == "Switch to Workspace (1-10) is not set by default.")
+    #expect(ShortcutPreset.arc.data.bindings[.selectTab1] == nil)
 }

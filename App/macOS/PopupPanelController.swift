@@ -31,6 +31,7 @@ final class PopupPanelController: NSObject, NSWindowDelegate {
         panel.isFloatingPanel = true
         panel.hidesOnDeactivate = false
         panel.isReleasedWhenClosed = false
+        panel.isRestorable = false
         panel.becomesKeyOnlyIfNeeded = false
         panel.contentView = webView
         panel.delegate = self

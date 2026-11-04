@@ -27,7 +27,7 @@ public struct SidebarPresentation: Equatable, Sendable {
         setCompact(!isCompact)
     }
 
-    /// The pointer touched the left edge, or the user used the shortcut. No effect outside Compact mode.
+    /// The pointer touched the window's edge on the sidebar's side, or the user used the shortcut. No effect outside Compact mode.
     public mutating func reveal() {
         if isCompact { isRevealed = true }
     }
@@ -44,7 +44,7 @@ public struct SidebarPresentation: Equatable, Sendable {
 
     public static let compactModeTitle = "Compact Mode"
     public static let compactModeExplanation =
-        "The sidebar is hidden and the page uses the full width. Move the pointer to the left edge of the window, or "
+        "The sidebar is hidden and the page uses the full width. Move the pointer to the window's edge on the sidebar's side, or "
         + "use Show Sidebar, to bring it back over the page; it hides again when the pointer leaves it or you go back "
         + "to the page."
 

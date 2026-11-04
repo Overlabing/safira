@@ -26,6 +26,7 @@ private let documentedDefaults: [(id: String, value: String, control: DefaultCon
     ("session.lazyRestoration", "On", .information),
     ("nonWebLinks.confirmation", "Ask each time", .information),
     ("downloads.folder", "~/Downloads", .information),
+    ("window.sidebarSide", "Off, on the left", .toggle(isOn: false)),
 ]
 
 @Suite struct DefaultsRegistryTests {

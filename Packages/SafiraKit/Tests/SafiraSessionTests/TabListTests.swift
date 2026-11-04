@@ -248,14 +248,14 @@ private func openTabs(_ fixture: SessionFixture, _ addresses: [String]) -> [TabI
         #expect(fixture.createdPageCount == 1)
     }
 
-    @Test func blankTextAfterNewTabKeepsTheCommandBarOpenAndCreatesNoTab() {
+    @Test func blankTextAfterNewTabClosesTheCommandBarAndCreatesNoTab() {
         let fixture = SessionFixture()
 
         fixture.session.openCommandBar(for: .newTab)
         fixture.session.submitCommandBar("  ")
 
         #expect(fixture.session.tabs.isEmpty)
-        #expect(fixture.session.commandBarTarget == .newTab)
+        #expect(fixture.session.commandBarTarget == nil)
     }
 
     @Test func theSelectedTabTargetReplacesThePageOfTheSelectedTab() {

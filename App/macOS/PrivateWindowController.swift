@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Antonin Carlin
 
+import Appearance
 import AppKit
+import ColorCore
 import Commands
 import SafiraCore
 import SafiraSession
@@ -9,23 +11,23 @@ import SafiraWeb
 import SwiftUI
 
 /// A Private window: a separate window attached to one Profile, with no Spaces, no saved history and a data store that
-/// is erased when it closes. It has no Profile switcher, no Space row and no Command bar suggestions: nothing it shows
-/// comes from the Profile's history or Tabs. It answers the Tab commands of the menu the way the Main window does, and
-/// the menu items it does not answer (Spaces, Profiles, Compact mode) are disabled while it is the key window.
+/// is erased when it closes. It has the Main window's layout (address and Back, Forward and Reload at the top of the
+/// column, the Command bar floating over the page, no bar above it), always dark and in its own purple Theme. It has no
+/// Profile switcher, no Space switcher and no Command bar suggestions: nothing it shows comes from the Profile's
+/// history or Tabs. It answers the Tab commands of the menu the way the Main window does, and the menu items it does not
+/// answer (Spaces, Profiles, Compact mode) are disabled while it is the key window.
 @MainActor
-final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSTextFieldDelegate, NSMenuItemValidation {
+final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSMenuItemValidation {
     let context: PrivateContext
     /// Called once, when the window has closed and its data is being erased.
     var onClose: ((PrivateWindowController) -> Void)?
     private var session: ProfileSession { context.session }
-    private let commandBar = NSTextField()
-    private let backButton = PrivateWindowController.toolbarButton(symbol: "chevron.left", label: "Back",
-                                                                  action: #selector(goBack(_:)))
-    private let forwardButton = PrivateWindowController.toolbarButton(symbol: "chevron.right", label: "Forward",
-                                                                     action: #selector(goForward(_:)))
-    private let reloadButton = PrivateWindowController.toolbarButton(symbol: "arrow.clockwise", label: "Reload",
-                                                                    action: #selector(reload(_:)))
+    private let sideSetting: SidebarSideSetting
+    private lazy var commandBar = FloatingCommandBar { [unowned self] in session }
+    private let columnFocus = ColumnFocus()
+    private var windowButtons: WindowButtonsReveal?
     private let pageArea = TabHostView()
+    private var layout: BrowserWindowLayout?
     private var sidebar: NSViewController?
     private var searchEngineSheet: NSWindow?
     private var popupPanels: [PopupID: PopupPanelController] = [:]
@@ -35,11 +37,12 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSTex
     private lazy var permissionPrompter = PermissionPrompter(
         window: { [weak self] in self?.window }, profileName: { _ in "" }, isPrivate: true)
 
-    init(context: PrivateContext, shortcuts: ShortcutController) {
+    init(context: PrivateContext, shortcuts: ShortcutController, sideSetting: SidebarSideSetting) {
         self.context = context
+        self.sideSetting = sideSetting
         let window = PrivateWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 1100, height: 760),
-            styleMask: [.titled, .closable, .miniaturizable, .resizable],
+            contentRect: NSRect(origin: .zero, size: SafiraDesign.privateWindowSize),
+            styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )
@@ -47,6 +50,8 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSTex
         window.shortcuts = shortcuts
         window.tabbingMode = .disallowed
         window.isReleasedWhenClosed = false
+        // A Private window keeps nothing: it never comes back after a relaunch.
+        window.isRestorable = false
         window.setAccessibilityLabel(Self.title(for: nil))
         super.init(window: window)
         window.delegate = self
@@ -77,7 +82,7 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSTex
     // MARK: Menu actions
 
     @objc func newTab(_ sender: Any?) {
-        openCommandBar(for: .newTab, text: "", placeholder: Self.newTabPlaceholder)
+        commandBar.open(for: .newTab, text: "")
     }
 
     @objc func closeTab(_ sender: Any?) {
@@ -92,14 +97,20 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSTex
     }
 
     @objc func focusCommandBar(_ sender: Any?) {
-        openCommandBar(for: .selectedTab, text: session.selectedTab?.address?.absoluteString ?? "",
-                       placeholder: Self.placeholder)
-        commandBar.currentEditor()?.selectAll(nil)
+        commandBar.open(for: .selectedTab, text: session.selectedTab?.address?.absoluteString ?? "")
     }
 
     @objc func focusTabList(_ sender: Any?) {
-        guard let list = sidebar.flatMap({ Self.firstTableView(in: $0.view) }) else { return }
-        window?.makeFirstResponder(list)
+        columnFocus.focusList()
+    }
+
+    @objc func showTabNumber(_ sender: Any?) {
+        guard let number = (sender as? NSMenuItem)?.tag else { return }
+        session.selectTab(number: number)
+    }
+
+    @objc func toggleSidebarSide(_ sender: Any?) {
+        sideSetting.isRight.toggle()
     }
 
     @objc func moveTabUp(_ sender: Any?) {
@@ -141,6 +152,10 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSTex
         case #selector(goForward(_:)): return tab?.state.canGoForward == true
         case #selector(reload(_:)): return tab?.address != nil
         case #selector(showNextTab(_:)), #selector(showPreviousTab(_:)): return session.tabs.count > 1
+        case #selector(showTabNumber(_:)): return menuItem.tag <= session.tabs.count
+        case #selector(toggleSidebarSide(_:)):
+            menuItem.state = sideSetting.isRight ? .on : .off
+            return true
         default: return true
         }
     }
@@ -152,48 +167,13 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSTex
     func windowWillClose(_ notification: Notification) {
         guard !isClosed else { return }
         isClosed = true
+        commandBar.dismiss(returningFocus: false)
         popupPanels.removeAll()
         let context = context
         Task { await context.close() }
         let onClose = onClose
         self.onClose = nil
         onClose?(self)
-    }
-
-    // MARK: Command bar
-
-    func control(_ control: NSControl, textView: NSTextView, doCommandBy selector: Selector) -> Bool {
-        switch selector {
-        case #selector(NSResponder.insertNewline(_:)):
-            session.submitCommandBar(commandBar.stringValue)
-            render()
-            if session.commandBarTarget == nil { showPage() }
-            return true
-        case #selector(NSResponder.insertTab(_:)), #selector(NSResponder.insertBacktab(_:)):
-            focusTabList(nil)
-            return true
-        case #selector(NSResponder.cancelOperation(_:)):
-            session.dismissCommandBar()
-            commandBar.placeholderString = Self.placeholder
-            commandBar.stringValue = session.selectedTab?.address?.absoluteString ?? ""
-            if !showPage() { commandBar.currentEditor()?.selectAll(nil) }
-            return true
-        default:
-            return false
-        }
-    }
-
-    func controlTextDidEndEditing(_ notification: Notification) {
-        session.dismissCommandBar()
-        commandBar.placeholderString = Self.placeholder
-        render()
-    }
-
-    private func openCommandBar(for target: CommandBarTarget, text: String, placeholder: String) {
-        commandBar.stringValue = text
-        commandBar.placeholderString = placeholder
-        window?.makeFirstResponder(commandBar)
-        session.openCommandBar(for: target)
     }
 
     @discardableResult
@@ -223,14 +203,13 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSTex
 
     private func render() {
         let tab = session.selectedTab
-        backButton.isEnabled = tab?.state.canGoBack == true
-        forwardButton.isEnabled = tab?.state.canGoForward == true
-        reloadButton.isEnabled = tab?.address != nil
+        commandBar.follow(session)
         let shownTabChanged = tab?.id != renderedTabID
         renderedTabID = tab?.id
-        if commandBar.currentEditor() == nil || (shownTabChanged && session.commandBarTarget != .newTab) {
-            commandBar.stringValue = tab?.address?.absoluteString ?? ""
+        if commandBar.isShown, shownTabChanged, session.commandBarTarget == .selectedTab {
+            commandBar.field.stringValue = tab?.address?.absoluteString ?? ""
         }
+        layout?.setSide(sideSetting.side)
         let title = Self.title(for: tab?.state.title)
         window?.title = title
         window?.setAccessibilityLabel(title)
@@ -268,7 +247,7 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSTex
                 choose: { [weak session] engine in session?.chooseSearchEngine(engine) },
                 cancel: { [weak session] in session?.cancelSearchEngineChoice() }
             )
-            let sheet = NSWindow(contentViewController: NSHostingController(rootView: picker))
+            let sheet = NSWindow.sheet(picker)
             searchEngineSheet = sheet
             window.beginSheet(sheet)
         case (nil, let sheet?):
@@ -282,9 +261,6 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSTex
 
     // MARK: Layout
 
-    private static let placeholder = String(localized: "Search or enter an address")
-    private static let newTabPlaceholder = String(localized: "Search or enter an address to open in a new Tab")
-
     /// The window title always says it is a Private window, which is also what VoiceOver reads when the window is key.
     private static func title(for page: String?) -> String {
         guard let page, !page.isEmpty else { return String(localized: "Private Window") }
@@ -292,54 +268,38 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSTex
     }
 
     private func layOut(in window: NSWindow) {
-        commandBar.placeholderString = Self.placeholder
-        commandBar.setAccessibilityLabel("Command bar")
-        commandBar.delegate = self
-        commandBar.lineBreakMode = .byTruncatingTail
-        commandBar.usesSingleLineMode = true
-
-        let badge = NSTextField(labelWithString: String(localized: "Private"))
-        badge.font = .systemFont(ofSize: 11, weight: .semibold)
-        badge.textColor = .white
-        badge.wantsLayer = true
-        badge.layer?.backgroundColor = NSColor(red: 0.20, green: 0.11, blue: 0.33, alpha: 1).cgColor
-        badge.layer?.cornerRadius = 4
-        badge.setAccessibilityElement(false)
-
-        let toolbar = NSStackView(views: [backButton, forwardButton, reloadButton, badge, commandBar])
-        toolbar.orientation = .horizontal
-        toolbar.spacing = 6
-        toolbar.edgeInsets = NSEdgeInsets(top: 8, left: 10, bottom: 8, right: 10)
-        commandBar.setContentHuggingPriority(.defaultLow, for: .horizontal)
-
-        let content = NSStackView(views: [toolbar, pageArea])
-        content.orientation = .vertical
-        content.spacing = 0
-        content.alignment = .leading
-        toolbar.widthAnchor.constraint(equalTo: content.widthAnchor).isActive = true
-        pageArea.widthAnchor.constraint(equalTo: content.widthAnchor).isActive = true
-
-        let sidebar = NSHostingController(rootView: PrivateSidebar(session: session, parent: context.parent) {
-            [weak self] in self?.showPage()
-        })
+        // Always dark, in the Private Theme's purple: what tells a Private window from the Main window at a glance.
+        window.appearance = NSAppearance(named: .darkAqua)
+        window.titlebarAppearsTransparent = true
+        window.titleVisibility = .hidden
+        commandBar.appearance.theme = SidebarComposition.privateTheme
+        commandBar.onClose = { [weak self] in
+            self?.render()
+            self?.showPage()
+        }
+        commandBar.onTabKey = { [weak self] in self?.focusTabList(nil) }
+        commandBar.announce = { [weak self] in self?.announce($0) }
+        let canvas = PageCanvasView(page: pageArea, banner: NSView(), commandBar: commandBar.overlay)
+        let pageActions = PageActions(
+            editAddress: { [weak self] in self?.focusCommandBar(nil) },
+            newTab: { [weak self] in self?.newTab(nil) },
+            showPage: { [weak self] in self?.showPage() })
+        let sidebar = NSHostingController(rootView: PrivateSidebar(
+            session: session, parent: context.parent, focus: columnFocus, pageActions: pageActions,
+            side: sideSetting))
+        sidebar.sizingOptions = []
+        // The column starts at the window's top edge: the title bar's buttons only show on demand.
+        sidebar.safeAreaRegions = []
         self.sidebar = sidebar
-        let page = NSViewController()
-        page.view = content
-        window.contentViewController = SidebarLayoutViewController(sidebar: sidebar, page: page)
-        window.setContentSize(NSSize(width: 1100, height: 760))
-    }
-
-    private static func firstTableView(in view: NSView) -> NSTableView? {
-        if let table = view as? NSTableView { return table }
-        return view.subviews.lazy.compactMap { firstTableView(in: $0) }.first
-    }
-
-    private static func toolbarButton(symbol: String, label: String, action: Selector) -> NSButton {
-        let image = NSImage(systemSymbolName: symbol, accessibilityDescription: label) ?? NSImage()
-        let button = NSButton(image: image, target: nil, action: action)
-        button.bezelStyle = .toolbar
-        button.toolTip = label
-        return button
+        let theme: () -> Theme = { SidebarComposition.privateTheme }
+        let layout = BrowserWindowLayout(
+            background: NSHostingView(rootView: WindowBackdrop(theme: theme)),
+            overlayBackground: NSHostingView(rootView: WindowBackdrop(theme: theme)),
+            column: sidebar, canvas: canvas, side: sideSetting.side)
+        self.layout = layout
+        window.contentViewController = layout
+        windowButtons = WindowButtonsReveal(window: window, layout: layout)
+        window.setContentSize(SafiraDesign.privateWindowSize)
     }
 }
 

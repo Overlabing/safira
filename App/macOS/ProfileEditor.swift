@@ -17,48 +17,6 @@ struct ProfileActions {
     let clearBrowsingData: (ProfileID) -> Void
 }
 
-/// The Active profile at the top of the sidebar, a menu that switches Profile. It is a different control, at the other
-/// end of the sidebar, from the row of Spaces, so that a Profile never changes by accident.
-struct ProfileSwitcher: View {
-    let registry: ProfileRegistry
-    let actions: ProfileActions
-
-    var body: some View {
-        Menu {
-            ForEach(registry.profiles) { profile in
-                Toggle(isOn: Binding(get: { registry.activeProfileID == profile.id },
-                                     set: { if $0 { actions.select(profile.id) } })) {
-                    Text(verbatim: "\(profile.symbol) \(profile.name)")
-                }
-            }
-            Divider()
-            Button("New Profile…") { actions.edit(nil) }
-            Button("Rename Profile…") { actions.edit(registry.activeProfileID) }
-            Button("Delete Profile…") { actions.delete(registry.activeProfileID) }
-                .disabled(!registry.canDeleteProfile)
-            Divider()
-            Button("Clear History and Website Data…") { actions.clearBrowsingData(registry.activeProfileID) }
-        } label: {
-            HStack(spacing: 4) {
-                Text(verbatim: "\(registry.activeProfile.symbol) \(registry.activeProfile.name)")
-                    .font(.headline)
-                    .lineLimit(1)
-                Image(systemName: "chevron.down")
-                    .font(.caption2.weight(.semibold))
-                    .accessibilityHidden(true)
-            }
-        }
-        .menuStyle(.button)
-        .buttonStyle(.plain)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-        .help("Switch Profile")
-        .accessibilityLabel(String(localized: "Profile: \(registry.activeProfile.name)"))
-        .accessibilityHint("Opens the list of Profiles")
-    }
-}
-
 /// Names a new Profile or edits one, and picks its Theme from the Palette: the Profile's tint and Dock icon. A new
 /// Profile needs a search engine, picked from a list where nothing is selected until the user chooses (decision D10).
 struct ProfileEditor: View {
