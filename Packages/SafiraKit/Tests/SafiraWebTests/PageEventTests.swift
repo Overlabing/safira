@@ -32,7 +32,7 @@ import WebKit
             #expect(context.webView(for: opener)?.url?.absoluteString == Self.base)
             close(session)
         }
-        try await removeDataStoreWhenReleased(profile)
+        await removeDataStoreWhenReleased(profile)
     }
 
     @Test func aCommandClickedLinkOpensABackgroundTabInTheProfileDataStore() async throws {
@@ -55,7 +55,7 @@ import WebKit
             #expect(session.tabs.count == 2)
             close(session)
         }
-        try await removeDataStoreWhenReleased(profile)
+        await removeDataStoreWhenReleased(profile)
     }
 
     @Test func aCommandClickedTargetBlankLinkOpensOneTab() async throws {
@@ -72,7 +72,7 @@ import WebKit
             #expect(session.selectedTabID == opener)
             close(session)
         }
-        try await removeDataStoreWhenReleased(profile)
+        await removeDataStoreWhenReleased(profile)
     }
 
     @Test func aTabShowsWhenItsPagePlaysMedia() async throws {
@@ -90,7 +90,7 @@ import WebKit
             try await waitUntil("the Tab shows media stopped") { session.selectedTab?.state.isPlayingMedia == false }
             close(session)
         }
-        try await removeDataStoreWhenReleased(profile)
+        await removeDataStoreWhenReleased(profile)
     }
 
     /// One second of silence: 8 kHz, mono, 8-bit PCM.

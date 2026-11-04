@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Antonin Carlin
 
 import AppKit
+import Commands
 import SafiraCore
 import SafiraSession
 import SafiraWeb
@@ -30,7 +31,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
     private var spaceSheet: NSWindow?
     private var renderedTabID: TabID?
 
-    init(session: ProfileSession, webContext: ProfileWebContext) {
+    init(session: ProfileSession, webContext: ProfileWebContext, shortcuts: ShortcutController) {
         self.session = session
         self.webContext = webContext
         presentation = compactModeStore.load()
@@ -41,6 +42,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
             defer: false
         )
         window.title = "Safira"
+        window.shortcuts = shortcuts
         window.tabbingMode = .disallowed
         window.isReleasedWhenClosed = false
         super.init(window: window)
@@ -317,6 +319,13 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         }
     }
 
+    /// Return or Escape in the Tab list. With no page to go to, a revealed sidebar that is hiding must not keep the
+    /// keyboard focus, so the Command bar takes it.
+    private func leaveSidebar() {
+        let wasRevealed = presentation.isRevealed
+        if !showPage(), wasRevealed { window?.makeFirstResponder(commandBar) }
+    }
+
     // MARK: Compact mode
 
     private func applyReveal() {
@@ -443,7 +452,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
             delete: { [weak self] id in self?.confirmDeletion(of: id) }
         )
         let sidebar = NSHostingController(rootView: TabSidebar(session: session, spaceActions: spaceActions) { [weak self] in
-            self?.showPage()
+            self?.leaveSidebar()
         })
         self.sidebar = sidebar
         let page = NSViewController()
@@ -471,15 +480,13 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
     }
 }
 
-/// Keeps the browser-level shortcuts for the menu: a focused web page sees key equivalents before the menu does and
-/// could otherwise swallow them.
+/// Keeps the reserved browser-level shortcuts for the menu: a focused web page sees key equivalents before the menu
+/// does and could otherwise swallow them. Which keys those are is decided by `KeyBindings.reservesKeyEquivalent`.
 private final class MainWindow: NSWindow {
-    private static let reserved: Set<String> = ["t", "n", "w", "T", "l", "q"]
+    var shortcuts: ShortcutController?
 
     override func performKeyEquivalent(with event: NSEvent) -> Bool {
-        let modifiers = event.modifierFlags.intersection([.command, .shift, .option, .control])
-        if modifiers == .command || modifiers == [.command, .shift],
-           let key = event.charactersIgnoringModifiers, Self.reserved.contains(key),
+        if shortcuts?.bindings.reservesKeyEquivalent(KeyStroke(event)) == true,
            NSApp.mainMenu?.performKeyEquivalent(with: event) == true {
             return true
         }

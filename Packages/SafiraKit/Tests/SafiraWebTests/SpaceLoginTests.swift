@@ -16,7 +16,9 @@ private final class LoginServer: @unchecked Sendable {
     let port: UInt16
 
     init() async throws {
-        let listener = try NWListener(using: .tcp, on: .any)
+        let parameters = NWParameters.tcp
+        parameters.requiredLocalEndpoint = .hostPort(host: "127.0.0.1", port: .any)
+        let listener = try NWListener(using: parameters)
         listener.newConnectionHandler = { connection in
             connection.start(queue: .global())
             connection.receive(minimumIncompleteLength: 1, maximumLength: 65_536) { data, _, _, _ in
@@ -101,8 +103,8 @@ private final class LoginServer: @unchecked Sendable {
             closeAll(session)
             closeAll(other)
         }
-        try await removeDataStoreWhenReleased(profile)
-        try await removeDataStoreWhenReleased(otherProfile)
+        await removeDataStoreWhenReleased(profile)
+        await removeDataStoreWhenReleased(otherProfile)
     }
 
     @Test func deletingTheSpaceWhereTheUserSignedInKeepsTheLogin() async throws {
@@ -124,6 +126,6 @@ private final class LoginServer: @unchecked Sendable {
             #expect(cookies.map { "\($0.name)=\($0.value)" } == ["session=alice"])
             closeAll(session)
         }
-        try await removeDataStoreWhenReleased(profile)
+        await removeDataStoreWhenReleased(profile)
     }
 }

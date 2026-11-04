@@ -43,6 +43,9 @@ targets:
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         NSPrincipalClass: NSApplication
         LSApplicationCategoryType: public.app-category.productivity
+        # A browser loads the HTTP pages the user chose to continue to; the system does not stop web content for lack of TLS.
+        NSAppTransportSecurity:
+          NSAllowsArbitraryLoadsInWebContent: true
         # Sparkle, opt-in (docs/architecture-v1.md §8.4). A missing SUEnableAutomaticChecks makes Sparkle ask the user on
         # the second launch, which would be an unrequested update prompt, so it is explicit. SUEnableSystemProfiling is
         # deliberately absent (off by default) and an update never installs without the user's click.

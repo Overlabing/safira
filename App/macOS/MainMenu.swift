@@ -2,11 +2,14 @@
 // Copyright (c) 2026 Antonin Carlin
 
 import AppKit
+import Commands
 import SafiraCore
 
 @MainActor
 enum MainMenu {
-    static func make(updates: UpdateController, diagnostics: DiagnosticsController) -> NSMenu {
+    static func make(updates: UpdateController, diagnostics: DiagnosticsController, shortcuts: KeyBindings,
+                     shortcutsWindow: ShortcutsWindowController) -> NSMenu {
+        func item(_ id: CommandID, _ action: Selector?) -> NSMenuItem { commandItem(id, action, shortcuts) }
         let menu = NSMenu()
         menu.addItem(submenu(title: "Safira", items: [
             NSMenuItem(title: "About Safira", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: ""),
@@ -14,21 +17,22 @@ enum MainMenu {
             target(updates, NSMenuItem(title: "Check for Updates…", action: #selector(UpdateController.checkForUpdates(_:)), keyEquivalent: "")),
             target(updates, NSMenuItem(title: "Check for Updates Automatically", action: #selector(UpdateController.toggleAutomaticChecks(_:)), keyEquivalent: "")),
             .separator(),
+            target(shortcutsWindow, NSMenuItem(title: "Shortcuts…", action: #selector(ShortcutsWindowController.show(_:)),
+                                               keyEquivalent: "")),
+            .separator(),
             NSMenuItem(title: "Hide Safira", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h"),
             hideOthers(),
             NSMenuItem(title: "Show All", action: #selector(NSApplication.unhideAllApplications(_:)), keyEquivalent: ""),
             .separator(),
-            NSMenuItem(title: "Quit Safira", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"),
+            item(.quit, #selector(NSApplication.terminate(_:))),
         ]))
         menu.addItem(submenu(title: "File", items: [
-            NSMenuItem(title: "New Tab", action: #selector(MainWindowController.newTab(_:)), keyEquivalent: "t"),
-            NSMenuItem(title: "Open Command Bar", action: #selector(MainWindowController.focusCommandBar(_:)),
-                       keyEquivalent: "l"),
+            item(.newTab, #selector(MainWindowController.newTab(_:))),
+            item(.openCommandBar, #selector(MainWindowController.focusCommandBar(_:))),
             .separator(),
-            NSMenuItem(title: "Close Tab", action: #selector(MainWindowController.closeTab(_:)), keyEquivalent: "w"),
-            NSMenuItem(title: "Reopen Closed Tab", action: #selector(MainWindowController.reopenClosedTab(_:)),
-                       keyEquivalent: "T"),
-            NSMenuItem(title: "Close Window", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "W"),
+            item(.closeTab, #selector(MainWindowController.closeTab(_:))),
+            item(.reopenClosedTab, #selector(MainWindowController.reopenClosedTab(_:))),
+            item(.closeWindow, #selector(NSWindow.performClose(_:))),
         ]))
         menu.addItem(submenu(title: "Edit", items: [
             NSMenuItem(title: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x"),
@@ -37,7 +41,7 @@ enum MainMenu {
             NSMenuItem(title: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a"),
         ]))
         menu.addItem(submenu(title: "View", items: [
-            NSMenuItem(title: "Reload Page", action: #selector(MainWindowController.reload(_:)), keyEquivalent: "r"),
+            item(.reload, #selector(MainWindowController.reload(_:))),
             .separator(),
             webContentItem(title: WebContentSettings.fraudulentSiteWarningTitle,
                            explanation: WebContentSettings.fraudulentSiteWarningExplanation,
@@ -46,43 +50,32 @@ enum MainMenu {
                            explanation: WebContentSettings.autoplayingSoundExplanation,
                            action: #selector(MainWindowController.toggleAutoplayingSound(_:))),
             .separator(),
-            controlCommandItem(title: "Compact Mode", action: #selector(MainWindowController.toggleCompactMode(_:)),
-                               key: "s"),
-            optionCommandItem(title: "Show Sidebar", action: #selector(MainWindowController.toggleRevealedSidebar(_:)),
-                              key: "s"),
-            NSMenuItem(title: "Focus Tab List", action: #selector(MainWindowController.focusTabList(_:)),
-                       keyEquivalent: ""),
+            item(.compactMode, #selector(MainWindowController.toggleCompactMode(_:))),
+            item(.showSidebar, #selector(MainWindowController.toggleRevealedSidebar(_:))),
+            item(.focusTabList, #selector(MainWindowController.focusTabList(_:))),
         ]))
         menu.addItem(submenu(title: "History", items: [
-            NSMenuItem(title: "Back", action: #selector(MainWindowController.goBack(_:)), keyEquivalent: "["),
-            NSMenuItem(title: "Forward", action: #selector(MainWindowController.goForward(_:)), keyEquivalent: "]"),
+            item(.goBack, #selector(MainWindowController.goBack(_:))),
+            item(.goForward, #selector(MainWindowController.goForward(_:))),
         ]))
         menu.addItem(submenu(title: "Spaces", items: [
-            controlCommandItem(title: "New Space…", action: #selector(MainWindowController.newSpace(_:)), key: "n"),
-            NSMenuItem(title: "Rename Space…", action: #selector(MainWindowController.renameSpace(_:)), keyEquivalent: ""),
-            NSMenuItem(title: "Delete Space…", action: #selector(MainWindowController.deleteSpace(_:)), keyEquivalent: ""),
+            item(.newSpace, #selector(MainWindowController.newSpace(_:))),
+            item(.renameSpace, #selector(MainWindowController.renameSpace(_:))),
+            item(.deleteSpace, #selector(MainWindowController.deleteSpace(_:))),
             .separator(),
-            controlArrowItem(title: "Show Previous Space", action: #selector(MainWindowController.showPreviousSpace(_:)),
-                             arrow: NSLeftArrowFunctionKey),
-            controlArrowItem(title: "Show Next Space", action: #selector(MainWindowController.showNextSpace(_:)),
-                             arrow: NSRightArrowFunctionKey),
-            NSMenuItem(title: "Move Space Left", action: #selector(MainWindowController.moveSpaceLeft(_:)),
-                       keyEquivalent: ""),
-            NSMenuItem(title: "Move Space Right", action: #selector(MainWindowController.moveSpaceRight(_:)),
-                       keyEquivalent: ""),
+            item(.previousSpace, #selector(MainWindowController.showPreviousSpace(_:))),
+            item(.nextSpace, #selector(MainWindowController.showNextSpace(_:))),
+            item(.moveSpaceLeft, #selector(MainWindowController.moveSpaceLeft(_:))),
+            item(.moveSpaceRight, #selector(MainWindowController.moveSpaceRight(_:))),
         ]))
         let window = submenu(title: "Window", items: [
             NSMenuItem(title: "Minimize", action: #selector(NSWindow.performMiniaturize(_:)), keyEquivalent: "m"),
             NSMenuItem(title: "Zoom", action: #selector(NSWindow.performZoom(_:)), keyEquivalent: ""),
             .separator(),
-            NSMenuItem(title: "Show Previous Tab", action: #selector(MainWindowController.showPreviousTab(_:)),
-                       keyEquivalent: "{"),
-            NSMenuItem(title: "Show Next Tab", action: #selector(MainWindowController.showNextTab(_:)),
-                       keyEquivalent: "}"),
-            arrowItem(title: "Move Tab Up", action: #selector(MainWindowController.moveTabUp(_:)),
-                      arrow: NSUpArrowFunctionKey),
-            arrowItem(title: "Move Tab Down", action: #selector(MainWindowController.moveTabDown(_:)),
-                      arrow: NSDownArrowFunctionKey),
+            item(.previousTab, #selector(MainWindowController.showPreviousTab(_:))),
+            item(.nextTab, #selector(MainWindowController.showNextTab(_:))),
+            item(.moveTabUp, #selector(MainWindowController.moveTabUp(_:))),
+            item(.moveTabDown, #selector(MainWindowController.moveTabDown(_:))),
         ])
         menu.addItem(window)
         NSApplication.shared.windowsMenu = window.submenu
@@ -106,30 +99,13 @@ enum MainMenu {
         return item
     }
 
-    /// ⌥⌘ with an arrow key.
-    private static func arrowItem(title: String, action: Selector, arrow: Int) -> NSMenuItem {
-        let item = NSMenuItem(title: title, action: action, keyEquivalent: String(Character(UnicodeScalar(arrow)!)))
-        item.keyEquivalentModifierMask = [.command, .option]
-        return item
-    }
-
-    /// ⌃⌘ with an arrow key: no browser-level or system shortcut uses it.
-    private static func controlArrowItem(title: String, action: Selector, arrow: Int) -> NSMenuItem {
-        let item = NSMenuItem(title: title, action: action, keyEquivalent: String(Character(UnicodeScalar(arrow)!)))
-        item.keyEquivalentModifierMask = [.command, .control]
-        return item
-    }
-
-    /// ⌃⌘ with a letter, the system's own sidebar shortcut for S.
-    private static func controlCommandItem(title: String, action: Selector, key: String) -> NSMenuItem {
-        let item = NSMenuItem(title: title, action: action, keyEquivalent: key)
-        item.keyEquivalentModifierMask = [.control, .command]
-        return item
-    }
-
-    private static func optionCommandItem(title: String, action: Selector, key: String) -> NSMenuItem {
-        let item = NSMenuItem(title: title, action: action, keyEquivalent: key)
-        item.keyEquivalentModifierMask = [.option, .command]
+    /// A menu item for a registry command: its title and key equivalent come from the registry and the bindings in force.
+    private static func commandItem(_ id: CommandID, _ action: Selector?, _ bindings: KeyBindings) -> NSMenuItem {
+        let item = NSMenuItem(title: CommandRegistry.command(id).title, action: action, keyEquivalent: "")
+        if let shortcut = bindings[id] {
+            item.keyEquivalent = shortcut.menuKeyEquivalent
+            item.keyEquivalentModifierMask = shortcut.modifiers.eventFlags
+        }
         return item
     }
 

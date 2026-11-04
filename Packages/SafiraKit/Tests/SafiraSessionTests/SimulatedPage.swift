@@ -13,6 +13,9 @@ final class SimulatedPage: WebPageHandle {
     private(set) var reloadCount = 0
     private(set) var restoreCount = 0
     private(set) var isClosed = false
+    /// Every load the session asked for, in order, with the policy it asked for.
+    private(set) var loads: [(url: URL, httpsFirst: Bool)] = []
+    private(set) var shownWarnings: [InsecureConnectionWarning] = []
     /// Makes `restore` fail, as the engine does with a state it cannot read.
     var refusesNavigationState = false
     private var history: [Entry] = []
@@ -21,6 +24,8 @@ final class SimulatedPage: WebPageHandle {
     private var sensitiveHistory = SensitiveHistory<UUID>()
     var onStateChange: (@MainActor (PageState) -> Void)?
     var onNewTab: (@MainActor (NewTabRequest) -> Void)?
+    var onLoadFailure: (@MainActor (LoadFailure) -> Void)?
+    var onContinueOverHTTP: (@MainActor () -> Void)?
 
     private struct Entry: Codable {
         var id = UUID()
@@ -48,9 +53,24 @@ final class SimulatedPage: WebPageHandle {
         sensitiveHistory.content(of: history.map(\.id))
     }
 
-    func load(_ url: URL) {
+    func load(_ url: URL, httpsFirst: Bool) {
         loadCount += 1
+        loads.append((url, httpsFirst))
         navigate(to: url)
+    }
+
+    func showInsecureConnectionWarning(_ warning: InsecureConnectionWarning) {
+        shownWarnings.append(warning)
+    }
+
+    /// The platform reports that the navigation to `url` failed with the given NSURLError code.
+    func failLoad(of url: URL, code: URLError.Code) {
+        onLoadFailure?(LoadFailure(url: url, domain: NSURLErrorDomain, code: code.rawValue))
+    }
+
+    /// The user presses "Continue over HTTP" on the warning page.
+    func pressContinueOverHTTP() {
+        onContinueOverHTTP?()
     }
 
     func restore(_ navigationState: Data) -> Bool {

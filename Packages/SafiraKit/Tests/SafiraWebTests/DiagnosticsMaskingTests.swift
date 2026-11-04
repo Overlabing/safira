@@ -73,9 +73,9 @@ private final class Atomic: @unchecked Sendable {
             context.diagnostics = DiagnosticLogger(subsystem: "test", logsDirectory: logs, isEnabled: true)
             let page = context.makePage(for: TabID())
 
-            page.load(try #require(URL(string: "http://127.0.0.1:\(server.port)/private/path?token=abc123#frag")))
+            page.load(try #require(URL(string: "http://127.0.0.1:\(server.port)/private/path?token=abc123#frag")), httpsFirst: false)
             let loaded = try await waitForLine(containing: "page-loaded", in: context, logs: logs)
-            page.load(try #require(URL(string: "http://127.0.0.1:1/secret-failing-path?q=1")))
+            page.load(try #require(URL(string: "http://127.0.0.1:1/secret-failing-path?q=1")), httpsFirst: false)
             let failed = try await waitForLine(containing: "load-failed", in: context, logs: logs)
 
             #expect(loaded.contains("notice page-loaded host=127.0.0.1 ms="))
@@ -87,7 +87,7 @@ private final class Atomic: @unchecked Sendable {
             #expect(page.state.title == "Secret Quarterly Title")
             page.close()
         }
-        try await removeDataStore(profile)
+        await removeDataStoreWhenReleased(profile)
     }
 
     private func waitForLine(containing marker: String, in context: ProfileWebContext, logs: URL) async throws -> String {
@@ -106,14 +106,5 @@ private final class Atomic: @unchecked Sendable {
         guard FileManager.default.fileExists(atPath: logs.path) else { return "" }
         return try FileManager.default.contentsOfDirectory(at: logs, includingPropertiesForKeys: nil)
             .map { try String(contentsOf: $0, encoding: .utf8) }.joined()
-    }
-
-    private func removeDataStore(_ profile: ProfileID) async throws {
-        for _ in 1..<50 {
-            do { return try await ProfileWebContext.removeDataStore(of: profile) } catch {
-                try await Task.sleep(for: .milliseconds(100))
-            }
-        }
-        try await ProfileWebContext.removeDataStore(of: profile)
     }
 }

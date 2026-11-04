@@ -43,7 +43,7 @@ private final class NavigationCounter: NSObject, WKNavigationDelegate {
                 let page = context.makePage(for: TabID())
                 let counter = NavigationCounter()
                 page.webView.navigationDelegate = counter
-                try page.load(#require(URL(string: "data:text/html,<title>\(number)</title>")))
+                try page.load(#require(URL(string: "data:text/html,<title>\(number)</title>")), httpsFirst: false)
                 await counter.nextFinish()
                 _ = try await page.webView.evaluateJavaScript("window.marker = \(number)")
                 pages.append((page, counter))
@@ -67,7 +67,7 @@ private final class NavigationCounter: NSObject, WKNavigationDelegate {
             }
             pages.forEach { $0.page.close() }
         }
-        try await removeDataStoreWhenReleased(profile)
+        await removeDataStoreWhenReleased(profile)
     }
 
     @Test func aTabPageUsesItsProfileDataStoreAndLeavesTheRegistryWhenClosed() async throws {
@@ -85,6 +85,6 @@ private final class NavigationCounter: NSObject, WKNavigationDelegate {
 
             #expect(context.webView(for: tab) == nil)
         }
-        try await removeDataStoreWhenReleased(profile)
+        await removeDataStoreWhenReleased(profile)
     }
 }

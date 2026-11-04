@@ -14,7 +14,17 @@ public final class WebKitPage: NSObject, WebPageHandle {
     public let webView: WKWebView
     public var onStateChange: (@MainActor (PageState) -> Void)?
     public var onNewTab: (@MainActor (NewTabRequest) -> Void)?
+    public var onLoadFailure: (@MainActor (LoadFailure) -> Void)?
+    public var onContinueOverHTTP: (@MainActor () -> Void)?
     private var isPlayingMedia = false
+    /// The warning the page currently shows; only its own "Continue over HTTP" link is intercepted.
+    private var showing: InsecureConnectionWarning?
+    private var httpsFirstAddress: URL?
+    /// What to ask WebKit for on an HTTPS-first navigation. Tests set `.keepAsRequested` to stand for the cases where
+    /// WebKit ignores the preference (system configuration, known hosts), which is when Safira's own page takes over.
+    var httpsFirstPolicy: WKWebpagePreferences.UpgradeToHTTPSPolicy = .userMediatedFallbackToHTTP
+    /// Lets tests trust a throwaway certificate; nil in the app, where the system decides.
+    var trustsServer: (@MainActor (SecTrust) -> Bool)?
     private var sensitiveHistory = SensitiveHistory<ObjectIdentifier>()
     /// Sensitive content seen while the page had no back-forward entry to hold it; it stays for the page's lifetime.
     private var unattributedSensitiveContent: SensitiveContent = []
@@ -56,7 +66,9 @@ public final class WebKitPage: NSObject, WebPageHandle {
         return sensitiveHistory.content(of: entries.map(ObjectIdentifier.init)).union(unattributedSensitiveContent)
     }
 
-    public func load(_ url: URL) {
+    public func load(_ url: URL, httpsFirst: Bool) {
+        httpsFirstAddress = httpsFirst ? url : nil
+        showing = nil
         webView.load(URLRequest(url: url))
     }
 
@@ -64,6 +76,12 @@ public final class WebKitPage: NSObject, WebPageHandle {
     public func restore(_ navigationState: Data) -> Bool {
         webView.interactionState = navigationState
         return webView.backForwardList.currentItem != nil
+    }
+
+    public func showInsecureConnectionWarning(_ warning: InsecureConnectionWarning) {
+        showing = warning
+        // The failed address stays the page's address, so the Command bar and reload still name the site.
+        webView.loadHTMLString(InsecureConnectionPage.html(for: warning), baseURL: warning.failedURL)
     }
 
     public func goBack() {
@@ -83,6 +101,8 @@ public final class WebKitPage: NSObject, WebPageHandle {
         observations = []
         onStateChange = nil
         onNewTab = nil
+        onLoadFailure = nil
+        onContinueOverHTTP = nil
         webView.stopLoading()
         webView.removeFromSuperview()
         webView.navigationDelegate = nil
@@ -129,12 +149,16 @@ public final class WebKitPage: NSObject, WebPageHandle {
 
 extension WebKitPage: WKNavigationDelegate {
     public func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction,
-                        decisionHandler: @escaping @MainActor (WKNavigationActionPolicy) -> Void) {
+                        preferences: WKWebpagePreferences) async -> (WKNavigationActionPolicy, WKWebpagePreferences) {
         if navigationAction.navigationType == .linkActivated, navigationAction.modifierFlags.contains(.command),
            let url = navigationAction.request.url, let onNewTab {
             onNewTab(.address(url))
-            decisionHandler(.cancel)
-            return
+            return (.cancel, preferences)
+        }
+        if navigationAction.navigationType == .linkActivated, let warning = showing,
+           navigationAction.request.url == warning.httpURL {
+            onContinueOverHTTP?()
+            return (.cancel, preferences)
         }
         if navigationAction.request.httpMethod?.uppercased() == "POST", let frame = navigationAction.targetFrame {
             // A main-frame POST gets its own back-forward entry when it commits; a frame's POST lands in the shown one.
@@ -144,7 +168,19 @@ extension WebKitPage: WKNavigationDelegate {
                 markShownEntry(.postBody)
             }
         }
-        decisionHandler(.allow)
+        if navigationAction.targetFrame?.isMainFrame == true, let url = navigationAction.request.url,
+           let expected = httpsFirstAddress, HTTPSFallback.isSameAddress(url, expected) {
+            preferences.preferredHTTPSNavigationPolicy = httpsFirstPolicy
+        }
+        return (.allow, preferences)
+    }
+
+    public func webView(_ webView: WKWebView, respondTo challenge: URLAuthenticationChallenge) async
+        -> (URLSession.AuthChallengeDisposition, URLCredential?) {
+        guard let trustsServer, challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
+              let trust = challenge.protectionSpace.serverTrust, trustsServer(trust)
+        else { return (.performDefaultHandling, nil) }
+        return (.useCredential, URLCredential(trust: trust))
     }
 
     // WebKit holds one navigation delegate per web view, so this page is it and hands the load events to the
@@ -169,6 +205,9 @@ extension WebKitPage: WKNavigationDelegate {
                         withError error: any Error) {
         mainFrameIsPosting = false
         navigationDiagnostics?.webView(webView, didFailProvisionalNavigation: navigation, withError: error)
+        let error = error as NSError
+        guard let url = error.userInfo[NSURLErrorFailingURLErrorKey] as? URL else { return }
+        onLoadFailure?(LoadFailure(url: url, domain: error.domain, code: error.code))
     }
 }
 

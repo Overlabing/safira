@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Antonin Carlin
 
 import AppKit
+import Commands
 import os
 import SafiraCore
 import SafiraSession
@@ -22,6 +23,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                                     category: "persistence")
 
     let diagnostics = DiagnosticsController()
+    let shortcuts = ShortcutController()
+    private(set) lazy var shortcutsWindow = ShortcutsWindowController(shortcuts: shortcuts)
     private var mainWindow: MainWindowController?
     private var autosave: SessionAutosave?
 
@@ -41,11 +44,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         autosave.start()
         self.autosave = autosave
         diagnostics.attach(to: session)
-        let controller = MainWindowController(session: session, webContext: context)
+        let controller = MainWindowController(session: session, webContext: context, shortcuts: shortcuts)
         controller.showWindow(nil)
         controller.focusCommandBar(nil)
         mainWindow = controller
         NSApp.activate()
+        keepMenuInStepWithShortcuts()
+    }
+
+    func rebuildMenu() {
+        NSApp.mainMenu = MainMenu.make(updates: updates, diagnostics: diagnostics, shortcuts: shortcuts.bindings,
+                                       shortcutsWindow: shortcutsWindow)
+    }
+
+    /// The menu carries the key equivalents, so a change of preset or override rebuilds it.
+    private func keepMenuInStepWithShortcuts() {
+        withObservationTracking {
+            _ = shortcuts.bindings
+        } onChange: { [weak self] in
+            Task { @MainActor in
+                self?.rebuildMenu()
+                self?.keepMenuInStepWithShortcuts()
+            }
+        }
     }
 
     /// Quitting waits for the last save of the Tabs.
