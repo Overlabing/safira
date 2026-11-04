@@ -62,6 +62,7 @@ registered_as_browser() {
 allowed=Packages/SafiraKit/Sources/SafiraWeb/ProfileWebContext.swift
 
 signed_and_sandboxed() {
+    local app=$1
     codesign --verify --strict "$app" || return 1
     # Captured first: `grep -q` exits early, and under pipefail the codesign it cut off would fail the step.
     signature=$(codesign -dv "$app" 2>&1)
@@ -78,11 +79,12 @@ step "singleton guard (App, Packages)" scripts/guard-singletons.sh "$allowed" Ap
 step "swift test (SafiraKit)" swift test --package-path Packages/SafiraKit
 step "xcodebuild Safira (Debug)" \
     xcodebuild -project Safira.xcodeproj -scheme Safira -configuration Debug -derivedDataPath .build/dd build
-step "Safira.app signed, hardened runtime, sandboxed" signed_and_sandboxed
+step "Safira.app signed, hardened runtime, sandboxed" signed_and_sandboxed "$app"
 step "xcodebuild Safira (Benchmark)" \
     xcodebuild -project Safira.xcodeproj -scheme Safira -configuration Benchmark -derivedDataPath .build/dd build
 step "xcodebuild Safira (Release)" \
     xcodebuild -project Safira.xcodeproj -scheme Safira -configuration Release -derivedDataPath .build/dd build
+step "Release Safira.app signed, hardened runtime, sandboxed" signed_and_sandboxed .build/dd/Build/Products/Release/Safira.app
 step "benchmark mode only in the Benchmark build, absent from Release" benchmark_only_in_benchmark
 step "registered for http, https and HTML files in every configuration" registered_as_browser
 step "Sparkle opt-in: automatic checks off, no system profiling" updates_opt_in

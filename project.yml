@@ -82,6 +82,8 @@ targets:
         # The Debug mode export is saved where the user chooses, through the save panel. Debug builds use the hand-kept
         # Safira.Debug.entitlements, which carries the same key.
         com.apple.security.files.user-selected.read-write: true
+        # Keeps the Slack folder the user grants once, across launches (Link rules, #20).
+        com.apple.security.files.bookmarks.app-scope: true
         # Sparkle's installer launcher and status connections (Sparkle sandboxing guide); the only entitlements added for updates.
         com.apple.security.temporary-exception.mach-lookup.global-name:
           - $(PRODUCT_BUNDLE_IDENTIFIER)-spks
