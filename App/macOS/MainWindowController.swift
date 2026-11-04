@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Antonin Carlin
 
+import Appearance
 import AppKit
 import Commands
 import SafiraCore
@@ -38,6 +39,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
     private lazy var downloadsWindow = DownloadsWindowController(registry: registry)
     private var popupPanels: [PopupID: PopupPanelController] = [:]
     private var renderedTabID: TabID?
+    private var dockIconThemeID: String?
     private lazy var permissionPrompter = PermissionPrompter(
         window: { [weak self] in self?.window },
         profileName: { [weak self] id in self?.registry.profiles.first { $0.id == id }?.name ?? "" })
@@ -446,16 +448,17 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         if id != nil, space == nil { return }
         let count = session.spaces.count
         let editor = SpaceEditor(
-            title: space == nil ? String(localized: "New Space") : String(localized: "Rename Space"),
-            confirmTitle: space == nil ? String(localized: "Create") : String(localized: "Rename"),
+            title: space == nil ? String(localized: "New Space") : String(localized: "Edit Space"),
+            confirmTitle: space == nil ? String(localized: "Create") : String(localized: "Save"),
             name: space?.name ?? String(localized: "Space \(count + 1)"),
             emoji: space?.emoji ?? Self.newSpaceEmoji[count % Self.newSpaceEmoji.count],
-            save: { [weak self] name, emoji in
+            paletteID: space?.paletteID ?? ThemeCatalog.nextID(avoiding: session.spaces.map(\.paletteID)),
+            save: { [weak self] name, emoji, paletteID in
                 guard let self else { return }
                 if let id {
-                    session.renameSpace(id, name: name, emoji: emoji)
+                    session.renameSpace(id, name: name, emoji: emoji, paletteID: paletteID)
                 } else {
-                    session.createSpace(name: name, emoji: emoji)
+                    session.createSpace(name: name, emoji: emoji, paletteID: paletteID)
                     focusCommandBar(nil)
                 }
                 endSpaceSheet()
@@ -545,18 +548,21 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         if id != nil, profile == nil { return }
         let count = registry.profiles.count
         let editor = ProfileEditor(
-            title: profile == nil ? String(localized: "New Profile") : String(localized: "Rename Profile"),
-            confirmTitle: profile == nil ? String(localized: "Create") : String(localized: "Rename"),
+            title: profile == nil ? String(localized: "New Profile") : String(localized: "Edit Profile"),
+            confirmTitle: profile == nil ? String(localized: "Create") : String(localized: "Save"),
             name: profile?.name ?? String(localized: "Profile \(count + 1)"),
             symbol: profile?.symbol ?? Self.newProfileSymbols[count % Self.newProfileSymbols.count],
+            paletteID: profile?.paletteID ?? ThemeCatalog.nextID(avoiding: registry.profiles.map(\.paletteID)),
             asksForSearchEngine: profile == nil,
-            save: { [weak self] name, symbol, engine in
+            save: { [weak self] name, symbol, paletteID, engine in
                 guard let self else { return }
                 if let id {
-                    registry.renameProfile(id, name: name, symbol: symbol)
+                    registry.renameProfile(id, name: name, symbol: symbol, paletteID: paletteID)
                 } else if let engine {
                     endProfileSheet()
-                    switchProfile { $0.createProfile(name: name, symbol: symbol, searchEngine: engine) }
+                    switchProfile {
+                        $0.createProfile(name: name, symbol: symbol, searchEngine: engine, paletteID: paletteID)
+                    }
                     return
                 }
                 endProfileSheet()
@@ -735,6 +741,15 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         updateSearchEngineSheet(query: session.searchAwaitingEngine)
         showPopups()
         showMatchBanner()
+        updateDockIcon()
+    }
+
+    /// The Dock icon is the Active profile's Theme. Private windows leave it as it is.
+    private func updateDockIcon() {
+        let theme = ThemeCatalog.theme(id: registry.activeProfile.paletteID, fallback: ThemeCatalog.first)
+        guard theme.id != dockIconThemeID else { return }
+        dockIconThemeID = theme.id
+        NSApp.applicationIconImage = DockIcon.image(for: theme)
     }
 
     /// The banner follows the Active profile's session. A new one is announced and goes by itself after a while; the

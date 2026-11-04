@@ -53,15 +53,16 @@ struct ProfileSwitcher: View {
     }
 }
 
-/// Names a new Profile or renames one. A new Profile needs a search engine, picked from a list where nothing is
-/// selected until the user chooses (decision D10).
+/// Names a new Profile or edits one, and picks its Theme from the Palette: the Profile's tint and Dock icon. A new
+/// Profile needs a search engine, picked from a list where nothing is selected until the user chooses (decision D10).
 struct ProfileEditor: View {
     let title: String
     let confirmTitle: String
     @State var name: String
     @State var symbol: String
+    @State var paletteID: String
     let asksForSearchEngine: Bool
-    let save: (_ name: String, _ symbol: String, _ engine: SearchEngine?) -> Void
+    let save: (_ name: String, _ symbol: String, _ paletteID: String, _ engine: SearchEngine?) -> Void
     let cancel: () -> Void
     @State private var engine: SearchEngine?
 
@@ -76,6 +77,7 @@ struct ProfileEditor: View {
             Form {
                 TextField("Name", text: $name)
                 TextField("Symbol", text: $symbol)
+                LabeledContent("Theme") { PalettePicker(selection: $paletteID) }
                 if asksForSearchEngine {
                     Picker("Search engine", selection: $engine) {
                         ForEach(SearchEngine.allCases, id: \.self) { engine in
@@ -95,7 +97,7 @@ struct ProfileEditor: View {
                 Spacer()
                 Button("Cancel", role: .cancel, action: cancel)
                     .keyboardShortcut(.cancelAction)
-                Button(confirmTitle) { save(name, symbol, engine) }
+                Button(confirmTitle) { save(name, symbol, paletteID, engine) }
                     .keyboardShortcut(.defaultAction)
                     .disabled(!canSave)
             }
