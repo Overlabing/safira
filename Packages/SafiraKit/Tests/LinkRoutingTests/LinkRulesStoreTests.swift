@@ -180,4 +180,41 @@ private let handWritten = """
 
         #expect(rules(in: store).map(\.host) == ["hand.example", "second.example"])
     }
+    @Test func anEditAbortsWhenTheFileChangedBetweenReadAndWrite() throws {
+        let url = try temporaryRulesFile()
+        try Data(handWritten.utf8).write(to: url)
+        let handEdit = Data(#"{"version":1,"rules":[{"host":"hand.example","profile":"Work"}]}"#.utf8)
+        let store = LinkRulesStore(url: url, afterReadingForEdit: { try? handEdit.write(to: url) })
+
+        #expect(throws: LinkRulesEditError.changedOnDisk) {
+            try store.append(LinkRule(host: "late.example", profile: "Work"))
+        }
+
+        #expect(try Data(contentsOf: url) == handEdit)
+    }
+
+    @Test func aReplacingImportAbortsWhenTheFileChangedBetweenReadAndWrite() throws {
+        let url = try temporaryRulesFile()
+        try Data(handWritten.utf8).write(to: url)
+        let handEdit = Data(#"{"version":1,"rules":[{"host":"hand.example","profile":"Work"}]}"#.utf8)
+        let store = LinkRulesStore(url: url, afterReadingForEdit: { try? handEdit.write(to: url) })
+
+        #expect(throws: LinkRulesEditError.changedOnDisk) {
+            try store.importFile(Data(#"{"version":1,"rules":[]}"#.utf8), mode: .replace)
+        }
+
+        #expect(try Data(contentsOf: url) == handEdit)
+    }
+
+    @Test func anEditAbortsWhenTheFileAppearedBetweenReadAndWrite() throws {
+        let url = try temporaryRulesFile()
+        let created = Data(#"{"version":1,"rules":[{"host":"hand.example","profile":"Work"}]}"#.utf8)
+        let store = LinkRulesStore(url: url, afterReadingForEdit: { try? created.write(to: url) })
+
+        #expect(throws: LinkRulesEditError.changedOnDisk) {
+            try store.append(LinkRule(host: "late.example", profile: "Work"))
+        }
+
+        #expect(try Data(contentsOf: url) == created)
+    }
 }

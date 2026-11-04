@@ -39,9 +39,12 @@ public enum LinkRulesImportMode: Hashable, Sendable {
 /// written, and each write replaces the file in one step, so an interruption leaves the old file or the new one.
 public struct LinkRulesStore: Sendable {
     public let url: URL
+    private let afterReadingForEdit: @Sendable () -> Void
 
-    public init(url: URL) {
+    /// `afterReadingForEdit` runs between an edit's read and its write, the moment the changed-bytes guard covers.
+    public init(url: URL, afterReadingForEdit: @escaping @Sendable () -> Void = {}) {
         self.url = url
+        self.afterReadingForEdit = afterReadingForEdit
     }
 
     /// The rules file is read through the same reader that routing uses.
@@ -91,7 +94,7 @@ public struct LinkRulesStore: Sendable {
         }
         switch mode {
         case .replace:
-            let (original, _) = try read()
+            let (original, _) = try readForEdit()
             try write(Self.serialize(imported), replacing: original)
         case .addToEnd:
             let importedRules = imported["rules"] as? [Any] ?? []
@@ -120,8 +123,14 @@ public struct LinkRulesStore: Sendable {
         return (original, root)
     }
 
+    private func readForEdit() throws -> (original: Data?, root: [String: Any]) {
+        let result = try read()
+        afterReadingForEdit()
+        return result
+    }
+
     private func edit(_ change: (inout [Any]) throws -> Void) throws {
-        var (original, root) = try read()
+        var (original, root) = try readForEdit()
         var rules = root["rules"] as? [Any] ?? []
         try change(&rules)
         root["rules"] = rules

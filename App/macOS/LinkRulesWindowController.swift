@@ -293,7 +293,7 @@ private struct LinkRulesView: View {
 
     @ViewBuilder
     private var statusLine: some View {
-        if let message = model.message {
+        if model.fileProblem == nil, let message = model.message {
             Text(verbatim: message.text)
                 .foregroundStyle(message.isError ? Color.red : Color.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -306,7 +306,7 @@ private struct LinkRulesView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Where would this link go?").font(.headline)
             HStack {
-                TextField("Link", text: $model.checkedAddress, prompt: Text("https://example.com/page"))
+                TextField("Link", text: $model.checkedAddress, prompt: Text("Paste a link to check"))
                     .accessibilityLabel(Text("Link to check"))
                     .onSubmit { runCheck() }
                 TextField("Opener", text: $model.checkedOpener, prompt: Text("Opener (optional), such as com.example.chat"))
@@ -319,7 +319,6 @@ private struct LinkRulesView: View {
                 Text(verbatim: result)
                     .fixedSize(horizontal: false, vertical: true)
                     .textSelection(.enabled)
-                    .accessibilityLabel(Text(verbatim: result))
             }
         }
     }
