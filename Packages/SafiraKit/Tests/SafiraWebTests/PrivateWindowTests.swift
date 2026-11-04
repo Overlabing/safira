@@ -102,13 +102,21 @@ private func webKitFolders() -> [URL] {
             #expect(try await run(writeEverything.replacingOccurrences(of: "\"A\"", with: "\"P\"")
                 .replacingOccurrences(of: "script=A", with: "script=P"), in: privateWriter) == "written")
             #expect(try await read(in: privateWriter).local == "P")
-            #expect(await privateWindow.web.dataStore.httpCookieStore.allCookies().map(\.name).sorted() == ["script"])
+            let privateCookies = privateWindow.web.dataStore.httpCookieStore
+            try await waitUntilAsync("the Private window's cookie is stored") {
+                await privateCookies.allCookies().map(\.name).sorted() == ["script"]
+            }
+            #expect(await privateCookies.allCookies().map(\.name).sorted() == ["script"])
 
             let mainReader = try await load(server.url("/"), in: main.web)
             let mainSees = try await read(in: mainReader)
             #expect(mainSees.cookie == "script=A")
             #expect(mainSees.local == "A")
-            #expect(await main.web.dataStore.httpCookieStore.allCookies().map(\.name).sorted() == ["script", "server"])
+            let mainCookies = main.web.dataStore.httpCookieStore
+            try await waitUntilAsync("the Profile's cookies are stored") {
+                await mainCookies.allCookies().map(\.name).sorted() == ["script", "server"]
+            }
+            #expect(await mainCookies.allCookies().map(\.name).sorted() == ["script", "server"])
 
             #expect(privateWindow.web.dataStore.isPersistent == false)
             #expect(privateWindow.web.dataStore.identifier == nil)
@@ -184,7 +192,11 @@ private func webKitFolders() -> [URL] {
             session.openCommandBar(for: .newTab)
             session.submitCommandBar(server.url("/").absoluteString)
             try await waitUntil("the Tab loads") { session.selectedTab?.state.title == "storage" }
-            #expect(await privateWindow.web.dataStore.httpCookieStore.allCookies().map(\.value).contains(token))
+            let privateStore = privateWindow.web.dataStore.httpCookieStore
+            try await waitUntilAsync("the Private window's cookie is stored") {
+                await privateStore.allCookies().map(\.value).contains(token)
+            }
+            #expect(await privateStore.allCookies().map(\.value).contains(token))
             writer.close()
             await privateWindow.close()
             try await Task.sleep(for: .seconds(3))
