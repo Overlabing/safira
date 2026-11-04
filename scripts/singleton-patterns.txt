@@ -1,0 +1,7 @@
+# Shared singletons and website data stores, which would share data between Profiles (docs/architecture-v1.md §2.2).
+# Only the file named in scripts/check.sh may hold them. One fixed string per line.
+WKWebsiteDataStore.default()
+WKWebsiteDataStore(forIdentifier:
+URLSession.shared
+HTTPCookieStorage.shared
+URLCache.shared
