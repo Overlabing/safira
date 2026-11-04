@@ -17,6 +17,7 @@ let package = Package(
         .library(name: "LinkPickerUI", targets: ["LinkPickerUI"]),
         .library(name: "Diagnostics", targets: ["Diagnostics"]),
         .library(name: "Onboarding", targets: ["Onboarding"]),
+        .library(name: "DesignKit", targets: ["DesignKit"]),
     ],
     dependencies: [
         .package(url: "https://github.com/groue/GRDB.swift", exact: "7.11.1"),
@@ -44,5 +45,11 @@ let package = Package(
         .testTarget(name: "DiagnosticsTests", dependencies: ["Diagnostics", "SafiraCore"]),
         .target(name: "Onboarding", dependencies: ["SafiraCore", "SafiraStore", "Commands"]),
         .testTarget(name: "OnboardingTests", dependencies: ["Onboarding", "Commands"]),
+        // DesignKit is generic (no browser words) so it can move into the shared theme module; ThemeStandIn holds
+        // that module's types until it becomes a dependency. DesignGallery renders the candidate directions.
+        .target(name: "ThemeStandIn"),
+        .target(name: "DesignKit", dependencies: ["ThemeStandIn"]),
+        .testTarget(name: "DesignKitTests", dependencies: ["DesignKit", "ThemeStandIn"]),
+        .executableTarget(name: "DesignGallery", dependencies: ["DesignKit", "ThemeStandIn"]),
     ]
 )
