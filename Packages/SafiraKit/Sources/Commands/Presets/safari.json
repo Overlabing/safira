@@ -78,6 +78,7 @@
     "deleteProfile": "The cited page lists no Profile shortcut.",
     "sitePermissions": "The cited page lists no shortcut for website permissions.",
     "previousProfile": "The cited page lists no Profile shortcut.",
-    "nextProfile": "The cited page lists no Profile shortcut."
+    "nextProfile": "The cited page lists no Profile shortcut.",
+    "clearBrowsingData": "The cited page lists no shortcut to clear history or website data."
   }
 }

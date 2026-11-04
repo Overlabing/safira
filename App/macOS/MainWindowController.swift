@@ -33,6 +33,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
     private var spaceSheet: NSWindow?
     private var folderSheet: NSWindow?
     private var profileSheet: NSWindow?
+    private var clearSheet: NSWindow?
     private var permissionsSheet: NSWindow?
     private var popupPanels: [PopupID: PopupPanelController] = [:]
     private var renderedTabID: TabID?
@@ -203,6 +204,10 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         guard let sheet = permissionsSheet else { return }
         window?.endSheet(sheet)
         permissionsSheet = nil
+    }
+
+    @objc func clearBrowsingData(_ sender: Any?) {
+        askToClearBrowsingData(ofProfile: registry.activeProfileID)
     }
 
     @objc func showPreviousProfile(_ sender: Any?) {
@@ -588,6 +593,48 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         }
     }
 
+    /// Clearing Browsing data cannot be undone, so the sheet names the Profile and asks for a range with nothing
+    /// preselected. The Profile is the Active profile: the sheet blocks the window, so it cannot change underneath.
+    private func askToClearBrowsingData(ofProfile id: ProfileID) {
+        guard let window, clearSheet == nil, id == registry.activeProfileID else { return }
+        let profile = registry.activeProfile
+        let context = registry.active
+        let sheet = ClearBrowsingDataSheet(
+            profileName: profile.name,
+            clear: { [weak self] range in
+                guard let self else { return }
+                endClearSheet()
+                hideSuggestions()
+                Task { @MainActor in
+                    do {
+                        try await context.clearBrowsingData(range)
+                        self.announce(String(localized: "Cleared \(range.title) of “\(profile.name)”"))
+                    } catch {
+                        self.showClearingError(profileName: profile.name)
+                    }
+                }
+            },
+            cancel: { [weak self] in self?.endClearSheet() }
+        )
+        let hosting = NSWindow(contentViewController: NSHostingController(rootView: sheet))
+        clearSheet = hosting
+        window.beginSheet(hosting)
+    }
+
+    private func endClearSheet() {
+        guard let sheet = clearSheet else { return }
+        window?.endSheet(sheet)
+        clearSheet = nil
+    }
+
+    private func showClearingError(profileName: String) {
+        guard let window else { return }
+        let alert = NSAlert()
+        alert.messageText = String(localized: "The history of “\(profileName)” could not be cleared")
+        alert.informativeText = String(localized: "Its website data was cleared. Try clearing the history again.")
+        alert.beginSheetModal(for: window)
+    }
+
     private func showDeletionError(_ error: any Error) {
         guard let window else { return }
         let alert = NSAlert()
@@ -806,7 +853,8 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSTextFi
         let profileActions = ProfileActions(
             select: { [weak self] id in self?.switchProfile { $0.selectProfile(id) } },
             edit: { [weak self] id in self?.editProfile(id) },
-            delete: { [weak self] id in self?.confirmDeletion(ofProfile: id) }
+            delete: { [weak self] id in self?.confirmDeletion(ofProfile: id) },
+            clearBrowsingData: { [weak self] id in self?.askToClearBrowsingData(ofProfile: id) }
         )
         let sidebar = NSHostingController(rootView: TabSidebar(registry: registry, profileActions: profileActions,
                                                                spaceActions: spaceActions,
