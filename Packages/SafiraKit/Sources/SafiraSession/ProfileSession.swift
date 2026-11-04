@@ -165,8 +165,8 @@ public final class ProfileSession {
         guard let input = CommandBarInput(text) else { return }
         commandBarTarget = nil
         switch input {
-        case .address(let url):
-            open(url, in: target)
+        case .address(let url, let scheme):
+            open(url, in: target, httpsFirst: scheme == .defaultedToHTTPS)
         case .search(let query):
             if let engine = profile.searchEngine {
                 open(engine.searchURL(for: query), in: target)
@@ -203,11 +203,11 @@ public final class ProfileSession {
         selectedTab?.reload()
     }
 
-    private func open(_ url: URL, in target: CommandBarTarget) {
+    private func open(_ url: URL, in target: CommandBarTarget, httpsFirst: Bool = false) {
         if target == .newTab || selectedTab == nil {
             openNewTab()
         }
-        selectedTab?.load(url)
+        selectedTab?.load(url, httpsFirst: httpsFirst)
     }
 
     /// A page opened a link in a new Tab: it goes right after the Tab that opened it, in the background.
