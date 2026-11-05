@@ -105,7 +105,6 @@ private struct PinnedFolder: View {
     let session: ProfileSession
     let actions: FolderActions
     let placement: SidebarCellPlacement
-    @State private var isHovered = false
     @State private var isDropTarget = false
     @Environment(\.designTokens) private var tokens
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -125,7 +124,6 @@ private struct PinnedFolder: View {
                 }
             }
         }
-        .onHover { isHovered = $0 }
         .onTapGesture { session.setFolderExpanded(folder.id, !folder.isExpanded) }
         .draggable(PinnedDrag.text(for: .folder(folder.id)))
         .dropDestination(for: String.self, action: { texts, _ in
@@ -149,7 +147,7 @@ private struct PinnedFolder: View {
         }
         .accessibilityAction(named: "Rename Folder") { actions.rename(folder.id) }
         .accessibilityAction(named: "Delete Folder") { session.deleteFolder(folder.id) }
-        .sidebarCell(state: RowState(isCurrent: isDropTarget, isHovered: isHovered), placement: placement)
+        .sidebarCell(state: RowState(isCurrent: isDropTarget), placement: placement, hoverID: folder.id)
     }
 }
 

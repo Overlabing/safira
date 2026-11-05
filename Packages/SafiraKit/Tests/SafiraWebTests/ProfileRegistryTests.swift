@@ -4,10 +4,12 @@
 import CoreGraphics
 import Foundation
 import ImageIO
+import Observation
 import SafiraCore
 import SafiraSession
 import SafiraStore
 import SafiraWeb
+import Synchronization
 import Testing
 import WebKit
 
@@ -232,6 +234,46 @@ private final class TemporaryRoot {
             #expect(registry.activeProfileID == first)
             #expect(registry.spaces(in: ProfileID(rawValue: UUID())).isEmpty)
             for context in registry.loadedContexts { context.session.closeAllTabs() }
+        }
+        await cleanUp(ids)
+    }
+
+    /// The Space rail's menu on another Profile's Space or dot: the command reaches that Profile's own owner, created
+    /// without showing it, and the rail, which read the Profile's saved Spaces, is told to read its session instead.
+    @Test func aSpaceOfAProfileNotShownIsReachedWithoutShowingItAndTheRailSeesTheChange() async throws {
+        let root = TemporaryRoot()
+        var ids: [ProfileID] = []
+        do {
+            let registry = ProfileRegistry(layout: root.layout)
+            let first = registry.activeProfileID
+            registry.createProfile(name: "Work", symbol: "💼", searchEngine: .kagi)
+            registry.active.session.createSpace(name: "Docs", emoji: "📄")
+            registry.selectProfile(first)
+            ids = registry.profiles.map(\.id)
+            await registry.saveAll()
+        }
+        do {
+            let relaunched = ProfileRegistry(layout: root.layout)
+            let first = relaunched.activeProfileID
+            let work = try #require(ids.last)
+            #expect(!relaunched.loadedContexts.contains { $0.id == work }, "Work is not loaded after the relaunch")
+            let saved = relaunched.spaceSummary(of: work).spaces
+            #expect(saved.map(\.name) == ["Home", "Docs"])
+            let docs = try #require(saved.last?.id)
+
+            let told = Mutex(false)
+            withObservationTracking { _ = relaunched.spaceSummary(of: work) } onChange: { told.withLock { $0 = true } }
+            let context = try #require(relaunched.context(ofSpace: docs))
+            #expect(context.id == work)
+            #expect(told.withLock { $0 }, "loading Work tells whoever read its saved Spaces")
+            context.session.moveSpace(docs, by: -1)
+
+            #expect(relaunched.spaceSummary(of: work).spaces.map(\.name) == ["Docs", "Home"])
+            #expect(relaunched.activeProfileID == first, "Work was not shown")
+            #expect(relaunched.context(of: work) === context)
+            #expect(relaunched.context(of: ProfileID(rawValue: UUID())) == nil)
+            #expect(relaunched.context(ofSpace: SpaceID(rawValue: UUID())) == nil)
+            for context in relaunched.loadedContexts { context.session.closeAllTabs() }
         }
         await cleanUp(ids)
     }

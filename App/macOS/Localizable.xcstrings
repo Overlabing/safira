@@ -4,12 +4,6 @@
     "%@ could not open the link." : {
       "comment" : "Permission sheet of a site or a link to another app",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ could not open the link."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21,12 +15,6 @@
     "%@ edits text in a field, so the menu cannot use it." : {
       "comment" : "Shortcuts window: a key such as ⌃⌘← that is never a menu key",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ edits text in a field, so the menu cannot use it."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -55,12 +43,6 @@
     "%@ of %@" : {
       "comment" : "Downloads window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ of %@"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -72,12 +54,6 @@
     "%@ reach the menu before the page sees the key, whatever the page does with it." : {
       "comment" : "Shortcuts window footnote; the argument lists command names",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ reach the menu before the page sees the key, whatever the page does with it."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -88,12 +64,6 @@
     },
     "%@, for %@" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@, for %@"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -104,12 +74,6 @@
     },
     "%@: %@" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@: %@"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -121,12 +85,6 @@
     "%lld of %lld" : {
       "comment" : "Sidebar",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld of %lld"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -178,12 +136,6 @@
     },
     "A camera, microphone or location a page is already using keeps running until the page stops it." : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "A camera, microphone or location a page is already using keeps running until the page stops it."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -195,12 +147,6 @@
     "A command %@ has no equivalent for keeps Safira's key, marked “Inherited from Safira”. Choosing another preset clears your changes." : {
       "comment" : "Shortcuts window footnote; the argument is a browser's name",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "A command %@ has no equivalent for keeps Safira's key, marked “Inherited from Safira”. Choosing another preset clears your changes."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -212,12 +158,6 @@
     "A page wants to open a “%@:” link." : {
       "comment" : "Permission sheet of a site or a link to another app",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "A page wants to open a “%@:” link."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -228,12 +168,6 @@
     },
     "A site or a link asks each time until you choose to remember your choice. Revoking a choice makes it ask again." : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "A site or a link asks each time until you choose to remember your choice. Revoking a choice makes it ask again."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -245,12 +179,6 @@
     "About Safira" : {
       "comment" : "Menu item",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "About Safira"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -303,12 +231,6 @@
     "Add to the End" : {
       "comment" : "Link rules window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Add to the End"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -319,12 +241,6 @@
     },
     "Address" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Address"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -336,12 +252,6 @@
     "All time" : {
       "comment" : "Clear history and website data sheet",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "All time"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -353,12 +263,6 @@
     "Allow" : {
       "comment" : "Permission sheet of a site or a link to another app",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Allow"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -370,12 +274,6 @@
     "Allowed" : {
       "comment" : "Site permissions sheet",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Allowed"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -387,12 +285,6 @@
     "Back" : {
       "comment" : "Sidebar",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Back"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -404,12 +296,6 @@
     "Camera" : {
       "comment" : "Site permissions sheet",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Camera"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -421,12 +307,6 @@
     "Cancel" : {
       "comment" : "Link rules window\nMain window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cancel"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -437,12 +317,6 @@
     },
     "Cancel download of %@" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cancel download of %@"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -454,12 +328,6 @@
     "Cancelled, %@ received" : {
       "comment" : "Downloads window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cancelled, %@ received"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -471,12 +339,6 @@
     "Change Preset" : {
       "comment" : "Shortcuts window: confirmation button",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Change Preset"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -488,12 +350,6 @@
     "Change Slack Folder…" : {
       "comment" : "Link rules, Slack folder and default browser",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Change Slack Folder…"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -505,12 +361,6 @@
     "Change the Shortcut preset?" : {
       "comment" : "Shortcuts window: confirmation title",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Change the Shortcut preset?"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -522,12 +372,6 @@
     "Changed" : {
       "comment" : "Shortcuts window: the user changed this command's shortcut",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Changed"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -538,12 +382,6 @@
     },
     "Check" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Check"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -555,12 +393,6 @@
     "Check for Updates…" : {
       "comment" : "Menu item",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Check for Updates…"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -572,12 +404,6 @@
     "Choose Slack's folder (Application Support/Slack) so Slack links can open in the Slack app. Safira reads only the list of your workspaces from it." : {
       "comment" : "Link rules, Slack folder and default browser",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Choose Slack's folder (Application Support/Slack) so Slack links can open in the Slack app. Safira reads only the list of your workspaces from it."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -589,12 +415,6 @@
     "Choose a Link rules JSON file to import." : {
       "comment" : "Link rules window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Choose a Link rules JSON file to import."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -605,12 +425,6 @@
     },
     "Choose a Shortcut preset" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Choose a Shortcut preset"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -622,12 +436,6 @@
     "Choose a ZenPicker rules.json file to import." : {
       "comment" : "Link rules window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Choose a ZenPicker rules.json file to import."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -638,12 +446,6 @@
     },
     "Choose a search engine" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Choose a search engine"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -654,12 +456,6 @@
     },
     "Choose how far back to clear. Nothing is chosen until you pick one." : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Choose how far back to clear. Nothing is chosen until you pick one."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -671,12 +467,6 @@
     "Choose the folder named Slack inside Application Support. It holds a folder named storage." : {
       "comment" : "Link rules, Slack folder and default browser",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Choose the folder named Slack inside Application Support. It holds a folder named storage."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -688,12 +478,6 @@
     "Clear" : {
       "comment" : "Clear history and website data sheet",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Clear"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -705,12 +489,6 @@
     "Clear %@" : {
       "comment" : "Clear history and website data sheet",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Clear %@"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -722,12 +500,6 @@
     "Clear %@ of “%@”" : {
       "comment" : "Clear history and website data sheet",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Clear %@ of “%@”"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -738,12 +510,6 @@
     },
     "Clear History and Website Data…" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Clear History and Website Data…"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -754,12 +520,6 @@
     },
     "Clear List" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Clear List"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -770,12 +530,6 @@
     },
     "Clear history and website data of “%@”" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Clear history and website data of “%@”"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -787,12 +541,6 @@
     "Cleared %@ of “%@”" : {
       "comment" : "Main window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cleared %@ of “%@”"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -804,12 +552,6 @@
     "Click a shortcut, then press the new keys. Delete removes the shortcut, Escape cancels." : {
       "comment" : "Shortcuts window footnote",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Click a shortcut, then press the new keys. Delete removes the shortcut, Escape cancels."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -821,12 +563,6 @@
     "Click, then press the new shortcut; Delete removes it, Escape cancels." : {
       "comment" : "Shortcuts window: help of a shortcut button",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Click, then press the new shortcut; Delete removes it, Escape cancels."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -837,12 +573,6 @@
     },
     "Close Tab" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Close Tab"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -854,12 +584,6 @@
     "Collapse" : {
       "comment" : "VoiceOver action of a Folder",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Collapse"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -871,12 +595,6 @@
     "Collapsed" : {
       "comment" : "VoiceOver value of a Folder",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Collapsed"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -888,12 +606,6 @@
     "Command bar" : {
       "comment" : "Command bar",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Command bar"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -905,12 +617,6 @@
     "Compact mode off, sidebar shown" : {
       "comment" : "Main window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Compact mode off, sidebar shown"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -922,12 +628,6 @@
     "Compact mode on, sidebar hidden" : {
       "comment" : "Main window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Compact mode on, sidebar hidden"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -939,12 +639,6 @@
     "Completed, %@" : {
       "comment" : "Downloads window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Completed, %@"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -955,12 +649,6 @@
     },
     "Continue" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Continue"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -972,12 +660,6 @@
     "Copy" : {
       "comment" : "Menu item",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Copy"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -989,12 +671,6 @@
     "Copy Details" : {
       "comment" : "Alert button",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Copy Details"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1006,12 +682,6 @@
     "Create" : {
       "comment" : "Main window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Create"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1022,12 +692,6 @@
     },
     "Create your first Profile" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Create your first Profile"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1039,12 +703,6 @@
     "Cut" : {
       "comment" : "Menu item",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cut"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1056,12 +714,6 @@
     "Debug Mode" : {
       "comment" : "Menu item",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Debug Mode"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1072,12 +724,6 @@
     },
     "Default: %@. Change it: %@." : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Default: %@. Change it: %@."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1089,12 +735,6 @@
     "Defaults" : {
       "comment" : "Window title",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Defaults"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1106,12 +746,6 @@
     "Defaults…" : {
       "comment" : "Menu item",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Defaults…"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1122,12 +756,6 @@
     },
     "Delete" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Delete"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1138,12 +766,6 @@
     },
     "Delete Folder" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Delete Folder"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1154,12 +776,6 @@
     },
     "Delete Profile…" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Delete Profile…"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1171,12 +787,6 @@
     "Delete Space" : {
       "comment" : "Main window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Delete Space"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1187,12 +797,6 @@
     },
     "Delete Space…" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Delete Space…"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1204,12 +808,6 @@
     "Delete the Profile “%@”?" : {
       "comment" : "Main window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Delete the Profile “%@”?"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1221,12 +819,6 @@
     "Delete the Space “%@”?" : {
       "comment" : "Main window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Delete the Space “%@”?"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1237,12 +829,6 @@
     },
     "Delete the selected rule (Delete)" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Delete the selected rule (Delete)"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1254,12 +840,6 @@
     "Delete “%@”" : {
       "comment" : "Main window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Delete “%@”"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1271,12 +851,6 @@
     "Dismiss" : {
       "comment" : "Banner shown after Safira focused a Tab that already had the link",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dismiss"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1288,12 +862,6 @@
     "Do not import" : {
       "comment" : "Link rules window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Do not import"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1304,12 +872,6 @@
     },
     "Done" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Done"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1321,12 +883,6 @@
     "Don’t Allow" : {
       "comment" : "Permission sheet of a site or a link to another app",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Don’t Allow"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1338,12 +894,6 @@
     "Don’t Open" : {
       "comment" : "Permission sheet of a site or a link to another app",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Don’t Open"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1355,12 +905,6 @@
     "Downloads" : {
       "comment" : "Downloads window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Downloads"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1371,12 +915,6 @@
     },
     "Downloads of “%@”" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Downloads of “%@”"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1388,12 +926,6 @@
     "Edit" : {
       "comment" : "Menu bar title",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Edit"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1405,12 +937,6 @@
     "Edit Profile" : {
       "comment" : "Main window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Edit Profile"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1422,12 +948,6 @@
     "Edit Profile %@…" : {
       "comment" : "Sidebar menu",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Edit Profile %@…"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1438,12 +958,6 @@
     },
     "Edit Profile…" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Edit Profile…"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1455,12 +969,6 @@
     "Edit Space" : {
       "comment" : "Main window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Edit Space"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1472,12 +980,6 @@
     "Edit Space %@…" : {
       "comment" : "Sidebar menu",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Edit Space %@…"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1488,12 +990,6 @@
     },
     "Edit Space…" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Edit Space…"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1504,12 +1000,6 @@
     },
     "Emoji" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Emoji"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1520,12 +1010,6 @@
     },
     "Everything Safira decided for you" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Everything Safira decided for you"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1536,12 +1020,6 @@
     },
     "Everything Safira decided for you, and where to change it. Nothing is sent without an action of yours. Web content switches apply to %@, and to pages opened from now on." : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Everything Safira decided for you, and where to change it. Nothing is sent without an action of yours. Web content switches apply to %@, and to pages opened from now on."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1553,12 +1031,6 @@
     "Everything “%@” holds is erased: its logins, cookies and website data, its history, its Spaces and Tabs, and its settings. This cannot be undone." : {
       "comment" : "Alert text of Delete Profile; the argument is the Profile name",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Everything “%@” holds is erased: its logins, cookies and website data, its history, its Spaces and Tabs, and its settings. This cannot be undone."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1570,12 +1042,6 @@
     "Expand" : {
       "comment" : "VoiceOver action of a Folder",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Expand"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1587,12 +1053,6 @@
     "Expanded" : {
       "comment" : "VoiceOver value of a Folder",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Expanded"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1604,12 +1064,6 @@
     "Export Diagnostic Logs…" : {
       "comment" : "Menu item",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Export Diagnostic Logs…"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1620,12 +1074,6 @@
     },
     "Export…" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Export…"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1637,12 +1085,6 @@
     "Failed, %@ received" : {
       "comment" : "Downloads window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Failed, %@ received"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1654,12 +1096,6 @@
     "File" : {
       "comment" : "Menu bar title",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "File"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1670,12 +1106,6 @@
     },
     "Files are saved in your Downloads folder." : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Files are saved in your Downloads folder."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1686,12 +1116,6 @@
     },
     "Finish" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Finish"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1702,12 +1126,6 @@
     },
     "Fixed" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fixed"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1719,12 +1137,6 @@
     "Forget Slack's Folder" : {
       "comment" : "Menu item",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Forget Slack's Folder"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1736,12 +1148,6 @@
     "Forward" : {
       "comment" : "Sidebar",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Forward"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1753,12 +1159,6 @@
     "Grant Access" : {
       "comment" : "Link rules, Slack folder and default browser",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Grant Access"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1770,12 +1170,6 @@
     "Grant Access to Slack's Folder…" : {
       "comment" : "Link rules, Slack folder and default browser\nMenu item",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Grant Access to Slack's Folder…"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1787,12 +1181,6 @@
     "Help" : {
       "comment" : "Menu bar title",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Help"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1804,12 +1192,6 @@
     "Hide Others" : {
       "comment" : "Menu item",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hide Others"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1821,12 +1203,6 @@
     "Hide Safira" : {
       "comment" : "Menu item",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hide Safira"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1838,12 +1214,6 @@
     "Hide Sidebar" : {
       "comment" : "Main window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hide Sidebar"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1855,12 +1225,6 @@
     "History" : {
       "comment" : "Command bar: kind of a suggestion, read by VoiceOver\nMenu bar title",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "History"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1872,12 +1236,6 @@
     "Import" : {
       "comment" : "Link rules window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Import"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1930,12 +1288,6 @@
     "Inherited from Safira" : {
       "comment" : "Shortcuts window: the preset has no key for this command",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Inherited from Safira"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1947,12 +1299,6 @@
     "It has no Tab." : {
       "comment" : "Main window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "It has no Tab."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2005,12 +1351,6 @@
     "Its website data was cleared. Try clearing the history again." : {
       "comment" : "Main window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Its website data was cleared. Try clearing the history again."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2022,12 +1362,6 @@
     "Last day" : {
       "comment" : "Clear history and website data sheet",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Last day"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2039,12 +1373,6 @@
     "Last hour" : {
       "comment" : "Clear history and website data sheet",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Last hour"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2055,12 +1383,6 @@
     },
     "Link" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Link"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2072,12 +1394,6 @@
     "Link Rules" : {
       "comment" : "Link rules window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Link Rules"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2088,12 +1404,6 @@
     },
     "Link Rules File…" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Link Rules File…"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2105,12 +1415,6 @@
     "Link Rules…" : {
       "comment" : "Menu item",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Link Rules…"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2121,12 +1425,6 @@
     },
     "Link already open" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Link already open"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2137,12 +1435,6 @@
     },
     "Link rules" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Link rules"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2153,12 +1445,6 @@
     },
     "Link rules send a link to a Profile without asking. The first rule that matches wins." : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Link rules send a link to a Profile without asking. The first rule that matches wins."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2169,12 +1455,6 @@
     },
     "Link to check" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Link to check"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2185,12 +1465,6 @@
     },
     "Links that open an app" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Links that open an app"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2202,12 +1476,6 @@
     "Loading" : {
       "comment" : "Sidebar",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Loading"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2219,12 +1487,6 @@
     "Loading…" : {
       "comment" : "Sign-in panel",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Loading…"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2236,12 +1498,6 @@
     "Location" : {
       "comment" : "Site permissions sheet",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Location"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2253,12 +1509,6 @@
     "Make Safira the Default Browser…" : {
       "comment" : "Button\nLink rules, Slack folder and default browser\nMenu item",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Make Safira the Default Browser…"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2269,12 +1519,6 @@
     },
     "Make Safira your default browser?" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Make Safira your default browser?"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2286,12 +1530,6 @@
     "Microphone" : {
       "comment" : "Site permissions sheet",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Microphone"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2303,12 +1541,6 @@
     "Minimize" : {
       "comment" : "Menu item",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Minimize"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2319,12 +1551,6 @@
     },
     "Move Down" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Move Down"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2335,12 +1561,6 @@
     },
     "Move Space Left" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Move Space Left"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2351,12 +1571,6 @@
     },
     "Move Space Right" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Move Space Right"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2367,12 +1581,6 @@
     },
     "Move Up" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Move Up"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2383,12 +1591,6 @@
     },
     "Move the selected rule down (⌥↓)" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Move the selected rule down (⌥↓)"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2399,12 +1601,6 @@
     },
     "Move the selected rule up (⌥↑)" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Move the selected rule up (⌥↑)"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2415,12 +1611,6 @@
     },
     "Name" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Name"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2432,12 +1622,6 @@
     "Never opens an app" : {
       "comment" : "Site permissions sheet",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Never opens an app"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2449,12 +1633,6 @@
     "New Folder" : {
       "comment" : "Main window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "New Folder"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2465,12 +1643,6 @@
     },
     "New Folder Inside…" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "New Folder Inside…"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2482,12 +1654,6 @@
     "New Profile" : {
       "comment" : "Main window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "New Profile"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2499,12 +1665,6 @@
     "New Profile…" : {
       "comment" : "Sidebar menu",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "New Profile…"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2516,12 +1676,6 @@
     "New Space" : {
       "comment" : "Main window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "New Space"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2533,12 +1687,6 @@
     "New Space in %@…" : {
       "comment" : "Sidebar menu",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "New Space in %@…"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2550,12 +1698,6 @@
     "New Tab" : {
       "comment" : "Sidebar",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "New Tab"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2567,12 +1709,6 @@
     "No Link rule applies until it is fixed: links go to the Link picker." : {
       "comment" : "Link rules, Slack folder and default browser",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No Link rule applies until it is fixed: links go to the Link picker."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2583,12 +1719,6 @@
     },
     "No Link rules yet. Choose “Always” in the Link picker, or import a file." : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No Link rules yet. Choose “Always” in the Link picker, or import a file."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2600,12 +1730,6 @@
     "No app can open “%@:” links." : {
       "comment" : "Permission sheet of a site or a link to another app",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No app can open “%@:” links."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2616,12 +1740,6 @@
     },
     "No site or link has a remembered choice in this Profile." : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No site or link has a remembered choice in this Profile."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2632,12 +1750,6 @@
     },
     "None chosen (Safira's defaults)" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "None chosen (Safira's defaults)"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2649,12 +1761,6 @@
     "Not allowed" : {
       "comment" : "Site permissions sheet",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Not allowed"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2666,12 +1772,6 @@
     "Not chosen" : {
       "comment" : "Defaults window: the value of Search engine before a choice",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Not chosen"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2682,12 +1782,6 @@
     },
     "Nothing is chosen for you. Use ↑ and ↓ to move through the list, then Return to continue." : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nothing is chosen for you. Use ↑ and ↓ to move through the list, then Return to continue."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2699,12 +1793,6 @@
     "Nothing is sent anywhere without an action of yours: Safira has no telemetry, does not check for updates, and does not send what you type for suggestions." : {
       "comment" : "Onboarding: the reminder on the first and last steps",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nothing is sent anywhere without an action of yours: Safira has no telemetry, does not check for updates, and does not send what you type for suggestions."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2716,12 +1804,6 @@
     "Nothing to import" : {
       "comment" : "Link rules window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nothing to import"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2733,12 +1815,6 @@
     "Nothing was opened. No app on this Mac is set up for this kind of link." : {
       "comment" : "Permission sheet of a site or a link to another app",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nothing was opened. No app on this Mac is set up for this kind of link."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2750,12 +1826,6 @@
     "OK" : {
       "comment" : "Alert button",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "OK"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2767,12 +1837,6 @@
     "Open" : {
       "comment" : "Permission sheet of a site or a link to another app",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Open"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2784,12 +1848,6 @@
     "Open Tab" : {
       "comment" : "Command bar: kind of a suggestion, read by VoiceOver",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Open Tab"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2801,12 +1859,6 @@
     "Open in %@?" : {
       "comment" : "Permission sheet of a site or a link to another app",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Open in %@?"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2817,12 +1869,6 @@
     },
     "Open in New Tab" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Open in New Tab"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2833,12 +1879,6 @@
     },
     "Opener" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Opener"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2849,12 +1889,6 @@
     },
     "Opener (optional), such as com.example.chat" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Opener (optional), such as com.example.chat"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2865,12 +1899,6 @@
     },
     "Opener bundle identifier, optional" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Opener bundle identifier, optional"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2882,12 +1910,6 @@
     "Opens its app without asking" : {
       "comment" : "Site permissions sheet",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Opens its app without asking"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2898,12 +1920,6 @@
     },
     "Opens the Command bar" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Opens the Command bar"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2915,12 +1931,6 @@
     "Paste" : {
       "comment" : "Menu item",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Paste"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2931,12 +1941,6 @@
     },
     "Paste a link to check" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Paste a link to check"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2947,12 +1951,6 @@
     },
     "Pick the set of shortcuts you already know. Continue without picking to keep Safira's own shortcuts. You can change any shortcut later in Safira > Shortcuts." : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pick the set of shortcuts you already know. Continue without picking to keep Safira's own shortcuts. You can change any shortcut later in Safira > Shortcuts."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2964,12 +1962,6 @@
     "Pin Tab" : {
       "comment" : "Main window\nTab context menu",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pin Tab"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2981,12 +1973,6 @@
     "Pinned" : {
       "comment" : "Sidebar",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pinned"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2998,12 +1984,6 @@
     "Playing" : {
       "comment" : "Sidebar",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Playing"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3015,12 +1995,6 @@
     "Playing media" : {
       "comment" : "Sidebar",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Playing media"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3032,12 +2006,6 @@
     "Preset" : {
       "comment" : "Shortcuts window: the Shortcut preset picker",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Preset"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3048,12 +2016,6 @@
     },
     "Press 1, 2 or 3 to choose a range, then Return." : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Press 1, 2 or 3 to choose a range, then Return."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3065,12 +2027,6 @@
     "Press keys…" : {
       "comment" : "Shortcuts window: a row waiting for the new keys",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Press keys…"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3081,12 +2037,6 @@
     },
     "Press ⌘L to go to the Command bar." : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Press ⌘L to go to the Command bar."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3098,12 +2048,6 @@
     "Private Window" : {
       "comment" : "Private window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Private Window"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3115,12 +2059,6 @@
     "Private Window – %@" : {
       "comment" : "Private window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Private Window – %@"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3132,12 +2070,6 @@
     "Private window, attached to the Profile %@. Nothing is saved." : {
       "comment" : "Private window sidebar",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Private window, attached to the Profile %@. Nothing is saved."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3149,12 +2081,6 @@
     "Private window. Nothing is saved. Attached to the Profile %@." : {
       "comment" : "Private window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Private window. Nothing is saved. Attached to the Profile %@."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3166,12 +2092,6 @@
     "Private · %@ %@" : {
       "comment" : "Private window sidebar",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Private · %@ %@"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3183,12 +2103,6 @@
     "Profile %lld" : {
       "comment" : "Main window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Profile %lld"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3200,12 +2114,6 @@
     "Profile for the target %@" : {
       "comment" : "Link rules window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Profile for the target %@"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3217,12 +2125,6 @@
     "Profile: %@" : {
       "comment" : "Main window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Profile: %@"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3234,12 +2136,6 @@
     "Profiles" : {
       "comment" : "Menu bar title",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Profiles"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3250,12 +2146,6 @@
     },
     "Progress of %@" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Progress of %@"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3267,12 +2157,6 @@
     "Reload" : {
       "comment" : "Sidebar",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reload"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3284,12 +2168,6 @@
     "Remember my choice for this site in this Profile" : {
       "comment" : "Permission sheet of a site or a link to another app",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Remember my choice for this site in this Profile"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3301,12 +2179,6 @@
     "Remember my choice for this site until this window closes" : {
       "comment" : "Permission sheet of a site or a link to another app",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Remember my choice for this site until this window closes"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3318,12 +2190,6 @@
     "Remember my choice for “%@:” links in this Profile" : {
       "comment" : "Permission sheet of a site or a link to another app",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Remember my choice for “%@:” links in this Profile"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3335,12 +2201,6 @@
     "Remember my choice for “%@:” links until this window closes" : {
       "comment" : "Permission sheet of a site or a link to another app",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Remember my choice for “%@:” links until this window closes"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3351,12 +2211,6 @@
     },
     "Remove %@ from the list" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Remove %@ from the list"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3367,12 +2221,6 @@
     },
     "Remove from List" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Remove from List"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3383,12 +2231,6 @@
     },
     "Removes the history and the website data (logins, cookies and site storage) of “%@” for the range you choose. Other Profiles are not touched, and neither are this Profile’s Spaces, Tabs and settings. Open pages stay open and are not reloaded, but they lose what they stored, so they may ask you to sign in again. This cannot be undone." : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Removes the history and the website data (logins, cookies and site storage) of “%@” for the range you choose. Other Profiles are not touched, and neither are this Profile’s Spaces, Tabs and settings. Open pages stay open and are not reloaded, but they lose what they stored, so they may ask you to sign in again. This cannot be undone."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3400,12 +2242,6 @@
     "Rename" : {
       "comment" : "Main window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Rename"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3417,12 +2253,6 @@
     "Rename Folder" : {
       "comment" : "Main window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Rename Folder"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3433,12 +2263,6 @@
     },
     "Rename Folder…" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Rename Folder…"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3450,12 +2274,6 @@
     "Replace My Rules" : {
       "comment" : "Link rules window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Replace My Rules"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3467,12 +2285,6 @@
     "Reset" : {
       "comment" : "Shortcuts window: gives one command its preset's keys back",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reset"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3484,12 +2296,6 @@
     "Reset All Changes" : {
       "comment" : "Shortcuts window: button that gives every command its preset's keys back",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reset All Changes"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3500,12 +2306,6 @@
     },
     "Retry" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Retry"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3516,12 +2316,6 @@
     },
     "Retry download of %@" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Retry download of %@"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3532,12 +2326,6 @@
     },
     "Reveal %@ in Finder" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reveal %@ in Finder"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3548,12 +2336,6 @@
     },
     "Reveal in Finder" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reveal in Finder"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3564,12 +2346,6 @@
     },
     "Revoke" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Revoke"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3580,12 +2356,6 @@
     },
     "Revoke %@ for %@" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Revoke %@ for %@"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3596,12 +2366,6 @@
     },
     "Revoke All" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Revoke All"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3612,12 +2376,6 @@
     },
     "Revoke the choice for %@: links" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Revoke the choice for %@: links"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3629,12 +2387,6 @@
     "Safira Diagnostics %@.zip" : {
       "comment" : "File name of the diagnostics export; the argument is a date such as 2026-11-05",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Safira Diagnostics %@.zip"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3646,12 +2398,6 @@
     "Safira Is the Default Browser" : {
       "comment" : "Disabled button: nothing left to do\nLink rules, Slack folder and default browser",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Safira Is the Default Browser"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3663,12 +2409,6 @@
     "Safira could not be made the default browser" : {
       "comment" : "Link rules, Slack folder and default browser",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Safira could not be made the default browser"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3680,12 +2420,6 @@
     "Safira erases it the next time it opens." : {
       "comment" : "Main window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Safira erases it the next time it opens."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3696,12 +2430,6 @@
     },
     "Safira keeps your Profiles apart: each has its own logins, history and settings. In a few steps you create the first one, choose a search engine and a set of shortcuts, and see every default Safira picked, each of which you can change." : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Safira keeps your Profiles apart: each has its own logins, history and settings. In a few steps you create the first one, choose a search engine and a set of shortcuts, and see every default Safira picked, each of which you can change."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3713,12 +2441,6 @@
     "Safira never overwrites it. No rule applies until it is fixed: links go to the Link picker. Fix it in an editor, or delete it to start again." : {
       "comment" : "Link rules window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Safira never overwrites it. No rule applies until it is fixed: links go to the Link picker. Fix it in an editor, or delete it to start again."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3730,12 +2452,6 @@
     "Safira's own shortcuts" : {
       "comment" : "Defaults window: the value of Shortcut preset without a preset",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Safira's own shortcuts"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3747,12 +2463,6 @@
     "Safira's own shortcuts. A preset gives you the keys of Zen, Arc or Safari." : {
       "comment" : "Shortcuts window footnote without a preset",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Safira's own shortcuts. A preset gives you the keys of Zen, Arc or Safari."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3764,12 +2474,6 @@
     "Save" : {
       "comment" : "Main window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Save"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3781,12 +2485,6 @@
     "Save your Link rules as a JSON file." : {
       "comment" : "Link rules window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Save your Link rules as a JSON file."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3797,12 +2495,6 @@
     },
     "Search engine" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Search engine"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3814,12 +2506,6 @@
     "Search or address" : {
       "comment" : "Sidebar: placeholder of the address pill with no page; keep it short",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Search or address"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3831,12 +2517,6 @@
     "Search or enter an address" : {
       "comment" : "Command bar",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Search or enter an address"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3848,12 +2528,6 @@
     "Search or enter an address to open in a new Tab" : {
       "comment" : "Command bar",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Search or enter an address to open in a new Tab"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3865,12 +2539,6 @@
     "Select All" : {
       "comment" : "Menu item",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Select All"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3882,12 +2550,6 @@
     "Shortcut of “%@”" : {
       "comment" : "Shortcuts window: a recorder button; the argument is a command name",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Shortcut of “%@”"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3898,12 +2560,6 @@
     },
     "Shortcut preset" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Shortcut preset"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3915,12 +2571,6 @@
     "Shortcuts" : {
       "comment" : "Window title",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Shortcuts"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3932,12 +2582,6 @@
     "Shortcuts…" : {
       "comment" : "Menu item",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Shortcuts…"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3949,12 +2593,6 @@
     "Show All" : {
       "comment" : "Menu item",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Show All"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3965,12 +2603,6 @@
     },
     "Show Folder" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Show Folder"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3982,12 +2614,6 @@
     "Show Link Rules in Finder" : {
       "comment" : "Menu item",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Show Link Rules in Finder"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3999,12 +2625,6 @@
     "Show Sidebar" : {
       "comment" : "Main window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Show Sidebar"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4016,12 +2636,6 @@
     "Show in Finder" : {
       "comment" : "Link rules, Slack folder and default browser",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Show in Finder"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4033,12 +2647,6 @@
     "Sidebar" : {
       "comment" : "Toolbar: the button that hides and shows the sidebar on the right",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sidebar"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4050,12 +2658,6 @@
     "Sidebar hidden" : {
       "comment" : "Main window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sidebar hidden"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4067,12 +2669,6 @@
     "Sidebar shown" : {
       "comment" : "Main window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sidebar shown"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4084,12 +2680,6 @@
     "Sign-in window" : {
       "comment" : "Sign-in panel",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sign-in window"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4100,12 +2690,6 @@
     },
     "Site permissions of “%@”" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Site permissions of “%@”"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4116,12 +2700,6 @@
     },
     "Sites" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sites"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4133,12 +2711,6 @@
     "Some of the Profile’s website data could not be erased yet" : {
       "comment" : "Main window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Some of the Profile’s website data could not be erased yet"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4149,12 +2721,6 @@
     },
     "Source:" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Source:"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4166,12 +2732,6 @@
     "Space %lld" : {
       "comment" : "Main window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Space %lld"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4183,12 +2743,6 @@
     "Spaces" : {
       "comment" : "Menu bar title",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Spaces"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4199,12 +2753,6 @@
     },
     "Step %lld of %lld" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Step %lld of %lld"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4215,12 +2763,6 @@
     },
     "Suggestions" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Suggestions"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4231,12 +2773,6 @@
     },
     "Switch to Tab" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Switch to Tab"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4247,12 +2783,6 @@
     },
     "Symbol" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Symbol"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4263,12 +2793,6 @@
     },
     "Tabs" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tabs"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4280,12 +2804,6 @@
     "Take the preset's key again" : {
       "comment" : "Shortcuts window: help of Reset",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Take the preset's key again"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4297,12 +2815,6 @@
     "That file is not a valid Link rules file" : {
       "comment" : "Link rules window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "That file is not a valid Link rules file"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4314,12 +2826,6 @@
     "That is not Slack's folder" : {
       "comment" : "Link rules, Slack folder and default browser",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "That is not Slack's folder"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4331,12 +2837,6 @@
     "That is not a ZenPicker rules file" : {
       "comment" : "Link rules window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "That is not a ZenPicker rules file"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4348,12 +2848,6 @@
     "The Link rule was not saved" : {
       "comment" : "Link rules, Slack folder and default browser",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The Link rule was not saved"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4365,12 +2859,6 @@
     "The Link rules could not be saved" : {
       "comment" : "Link rules window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The Link rules could not be saved"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4382,12 +2870,6 @@
     "The Link rules file is not valid" : {
       "comment" : "Link rules, Slack folder and default browser",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The Link rules file is not valid"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4399,12 +2881,6 @@
     "The Profile's logins and history are kept." : {
       "comment" : "Main window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The Profile's logins and history are kept."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4416,12 +2892,6 @@
     "The archive holds Safira's local diagnostic logs: error codes, load times, Tab counts and memory. It names no site: no host, address or page title. Nothing is sent anywhere." : {
       "comment" : "Save panel message of the diagnostics export",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The archive holds Safira's local diagnostic logs: error codes, load times, Tab counts and memory. It names no site: no host, address or page title. Nothing is sent anywhere."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4433,12 +2903,6 @@
     "The diagnostic logs could not be exported" : {
       "comment" : "Alert title",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The diagnostic logs could not be exported"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4450,12 +2914,6 @@
     "The file could not be read" : {
       "comment" : "Link rules window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The file could not be read"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4467,12 +2925,6 @@
     "The file has no rule that names a target." : {
       "comment" : "Link rules window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The file has no rule that names a target."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4484,12 +2936,6 @@
     "The history of “%@” could not be cleared" : {
       "comment" : "Main window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The history of “%@” could not be cleared"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4501,12 +2947,6 @@
     "The link opened where you chose." : {
       "comment" : "Link rules, Slack folder and default browser",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The link opened where you chose."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4517,12 +2957,6 @@
     },
     "The search engine belongs to this Profile only. Nothing is chosen for you." : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The search engine belongs to this Profile only. Nothing is chosen for you."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4533,12 +2967,6 @@
     },
     "The search engine belongs to this Profile only. Without one, the Command bar would ask at your first search." : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The search engine belongs to this Profile only. Without one, the Command bar would ask at your first search."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4549,12 +2977,6 @@
     },
     "Theme" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Theme"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4566,12 +2988,6 @@
     "There are no diagnostic logs to export" : {
       "comment" : "Alert title",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "There are no diagnostic logs to export"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4582,12 +2998,6 @@
     },
     "This Profile has no downloads." : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "This Profile has no downloads."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4598,12 +3008,6 @@
     },
     "This Profile has no search engine yet. Pick one to search for “%@”." : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "This Profile has no search engine yet. Pick one to search for “%@”."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4615,12 +3019,6 @@
     "This is a Private window. Nothing is kept once it closes." : {
       "comment" : "Permission sheet of a site or a link to another app",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "This is a Private window. Nothing is kept once it closes."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4632,12 +3030,6 @@
     "This is the Profile “%@”. Another Profile is asked on its own." : {
       "comment" : "Permission sheet of a site or a link to another app\nPermission sheet text; the argument is the Profile name",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "This is the Profile “%@”. Another Profile is asked on its own."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4649,12 +3041,6 @@
     "This link was already open, so Safira showed that Tab." : {
       "comment" : "Banner shown after Safira focused a Tab that already had the link",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "This link was already open, so Safira showed that Tab."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4666,12 +3052,6 @@
     "This link was already open, so Safira showed that Tab. A button offers to open it in a new Tab." : {
       "comment" : "Main window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "This link was already open, so Safira showed that Tab. A button offers to open it in a new Tab."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4682,12 +3062,6 @@
     },
     "Time range" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Time range"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4699,12 +3073,6 @@
     "Turn on Debug mode in the Help menu, use Safira, then export again." : {
       "comment" : "Alert text, under There are no diagnostic logs to export",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Turn on Debug mode in the Help menu, use Safira, then export again."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4715,12 +3083,6 @@
     },
     "Type an address or a search" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Type an address or a search"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4732,12 +3094,6 @@
     "Unbound" : {
       "comment" : "Shortcuts window: a command with no shortcut",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Unbound"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4749,12 +3105,6 @@
     "Unpin Tab" : {
       "comment" : "Main window\nTab context menu",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Unpin Tab"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4765,12 +3115,6 @@
     },
     "Use ↑ and ↓ to move and Space to flip a switch. Changes apply when you finish. %@" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Use ↑ and ↓ to move and Space to flip a switch. Changes apply when you finish. %@"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4782,12 +3126,6 @@
     "View" : {
       "comment" : "Menu bar title",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "View"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4799,12 +3137,6 @@
     "Waiting for a shortcut" : {
       "comment" : "Shortcuts window: a recorder button's value while recording",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Waiting for a shortcut"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4816,12 +3148,6 @@
     "Welcome to Safira" : {
       "comment" : "Onboarding sheet title",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Welcome to Safira"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4832,12 +3158,6 @@
     },
     "When Safira is your default browser, links from other apps come to it, and the Link picker asks which Profile receives each one, unless a Link rule decides. macOS asks you to confirm, and you can skip this and do it later from the Safira menu." : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "When Safira is your default browser, links from other apps come to it, and the Link picker asks which Profile receives each one, unless a Link rule decides. macOS asks you to confirm, and you can skip this and do it later from the Safira menu."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4848,12 +3168,6 @@
     },
     "Where would this link go?" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Where would this link go?"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4865,12 +3179,6 @@
     "Which Profile should each target open in?" : {
       "comment" : "Link rules window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Which Profile should each target open in?"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4882,12 +3190,6 @@
     "Window" : {
       "comment" : "Menu bar title",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Window"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4898,12 +3200,6 @@
     },
     "You declined access to your Downloads folder, so this Profile's files are saved in a folder inside Safira's own data, which is erased with the Profile. You can allow access in System Settings > Privacy & Security > Files & Folders." : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "You declined access to your Downloads folder, so this Profile's files are saved in a folder inside Safira's own data, which is erased with the Profile. You can allow access in System Settings > Privacy & Security > Files & Folders."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4915,12 +3211,6 @@
     "Your Link rules are empty, so the imported rules become your rules." : {
       "comment" : "Link rules window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Your Link rules are empty, so the imported rules become your rules."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4932,12 +3222,6 @@
     "Your existing rules were not changed." : {
       "comment" : "Link rules window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Your existing rules were not changed."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4949,12 +3233,6 @@
     "Your shortcut changes will be lost." : {
       "comment" : "Shortcuts window: confirmation message",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Your shortcut changes will be lost."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4965,12 +3243,6 @@
     },
     "ZenPicker Rules…" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ZenPicker Rules…"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4982,12 +3254,6 @@
     "ZenPicker sends links to a target. Choose the Safira Profile that replaces each one. The rules are added after your own." : {
       "comment" : "Link rules window",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ZenPicker sends links to a target. Choose the Safira Profile that replaces each one. The rules are added after your own."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4999,12 +3265,6 @@
     "Zoom" : {
       "comment" : "Menu item",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Zoom"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5015,12 +3275,6 @@
     },
     "checked %@" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "checked %@"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5032,12 +3286,6 @@
     "“%@” wants to know your location." : {
       "comment" : "Permission sheet of a site or a link to another app",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "“%@” wants to know your location."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5049,12 +3297,6 @@
     "“%@” wants to open a “%@:” link." : {
       "comment" : "Permission sheet of a site or a link to another app",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "“%@” wants to open a “%@:” link."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5066,12 +3308,6 @@
     "“%@” wants to use your camera and microphone." : {
       "comment" : "Permission sheet of a site or a link to another app",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "“%@” wants to use your camera and microphone."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5083,12 +3319,6 @@
     "“%@” wants to use your camera, microphone or location." : {
       "comment" : "Permission sheet of a site or a link to another app",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "“%@” wants to use your camera, microphone or location."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5100,12 +3330,6 @@
     "“%@” wants to use your camera." : {
       "comment" : "Permission sheet of a site or a link to another app",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "“%@” wants to use your camera."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5117,12 +3341,6 @@
     "“%@” wants to use your microphone." : {
       "comment" : "Permission sheet of a site or a link to another app",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "“%@” wants to use your microphone."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",

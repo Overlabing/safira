@@ -4,12 +4,6 @@
     "Back" : {
       "comment" : "Command: menu item and Shortcuts row",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Back"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21,12 +15,6 @@
     "Chosen by you" : {
       "comment" : "Defaults: value of Shortcut preset",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Chosen by you"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -38,12 +26,6 @@
     "Clear History and Website Data…" : {
       "comment" : "Command: menu item and Shortcuts row",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Clear History and Website Data…"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -55,12 +37,6 @@
     "Close Tab" : {
       "comment" : "Command: menu item and Shortcuts row",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Close Tab"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -72,12 +48,6 @@
     "Close Window" : {
       "comment" : "Command: menu item and Shortcuts row",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Close Window"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -89,12 +59,6 @@
     "Command Bar" : {
       "comment" : "Shortcuts window: section title",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Command Bar"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -106,12 +70,6 @@
     "Command Bar: Move to the Tab List" : {
       "comment" : "Command name in the Shortcuts window; Tab moves from the Command bar",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Command Bar: Move to the Tab List"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -123,12 +81,6 @@
     "Command Bar: Move to the Tab List, Backward" : {
       "comment" : "Command name in the Shortcuts window; Tab moves from the Command bar",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Command Bar: Move to the Tab List, Backward"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -140,12 +92,6 @@
     "Compact Mode" : {
       "comment" : "Command: menu item and Shortcuts row",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Compact Mode"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -157,12 +103,6 @@
     "Copy" : {
       "comment" : "Menu item",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Copy"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -174,12 +114,6 @@
     "Cut" : {
       "comment" : "Menu item",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cut"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -191,12 +125,6 @@
     "Delete Profile…" : {
       "comment" : "Command: menu item and Shortcuts row",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Delete Profile…"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -208,12 +136,6 @@
     "Delete Space…" : {
       "comment" : "Command: menu item and Shortcuts row",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Delete Space…"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -225,12 +147,6 @@
     "Downloads" : {
       "comment" : "Command: menu item and Shortcuts row",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Downloads"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -242,12 +158,6 @@
     "Focus Tab List" : {
       "comment" : "Command: menu item and Shortcuts row",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Focus Tab List"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -259,12 +169,6 @@
     "Forward" : {
       "comment" : "Command: menu item and Shortcuts row",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Forward"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -276,12 +180,6 @@
     "Hide Others" : {
       "comment" : "Menu item",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hide Others"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -293,12 +191,6 @@
     "Hide Safira" : {
       "comment" : "Menu item",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hide Safira"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -310,12 +202,6 @@
     "Minimize" : {
       "comment" : "Menu item",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Minimize"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -327,12 +213,6 @@
     "Move Space Left" : {
       "comment" : "Command: menu item and Shortcuts row",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Move Space Left"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -344,12 +224,6 @@
     "Move Space Right" : {
       "comment" : "Command: menu item and Shortcuts row",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Move Space Right"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -361,12 +235,6 @@
     "Move Tab Down" : {
       "comment" : "Command: menu item and Shortcuts row",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Move Tab Down"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -378,12 +246,6 @@
     "Move Tab Up" : {
       "comment" : "Command: menu item and Shortcuts row",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Move Tab Up"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -395,12 +257,6 @@
     "New Folder…" : {
       "comment" : "Command: menu item and Shortcuts row",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "New Folder…"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -412,12 +268,6 @@
     "New Private Window" : {
       "comment" : "Command: menu item and Shortcuts row",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "New Private Window"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -429,12 +279,6 @@
     "New Profile…" : {
       "comment" : "Command: menu item and Shortcuts row",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "New Profile…"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -446,12 +290,6 @@
     "New Space…" : {
       "comment" : "Command: menu item and Shortcuts row",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "New Space…"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -463,12 +301,6 @@
     "New Tab" : {
       "comment" : "Command: menu item and Shortcuts row",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "New Tab"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -480,12 +312,6 @@
     "New Window" : {
       "comment" : "Command: menu item and Shortcuts row",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "New Window"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -497,12 +323,6 @@
     "Open Command Bar" : {
       "comment" : "Command: menu item and Shortcuts row",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Open Command Bar"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -514,12 +334,6 @@
     "Paste" : {
       "comment" : "Menu item",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Paste"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -531,12 +345,6 @@
     "Pin or Unpin Tab" : {
       "comment" : "Command: menu item and Shortcuts row",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pin or Unpin Tab"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -548,12 +356,6 @@
     "Profiles" : {
       "comment" : "Shortcuts window: section title",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Profiles"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -565,12 +367,6 @@
     "Quit Safira" : {
       "comment" : "Command: menu item and Shortcuts row",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Quit Safira"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -582,12 +378,6 @@
     "Reload Page" : {
       "comment" : "Command: menu item and Shortcuts row",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reload Page"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -599,12 +389,6 @@
     "Rename Profile…" : {
       "comment" : "Command: menu item and Shortcuts row",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Rename Profile…"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -616,12 +400,6 @@
     "Rename Space…" : {
       "comment" : "Command: menu item and Shortcuts row",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Rename Space…"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -633,12 +411,6 @@
     "Reopen Closed Tab" : {
       "comment" : "Command: menu item and Shortcuts row",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reopen Closed Tab"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -651,12 +423,6 @@
       "comment" : "Shortcuts window: the note of the Safari preset (Presets/safari.json); from is a JSON key",
       "extractionState" : "manual",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Safari's File and View menus carry a few shortcuts the cited page does not list; those are marked in 'from'."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -668,12 +434,6 @@
     "Safira menu, Shortcuts…" : {
       "comment" : "Defaults: where to change it; a menu and its item",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Safira menu, Shortcuts…"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -685,12 +445,6 @@
     "Select All" : {
       "comment" : "Menu item",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Select All"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -702,12 +456,6 @@
     "Shortcut preset" : {
       "comment" : "Defaults: entry title",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Shortcut preset"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -719,12 +467,6 @@
     "Show Next Profile" : {
       "comment" : "Command: menu item and Shortcuts row",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Show Next Profile"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -736,12 +478,6 @@
     "Show Next Space" : {
       "comment" : "Command: menu item and Shortcuts row",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Show Next Space"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -753,12 +489,6 @@
     "Show Next Tab" : {
       "comment" : "Command: menu item and Shortcuts row",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Show Next Tab"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -770,12 +500,6 @@
     "Show Previous Profile" : {
       "comment" : "Command: menu item and Shortcuts row",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Show Previous Profile"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -787,12 +511,6 @@
     "Show Previous Space" : {
       "comment" : "Command: menu item and Shortcuts row",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Show Previous Space"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -804,12 +522,6 @@
     "Show Previous Tab" : {
       "comment" : "Command: menu item and Shortcuts row",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Show Previous Tab"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -821,12 +533,6 @@
     "Show Sidebar" : {
       "comment" : "Command: menu item and Shortcuts row",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Show Sidebar"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -838,12 +544,6 @@
     "Show Space %lld" : {
       "comment" : "Command name; the Space's number from 1 to 9",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Show Space %lld"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -855,12 +555,6 @@
     "Show Tab %lld" : {
       "comment" : "Command name; the Tab's number from 1 to 9",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Show Tab %lld"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -872,12 +566,6 @@
     "Site Permissions…" : {
       "comment" : "Command: menu item and Shortcuts row",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Site Permissions…"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -889,12 +577,6 @@
     "Spaces" : {
       "comment" : "Shortcuts window: section title",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Spaces"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -906,12 +588,6 @@
     "Tabs and Windows" : {
       "comment" : "Shortcuts window: section title",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tabs and Windows"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -924,12 +600,6 @@
       "comment" : "Shortcuts window: the note of the Arc preset (Presets/arc.json)",
       "extractionState" : "manual",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The help center answers automated requests with 403; the list was read from the Internet Archive snapshot of the same page (web.archive.org/web/2025/) on the check date."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -942,12 +612,6 @@
       "comment" : "Shortcuts window: the note of the Zen preset (Presets/zen.json)",
       "extractionState" : "manual",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The page prints Ctrl and Alt and does not say how they map on macOS; they are read as ⌘ and ⌥, as in Firefox, which Zen is built on. Re-check on a Mac with Zen installed."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -959,12 +623,6 @@
     "View and History" : {
       "comment" : "Shortcuts window: section title",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "View and History"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -976,12 +634,6 @@
     "Zen, Arc or Safari shortcuts. A command the preset has no equivalent for keeps Safira's own shortcut. Without a preset, Safira's own shortcuts apply. You can change any shortcut afterwards." : {
       "comment" : "Defaults: explanation of Shortcut preset",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Zen, Arc or Safari shortcuts. A command the preset has no equivalent for keeps Safira's own shortcut. Without a preset, Safira's own shortcuts apply. You can change any shortcut afterwards."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",

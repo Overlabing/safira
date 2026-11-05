@@ -82,7 +82,8 @@ struct TabMenu: View {
 
 /// The Space rail, ThemeKit's one selector at the bottom of the column: the Active profile's Spaces as glyphs, the
 /// other Profiles folded into dots after a hairline, and a `+` with the commands that add or edit them. A click on a
-/// folded Profile shows it on its last Space. Its context menu acts on the active Space and the Active profile.
+/// folded Profile shows it on its last Space. A secondary click on a Space or a Profile opens that item's menu
+/// (`SpaceRailMenu`), whichever is current.
 private struct SpaceRailBar: View {
     let registry: ProfileRegistry
     let profileActions: ProfileActions
@@ -101,9 +102,10 @@ private struct SpaceRailBar: View {
         let shortcuts = SpaceRailContent.Shortcuts(
             spaces: CommandID.selectSpaceCommands.map(shortcut),
             previousProfile: shortcut(.previousProfile), nextProfile: shortcut(.nextProfile))
+        let profiles = SpaceRailContent.profiles(registry.profiles, activeID: registry.activeProfileID,
+                                                 spaces: registry.spaceSummary(of:), shortcuts: shortcuts)
         SpaceRail(
-            profiles: SpaceRailContent.profiles(registry.profiles, activeID: registry.activeProfileID,
-                                                spaces: registry.spaceSummary(of:), shortcuts: shortcuts),
+            profiles: profiles,
             selection: session.activeSpaceID.rawValue.uuidString,
             commands: [
                 [
@@ -124,20 +126,10 @@ private struct SpaceRailBar: View {
             selectSpace: selectSpace,
             selectProfile: { id in ProfileID(uuidString: id).map(profileActions.select) },
             perform: perform)
-        .contextMenu {
-            Button("Edit Space…") { spaceActions.edit(session.activeSpaceID) }
-            Button("Move Space Left") { session.moveSpace(session.activeSpaceID, by: -1) }
-                .disabled(session.spaces.first?.id == session.activeSpaceID)
-            Button("Move Space Right") { session.moveSpace(session.activeSpaceID, by: 1) }
-                .disabled(session.spaces.last?.id == session.activeSpaceID)
-            Button("Delete Space…") { spaceActions.delete(session.activeSpaceID) }
-                .disabled(!session.canDeleteSpace)
-            Divider()
-            Button("Edit Profile…") { profileActions.edit(registry.activeProfileID) }
-            Button("Delete Profile…") { profileActions.delete(registry.activeProfileID) }
-                .disabled(!registry.canDeleteProfile)
-            Divider()
-            Button("Clear History and Website Data…") { profileActions.clearBrowsingData(registry.activeProfileID) }
+        .spaceRailContextMenu { space in
+            RailMenu(sections: SpaceRailMenu.space(space.id, in: profiles), run: run)
+        } profile: { profile in
+            RailMenu(sections: SpaceRailMenu.profile(profile.id, in: profiles), run: run)
         }
     }
 
@@ -153,6 +145,20 @@ private struct SpaceRailBar: View {
         }
     }
 
+    /// A command of an item's menu, on the Space or Profile it names: one of another Profile reaches that Profile's own
+    /// session, which is not shown for it.
+    private func run(_ action: SpaceRailMenu.Action) {
+        switch action {
+        case .editSpace(let id): spaceActions.edit(id)
+        case .moveSpaceLeft(let id): registry.context(ofSpace: id)?.session.moveSpace(id, by: -1)
+        case .moveSpaceRight(let id): registry.context(ofSpace: id)?.session.moveSpace(id, by: 1)
+        case .deleteSpace(let id): spaceActions.delete(id)
+        case .editProfile(let id): profileActions.edit(id)
+        case .deleteProfile(let id): profileActions.delete(id)
+        case .clearBrowsingData(let id): profileActions.clearBrowsingData(id)
+        }
+    }
+
     private func perform(_ id: String) {
         switch Command(rawValue: id) {
         case .newSpace: spaceActions.edit(nil)
@@ -160,6 +166,34 @@ private struct SpaceRailBar: View {
         case .editSpace: spaceActions.edit(session.activeSpaceID)
         case .editProfile: profileActions.edit(registry.activeProfileID)
         case nil: break
+        }
+    }
+}
+
+/// A Space rail item's menu: its sections between dividers, each command under the title it had on the whole rail.
+private struct RailMenu: View {
+    let sections: [[SpaceRailMenu.Item]]
+    let run: (SpaceRailMenu.Action) -> Void
+
+    var body: some View {
+        ForEach(Array(sections.enumerated()), id: \.offset) { index, section in
+            if index > 0 { Divider() }
+            ForEach(section, id: \.self) { item in
+                button(item.action).disabled(!item.isEnabled)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func button(_ action: SpaceRailMenu.Action) -> some View {
+        switch action {
+        case .editSpace: Button("Edit Space…") { run(action) }
+        case .moveSpaceLeft: Button("Move Space Left") { run(action) }
+        case .moveSpaceRight: Button("Move Space Right") { run(action) }
+        case .deleteSpace: Button("Delete Space…") { run(action) }
+        case .editProfile: Button("Edit Profile…") { run(action) }
+        case .deleteProfile: Button("Delete Profile…") { run(action) }
+        case .clearBrowsingData: Button("Clear History and Website Data…") { run(action) }
         }
     }
 }
