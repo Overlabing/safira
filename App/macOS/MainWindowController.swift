@@ -362,22 +362,24 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
 
     private static let newSpaceEmoji = ["🌿", "📚", "💼", "🎨", "🎵", "✈️", "🧪", "⭐️"]
 
-    /// A new Space when `id` is nil, otherwise that Space.
+    /// A new Space of the Active profile when `id` is nil, otherwise that Space, in whichever Profile holds it.
     private func editSpace(_ id: SpaceID?) {
         guard let window, spaceSheet == nil else { return }
-        let space = id.flatMap { id in session.spaces.first { $0.id == id } }
+        let owner = id.map { registry.context(ofSpace: $0)?.session } ?? session
+        guard let owner else { return }
+        let space = id.flatMap { id in owner.spaces.first { $0.id == id } }
         if id != nil, space == nil { return }
-        let count = session.spaces.count
+        let count = owner.spaces.count
         let editor = SpaceEditor(
             title: space == nil ? String(localized: "New Space", comment: "Main window") : String(localized: "Edit Space", comment: "Main window"),
             confirmTitle: space == nil ? String(localized: "Create", comment: "Main window") : String(localized: "Save", comment: "Main window"),
             name: space?.name ?? String(localized: "Space \(count + 1)", comment: "Main window"),
             emoji: space?.emoji ?? Self.newSpaceEmoji[count % Self.newSpaceEmoji.count],
-            paletteID: space?.paletteID ?? ThemeCatalog.nextID(avoiding: session.spaces.map(\.paletteID)),
+            paletteID: space?.paletteID ?? ThemeCatalog.nextID(avoiding: owner.spaces.map(\.paletteID)),
             save: { [weak self] name, emoji, paletteID in
                 guard let self else { return }
                 if let id {
-                    session.renameSpace(id, name: name, emoji: emoji, paletteID: paletteID)
+                    owner.renameSpace(id, name: name, emoji: emoji, paletteID: paletteID)
                 } else {
                     session.createSpace(name: name, emoji: emoji, paletteID: paletteID)
                     focusCommandBar(nil)
@@ -429,9 +431,11 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         folderSheet = nil
     }
 
-    /// Deleting a Space closes its Tabs for good, so it is confirmed first. The last Space cannot be deleted.
+    /// Deleting a Space closes its Tabs for good, so it is confirmed first, in whichever Profile holds it. A Profile's
+    /// last Space cannot be deleted.
     private func confirmDeletion(of id: SpaceID) {
-        guard let window, session.canDeleteSpace, let space = session.spaces.first(where: { $0.id == id }) else { return }
+        guard let window, let owner = registry.context(ofSpace: id)?.session, owner.canDeleteSpace,
+              let space = owner.spaces.first(where: { $0.id == id }) else { return }
         let alert = NSAlert()
         alert.messageText = String(localized: "Delete the Space “\(space.name)”?", comment: "Main window")
         let count = space.allTabs.count
@@ -440,9 +444,9 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         alert.informativeText = tabs + " " + String(localized: "The Profile's logins and history are kept.", comment: "Main window")
         alert.addButton(withTitle: String(localized: "Delete Space", comment: "Main window")).hasDestructiveAction = true
         alert.addButton(withTitle: String(localized: "Cancel", comment: "Main window"))
-        alert.beginSheetModal(for: window) { [weak self] response in
+        alert.beginSheetModal(for: window) { response in
             guard response == .alertFirstButtonReturn else { return }
-            self?.session.deleteSpace(id)
+            owner.deleteSpace(id)
         }
     }
 
@@ -532,11 +536,11 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     }
 
     /// Clearing Browsing data cannot be undone, so the sheet names the Profile and asks for a range with nothing
-    /// preselected. The Profile is the Active profile: the sheet blocks the window, so it cannot change underneath.
+    /// preselected. The Profile is the one asked for, shown or not (the Space rail's menu reaches any Profile); the sheet
+    /// blocks the window, so it cannot change underneath.
     private func askToClearBrowsingData(ofProfile id: ProfileID) {
-        guard let window, clearSheet == nil, id == registry.activeProfileID else { return }
-        let profile = registry.activeProfile
-        let context = registry.active
+        guard let window, clearSheet == nil, let profile = registry.profiles.first(where: { $0.id == id }),
+              let context = registry.context(of: id) else { return }
         let sheet = ClearBrowsingDataSheet(
             profileName: profile.name,
             clear: { [weak self] range in

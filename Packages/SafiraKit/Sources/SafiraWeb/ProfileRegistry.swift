@@ -23,6 +23,9 @@ public final class ProfileRegistry {
     /// app that already had Profiles when onboarding was introduced.
     public private(set) var isOnboardingPending = false
     @ObservationIgnored private var contexts: [ProfileID: ProfileContext] = [:]
+    /// The Profiles whose owner exists, observed: a view that read a Profile's saved Spaces is told when the Profile
+    /// loads, so that it reads the session from then on, a Space command on a Profile not shown included.
+    private var loadedIDs: Set<ProfileID> = []
     /// The saved Spaces of Profiles not loaded since launch, read once: such a Profile cannot change until it loads.
     @ObservationIgnored private var savedSpaces: [ProfileID: ProfileSpaces] = [:]
     /// Asks the user about a camera, microphone or location request no Profile has a decision for. Every Profile's
@@ -132,12 +135,27 @@ public final class ProfileRegistry {
         return context(for: id).session.spaces
     }
 
+    /// The owner of a Profile, created if it has none yet, without showing the Profile: what a command on that
+    /// Profile's Spaces or Browsing data reaches. Nil for a Profile that does not exist.
+    public func context(of id: ProfileID) -> ProfileContext? {
+        guard profiles.contains(where: { $0.id == id }) else { return nil }
+        return context(for: id)
+    }
+
+    /// The owner of the Profile that holds a Space, created as `context(of:)` does; nil when no Profile holds it.
+    public func context(ofSpace id: SpaceID) -> ProfileContext? {
+        guard let owner = profiles.first(where: { spaceSummary(of: $0.id).spaces.contains { $0.id == id } }) else {
+            return nil
+        }
+        return context(for: owner.id)
+    }
+
     /// What the Space rail shows of a Profile: its Spaces and the one it was last on. A loaded Profile answers from its
     /// session; one not loaded since launch from its saved Spaces, with no owner created and no page loaded. Empty for
     /// a Profile that does not exist or has nothing saved yet.
     public func spaceSummary(of id: ProfileID) -> ProfileSpaces {
         guard profiles.contains(where: { $0.id == id }) else { return ProfileSpaces() }
-        if let session = contexts[id]?.session {
+        if loadedIDs.contains(id), let session = contexts[id]?.session {
             return ProfileSpaces(
                 spaces: session.spaces.map { SpaceSummary(id: $0.id, name: $0.name, emoji: $0.emoji, paletteID: $0.paletteID) },
                 lastSpaceID: session.activeSpaceID)
@@ -244,6 +262,7 @@ public final class ProfileRegistry {
         }
         profiles.append(profile)
         contexts[profile.id] = makeContext(profile.id, settings: settings)
+        loadedIDs.insert(profile.id)
         selectProfile(profile.id)
         return profile.id
     }
@@ -280,6 +299,7 @@ public final class ProfileRegistry {
         try appDatabase?.markForDeletion(id)
         profiles.remove(at: index)
         savedSpaces[id] = nil
+        loadedIDs.remove(id)
         await contexts.removeValue(forKey: id)?.discard()
         try await erase(id)
     }
@@ -304,6 +324,7 @@ public final class ProfileRegistry {
         if let context = contexts[id] { return context }
         let context = makeContext(id, settings: nil)
         contexts[id] = context
+        loadedIDs.insert(id)
         return context
     }
 
