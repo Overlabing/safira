@@ -24,6 +24,7 @@ final class BrowserWindowLayout: NSViewController {
 
     private let background: NSView
     private let column: NSViewController
+    private let canvas: PageCanvasView
     private let split = SidebarSplitController()
     private var columnItem: NSSplitViewItem
     private let pageItem: NSSplitViewItem
@@ -41,6 +42,7 @@ final class BrowserWindowLayout: NSViewController {
     init(background: NSView, column: some View, canvas: PageCanvasView, side: SidebarSide) {
         self.background = background
         self.side = side
+        self.canvas = canvas
         let item = NSSplitViewItem.sidebar(hosting: column, tokens: SafiraDesign.tokens)
         self.column = item.viewController
         columnItem = side == .left ? item : Self.item(for: side, holding: item.viewController)
@@ -112,6 +114,12 @@ final class BrowserWindowLayout: NSViewController {
         arrangeItems()
         setColumnWidth(width)
         if isViewLoaded { pinEdge() }
+        updateCardTop(animated: false)
+    }
+
+    override func viewDidLayout() {
+        super.viewDidLayout()
+        updateCardTop(animated: false)
     }
 
     func apply(_ presentation: SidebarPresentation, animated: Bool) {
@@ -126,10 +134,23 @@ final class BrowserWindowLayout: NSViewController {
             NSAnimationContext.runAnimationGroup { context in
                 context.duration = motion.spec.duration.rawValue
                 columnItem.animator().isCollapsed = collapsed
+                updateCardTop(animated: true)
             }
         } else {
             columnItem.isCollapsed = collapsed
+            updateCardTop(animated: false)
         }
+    }
+
+    /// The window's buttons and the sidebar button sit in the title bar at the leading and trailing top corners. Beside
+    /// a column on the left they sit on the column, and the card starts `Spacing.canvasInset` from the window's top edge,
+    /// as `SidebarDetail` does; with no column on the left (sidebar on the right, or collapsed) they would sit on the
+    /// card, over the page, so the card starts under the title bar and they keep a strip of the gradient to themselves.
+    private func updateCardTop(animated: Bool) {
+        guard let window = view.window else { return }
+        let titleBar = window.frame.height - window.contentLayoutRect.height
+        let columnOnLeft = side == .left && !wantsCollapsed
+        canvas.setTopInset(columnOnLeft ? SafiraDesign.tokens.spacing.canvasInset : titleBar, animated: animated)
     }
 
     /// The system's sidebar item on the left, as the kit makes it. A sidebar item belongs at the split's leading edge
@@ -196,13 +217,14 @@ private final class SidebarSplitController: NSSplitViewController {
 
 /// The page in the kit's detail card (`SidebarDetail`), in AppKit: the web view is an AppKit view the card must clip,
 /// which a SwiftUI clip shape does not do for a hosted view. Inset `Spacing.canvasInset` from the detail's edges and from
-/// the window's top edge, under the transparent toolbar; on the plain background, rounded `Radius.canvas`, with a 1 pt
+/// the window's top edge, under the transparent toolbar (under the title bar when no column is on its left); on the plain background, rounded `Radius.canvas`, with a 1 pt
 /// `.separator` line on its edge.
 /// The banner floats over the top of the card, and the Command bar over the whole page.
 @MainActor
 final class PageCanvasView: NSView {
     private let tokens = SafiraDesign.tokens
     private let clip = NSView()
+    private var top = NSLayoutConstraint()
 
     init(page: NSView, banner: NSView, commandBar: NSView) {
         super.init(frame: .zero)
@@ -214,10 +236,11 @@ final class PageCanvasView: NSView {
         clip.translatesAutoresizingMaskIntoConstraints = false
         addSubview(clip)
         let inset = tokens.spacing.canvasInset
+        top = clip.topAnchor.constraint(equalTo: topAnchor, constant: inset)
         NSLayoutConstraint.activate([
             clip.leadingAnchor.constraint(equalTo: leadingAnchor, constant: inset),
             clip.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -inset),
-            clip.topAnchor.constraint(equalTo: topAnchor, constant: inset),
+            top,
             clip.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -inset),
         ])
         for view in [page, commandBar] {
@@ -252,6 +275,12 @@ final class PageCanvasView: NSView {
     override func viewDidChangeEffectiveAppearance() {
         super.viewDidChangeEffectiveAppearance()
         updateOutline()
+    }
+
+    /// From the window's top edge to the card's top.
+    func setTopInset(_ inset: CGFloat, animated: Bool) {
+        guard top.constant != inset else { return }
+        (animated ? top.animator() : top).constant = inset
     }
 
     @objc private func accessibilityDisplayOptionsChanged(_ notification: Notification) {
