@@ -5,8 +5,8 @@
 # Copy this file into your repository (as scripts/tools.sh, say) next to a pin file, and your check scripts source
 # AppTooling from a tagged release, checked against a checksum:
 #
-#   scripts/apptooling.pin       version=0.1.0
-#                                sha256=<sha-256 of AppTooling-0.1.0.tar.gz, from the release notes>
+#   scripts/apptooling.pin       version=0.2.0
+#                                sha256=<sha-256 of AppTooling-0.2.0.tar.gz, from the release notes>
 #
 #   tools=$(scripts/tools.sh) || exit 1          # downloads once, prints the AppTooling directory
 #   . "$tools/lib/gate.sh"
