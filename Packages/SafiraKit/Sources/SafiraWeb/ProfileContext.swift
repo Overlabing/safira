@@ -17,7 +17,9 @@ public final class ProfileContext: MatchingTabSearchable {
     private let autosave: SessionAutosave
 
     /// Restores the Profile's Spaces, Tabs and settings from its database; only the selected Tab gets a page.
-    init(id: ProfileID, database: ProfileDatabase, diagnostics: DiagnosticLogger?,
+    /// - Parameter siteIconsDirectory: the folder of the Profile's site icons, inside its own folder; nil keeps them in
+    ///   memory only.
+    init(id: ProfileID, database: ProfileDatabase, siteIconsDirectory: URL?, diagnostics: DiagnosticLogger?,
          onError: @escaping @MainActor (String, any Error) -> Void) {
         let settings: ProfileSettings
         do {
@@ -32,9 +34,10 @@ public final class ProfileContext: MatchingTabSearchable {
                                     downloads: downloads)
         web.diagnostics = diagnostics
         let appLinks = AppLinkGate(profileID: id, permissions: permissions)
-        let session = ProfileSession(profileID: id, settings: settings, history: database, appLinks: appLinks) {
-            [unowned web] in web.makePage(for: $0)
-        }
+        let siteIcons = ProfileSiteIcons(directory: siteIconsDirectory)
+        siteIcons.onError = { onError("A site icon could not be saved", $0) }
+        let session = ProfileSession(profileID: id, settings: settings, history: database, appLinks: appLinks,
+                                     siteIcons: siteIcons) { [unowned web] in web.makePage(for: $0) }
         session.onHistoryError = { onError("The history could not be used", $0) }
         do {
             session.restore(try database.savedSession())
@@ -75,19 +78,25 @@ public final class ProfileContext: MatchingTabSearchable {
         await session.recordedHistorySettled()
     }
 
-    /// Clears this Profile's Browsing data for `range`: its history and its website data. Only this Profile's own
-    /// database and data store are reached. Spaces, Tabs, Pinned tabs, settings and the closed-Tab stack are kept. The
-    /// website data is cleared even when the history cannot be, and the history error is then thrown.
+    /// Clears this Profile's Browsing data for `range`: its history, its website data and the site icons its pages
+    /// fetched. Only this Profile's own database, data store and folder are reached. Spaces, Tabs, Pinned tabs,
+    /// settings and the closed-Tab stack are kept. Everything is cleared even when one part cannot be, and the first
+    /// error is then thrown.
     public func clearBrowsingData(_ range: ClearRange, now: Date = Date()) async throws {
         let start = range.start(now: now)
-        var historyError: (any Error)?
+        var firstError: (any Error)?
         do {
             try await session.clearHistory(since: start)
         } catch {
-            historyError = error
+            firstError = error
         }
         await web.clearWebsiteData(since: start)
-        if let historyError { throw historyError }
+        do {
+            try await session.siteIcons.clear(since: start)
+        } catch {
+            firstError = firstError ?? error
+        }
+        if let firstError { throw firstError }
     }
 
     /// Stops saving, stops the running downloads and closes every page, so that WebKit lets the data store go.

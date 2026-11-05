@@ -5,7 +5,7 @@ import Foundation
 import Network
 
 /// A loopback server whose pages the test writes out literally: one fixed answer per path, any status, any headers.
-/// A path it has no page for answers 404. It serves HTTP only and keeps no request log.
+/// A path it has no page for answers 404. It serves HTTP only, and keeps the head of every request it received.
 final class RoutedPageServer: @unchecked Sendable {
     struct Page: Sendable {
         var status = 200
@@ -22,6 +22,10 @@ final class RoutedPageServer: @unchecked Sendable {
     private let pages: [String: Page]
     private let lock = NSLock()
     private var open: [NWConnection] = []
+    private var heads: [String] = []
+
+    /// The request line and headers of every request received, in order, each line ending in a line break.
+    var requests: [String] { lock.withLock { heads } }
 
     func url(_ path: String) -> URL { URL(string: "http://127.0.0.1:\(port)\(path)")! }
 
@@ -67,7 +71,10 @@ final class RoutedPageServer: @unchecked Sendable {
         connection.start(queue: .global())
         connection.receive(minimumIncompleteLength: 1, maximumLength: 65_536) { [self] data, _, _, _ in
             guard let data else { return connection.cancel() }
-            let line = String(decoding: data, as: UTF8.self).components(separatedBy: "\r\n").first ?? ""
+            let text = String(decoding: data, as: UTF8.self)
+            let line = text.components(separatedBy: "\r\n").first ?? ""
+            let head = text.components(separatedBy: "\r\n\r\n").first ?? text
+            lock.withLock { heads.append(head.replacingOccurrences(of: "\r\n", with: "\n") + "\n") }
             let target = line.split(separator: " ").dropFirst().first.map(String.init) ?? "/"
             let path = target.split(separator: "?", maxSplits: 1).first.map(String.init) ?? target
             let page = pages[path] ?? Page(status: 404, body: "not found")

@@ -117,7 +117,8 @@ import WebKit
             #expect(await until { await harness.title() == "secure" })
             #expect(harness.tab?.address?.absoluteString == "https://127.0.0.1:\(server.port)/")
             #expect(harness.tab?.insecureConnectionWarning == nil)
-            #expect(server.requestCount == 1)
+            // The loaded page then asks its own site for its icon; the page itself is requested once.
+            #expect(server.requestLines.filter { $0.hasPrefix("GET / ") }.count == 1, "\(server.requestLines)")
         }
     }
 

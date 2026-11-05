@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Antonin Carlin
 
+import CoreGraphics
 import Foundation
+import ImageIO
 import SafiraCore
 import SafiraSession
 import SafiraStore
@@ -604,6 +606,80 @@ extension ProfileRegistryTests {
             for context in registry.loadedContexts { context.session.closeAllTabs() }
         }
         server.stop()
+        await cleanUp(ids)
+    }
+}
+
+/// A site that answers every icon request with one PNG, standing in for a loaded page's fetches.
+@MainActor
+private final class IconSite: SiteResourceFetcher {
+    private(set) var fetched: [URL] = []
+
+    func fetchSiteResource(_ url: URL, byteLimit: Int) async -> SiteResourceResponse {
+        fetched.append(url)
+        let context = CGContext(data: nil, width: 16, height: 16, bitsPerComponent: 8, bytesPerRow: 0,
+                                space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                                bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+        context.setFillColor(CGColor(srgbRed: 1, green: 0, blue: 0, alpha: 1))
+        context.fill(CGRect(x: 0, y: 0, width: 16, height: 16))
+        let data = NSMutableData()
+        let destination = CGImageDestinationCreateWithData(data, "public.png" as CFString, 1, nil)!
+        CGImageDestinationAddImage(destination, context.makeImage()!, nil)
+        CGImageDestinationFinalize(destination)
+        return .resource(data as Data, cacheControl: nil)
+    }
+}
+
+/// Site icons belong to one Profile: they live in its own folder, and its Clear history and website data removes them.
+extension ProfileRegistryTests {
+    @Test func siteIconsLiveInTheirProfilesFolderAndAreClearedWithItsBrowsingData() async throws {
+        let root = TemporaryRoot()
+        var ids: [ProfileID] = []
+        do {
+            let registry = ProfileRegistry(layout: root.layout)
+            let personal = registry.activeProfileID
+            let work = registry.createProfile(name: "Work", symbol: "💼", searchEngine: .kagi)
+            ids = registry.profiles.map(\.id)
+            let workContext = registry.active
+            registry.selectProfile(personal)
+            let personalContext = registry.active
+            let site = URL(string: "https://docs.example/")!
+            let workSite = IconSite()
+            let personalSite = IconSite()
+            func folder(_ id: ProfileID) -> URL {
+                root.layout.profileDirectory(for: id).appending(path: "SiteIcons", directoryHint: .isDirectory)
+            }
+            func files(_ id: ProfileID) -> [String] {
+                let path = folder(id).path(percentEncoded: false)
+                return ((try? FileManager.default.contentsOfDirectory(atPath: path)) ?? []).sorted()
+            }
+
+            #expect(workContext.session.siteIcons.directory == folder(work))
+            workContext.session.siteIcons.pageLoaded(PageIconLinks(page: site, base: site, tags: []), fetcher: workSite)
+            await workContext.session.siteIcons.settled()
+
+            #expect(workContext.session.siteIcons.icon(for: site)?.width == 16)
+            #expect(files(work) == ["https%3A%2F%2Fdocs.example.expires", "https%3A%2F%2Fdocs.example.png"])
+            #expect(personalContext.session.siteIcons.icon(for: site) == nil)
+            await personalContext.session.siteIcons.settled()
+            #expect(personalContext.session.siteIcons.icon(for: site) == nil, "never read from another Profile")
+            #expect(files(personal) == [])
+
+            personalContext.session.siteIcons.pageLoaded(PageIconLinks(page: site, base: site, tags: []),
+                                                         fetcher: personalSite)
+            await personalContext.session.siteIcons.settled()
+            #expect(personalSite.fetched.count == 1, "the Personal Profile fetches for itself")
+
+            try await workContext.clearBrowsingData(.allTime)
+
+            #expect(workContext.session.siteIcons.icon(for: site) == nil)
+            await workContext.session.siteIcons.settled()
+            #expect(workContext.session.siteIcons.icon(for: site) == nil)
+            #expect(files(work) == [])
+            #expect(personalContext.session.siteIcons.icon(for: site)?.width == 16)
+            #expect(files(personal) == ["https%3A%2F%2Fdocs.example.expires", "https%3A%2F%2Fdocs.example.png"])
+            for context in registry.loadedContexts { context.session.closeAllTabs() }
+        }
         await cleanUp(ids)
     }
 }
