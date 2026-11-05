@@ -4,6 +4,7 @@
 import AppKit
 import DefaultApps
 import Diagnostics
+import DiagnosticsKit
 import LinkPickerUI
 import LinkRouting
 import Observation

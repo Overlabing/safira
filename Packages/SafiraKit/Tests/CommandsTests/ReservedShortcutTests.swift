@@ -57,7 +57,7 @@ func otherKeysGoToThePage(key: Shortcut?) {
     try changed.record(Shortcut("k"), for: .newTab, rules: SafiraShortcuts.rules)
     #expect(!takesFirst(changed, press("t", [.command])))
     #expect(takesFirst(changed, press("k", [.command])))
-    changed = ShortcutBindings(set: changed.set, overrides: changed.overrides.merging([.closeTab: []]) { $1 })
+    try changed.unbind(.closeTab, rules: SafiraShortcuts.rules)
     #expect(!takesFirst(changed, press("w", [.command])))
 }
 

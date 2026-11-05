@@ -58,6 +58,18 @@ private func recording(_ shortcut: Shortcut, for command: CommandID, on preset: 
     #expect(throws: ShortcutBindingError<CommandID>.editsText(Shortcut(Shortcut.leftArrow, [.command]))) {
         try recording(Shortcut(Shortcut.leftArrow, [.command]), for: .goBack)
     }
+    #expect(throws: ShortcutBindingError<CommandID>.editsText(Shortcut(Shortcut.delete, [.command]))) {
+        try recording(Shortcut(Shortcut.delete, [.command]), for: .clearBrowsingData)
+    }
+}
+
+@Test func aControlCommandArrowAndShiftCommandDeleteCanBeRecorded() throws {
+    let spaces = try recording(Shortcut(Shortcut.downArrow, [.control, .command]), for: .moveSpaceLeft)
+    #expect(spaces.shortcut(.moveSpaceLeft)?.symbols == "⌃⌘↓")
+    var changed = bindings(nil)
+    try changed.unbind(.clearBrowsingData, rules: SafiraShortcuts.rules)
+    try changed.record(Shortcut(Shortcut.delete, [.option, .command]), for: .clearBrowsingData, rules: SafiraShortcuts.rules)
+    #expect(changed.shortcut(.clearBrowsingData)?.symbols == "⌥⌘⌫")
 }
 
 @MainActor

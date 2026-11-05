@@ -62,7 +62,7 @@ private func stored(_ store: any KeyValueStore) -> String? {
 @MainActor
 @Test func aFixedCommandCannotBeUnbound() {
     let controller = ShortcutController(store: ShortcutStore(store: InMemoryKeyValueStore()), unreadable: ignored)
-    controller.unbind(.commandBarNext)
+    #expect(controller.unbind(.commandBarNext) == .notRebindable(.commandBarNext))
     #expect(controller.bindings.keys(.commandBarNext).map(\.symbols) == ["⇥"])
     #expect(controller.bindings.overrides.isEmpty)
 }

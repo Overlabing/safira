@@ -9,7 +9,8 @@ import Network
 ///
 /// - `/small.bin`: 1 000 bytes at once, `application/octet-stream`.
 /// - `/slow.bin`: 100 000 bytes in ten chunks, one every 300 ms, with a validator and range support so that a
-///   transfer can be continued.
+///   transfer can be continued. `hold(after:)` stops it partway until `release()`, so that a test acting on a running
+///   transfer never finds it finished, however long a loaded machine takes to get there.
 /// - `/broken.bin`: promises 100 000 bytes without a validator, sends 20 000 and hangs up.
 /// - `/notes.txt`: `text/plain` that the browser could show, sent as an attachment.
 /// - `/inline.txt`: `text/plain` with no disposition, which the browser shows unless a link says `download`.
@@ -25,6 +26,8 @@ final class DownloadServer: @unchecked Sendable {
     private var counts: [String: Int] = [:]
     private var ranges: [String] = []
     private var connections: [NWConnection] = []
+    private var heldAfter: Int?
+    private var stopped = false
 
     /// Requests received per path.
     func requestCount(_ path: String) -> Int { lock.withLock { counts[path] ?? 0 } }
@@ -49,7 +52,17 @@ final class DownloadServer: @unchecked Sendable {
 
     func stop() {
         listener.cancel()
-        lock.withLock { connections.forEach { $0.cancel() }; connections = [] }
+        lock.withLock { stopped = true; connections.forEach { $0.cancel() }; connections = [] }
+    }
+
+    /// Every `/slow.bin` transfer, running or to come, sends nothing past this byte of the file until `release()`.
+    /// Wait for fewer bytes than this: WebKit may not report the last bytes before a pause until more arrive.
+    func hold(after byte: Int) { lock.withLock { heldAfter = byte } }
+
+    func release() { lock.withLock { heldAfter = nil } }
+
+    private func isHeld(at offset: Int) -> Bool {
+        lock.withLock { !stopped && (heldAfter.map { offset >= $0 } ?? false) }
     }
 
     private func ready() async throws -> DownloadServer {
@@ -135,6 +148,7 @@ final class DownloadServer: @unchecked Sendable {
         await write(connection, Data(head.utf8))
         var offset = start
         while offset < Self.slowSize {
+            while isHeld(at: offset) { try? await Task.sleep(for: .milliseconds(20)) }
             let end = min(Self.slowSize, offset + Self.chunk)
             await write(connection, Self.bytes(offset..<end))
             offset = end

@@ -2,47 +2,51 @@
 // Copyright (c) 2026 Antonin Carlin
 
 import Diagnostics
+import DiagnosticsKit
 import Foundation
 import Testing
 
 @Suite struct LinkRuleEventTests {
-    @Test func aSkippedRuleIsWrittenWithItsPositionAndReasonOnly() {
+    @Test func aSkippedRuleIsWrittenWithItsPositionAndReasonOnly() async {
         let directory = makeLogsDirectory()
         defer { removeParent(of: directory) }
-        let logger = DiagnosticLogger(subsystem: "test", logsDirectory: directory, isEnabled: true,
-                                      clock: { Date(timeIntervalSince1970: 1_793_700_000.25) })
+        let logger = makeLogger(in: directory, isEnabled: true)
 
         logger.record(.linkRuleSkipped(index: 2, reason: .unknownProfile))
         logger.record(.linkRuleSkipped(index: 0, reason: .ambiguousSpace))
-        logger.flush()
+        await logger.sink.flush()
 
-        #expect(allLines(in: directory) == [
-            "2026-11-03T10:00:00.250Z notice link-rule-skipped index=2 reason=unknownProfile",
-            "2026-11-03T10:00:00.250Z notice link-rule-skipped index=0 reason=ambiguousSpace",
+        #expect(messages(in: directory) == [
+            "notice [links] link-rule-skipped index=2 reason=unknownProfile",
+            "notice [links] link-rule-skipped index=0 reason=ambiguousSpace",
         ])
     }
 
-    @Test func anInvalidRulesFileIsWrittenAsAnErrorWithTheKindOfProblemOnly() {
+    @Test func anInvalidRulesFileIsWrittenAsAnErrorWithTheKindOfProblemOnly() async {
         let directory = makeLogsDirectory()
         defer { removeParent(of: directory) }
-        let logger = DiagnosticLogger(subsystem: "test", logsDirectory: directory, isEnabled: true,
-                                      clock: { Date(timeIntervalSince1970: 1_793_700_000.25) })
+        let logger = makeLogger(in: directory, isEnabled: true)
 
         logger.record(.linkRulesInvalid(.invalidField))
-        logger.flush()
+        await logger.sink.flush()
 
-        #expect(allLines(in: directory) == ["2026-11-03T10:00:00.250Z error link-rules-invalid problem=invalidField"])
+        #expect(messages(in: directory) == ["error [links] link-rules-invalid problem=invalidField"])
     }
 
-    @Test func neitherEventCarriesSiteInformationOrWritesAnythingWhileDebugModeIsOff() {
-        #expect(!DiagnosticEvent.linkRuleSkipped(index: 0, reason: .unknownSpace).carriesSiteInformation)
-        #expect(!DiagnosticEvent.linkRulesInvalid(.notJSON).carriesSiteInformation)
-
+    @Test func neitherEventIsPrivateSoTheyReachOnlyTheSystemLogWhileDebugModeIsOff() async {
         let directory = makeLogsDirectory()
         defer { removeParent(of: directory) }
-        let logger = DiagnosticLogger(subsystem: "test", logsDirectory: directory)
+        let systemLog = RecordingSystemLog()
+        let logger = makeLogger(in: directory, isEnabled: false, systemLog: systemLog)
+
+        logger.record(.linkRuleSkipped(index: 0, reason: .unknownSpace))
         logger.record(.linkRulesInvalid(.notJSON))
-        logger.flush()
+        await logger.sink.flush()
+
+        #expect(systemLog.lines == [
+            .init(category: "links", type: .default, redacted: "link-rule-skipped index=0 reason=unknownSpace", full: nil),
+            .init(category: "links", type: .error, redacted: "link-rules-invalid problem=notJSON", full: nil),
+        ])
         #expect(!FileManager.default.fileExists(atPath: directory.path))
     }
 }

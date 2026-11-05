@@ -67,22 +67,26 @@ import Testing
     }
 }
 
-/// CommandKit's rule (`Shortcut.editsText`): ⌘ with an arrow and ⌫ with any modifier edit the text of a field, so they
-/// are never a menu item's key. Safira's ⌃⌘←, ⌃⌘→ and ⇧⌘⌫ keep their key but lose their menu item's key equivalent.
-@Test func theKeysThatEditTextHaveNoMenuKey() {
-    #expect(menuKey(nil, .previousSpace) == nil)
-    #expect(menuKey(nil, .nextSpace) == nil)
-    #expect(menuKey(nil, .clearBrowsingData) == nil)
-    #expect(menuKey(.safari, .previousSpace) == nil)
-    #expect(menuKey(.zen, .clearBrowsingData) == nil)
+/// CommandKit 0.1.3's rule (`Shortcut.editsText`): only ⌘ or ⇧⌘ with an arrow, and ⌫ alone, with one of ⇧ ⌥ ⌃ or with ⌘
+/// alone, edit the text of a field. ⌃⌘←, ⌃⌘→ (Show Previous and Next Space) and ⇧⌘⌫ (Clear History) are menu keys, so
+/// every key of every set reaches its menu item.
+@Test func everyKeyOfEverySetIsAMenuKey() {
+    #expect(menuKey(nil, .previousSpace) == "⌃⌘←")
+    #expect(menuKey(nil, .nextSpace) == "⌃⌘→")
+    #expect(menuKey(nil, .clearBrowsingData) == "⇧⌘⌫")
+    #expect(menuKey(.safari, .previousSpace) == "⌃⌘←")
+    #expect(menuKey(.safari, .nextSpace) == "⌃⌘→")
+    for preset in ShortcutPreset.allCases {
+        #expect(menuKey(preset, .clearBrowsingData) == "⇧⌘⌫", "\(preset)")
+    }
     #expect(menuKey(.arc, .previousSpace) == "⌥⌘←")
     #expect(menuKey(nil, .previousProfile) == "⌃⌥⌘←")
-    var withMenuKey: [CommandID] = []
+    var withoutMenuKey: [String] = []
     for preset in [nil] + ShortcutPreset.allCases.map(Optional.some) {
-        withMenuKey += CommandID.allCases.filter { !bindings(preset).keys($0).isEmpty && menuKey(preset, $0) == nil }
+        withoutMenuKey += CommandID.allCases.filter { !bindings(preset).keys($0).isEmpty && menuKey(preset, $0) == nil }
+            .map { "\(preset?.rawValue ?? "safira") \($0)" }
     }
-    #expect(withMenuKey == [.previousSpace, .nextSpace, .clearBrowsingData, .clearBrowsingData, .clearBrowsingData,
-                            .previousSpace, .nextSpace, .clearBrowsingData])
+    #expect(withoutMenuKey == [])
 }
 
 @Test func arcAndZenSwitchSpacesWithTheirOwnKeys() {

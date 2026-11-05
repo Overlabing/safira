@@ -43,10 +43,18 @@ public final class ShortcutController {
         return nil
     }
 
-    /// The user removes the command's shortcut: no key, even one the set gives it, until `reset`.
-    public func unbind(_ command: CommandID) {
-        guard SafiraShortcuts.rules.isRebindable(command) else { return }
-        update { $0 = Self.unbinding(command, in: $0) }
+    /// The user removes the command's shortcut: no key, even one the set gives it, until `reset`. Returns why it was
+    /// refused, changing nothing, for a command whose keys are fixed.
+    @discardableResult
+    public func unbind(_ command: CommandID) -> ShortcutBindingError<CommandID>? {
+        var changed = bindings
+        do {
+            try changed.unbind(command, rules: SafiraShortcuts.rules)
+        } catch {
+            return error
+        }
+        update { $0 = changed }
+        return nil
     }
 
     /// Back to what the set says for this command.
@@ -61,12 +69,6 @@ public final class ShortcutController {
     /// Whether a key press goes to the menu before the focused view, even a web page that handles the key itself.
     public func takesKeyBeforeFocusedView(_ shortcut: Shortcut) -> Bool {
         bindings.takesKeyBeforeFocusedView(shortcut, rules: SafiraShortcuts.rules)
-    }
-
-    // TODO(CommandKit 0.1.2): unbind(_:)
-    /// An empty override, CommandKit's "no shortcut", built through its public initializer until the kit has `unbind`.
-    static func unbinding(_ command: CommandID, in bindings: ShortcutBindings<CommandID>) -> ShortcutBindings<CommandID> {
-        ShortcutBindings(set: bindings.set, overrides: bindings.overrides.merging([command: []]) { $1 })
     }
 
     private func update(_ change: (inout ShortcutBindings<CommandID>) -> Void) {

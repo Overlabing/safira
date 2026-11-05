@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Antonin Carlin
 
+import DiagnosticsKit
 import Foundation
-import OSLog
 
 /// How an error is written: its domain and code, never its description, which can quote an address or a title.
 public struct ErrorSummary: Hashable, Sendable {
@@ -58,55 +58,49 @@ public enum DiagnosticEvent: Hashable, Sendable {
     case linkRuleSkipped(index: Int, reason: LinkRuleSkipReason)
     /// The Link rules file is invalid, so no rule applied.
     case linkRulesInvalid(LinkRulesFileProblem)
+}
 
-    public enum Level: String, Sendable {
-        case info, notice, error
-
-        var osLogType: OSLogType {
-            switch self {
-            case .info: .info
-            case .notice: .default
-            case .error: .error
-            }
+extension DiagnosticEvent: DiagnosticEventConvertible {
+    public var category: String {
+        switch self {
+        case .pageLoaded, .loadFailed: "navigation"
+        case .tabCounts, .memory: "sample"
+        case .debugMode: "app"
+        case .linkRuleSkipped, .linkRulesInvalid: "links"
         }
     }
 
-    public var level: Level {
+    public var level: DiagnosticLevel {
         switch self {
-        case .tabCounts, .memory: .info
-        case .pageLoaded, .debugMode, .linkRuleSkipped: .notice
+        // Notice is the lowest level the file keeps.
+        case .tabCounts, .memory, .pageLoaded, .debugMode, .linkRuleSkipped: .notice
         case .linkRulesInvalid: .error
         // A navigation the user or the page itself replaced is expected, not a failure.
         case .loadFailed(_, let error): error.domain == NSURLErrorDomain && error.code == NSURLErrorCancelled ? .notice : .error
         }
     }
 
-    /// Whether the line tells where the user browsed or how long a page took. A failure without a host does not.
-    public var carriesSiteInformation: Bool {
-        switch self {
-        case .pageLoaded: true
-        case .loadFailed(let host, _): host != nil
-        case .tabCounts, .memory, .debugMode, .linkRuleSkipped, .linkRulesInvalid: false
-        }
-    }
-
-    /// The text of the line after its timestamp and level.
-    public var message: String {
+    /// A host is a private value, and so is a page timing, which tells where the user browsed even without its host:
+    /// under `OSLogPolicy.publicMessagesAlways` such a line reaches the system log only while Debug mode is on, and the
+    /// file reads `<private>` in its place. Every other value is public, so its line always reaches the system log.
+    public var message: DiagnosticMessage {
         switch self {
         case .pageLoaded(let host, let milliseconds):
-            "page-loaded host=\(host?.name ?? "-") ms=\(milliseconds)"
-        case .loadFailed(let host, let error):
-            "load-failed host=\(host?.name ?? "-") domain=\(error.domain) code=\(error.code)"
+            "page-loaded host=\(host?.name ?? "-", privacy: .private) ms=\(milliseconds)"
+        case .loadFailed(let host?, let error):
+            "load-failed host=\(host.name, privacy: .private) domain=\(error.domain, privacy: .public) code=\(error.code)"
+        case .loadFailed(nil, let error):
+            "load-failed host=- domain=\(error.domain, privacy: .public) code=\(error.code)"
         case .tabCounts(let counts):
             "tabs blank=\(counts.blank) loading=\(counts.loading) loaded=\(counts.loaded)"
         case .memory(let bytes):
             "memory footprint-bytes=\(bytes)"
         case .debugMode(let isOn):
-            "debug-mode \(isOn ? "on" : "off")"
+            "debug-mode \(isOn ? "on" : "off", privacy: .public)"
         case .linkRuleSkipped(let index, let reason):
-            "link-rule-skipped index=\(index) reason=\(reason.rawValue)"
+            "link-rule-skipped index=\(index) reason=\(reason.rawValue, privacy: .public)"
         case .linkRulesInvalid(let problem):
-            "link-rules-invalid problem=\(problem.rawValue)"
+            "link-rules-invalid problem=\(problem.rawValue, privacy: .public)"
         }
     }
 }
