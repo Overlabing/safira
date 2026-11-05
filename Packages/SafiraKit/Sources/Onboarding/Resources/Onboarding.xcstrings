@@ -4,12 +4,6 @@
     "Not chosen" : {
       "comment" : "Onboarding, defaults step: the value of Search engine before a choice",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Not chosen"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21,12 +15,6 @@
     "Safira's own shortcuts" : {
       "comment" : "Onboarding, defaults step: the value of Shortcut preset without a preset",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Safira's own shortcuts"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",

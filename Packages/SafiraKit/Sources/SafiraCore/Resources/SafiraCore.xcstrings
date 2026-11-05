@@ -4,12 +4,6 @@
     "A page cannot play sound until you click or press a key on it. Silent video can still start by itself." : {
       "comment" : "Defaults: explanation of autoplaying sound",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "A page cannot play sound until you click or press a key on it. Silent video can still start by itself."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21,12 +15,6 @@
     "Allow autoplaying sound" : {
       "comment" : "Menu item and Defaults title",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Allow autoplaying sound"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -38,12 +26,6 @@
     "Allowed" : {
       "comment" : "Defaults: value of autoplaying sound",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Allowed"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -55,12 +37,6 @@
     "An address typed without a scheme is tried over HTTPS. When the site offers no secure connection, Safira warns you before loading it over HTTP, and loads it only if you agree." : {
       "comment" : "Defaults: explanation of HTTPS first",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "An address typed without a scheme is tried over HTTPS. When the site offers no secure connection, Safira warns you before loading it over HTTP, and loads it only if you agree."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -72,12 +48,6 @@
     "Ask each time" : {
       "comment" : "Defaults: value of Open links to other apps",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ask each time"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -89,12 +59,6 @@
     "At launch only the selected Tab and the Pinned tabs of the Active profile load, which contacts those sites. Every other Tab comes back without loading until you select it." : {
       "comment" : "Defaults: explanation of Restore Tabs lazily",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "At launch only the selected Tab and the Pinned tabs of the Active profile load, which contacts those sites. Every other Tab comes back without loading until you select it."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -106,12 +70,6 @@
     "Before a page loads, WebKit checks the site against a list of known fraudulent sites and warns you if it matches. This check may consult a third-party service, which can learn which sites you visit." : {
       "comment" : "Defaults: explanation of the fraudulent website warning",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Before a page loads, WebKit checks the site against a list of known fraudulent sites and warns you if it matches. This check may consult a third-party service, which can learn which sites you visit."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -123,12 +81,6 @@
     "Blocked" : {
       "comment" : "Defaults: value of autoplaying sound",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Blocked"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -140,12 +92,6 @@
     "Check for Updates Automatically" : {
       "comment" : "Menu item and Defaults title",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Check for Updates Automatically"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -157,12 +103,6 @@
     "Chosen by you" : {
       "comment" : "Defaults: value of Search engine",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Chosen by you"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -174,12 +114,6 @@
     "Compact Mode" : {
       "comment" : "Defaults title of Compact mode",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Compact Mode"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -191,12 +125,6 @@
     "Defaults window" : {
       "comment" : "Defaults: where to change the search engine",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Defaults window"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -208,12 +136,6 @@
     "Downloaded files go to your Downloads folder, and each Profile keeps its own list of them, which the Show Downloads command opens." : {
       "comment" : "Defaults: explanation of Downloads folder",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Downloaded files go to your Downloads folder, and each Profile keeps its own list of them, which the Show Downloads command opens."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -225,12 +147,6 @@
     "Downloads folder" : {
       "comment" : "Defaults: entry title",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Downloads folder"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -242,12 +158,6 @@
     "Each Profile has its own search engine, and none is chosen for you. A Profile cannot be created without one; if you skip it, the Command bar asks at the first search." : {
       "comment" : "Defaults: explanation of Search engine",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Each Profile has its own search engine, and none is chosen for you. A Profile cannot be created without one; if you skip it, the Command bar asks at the first search."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -259,12 +169,6 @@
     "HTTPS first" : {
       "comment" : "Defaults: entry title",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "HTTPS first"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -276,12 +180,6 @@
     "Help menu" : {
       "comment" : "Defaults: where to change a default",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Help menu"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -293,12 +191,6 @@
     "None" : {
       "comment" : "Defaults: value of Telemetry",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "None"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -310,12 +202,6 @@
     "Not adjustable yet" : {
       "comment" : "Defaults: where to change a default that has no switch yet",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Not adjustable yet"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -327,12 +213,6 @@
     "Nothing to change" : {
       "comment" : "Defaults: where to change Telemetry, which is a reminder",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nothing to change"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -344,12 +224,6 @@
     "Off" : {
       "comment" : "Defaults: the value of a switch that is off",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Off"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -361,12 +235,6 @@
     "Off, local suggestions on" : {
       "comment" : "Defaults: value of Remote search suggestions",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Off, local suggestions on"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -378,12 +246,6 @@
     "Off, on the left" : {
       "comment" : "Defaults: value of Sidebar on the Right",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Off, on the left"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -395,12 +257,6 @@
     "On" : {
       "comment" : "Defaults: the value of a switch that is on",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "On"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -412,12 +268,6 @@
     "Open links to other apps" : {
       "comment" : "Defaults: entry title",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Open links to other apps"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -429,12 +279,6 @@
     "Pages can be inspected from the Develop menu of Safari, once Safari's Develop menu is enabled. Safira has no inspector of its own." : {
       "comment" : "Defaults: explanation of Web inspector",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pages can be inspected from the Develop menu of Safari, once Safari's Develop menu is enabled. Safira has no inspector of its own."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -446,12 +290,6 @@
     "Profiles menu, Site Permissions…" : {
       "comment" : "Defaults: where to change it; a menu and its item",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Profiles menu, Site Permissions…"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -463,12 +301,6 @@
     "Remote search suggestions" : {
       "comment" : "Defaults: entry title",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Remote search suggestions"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -480,12 +312,6 @@
     "Restore Tabs lazily" : {
       "comment" : "Defaults: entry title",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Restore Tabs lazily"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -497,12 +323,6 @@
     "Safari's Develop menu" : {
       "comment" : "Defaults: where to change Web inspector",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Safari's Develop menu"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -514,12 +334,6 @@
     "Safira collects no usage data and has no analytics. Nothing is sent without an action of yours: a page you open, a search you submit, an update check you ask for, a log you export." : {
       "comment" : "Defaults: explanation of Telemetry",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Safira collects no usage data and has no analytics. Nothing is sent without an action of yours: a page you open, a search you submit, an update check you ask for, a log you export."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -531,12 +345,6 @@
     "Safira does not contact its update server until you choose Check for Updates, or turn this on. Turned on, it checks in the background." : {
       "comment" : "Defaults: explanation of automatic update checks",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Safira does not contact its update server until you choose Check for Updates, or turn this on. Turned on, it checks in the background."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -548,12 +356,6 @@
     "Safira menu" : {
       "comment" : "Defaults: where to change a default, the app menu",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Safira menu"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -565,12 +367,6 @@
     "Search engine" : {
       "comment" : "Defaults: entry title",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Search engine"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -582,12 +378,6 @@
     "Sidebar on the Right" : {
       "comment" : "Menu item and Defaults title",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sidebar on the Right"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -599,12 +389,6 @@
     "Some settings were reset" : {
       "comment" : "Banner title when a saved setting could not be read",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Some settings were reset"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -616,12 +400,6 @@
     "Telemetry" : {
       "comment" : "Defaults: entry title",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Telemetry"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -633,12 +411,6 @@
     "The sidebar is hidden and the page uses the full width. Move the pointer to the window's edge on the sidebar's side, or use Show Sidebar, to bring it back beside the page; it hides again when the pointer leaves it or you go back to the page." : {
       "comment" : "Defaults: explanation of Compact mode",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The sidebar is hidden and the page uses the full width. Move the pointer to the window's edge on the sidebar's side, or use Show Sidebar, to bring it back beside the page; it hides again when the pointer leaves it or you go back to the page."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -650,12 +422,6 @@
     "The sidebar, with the address and the Tabs, sits on the left of the window. Put it on the right instead; in Compact mode it then comes back from the right edge." : {
       "comment" : "Defaults: explanation of Sidebar on the Right",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The sidebar, with the address and the Tabs, sits on the left of the window. Put it on the right instead; in Compact mode it then comes back from the right edge."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -667,12 +433,6 @@
     "View menu" : {
       "comment" : "Defaults: where to change a default",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "View menu"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -684,12 +444,6 @@
     "View menu, or Safira menu, Defaults…" : {
       "comment" : "Defaults: where to change Sidebar on the Right",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "View menu, or Safira menu, Defaults…"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -701,12 +455,6 @@
     "Warn about fraudulent websites" : {
       "comment" : "Menu item and Defaults title",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Warn about fraudulent websites"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -718,12 +466,6 @@
     "Web inspector" : {
       "comment" : "Defaults: entry title",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Web inspector"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -735,12 +477,6 @@
     "What you type in the Command bar is not sent to a search engine to complete it. Suggestions come from the Active profile's history and open Tabs, on this Mac." : {
       "comment" : "Defaults: explanation of Remote search suggestions",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "What you type in the Command bar is not sent to a search engine to complete it. Suggestions come from the Active profile's history and open Tabs, on this Mac."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -752,12 +488,6 @@
     "When a page opens a link that only another app can take, such as mailto: or slack:, Safira names the app and asks first. You can remember the answer for a Profile and a scheme, and forget it again." : {
       "comment" : "Defaults: explanation of Open links to other apps",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "When a page opens a link that only another app can take, such as mailto: or slack:, Safira names the app and asks first. You can remember the answer for a Profile and a scheme, and forget it again."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",

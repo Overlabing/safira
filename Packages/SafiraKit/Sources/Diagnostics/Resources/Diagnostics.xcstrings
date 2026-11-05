@@ -4,12 +4,6 @@
     "Debug mode" : {
       "comment" : "Defaults: entry title",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Debug mode"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21,12 +15,6 @@
     "Logs stay on this Mac and leave it only through a manual export. The log file and its export write private values as <private>, so they hold no host, address or page title. The system log always gets the events that name no site, and gets a site's host only while Debug mode is on, masked by macOS." : {
       "comment" : "Defaults: explanation of Debug mode",
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Logs stay on this Mac and leave it only through a manual export. The log file and its export write private values as <private>, so they hold no host, address or page title. The system log always gets the events that name no site, and gets a site's host only while Debug mode is on, masked by macOS."
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
