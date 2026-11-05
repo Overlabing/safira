@@ -7,6 +7,7 @@ import PackageDescription
 let preferences = Target.Dependency.product(name: "Preferences", package: "AppSupportKit")
 let userFacing = Target.Dependency.product(name: "UserFacing", package: "AppSupportKit")
 let defaultApps = Target.Dependency.product(name: "DefaultApps", package: "AppSupportKit")
+let diagnosticsKit = Target.Dependency.product(name: "DiagnosticsKit", package: "DiagnosticsKit")
 
 let package = Package(
     name: "SafiraKit",
@@ -28,6 +29,7 @@ let package = Package(
         .package(url: "https://github.com/groue/GRDB.swift", exact: "7.11.1"),
         .package(url: "https://github.com/Overlabing/ThemeKit", exact: "0.2.6"),
         .package(url: "https://github.com/Overlabing/AppSupportKit", exact: "0.1.1"),
+        .package(url: "https://github.com/Overlabing/DiagnosticsKit", exact: "0.1.1"),
     ],
     targets: [
         .target(name: "SafiraCore", dependencies: [preferences, userFacing], resources: [.process("Resources")]),
@@ -53,10 +55,11 @@ let package = Package(
             .product(name: "SiteIcons", package: "AppSupportKit"),
         ], resources: [.process("Resources")]),
         .testTarget(name: "SafiraSessionTests", dependencies: ["SafiraSession", "SafiraStore", "Diagnostics"]),
-        .target(name: "SafiraWeb", dependencies: ["SafiraCore", "SafiraStore", "SafiraSession", "Diagnostics", "Appearance"],
+        .target(name: "SafiraWeb", dependencies: ["SafiraCore", "SafiraStore", "SafiraSession", "Diagnostics", "Appearance",
+                                                diagnosticsKit],
                 resources: [.process("Resources")]),
         .testTarget(name: "SafiraWebTests", dependencies: [
-            "SafiraWeb", "SafiraStore", "SafiraSession", "SafiraCore", "Diagnostics",
+            "SafiraWeb", "SafiraStore", "SafiraSession", "SafiraCore", "Diagnostics", diagnosticsKit,
         ]),
         .target(name: "Commands", dependencies: ["SafiraCore", preferences],
                 resources: [.copy("Presets"), .process("Resources")]),
@@ -65,8 +68,9 @@ let package = Package(
         .testTarget(name: "LinkRoutingTests", dependencies: ["LinkRouting", "SafiraCore", preferences, defaultApps]),
         .target(name: "LinkPickerUI", dependencies: ["LinkRouting", "SafiraCore"], resources: [.process("Resources")]),
         .testTarget(name: "LinkPickerUITests", dependencies: ["LinkPickerUI", "LinkRouting", "SafiraCore"]),
-        .target(name: "Diagnostics", dependencies: ["SafiraCore", preferences], resources: [.process("Resources")]),
-        .testTarget(name: "DiagnosticsTests", dependencies: ["Diagnostics", "SafiraCore", preferences]),
+        .target(name: "Diagnostics", dependencies: ["SafiraCore", preferences, diagnosticsKit],
+                resources: [.process("Resources")]),
+        .testTarget(name: "DiagnosticsTests", dependencies: ["Diagnostics", "SafiraCore", preferences, diagnosticsKit]),
         .target(name: "Onboarding", dependencies: ["SafiraCore", "Commands", "LinkRouting", "Diagnostics", preferences],
                 resources: [.process("Resources")]),
         .testTarget(name: "OnboardingTests", dependencies: ["Onboarding", "Commands", "SafiraCore", preferences]),

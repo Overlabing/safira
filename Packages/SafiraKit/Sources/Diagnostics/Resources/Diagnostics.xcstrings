@@ -18,19 +18,19 @@
         }
       }
     },
-    "Logs stay on this Mac, masked to site hosts, and leave it only through a manual export." : {
+    "Logs stay on this Mac and leave it only through a manual export. The log file and its export write private values as <private>, so they hold no host, address or page title. The system log always gets the events that name no site, and gets a site's host only while Debug mode is on, masked by macOS." : {
       "comment" : "Defaults: explanation of Debug mode",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Logs stay on this Mac, masked to site hosts, and leave it only through a manual export."
+            "value" : "Logs stay on this Mac and leave it only through a manual export. The log file and its export write private values as <private>, so they hold no host, address or page title. The system log always gets the events that name no site, and gets a site's host only while Debug mode is on, masked by macOS."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Les journaux restent sur ce Mac, réduits aux hôtes des sites, et n’en sortent que par un export manuel."
+            "value" : "Les journaux restent sur ce Mac et n’en sortent que par un export manuel. Le fichier journal et son export écrivent les valeurs privées <private> : ils ne contiennent ni hôte, ni adresse, ni titre de page. Le journal système reçoit toujours les événements qui ne nomment aucun site, et l’hôte d’un site seulement en mode débogage, masqué par macOS."
           }
         }
       }

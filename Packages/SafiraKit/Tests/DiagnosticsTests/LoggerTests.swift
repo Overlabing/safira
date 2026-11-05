@@ -2,68 +2,93 @@
 // Copyright (c) 2026 Antonin Carlin
 
 import Diagnostics
+import DiagnosticsKit
 import Foundation
 import Preferences
 import SafiraCore
 import Testing
 
 @Suite struct LoggerTests {
-    @Test func nothingIsCreatedWhileDebugModeIsOff() throws {
+    @Test func nothingIsCreatedWhileDebugModeIsOff() async throws {
         let directory = makeLogsDirectory()
         defer { removeParent(of: directory) }
-        let logger = DiagnosticLogger(subsystem: "test", logsDirectory: directory)
+        let logger = makeLogger(in: directory, isEnabled: false)
         let host = try #require(LoggedHost(url("https://example.com")))
 
         logger.record(.pageLoaded(host: host, milliseconds: 10))
         logger.record(.memory(footprintBytes: 1))
-        logger.flush()
+        await logger.sink.flush()
 
-        #expect(logger.isEnabled == false)
+        #expect(logger.sink.isEnabled == false)
         #expect(!FileManager.default.fileExists(atPath: directory.path))
-        #expect(!logger.hasLogs)
+        #expect(try await logger.sink.hasLogs() == false)
     }
 
-    @Test func turningDebugModeOffStopsLogging() throws {
+    @Test func theFirstLineMakesTheLogExportable() async throws {
         let directory = makeLogsDirectory()
         defer { removeParent(of: directory) }
-        let logger = DiagnosticLogger(subsystem: "test", logsDirectory: directory)
+        let logger = makeLogger(in: directory, isEnabled: false)
+        #expect(try await logger.sink.hasLogs() == false)
+
+        logger.setDebugMode(true)
+
+        #expect(try await logger.sink.hasLogs())
+    }
+
+    @Test func turningDebugModeOffStopsLogging() async throws {
+        let directory = makeLogsDirectory()
+        defer { removeParent(of: directory) }
+        let logger = makeLogger(in: directory, isEnabled: false)
         let host = try #require(LoggedHost(url("https://example.com")))
 
-        logger.setEnabled(true)
+        logger.setDebugMode(true)
         logger.record(.pageLoaded(host: host, milliseconds: 10))
-        logger.setEnabled(false)
+        logger.setDebugMode(false)
         logger.record(.pageLoaded(host: host, milliseconds: 20))
         logger.record(.memory(footprintBytes: 5))
-        logger.flush()
+        await logger.sink.flush()
 
-        let lines = allLines(in: directory)
-        #expect(lines.count == 3)
-        #expect(lines[0].hasSuffix(" notice debug-mode on"))
-        #expect(lines[1].hasSuffix("page-loaded host=example.com ms=10"))
-        #expect(lines[2].hasSuffix(" notice debug-mode off"))
+        #expect(messages(in: directory) == [
+            "notice [app] debug-mode on",
+            "notice [navigation] page-loaded host=<private> ms=10",
+            "notice [app] debug-mode off",
+        ])
     }
 
-    @Test func aLineStartsWithAUTCTimestamp() throws {
+    @Test func turningDebugModeOnTwiceWritesItsFirstLineOnce() async {
         let directory = makeLogsDirectory()
         defer { removeParent(of: directory) }
-        let moment = Date(timeIntervalSince1970: 1_793_700_000.25)
-        let logger = DiagnosticLogger(subsystem: "test", logsDirectory: directory, isEnabled: true, clock: { moment })
+        let logger = makeLogger(in: directory, isEnabled: false)
+
+        logger.setDebugMode(true)
+        logger.setDebugMode(true)
+        await logger.sink.flush()
+
+        #expect(messages(in: directory) == ["notice [app] debug-mode on"])
+    }
+
+    @Test func aLineStartsWithAUTCTimestamp() async throws {
+        let directory = makeLogsDirectory()
+        defer { removeParent(of: directory) }
+        let logger = makeLogger(in: directory, isEnabled: true)
 
         logger.record(.memory(footprintBytes: 7))
-        logger.flush()
+        await logger.sink.flush()
 
-        #expect(allLines(in: directory) == ["2026-11-03T10:00:00.250Z info memory footprint-bytes=7"])
+        let line = try #require(allLines(in: directory).first)
+        #expect(line.wholeMatch(of: #/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z notice \[sample\] memory footprint-bytes=7/#)
+            != nil)
     }
 
-    @Test func theLoggerKeepsTheLinesOfEveryThreadInOrder() throws {
+    @Test func theLoggerKeepsTheLinesOfEveryThreadInOrder() async throws {
         let directory = makeLogsDirectory()
         defer { removeParent(of: directory) }
-        let logger = DiagnosticLogger(subsystem: "test", logsDirectory: directory, isEnabled: true)
+        let logger = makeLogger(in: directory, isEnabled: true)
 
         for number in 0..<200 {
             logger.record(.memory(footprintBytes: UInt64(number)))
         }
-        logger.flush()
+        await logger.sink.flush()
 
         let bytes = allLines(in: directory).compactMap { $0.split(separator: "=").last.flatMap { UInt64($0) } }
         #expect(bytes == (0..<200).map(UInt64.init))
