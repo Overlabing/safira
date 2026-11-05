@@ -22,7 +22,7 @@ packages:
     exactVersion: 2.10.1
   ThemeKit:
     url: https://github.com/Overlabing/ThemeKit
-    exactVersion: 0.2.4
+    exactVersion: 0.2.6
 settings:
   base:
     SWIFT_VERSION: "6.0"

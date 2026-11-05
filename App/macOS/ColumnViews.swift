@@ -36,9 +36,9 @@ final class ColumnFocus {
     }
 }
 
-/// The address of the shown Tab and Back, Forward and Reload, where Oisillon has its status line. The address is a
-/// field pill showing the host; hovering shows the full address, VoiceOver reads it, and clicking opens the Command bar
-/// with it selected.
+/// The sidebar's head field, where Oisillon has its sidebar search (`sidebarColumn(field:…)` puts it there): the
+/// address of the shown Tab, then Back, Forward and Reload. The address field shows the host; hovering shows the full
+/// address, VoiceOver reads it, and clicking opens the Command bar with it selected.
 struct BrowserControls: View {
     let session: ProfileSession
     let actions: PageActions
@@ -49,8 +49,8 @@ struct BrowserControls: View {
         let address = tab?.address
         HStack(spacing: 0) {
             Button(action: actions.editAddress) {
-                FieldPill(systemImage: symbol(for: address), title: address.map { AddressDisplay($0).host } ?? "",
-                          placeholder: Self.placeholder)
+                AddressField(symbol: symbol(for: address), host: address.map { AddressDisplay($0).host } ?? "",
+                             placeholder: Self.placeholder)
             }
             .buttonStyle(PressedOpacityStyle())
             .help(address?.absoluteString ?? FloatingCommandBar.placeholder)
@@ -58,24 +58,16 @@ struct BrowserControls: View {
             .accessibilityLabel(Text("Address"))
             .accessibilityValue(Text(verbatim: address?.absoluteString ?? ""))
             .accessibilityHint(Text("Opens the Command bar"))
-            HStack(spacing: 0) {
-                IconButton(String(localized: "Back", comment: "Sidebar"), systemImage: "chevron.left") { session.goBack() }
-                    .disabled(tab?.state.canGoBack != true)
-                IconButton(String(localized: "Forward", comment: "Sidebar"), systemImage: "chevron.right") { session.goForward() }
-                    .disabled(tab?.state.canGoForward != true)
-                IconButton(String(localized: "Reload", comment: "Sidebar"), systemImage: "arrow.clockwise") { session.reload() }
-                    .disabled(address == nil)
-            }
-            .padding(.trailing, tokens.spacing.listMargin - tokens.spacing.rowInsetHorizontal)
+            IconButton(String(localized: "Back", comment: "Sidebar"), systemImage: "chevron.left") { session.goBack() }
+                .disabled(tab?.state.canGoBack != true)
+            IconButton(String(localized: "Forward", comment: "Sidebar"), systemImage: "chevron.right") { session.goForward() }
+                .disabled(tab?.state.canGoForward != true)
+            IconButton(String(localized: "Reload", comment: "Sidebar"), systemImage: "arrow.clockwise") { session.reload() }
+                .disabled(address == nil)
         }
-        .frame(minHeight: tokens.size.statusLine)
-        // The row sits near the window's top edge (`Spacing.columnTop`, set by the column's surface); its empty space
-        // moves the window, as a title bar would.
-        .background { Color.clear.contentShape(.rect).gesture(WindowDragGesture()) }
-        .padding(.bottom, tokens.spacing.statusLineToList)
     }
 
-    /// Shorter than the Command bar's own placeholder, which the help tag shows in full: the pill shares its row with
+    /// Shorter than the Command bar's own placeholder, which the help tag shows in full: the field shares its row with
     /// three buttons and the French text did not fit.
     static let placeholder = String(localized: "Search or address",
                                     comment: "Sidebar: placeholder of the address pill with no page; keep it short")
@@ -87,13 +79,131 @@ struct BrowserControls: View {
     }
 }
 
-/// A Tab as a kit row: its initial on a tile, its title, and its host (or "Playing") under it; the close button while
-/// the pointer is over it.
+/// The address as a sidebar search field draws its text: a capsule `Size.sidebarField` tall on glass, a symbol in the
+/// secondary ink, the host in the label colour or the placeholder in the secondary ink.
+private struct AddressField: View {
+    let symbol: String
+    let host: String
+    let placeholder: String
+    @Environment(\.designTokens) private var tokens
+
+    var body: some View {
+        WithColorRoles { roles in
+            HStack(spacing: tokens.spacing.pillTileToText) {
+                Image(systemName: symbol)
+                    .font(tokens.type.accessory.font)
+                    .foregroundStyle(roles.secondaryText)
+                    .accessibilityHidden(true)
+                Text(host.isEmpty ? placeholder : host)
+                    .role(tokens.type.rowTitle)
+                    .foregroundStyle(host.isEmpty ? AnyShapeStyle(roles.secondaryText) : AnyShapeStyle(.primary))
+                    .lineLimit(1)
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, tokens.spacing.rowInsetHorizontal)
+            .frame(height: tokens.size.sidebarField)
+            .surface(.glass(tint: 0), in: Capsule(style: .continuous))
+            .contentShape(Capsule(style: .continuous))
+        }
+    }
+}
+
+/// Where a sidebar cell sits: on the column, or in an open Folder's panel, whose first and last cells round its corners.
+enum SidebarCellPlacement: Equatable {
+    case free
+    case panel(level: Int, isFirst: Bool, isLast: Bool)
+}
+
+extension View {
+    /// The kit's sidebar cell (`sidebarRowCell(state:placement:)`) on the column. In a Folder's panel, the same cell
+    /// with the panel drawn behind it a cell at a time, since a `List` cannot group cells under one `LayerPanel`.
+    @ViewBuilder
+    func sidebarCell(state: RowState, placement: SidebarCellPlacement) -> some View {
+        switch placement {
+        case .free:
+            sidebarRowCell(state: state, placement: .free(firstInSection: false))
+        case .panel(let level, let isFirst, let isLast):
+            modifier(PanelCell(state: state, level: level, isFirst: isFirst, isLast: isLast))
+        }
+    }
+}
+
+/// A cell inside an open Folder's panel: the insets of the kit's sidebar cell for a `.layer` row, moved in by the
+/// panel's own margin, and a slice of `LayerPanel`'s fill behind the row's background, rounded at the panel's ends.
+private struct PanelCell: ViewModifier {
+    let state: RowState
+    let level: Int
+    let isFirst: Bool
+    let isLast: Bool
+    @Environment(\.designTokens) private var tokens
+
+    func body(content: Content) -> some View {
+        let spacing = tokens.spacing
+        let panelSide = spacing.listMargin - spacing.rowInsetHorizontal
+        let panelEnd = spacing.layerInset - spacing.rowGap / 2
+        let vertical = spacing.rowInsetVertical + spacing.textLines
+        let side = panelSide + spacing.layerInset + spacing.rowInsetHorizontal
+        let indent = CGFloat(max(level - 1, 0)) * spacing.layerIndent
+        let radius = tokens.radius.layer
+        let top = isFirst ? panelEnd : 0
+        let bottom = isLast ? panelEnd : 0
+        content
+            .listRowInsets(EdgeInsets(top: spacing.rowGap / 2 + vertical + top, leading: side + indent,
+                                      bottom: spacing.rowGap / 2 + vertical + bottom, trailing: side))
+            .listRowSeparator(.hidden)
+            .listRowBackground(
+                ZStack {
+                    UnevenRoundedRectangle(
+                        topLeadingRadius: isFirst ? radius : 0, bottomLeadingRadius: isLast ? radius : 0,
+                        bottomTrailingRadius: isLast ? radius : 0, topTrailingRadius: isFirst ? radius : 0,
+                        style: .continuous)
+                        .fill(Color.primary.opacity(tokens.emphasis.layer))
+                        .accessibilityHidden(true)
+                    ListRowBackground(state: state, placement: .layer(level: level))
+                        .padding(.top, top)
+                        .padding(.bottom, bottom)
+                }
+                .padding(.horizontal, panelSide))
+    }
+}
+
+/// A sidebar row's content, with no padding of its own (the kit's sidebar cell carries it): a tile, the title in the
+/// row's style (semibold when selected), detail lines in the secondary ink, a trailing accessory.
+struct SidebarRowContent<Leading: View, Trailing: View>: View {
+    let title: String
+    var details: [String] = []
+    var isSelected = false
+    @ViewBuilder let leading: Leading
+    @ViewBuilder let trailing: Trailing
+    @Environment(\.designTokens) private var tokens
+
+    var body: some View {
+        WithColorRoles { roles in
+            HStack(alignment: details.isEmpty ? .center : .top, spacing: tokens.spacing.tileToText) {
+                leading
+                VStack(alignment: .leading, spacing: tokens.spacing.textLines) {
+                    Text(title)
+                        .role(isSelected ? tokens.type.rowTitleEmphasized : tokens.type.rowTitle)
+                        .lineLimit(1)
+                    ForEach(details, id: \.self) { line in
+                        Text(line).role(tokens.type.rowDetail).foregroundStyle(roles.secondaryText).lineLimit(1)
+                    }
+                }
+                Spacer(minLength: 0)
+                trailing
+            }
+            .contentShape(.rect)
+        }
+    }
+}
+
+/// A Tab as a sidebar cell: its initial on a tile, its title, and its host (or "Playing") under it; the close button
+/// while the pointer is over it.
 struct TabRowView: View {
     let tab: SafiraSession.Tab
     let isSelected: Bool
     let isListFocused: Bool
-    let placement: RowPlacement
+    let placement: SidebarCellPlacement
     let position: Int
     let count: Int
     let select: () -> Void
@@ -103,9 +213,7 @@ struct TabRowView: View {
 
     var body: some View {
         WithColorRoles { roles in
-            ListRow(title, details: [subtitle], state: RowState(isSelected: isSelected, isHovered: isHovered,
-                                                               isFocused: isSelected && isListFocused),
-                    placement: placement) {
+            SidebarRowContent(title: title, details: [subtitle], isSelected: isSelected) {
                 Tile(.initial(initial))
             } trailing: {
                 if isHovered {
@@ -132,6 +240,8 @@ struct TabRowView: View {
             .accessibilityAction(.default, select)
             .accessibilityAction(named: "Close Tab", close)
         }
+        .sidebarCell(state: RowState(isSelected: isSelected, isHovered: isHovered, isFocused: isSelected && isListFocused),
+                     placement: placement)
     }
 
     private var title: String {
@@ -162,7 +272,7 @@ struct TabRowView: View {
     }
 }
 
-/// The row that opens the Command bar for a new Tab, with its shortcut.
+/// The cell that opens the Command bar for a new Tab, with its shortcut.
 struct NewTabRow: View {
     let shortcut: String?
     let newTab: () -> Void
@@ -171,7 +281,7 @@ struct NewTabRow: View {
 
     var body: some View {
         WithColorRoles { roles in
-            ListRow(String(localized: "New Tab", comment: "Sidebar"), state: RowState(isHovered: isHovered)) {
+            SidebarRowContent(title: String(localized: "New Tab", comment: "Sidebar")) {
                 Tile(.tintedSymbol("plus"))
             } trailing: {
                 if let shortcut {
@@ -181,13 +291,24 @@ struct NewTabRow: View {
             }
             .onHover { isHovered = $0 }
             .onTapGesture(perform: newTab)
+            .accessibilityElement(children: .combine)
+            .accessibilityAddTraits(.isButton)
             .accessibilityAction(.default, newTab)
         }
+        .sidebarCell(state: RowState(isHovered: isHovered), placement: .free)
+    }
+}
+
+/// A hairline between two groups of cells, on the column's margin, as a cell with no background.
+struct SidebarSeparator: View {
+    var body: some View {
+        ColumnSeparator().listRowCell()
     }
 }
 
 /// The keyboard behaviour of a Tab list: arrows move the selection (which shows the Tab), Delete closes it, Return or
-/// Escape goes to the page. The list draws its own focus ring around the selected row (`RowState.isFocused`).
+/// Escape goes to the page. The list draws its own focus ring around the selected row (`RowState.isFocused`): the
+/// `List` keeps no selection of its own.
 struct TabListKeyboard: ViewModifier {
     let session: ProfileSession
     let focus: ColumnFocus

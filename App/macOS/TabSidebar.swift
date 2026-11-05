@@ -11,9 +11,11 @@ import SafiraSession
 import SafiraWeb
 import SwiftUI
 
-/// The Main window's column, from top to bottom: the address and Back, Forward and Reload; the active Space's pinned
-/// area with its Folders; a hairline; the New Tab row and the other Tabs; the Space rail with the Spaces and Profiles.
-/// Arrow keys in the list move the selection, which shows the Tab; Delete closes it; Return or Escape goes to its page. Tabs can be dragged to reorder, and Pinned tabs and Folders into Folders.
+/// The Main window's column, ThemeKit's sidebar column (`sidebarColumn(field:header:bottomBar:)`): the address and
+/// Back, Forward and Reload in the head field; a plain list of the active Space's pinned area with its Folders, a
+/// hairline, the New Tab row and the other Tabs; the Space rail with the Spaces and Profiles in the bottom bar. Arrow
+/// keys in the list move the selection, which shows the Tab; Delete closes it; Return or Escape goes to its page. Tabs
+/// can be dragged to reorder, and Pinned tabs and Folders into Folders.
 struct TabSidebar: View {
     let registry: ProfileRegistry
     let focus: ColumnFocus
@@ -21,38 +23,35 @@ struct TabSidebar: View {
     let profileActions: ProfileActions
     let spaceActions: SpaceActions
     let folderActions: FolderActions
-    let side: SidebarSideSetting
     /// The shortcut a menu item shows for a command, in the bindings in force ("⌘T", "⌃1").
     let shortcut: (CommandID) -> String?
-    @Environment(\.designTokens) private var tokens
 
     private var session: ProfileSession { registry.active.session }
 
     var body: some View {
-        VStack(spacing: 0) {
-            BrowserControls(session: session, actions: pageActions)
-            ScrollView {
-                VStack(spacing: 0) {
-                    PinnedSection(session: session, focus: focus, actions: folderActions)
-                    if !session.pinnedItems.isEmpty { ColumnSeparator() }
-                    NewTabRow(shortcut: shortcut(.newTab), newTab: pageActions.newTab)
-                    ForEach(Array(session.tabs.enumerated()), id: \.element.id) { index, tab in
-                        TabRowView(tab: tab, isSelected: session.selectedTabID == tab.id,
-                                   isListFocused: focus.isListFocused, placement: .free(firstInSection: false),
-                                   position: session.activeSpace.pinnedTabs.count + index + 1,
-                                   count: session.activeSpace.allTabs.count,
-                                   select: { session.select(tab.id) }, close: { session.close(tab.id) })
-                            .modifier(TabDrag(tab: tab, session: session))
-                            .contextMenu { TabMenu(tab: tab, session: session) }
-                    }
-                }
-                .modifier(TabListKeyboard(session: session, focus: focus, showPage: pageActions.showPage))
+        List {
+            PinnedSection(session: session, focus: focus, actions: folderActions)
+            if !session.pinnedItems.isEmpty { SidebarSeparator() }
+            NewTabRow(shortcut: shortcut(.newTab), newTab: pageActions.newTab)
+            ForEach(Array(session.tabs.enumerated()), id: \.element.id) { index, tab in
+                TabRowView(tab: tab, isSelected: session.selectedTabID == tab.id,
+                           isListFocused: focus.isListFocused, placement: .free,
+                           position: session.activeSpace.pinnedTabs.count + index + 1,
+                           count: session.activeSpace.allTabs.count,
+                           select: { session.select(tab.id) }, close: { session.close(tab.id) })
+                    .modifier(TabDrag(tab: tab, session: session))
+                    .contextMenu { TabMenu(tab: tab, session: session) }
             }
-            .scrollContentBackground(.hidden)
+        }
+        .modifier(TabListKeyboard(session: session, focus: focus, showPage: pageActions.showPage))
+        .sidebarColumn {
+            BrowserControls(session: session, actions: pageActions)
+        } header: {
+            EmptyView()
+        } bottomBar: {
             SpaceRailBar(registry: registry, profileActions: profileActions, spaceActions: spaceActions,
                          shortcut: shortcut)
         }
-        .columnSurface(side: side.side == .right ? .right : .left)
         .theme(spaceTheme)
     }
 
