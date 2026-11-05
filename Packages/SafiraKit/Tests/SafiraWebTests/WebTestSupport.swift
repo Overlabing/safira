@@ -51,3 +51,14 @@ func waitUntilAsync(_ what: Comment, timeout: Duration = .seconds(10), _ conditi
         try await Task.sleep(for: .milliseconds(20))
     }
 }
+
+/// Keeps the main thread busy, as a loaded machine does, until `condition` holds and `margin` more has passed, for at
+/// most `timeout`. WebKit's messages to the app queue up meanwhile and are then handled one after another, before any
+/// main-actor work an `await` resumed in between.
+@MainActor
+func holdMainThread(until condition: () -> Bool = { true }, margin: Duration, timeout: Duration = .seconds(10)) {
+    let deadline = ContinuousClock.now + timeout
+    while !condition(), ContinuousClock.now < deadline { usleep(10_000) }
+    let end = min(ContinuousClock.now + margin, deadline)
+    while ContinuousClock.now < end { usleep(10_000) }
+}

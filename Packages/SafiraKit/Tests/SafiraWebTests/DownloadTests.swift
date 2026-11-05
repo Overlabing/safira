@@ -205,6 +205,50 @@ private final class TemporaryRoot {
         }
     }
 
+    @Test func aTransferStartedOverWhileTheMainThreadIsBusyIsStillHeardFrom() async throws {
+        let server = try await DownloadServer.start()
+        defer { server.stop() }
+        let root = TemporaryRoot()
+        try await run(root) { registry in
+            let context = profile(registry, saving: root)
+            context.session.submitCommandBar(server.url("/broken.bin").absoluteString)
+            try await waitUntil("the download fails") { context.downloads.all.first?.state == .failed }
+            let id = try #require(context.downloads.all.first?.id)
+
+            #expect(context.downloads.retry(id))
+            await Task.yield()
+            // WebKit's answer to the new transfer and its question for a destination now arrive together.
+            holdMainThread(until: { server.requestCount("/broken.bin") == 2 }, margin: .milliseconds(500))
+            try await waitUntil("the second transfer fails") { context.downloads.all.first?.state == .failed }
+
+            #expect(context.downloads.all.map(\.state) == [.failed])
+            #expect(root.files() == ["broken.bin.part"])
+        }
+    }
+
+    @Test func aTransferContinuedWhileTheMainThreadIsBusyIsStillHeardFrom() async throws {
+        let server = try await DownloadServer.start()
+        defer { server.stop() }
+        let root = TemporaryRoot()
+        try await run(root) { registry in
+            let context = profile(registry, saving: root)
+            context.session.submitCommandBar(server.url("/slow.bin").absoluteString)
+            try await waitUntil("some bytes arrive") { (context.downloads.all.first?.receivedBytes ?? 0) >= 20_000 }
+            let id = try #require(context.downloads.all.first?.id)
+            await context.downloads.cancel(id)
+
+            #expect(context.downloads.retry(id))
+            await Task.yield()
+            // Long enough for the rest of the file to arrive: WebKit's answer to the transfer and its end come together.
+            holdMainThread(until: { server.rangeRequests.count == 1 }, margin: .seconds(3.5))
+            try await waitUntil("the download is saved") { isFinished(context) }
+
+            #expect(context.downloads.all.map(\.state) == [.completed])
+            #expect(root.files() == ["slow.bin"])
+            #expect(try Data(contentsOf: root.downloads.appending(path: "slow.bin")) == DownloadServer.bytes(0..<100_000))
+        }
+    }
+
     @Test func aDownloadSurvivesClosingItsTabAndTheTabsWebViewIsReleased() async throws {
         let server = try await DownloadServer.start()
         defer { server.stop() }
