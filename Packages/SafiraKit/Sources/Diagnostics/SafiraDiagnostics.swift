@@ -48,3 +48,22 @@ public enum DiagnosticEnvironment {
         """
     }
 }
+
+/// Debug mode's files from before DiagnosticsKit: `safira-20261103T100000.250Z.log`, or `…Z-1.log` for a second file
+/// started in the same millisecond. They hold site hosts, and the kit neither prunes nor exports them.
+public enum LegacyLogFiles {
+    /// Deletes the files of exactly that name directly in `directory`, nothing else; a missing folder is left missing.
+    public static func remove(in directory: URL) {
+        let manager = FileManager.default
+        guard let names = try? manager.contentsOfDirectory(atPath: directory.path(percentEncoded: false)) else { return }
+        for name in names where isLegacyName(name) {
+            let file = directory.appending(path: name, directoryHint: .notDirectory)
+            guard (try? file.resourceValues(forKeys: [.isRegularFileKey]))?.isRegularFile == true else { continue }
+            try? manager.removeItem(at: file)
+        }
+    }
+
+    static func isLegacyName(_ name: String) -> Bool {
+        name.wholeMatch(of: #/safira-\d{8}T\d{6}\.\d{3}Z(?:-\d+)?\.log/#) != nil
+    }
+}

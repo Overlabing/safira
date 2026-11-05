@@ -52,7 +52,7 @@ Un navigateur macOS natif, en Swift sur `WKWebView`, avec l'UX d'Arc et de Zen. 
 ## 5. Vie privée
 
 - **Zéro télémétrie.**
-- **Mode debug opt-in** sur le modèle d'Oisillon (`DiagnosticsExport`) : journaux locaux, hôte des sites seulement (sans chemin ni paramètres), erreurs, temps de chargement, état mémoire ; jamais de contenu de page, de cookies ni de titres d'onglets ; export manuel via un zip, jamais envoyé automatiquement (Q6, Q32).
+- **Mode debug opt-in** sur le modèle d'Oisillon (`DiagnosticsExport`) : journaux locaux, hôte des sites seulement (sans chemin ni paramètres ; depuis #73, l'hôte n'atteint que le journal système, en mode debug, et le fichier comme l'export écrivent `<private>`), erreurs, temps de chargement, état mémoire ; jamais de contenu de page, de cookies ni de titres d'onglets ; export manuel via un zip, jamais envoyé automatiquement (Q6, Q32).
 - **HTTPS d'abord** : pour toute adresse saisie sans schéma, avertissement avant tout repli en HTTP (Q34).
 - **Suggestions de recherche distantes désactivées** par défaut ; les suggestions locales (historique, onglets du profil actif) restent actives (Q30).
 - **Moteur de recherche** : aucun moteur imposé, choix au premier lancement (Q29).
@@ -109,7 +109,7 @@ Tout ce qui a été accepté « par défaut » pendant la séance doit être vis
 | Suggestions de recherche distantes | **Désactivées** ; les suggestions locales (historique, onglets du profil actif) restent actives | Q30 |
 | Moteur de recherche | **Aucun imposé**, choisi au premier lancement | Q29 |
 | HTTPS d'abord | **Activé**, avertissement avant tout repli en HTTP | Q34 |
-| Mode debug (journaux locaux masqués) | **Désactivé** ; export manuel, hôte seulement | Q6, Q32 |
+| Mode debug (journaux locaux masqués) | **Désactivé** ; export manuel, sans hôte (`<private>`, #73) | Q6, Q32 |
 | Navigation sécurisée de WebKit (avertissement de sites frauduleux) | **Activée** ; elle peut consulter un service tiers, à expliquer | Q16 |
 | Son en lecture automatique | **Bloqué** | Q16 |
 | Doublons de liens externes (onglet correspondant) | **Activé** ; une Link rule peut forcer un nouvel onglet | Q20 |

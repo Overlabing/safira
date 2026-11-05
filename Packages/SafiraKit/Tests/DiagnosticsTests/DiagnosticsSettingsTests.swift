@@ -16,6 +16,10 @@ import Testing
     #expect(entry.id == "diagnostics.debugMode")
     #expect(entry.title == "Debug mode")
     #expect(entry.value == "Off")
-    #expect(entry.explanation == "Logs stay on this Mac, masked to site hosts, and leave it only through a manual export.")
+    #expect(entry.explanation == """
+        Logs stay on this Mac and leave it only through a manual export. The log file and its export write private \
+        values as <private>, so they hold no host, address or page title. The system log always gets the events that \
+        name no site, and gets a site's host only while Debug mode is on, masked by macOS.
+        """)
     #expect(entry.whereToChange == "Help menu")
 }

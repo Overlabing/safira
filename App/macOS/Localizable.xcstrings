@@ -4255,19 +4255,19 @@
         }
       }
     },
-    "The archive holds Safira's local diagnostic logs: error codes, load times, Tab counts and memory, with no site address. Nothing is sent anywhere." : {
+    "The archive holds Safira's local diagnostic logs: error codes, load times, Tab counts and memory. It names no site: no host, address or page title. Nothing is sent anywhere." : {
       "comment" : "Save panel message of the diagnostics export",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "The archive holds Safira's local diagnostic logs: error codes, load times, Tab counts and memory, with no site address. Nothing is sent anywhere."
+            "value" : "The archive holds Safira's local diagnostic logs: error codes, load times, Tab counts and memory. It names no site: no host, address or page title. Nothing is sent anywhere."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "L’archive contient les journaux de diagnostic locaux de Safira : codes d’erreur, temps de chargement, nombre d’onglets et mémoire, sans adresse de site. Rien n’est envoyé nulle part."
+            "value" : "L’archive contient les journaux de diagnostic locaux de Safira : codes d’erreur, temps de chargement, nombre d’onglets et mémoire. Elle ne nomme aucun site : ni hôte, ni adresse, ni titre de page. Rien n’est envoyé nulle part."
           }
         }
       }

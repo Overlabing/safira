@@ -28,7 +28,11 @@ final class DiagnosticsController: NSObject, NSMenuItemValidation {
         logger = DiagnosticLogger(category: "navigation", sink: log)
         super.init()
         let directory = StoreLayout.application.logsDirectory
-        log.start { directory }
+        // On the writer's queue, before the kit's first prune: the old-format files hold site hosts.
+        log.start {
+            LegacyLogFiles.remove(in: directory)
+            return directory
+        }
         log.observeSize { [weak self] _ in
             Task { @MainActor in await self?.refreshHasLogs() }
         }
@@ -59,8 +63,8 @@ final class DiagnosticsController: NSObject, NSMenuItemValidation {
         panel.nameFieldStringValue = String(localized: "Safira Diagnostics \(day).zip",
                                             comment: "File name of the diagnostics export; the argument is a date such as 2026-11-05")
         panel.message = String(localized: """
-            The archive holds Safira's local diagnostic logs: error codes, load times, Tab counts and memory, with no \
-            site address. Nothing is sent anywhere.
+            The archive holds Safira's local diagnostic logs: error codes, load times, Tab counts and memory. It names \
+            no site: no host, address or page title. Nothing is sent anywhere.
             """, comment: "Save panel message of the diagnostics export")
         guard panel.runModal() == .OK, let destination = panel.url else { return }
         Task {

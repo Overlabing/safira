@@ -431,7 +431,7 @@ Oisillon fournit le modèle complet (`docs/architecture.md`, § Diagnostics) [É
 Adaptations pour Safira (scope §5) [D] :
 
 - **Masquage par construction**, pas seulement par filtre : le logger n'accepte pas d'`URL` mais un type `LoggedHost` construit par `URL.host`. Le chemin, la requête et le titre ne peuvent pas entrer dans une ligne.
-- Contenu : hôte, erreurs (type et code, comme `ErrorLog.safeDescription` d'Oisillon), temps de chargement (`didCommit` → `didFinish`), nombre d'onglets par état, empreinte du process de l'app (`task_info`, API Mach publique). L'empreinte des process WebContent n'est pas lisible par API publique (Recherche §5.3) [D].
+- Contenu : hôte (valeur privée depuis #73, voir plus bas), erreurs (type et code, comme `ErrorLog.safeDescription` d'Oisillon), temps de chargement (`didCommit` → `didFinish`), nombre d'onglets par état, empreinte du process de l'app (`task_info`, API Mach publique). L'empreinte des process WebContent n'est pas lisible par API publique (Recherche §5.3) [D].
 - Jamais : contenu de page, cookies, titres d'onglets, noms de Space ou de profil (on écrit l'UUID ou un rang).
 - Sous-système os_log : identifiant de bundle (Q7).
 - Depuis #73, le journal, la rotation et l'archive viennent de DiagnosticsKit, avec la politique
