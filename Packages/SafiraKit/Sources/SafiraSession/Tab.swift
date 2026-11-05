@@ -31,6 +31,9 @@ public final class Tab: Identifiable {
     @ObservationIgnored var onVisitEvent: (@MainActor (VisitEvent) -> Void)?
     /// Called when the Tab's page follows a non-web link, with the host of the page that asked; the session sets it.
     @ObservationIgnored var onNonWebLink: (@MainActor (NonWebLink, String?) -> Void)?
+    /// Called when the Tab's page finished loading, with its icon links and the page to fetch them through; the
+    /// session sets it. A dormant Tab has no page, so it never fetches.
+    @ObservationIgnored var onIconLinks: (@MainActor (PageIconLinks, any SiteResourceFetcher) -> Void)?
     /// Called when a download starts in a Tab that has never shown anything; the session sets it on Tabs a link opened.
     @ObservationIgnored var onEmptyDownload: (@MainActor () -> Void)?
 
@@ -161,6 +164,7 @@ public final class Tab: Identifiable {
         page?.onContinueOverHTTP = nil
         page?.onNonWebLink = nil
         page?.onDownloadStarted = nil
+        page?.onIconLinks = nil
         page?.close()
         page = nil
     }
@@ -173,6 +177,10 @@ public final class Tab: Identifiable {
         page.onContinueOverHTTP = { [weak self] in self?.continueOverHTTP() }
         page.onNonWebLink = { [weak self] link in self?.onNonWebLink?(link, self?.state.url?.host) }
         page.onDownloadStarted = { [weak self] in self?.pageStartedDownload() }
+        page.onIconLinks = { [weak self, weak page] links in
+            guard let self, let page else { return }
+            onIconLinks?(links, page)
+        }
         self.page = page
         pageChanged(page.state)
         return page

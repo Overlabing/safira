@@ -23,6 +23,10 @@ packages:
   ThemeKit:
     url: https://github.com/Overlabing/ThemeKit
     exactVersion: 0.2.4
+  # Only its SiteIcons product, linked through SafiraSession; pinned here too so the app resolves the same release.
+  AppSupportKit:
+    url: https://github.com/Overlabing/AppSupportKit
+    exactVersion: 0.1.1
 settings:
   base:
     SWIFT_VERSION: "6.0"

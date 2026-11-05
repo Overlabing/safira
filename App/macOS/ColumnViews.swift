@@ -82,10 +82,54 @@ struct BrowserControls: View {
     }
 }
 
-/// A Tab as a kit row: its initial on a tile, its title, and its host (or "Playing") under it; the close button while
-/// the pointer is over it.
+/// A site's icon on the kit's tile fill, or the site's initial on the kit's letter tile while no icon is cached for it.
+/// Looking the icon up never fetches: only a loaded page does (`ProfileSiteIcons`).
+struct SiteIconTile: View {
+    let icons: ProfileSiteIcons?
+    let address: URL?
+    let initial: String
+    var size: TileSize = .standard
+    @Environment(\.designTokens) private var tokens
+
+    var body: some View {
+        if let icon = icons?.icon(for: address) {
+            let side = tileSide * Self.iconShare
+            Image(decorative: icon, scale: 1)
+                .resizable()
+                .interpolation(.high)
+                .aspectRatio(contentMode: .fit)
+                .frame(width: side, height: side)
+                .tileFill(size)
+                .accessibilityHidden(true)
+        } else {
+            Tile(.initial(initial), size: size)
+        }
+    }
+
+    private var tileSide: CGFloat {
+        switch size {
+        case .standard: tokens.size.tile
+        case .compact: tokens.size.compactTile
+        case .small: tokens.size.smallTile
+        case .status: tokens.size.statusTile
+        }
+    }
+
+    /// The part of the tile the icon covers, the rest being the tile fill around it.
+    private static let iconShare = 0.625
+
+    /// The first letter of the site's host without `www.`, or of the title when there is no host; a dot for neither.
+    static func initial(of address: URL?, title: String) -> String {
+        let source = address?.host().map { $0.hasPrefix("www.") ? String($0.dropFirst(4)) : $0 } ?? title
+        return source.first.map { String($0).uppercased() } ?? "·"
+    }
+}
+
+/// A Tab as a kit row: its site's icon (or initial) on a tile, its title, and its host (or "Playing") under it; the
+/// close button while the pointer is over it. A dormant Tab shows the icon cached for its saved address.
 struct TabRowView: View {
     let tab: SafiraSession.Tab
+    let icons: ProfileSiteIcons
     let isSelected: Bool
     let isListFocused: Bool
     let placement: RowPlacement
@@ -101,7 +145,8 @@ struct TabRowView: View {
             ListRow(title, details: [subtitle], state: RowState(isSelected: isSelected, isHovered: isHovered,
                                                                isFocused: isSelected && isListFocused),
                     placement: placement) {
-                Tile(.initial(initial))
+                SiteIconTile(icons: icons, address: tab.address,
+                             initial: SiteIconTile.initial(of: tab.address, title: title))
             } trailing: {
                 if isHovered {
                     Button(action: close) {
@@ -138,11 +183,6 @@ struct TabRowView: View {
         if tab.state.isPlayingMedia { return String(localized: "Playing") }
         if tab.state.isLoading { return String(localized: "Loading") }
         return tab.address.map { AddressDisplay($0).host } ?? ""
-    }
-
-    private var initial: String {
-        let source = tab.address?.host().map { $0.hasPrefix("www.") ? String($0.dropFirst(4)) : $0 } ?? title
-        return source.first.map { String($0).uppercased() } ?? "·"
     }
 
     /// The Tab's state then its place, as VoiceOver reads it after the title: "Loading, Playing media, 2 of 5".

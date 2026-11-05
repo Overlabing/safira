@@ -22,6 +22,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/groue/GRDB.swift", exact: "7.11.1"),
         .package(url: "https://github.com/Overlabing/ThemeKit", exact: "0.2.4"),
+        .package(url: "https://github.com/Overlabing/AppSupportKit", exact: "0.1.1"),
     ],
     targets: [
         .target(name: "SafiraCore"),
@@ -42,7 +43,10 @@ let package = Package(
         .testTarget(name: "SafiraStoreTests", dependencies: [
             "SafiraStore", "SafiraCore", .product(name: "GRDB", package: "GRDB.swift"),
         ]),
-        .target(name: "SafiraSession", dependencies: ["SafiraCore", "SafiraStore", "Diagnostics", "Appearance"]),
+        .target(name: "SafiraSession", dependencies: [
+            "SafiraCore", "SafiraStore", "Diagnostics", "Appearance",
+            .product(name: "SiteIcons", package: "AppSupportKit"),
+        ]),
         .testTarget(name: "SafiraSessionTests", dependencies: ["SafiraSession", "SafiraStore", "Diagnostics"]),
         .target(name: "SafiraWeb", dependencies: ["SafiraCore", "SafiraStore", "SafiraSession", "Diagnostics", "Appearance"]),
         .testTarget(name: "SafiraWebTests", dependencies: [

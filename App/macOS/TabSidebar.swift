@@ -37,7 +37,7 @@ struct TabSidebar: View {
                     if !session.pinnedItems.isEmpty { ColumnSeparator() }
                     NewTabRow(shortcut: shortcut(.newTab), newTab: pageActions.newTab)
                     ForEach(Array(session.tabs.enumerated()), id: \.element.id) { index, tab in
-                        TabRowView(tab: tab, isSelected: session.selectedTabID == tab.id,
+                        TabRowView(tab: tab, icons: session.siteIcons, isSelected: session.selectedTabID == tab.id,
                                    isListFocused: focus.isListFocused, placement: .free(firstInSection: false),
                                    position: session.activeSpace.pinnedTabs.count + index + 1,
                                    count: session.activeSpace.allTabs.count,

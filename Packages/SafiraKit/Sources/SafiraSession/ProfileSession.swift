@@ -47,6 +47,8 @@ public final class ProfileSession {
     @ObservationIgnored private let osBuild: String
     /// False for a Private window's session: its one Space is internal, never shown, and no other can be added.
     public let hasSpaces: Bool
+    /// The icons of the sites this Profile's Tabs loaded, which its Tabs, Pinned tabs and suggestions show.
+    public let siteIcons: ProfileSiteIcons
     /// Nil for a session that keeps no history, as a Private window's does.
     @ObservationIgnored let history: ProfileDatabase?
     @ObservationIgnored private let historyRecorder: HistoryRecorder?
@@ -70,11 +72,13 @@ public final class ProfileSession {
     ///   - history: the Profile's database, where the pages its Tabs visit are recorded and searched; nil keeps no history.
     ///   - appLinks: the Profile's remembered app choices; without it they are kept for this run only.
     ///   - hasSpaces: false for a Private window, which has a single internal Space the user never sees.
+    ///   - siteIcons: the Profile's site icons; without it they are kept in memory for this run only.
     ///   - makePage: builds the page of a Tab, called once per Tab on its first load or its first selection.
     public init(profileID: ProfileID, settings: ProfileSettings = ProfileSettings(), osBuild: String = OSBuild.current,
                 history: ProfileDatabase? = nil, appLinks: AppLinkGate? = nil, hasSpaces: Bool = true,
-                makePage: @escaping @MainActor (TabID) -> any WebPageHandle) {
+                siteIcons: ProfileSiteIcons? = nil, makePage: @escaping @MainActor (TabID) -> any WebPageHandle) {
         self.profileID = profileID
+        self.siteIcons = siteIcons ?? ProfileSiteIcons(directory: nil)
         self.appLinks = appLinks ?? AppLinkGate(profileID: profileID)
         self.settings = settings
         self.osBuild = osBuild
@@ -146,6 +150,7 @@ public final class ProfileSession {
         }
         observeVisits(of: restored)
         observeNonWebLinks(of: restored)
+        observeIcons(of: restored)
         return restored
     }
 
@@ -692,7 +697,12 @@ public final class ProfileSession {
         }
         observeVisits(of: tab)
         observeNonWebLinks(of: tab)
+        observeIcons(of: tab)
         return tab
+    }
+
+    private func observeIcons(of tab: Tab) {
+        tab.onIconLinks = { [siteIcons] links, page in siteIcons.pageLoaded(links, fetcher: page) }
     }
 
     private func observeNonWebLinks(of tab: Tab) {

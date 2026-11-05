@@ -4,8 +4,9 @@ Safira is licensed under GPL-3.0-only (see `LICENSE`). This file reproduces the 
 component that ships inside Safira.
 
 When a dependency is added, its full licence notice goes here. The dependencies of v1 are GRDB.swift (MIT), Sparkle
-(MIT, with BSD and zlib components) and ThemeKit, Safira's theme module, kept in its own MIT repository
-(`docs/adr/0003-theme-module-separate-mit-repository.md`).
+(MIT, with BSD and zlib components), ThemeKit, Safira's theme module, kept in its own MIT repository
+(`docs/adr/0003-theme-module-separate-mit-repository.md`), and AppSupportKit (MIT), whose SiteIcons module finds and
+caches site icons (`docs/adr/0005-shared-code-lives-in-public-kits.md`).
 
 ## Sparkle 2.10.1
 
@@ -174,6 +175,35 @@ text below is the `LICENSE` file of the 0.2.4 release, unmodified.
 MIT License
 
 Copyright (c) 2026 Antonin Carlin
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+## AppSupportKit 0.1.1
+
+Support code shared with Oisillon, <https://github.com/Overlabing/AppSupportKit>. Only its SiteIcons module is linked,
+through the SafiraSession module. The text below is the `LICENSE` file of the 0.1.1 release, unmodified.
+
+```text
+MIT License
+
+Copyright (c) 2026 Overlabing
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

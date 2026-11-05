@@ -314,7 +314,10 @@ public final class ProfileRegistry {
                 onError("The new Profile's settings could not be saved", error)
             }
         }
-        let context = ProfileContext(id: id, database: database, diagnostics: diagnostics, onError: onError)
+        // Inside the Profile's own folder: erased with the Profile, cleared with its Browsing data, never shared.
+        let icons = layout?.profileDirectory(for: id).appending(path: "SiteIcons", directoryHint: .isDirectory)
+        let context = ProfileContext(id: id, database: database, siteIconsDirectory: icons, diagnostics: diagnostics,
+                                     onError: onError)
         // Inside the Profile's own folder, so it is erased with the Profile and never shared with another.
         if let layout {
             context.web.downloadsFallbackDirectory = layout.profileDirectory(for: id)

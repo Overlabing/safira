@@ -34,6 +34,11 @@ final class SimulatedPage: WebPageHandle {
     var onNonWebLink: (@MainActor (NonWebLink) -> Void)?
     var onDidClose: (@MainActor () -> Void)?
     var onDownloadStarted: (@MainActor () -> Void)?
+    var onIconLinks: (@MainActor (PageIconLinks) -> Void)?
+    /// What the site answers for each address the page fetches; any other address answers 404.
+    var siteResources: [URL: SiteResourceResponse] = [:]
+    /// Every icon or manifest address the page fetched, in order.
+    private(set) var fetched: [URL] = []
 
     private struct Entry: Codable {
         var id = UUID()
@@ -124,6 +129,17 @@ final class SimulatedPage: WebPageHandle {
         onDownloadStarted?()
     }
 
+    /// The shown document finishes loading with these `<link>` elements, each given as its attributes.
+    func finishLoading(links tags: [[String: String]], base: URL? = nil) {
+        guard let url = state.url else { return }
+        onIconLinks?(PageIconLinks(page: url, base: base ?? url, tags: tags))
+    }
+
+    func fetchSiteResource(_ url: URL, byteLimit: Int) async -> SiteResourceResponse {
+        fetched.append(url)
+        return siteResources[url] ?? .unusable
+    }
+
     /// The page calls `window.close()`.
     func closeWindow() {
         onDidClose?()
@@ -187,10 +203,12 @@ final class SessionFixture {
 
     init(searchEngine: SearchEngine? = nil, osBuild: String = "26A434",
          id: ProfileID = ProfileID(rawValue: UUID(uuidString: "6F9619FF-8B86-D011-B42D-00C04FC964FF")!),
-         history: ProfileDatabase? = nil, permissions: SitePermissions = SitePermissions()) {
+         history: ProfileDatabase? = nil, permissions: SitePermissions = SitePermissions(),
+         siteIcons: ProfileSiteIcons? = nil) {
         session = ProfileSession(profileID: id, settings: ProfileSettings(searchEngine: searchEngine),
                                  osBuild: osBuild, history: history,
-                                 appLinks: AppLinkGate(profileID: id, permissions: permissions)) { [unowned self] tabID in
+                                 appLinks: AppLinkGate(profileID: id, permissions: permissions),
+                                 siteIcons: siteIcons) { [unowned self] tabID in
             let page = SimulatedPage()
             preparePage(page)
             pages[tabID] = page

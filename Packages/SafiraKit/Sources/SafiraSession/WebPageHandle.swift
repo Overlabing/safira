@@ -36,9 +36,10 @@ public enum NewTabRequest {
     case popup(PopupID, any WebPageHandle, RequestedWindow)
 }
 
-/// The web page behind a Tab. SafiraWeb backs it with a `WKWebView`; tests use a simulated page.
+/// The web page behind a Tab. SafiraWeb backs it with a `WKWebView`; tests use a simulated page. A page fetches its
+/// own site's icons, through its Profile's data store, once it has loaded.
 @MainActor
-public protocol WebPageHandle: AnyObject {
+public protocol WebPageHandle: SiteResourceFetcher {
     var state: PageState { get }
     /// Called whenever the page's state changes, including navigations the page starts itself (a clicked link).
     var onStateChange: (@MainActor (PageState) -> Void)? { get set }
@@ -55,6 +56,8 @@ public protocol WebPageHandle: AnyObject {
     var onNonWebLink: (@MainActor (NonWebLink) -> Void)? { get set }
     /// Called when a navigation of the page turned into a download, which the Profile's downloads take over.
     var onDownloadStarted: (@MainActor () -> Void)? { get set }
+    /// Called when the main frame finished loading a document, with the `<link>` elements it holds.
+    var onIconLinks: (@MainActor (PageIconLinks) -> Void)? { get set }
     /// The engine's opaque navigation state (back-forward list, scroll positions, form fields); nil when it has none.
     var navigationState: Data? { get }
     /// What the pages of the back-forward list hold that keeps the navigation state off the disk (decision D1).
