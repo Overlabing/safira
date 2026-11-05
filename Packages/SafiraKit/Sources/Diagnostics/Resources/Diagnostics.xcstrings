@@ -1,0 +1,40 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Debug mode" : {
+      "comment" : "Defaults: entry title",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Debug mode"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mode débogage"
+          }
+        }
+      }
+    },
+    "Logs stay on this Mac, masked to site hosts, and leave it only through a manual export." : {
+      "comment" : "Defaults: explanation of Debug mode",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Logs stay on this Mac, masked to site hosts, and leave it only through a manual export."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les journaux restent sur ce Mac, réduits aux hôtes des sites, et n’en sortent que par un export manuel."
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

@@ -13,11 +13,12 @@ public struct AskForSpaceSettings: Hashable, Sendable, Codable {
         self.isEnabled = isEnabled
     }
 
-    public static let title = "Ask for the Space Too"
+    public static let title = String(localized: "Ask for the Space Too", table: "LinkRouting", bundle: .module, comment: "Menu item and Defaults title")
 
-    public static let explanation =
-        "After you choose a Profile for a link, the Link picker also asks which of its Spaces receives it. A Link rule "
-        + "can still name a Space, and then nothing is asked."
+    public static let explanation = String(localized: """
+        After you choose a Profile for a link, the Link picker also asks which of its Spaces receives it. A Link rule \
+        can still name a Space, and then nothing is asked.
+        """, table: "LinkRouting", bundle: .module, comment: "Defaults: explanation of Ask for the Space Too")
 
     /// The entry this type contributes to the registry of defaults, with the value of a fresh `AskForSpaceSettings`.
     public static var defaultEntries: [DefaultEntry] {
@@ -25,9 +26,9 @@ public struct AskForSpaceSettings: Hashable, Sendable, Codable {
             DefaultEntry(
                 id: "linkPicker.askForSpace",
                 title: title,
-                value: AskForSpaceSettings().isEnabled ? "On" : "Off",
+                value: DefaultWording.onOff(AskForSpaceSettings().isEnabled),
                 explanation: explanation,
-                whereToChange: "Safira menu",
+                whereToChange: DefaultWording.safiraMenu,
                 control: .toggle(isOn: AskForSpaceSettings().isEnabled)
             ),
         ]
@@ -58,12 +59,16 @@ extension NativeApp {
         [
             DefaultEntry(
                 id: "linkRules.nativeApps",
-                title: "Open Slack, Linear, Notion and Figma links in their apps",
-                value: "On, when the app is installed",
-                explanation: "These links skip the Link rules and the Link picker. A Slack link also needs the Slack "
-                    + "folder granted in the Safira menu; without it the link goes to the rules or the Link picker. "
-                    + "Each app can be turned off in the rules file.",
-                whereToChange: "Rules file"
+                title: String(localized: "Open Slack, Linear, Notion and Figma links in their apps", table: "LinkRouting", bundle: .module,
+                              comment: "Defaults: entry title"),
+                value: String(localized: "On, when the app is installed", table: "LinkRouting", bundle: .module,
+                              comment: "Defaults: value of opening links in native apps"),
+                explanation: String(localized: """
+                    These links skip the Link rules and the Link picker. A Slack link also needs the Slack folder \
+                    granted in the Safira menu; without it the link goes to the rules or the Link picker. Each app \
+                    can be turned off in the rules file.
+                    """, table: "LinkRouting", bundle: .module, comment: "Defaults: explanation of opening links in native apps"),
+                whereToChange: String(localized: "Rules file", table: "LinkRouting", bundle: .module, comment: "Defaults: where to change it, the Link rules file")
             ),
         ]
     }

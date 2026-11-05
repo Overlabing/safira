@@ -77,6 +77,15 @@ private func schema(_ file: URL) throws -> [String] {
         #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads", "v8-space-themes", "v9-download-folders"])
     }
 
+    @Test func aNewDatabaseNamesItsFirstSpaceInTheUsersLanguageAndAnExistingOneKeepsItsName() throws {
+        let root = TemporaryRoot()
+        let file = root.layout.profileDatabaseFile(for: work)
+
+        #expect(try ProfileDatabase(file: file, firstSpaceName: "Accueil").savedSession().spaces.map(\.name) == ["Accueil"])
+        #expect(try ProfileDatabase(file: file, firstSpaceName: "Inicio").savedSession().spaces.map(\.name) == ["Accueil"])
+        #expect(try ProfileDatabase.inMemory(firstSpaceName: "Accueil").savedSession().spaces.map(\.name) == ["Accueil"])
+    }
+
     @Test func savedSpacesComeBackInOrderWithTheirTabsSelectionAndTheActiveSpace() throws {
         let root = TemporaryRoot()
         let saved = SavedSession(spaces: [

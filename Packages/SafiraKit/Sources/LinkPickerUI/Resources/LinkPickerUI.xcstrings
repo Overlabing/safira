@@ -1,0 +1,465 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "%@, key %lld" : {
+      "comment" : "Link picker: VoiceOver announcement; a Profile or Space name and its number key",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@, key %lld"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@, touche %lld"
+          }
+        }
+      }
+    },
+    ", from %@" : {
+      "comment" : "Link picker: VoiceOver announcement, after the question; the app the link came from",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", from %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", depuis %@"
+          }
+        }
+      }
+    },
+    "Already open in %@." : {
+      "comment" : "Link picker: VoiceOver announcement; the argument lists Profiles",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Already open in %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déjà ouvert dans %@."
+          }
+        }
+      }
+    },
+    "Always off" : {
+      "comment" : "Link picker: VoiceOver announcement after A",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Always off"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toujours : désactivé"
+          }
+        }
+      }
+    },
+    "Always on: the choice becomes a Link rule" : {
+      "comment" : "Link picker: VoiceOver announcement after A",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Always on: the choice becomes a Link rule"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toujours : activé, le choix devient une règle de lien"
+          }
+        }
+      }
+    },
+    "Always send links from %@ here" : {
+      "comment" : "Link picker: checkbox that creates a Link rule; the argument is a host",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Always send links from %@ here"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toujours envoyer les liens de %@ ici"
+          }
+        }
+      }
+    },
+    "Choose a Profile for the link to %@" : {
+      "comment" : "Link picker: VoiceOver announcement; the argument is the link title",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose a Profile for the link to %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisissez un profil pour le lien vers %@"
+          }
+        }
+      }
+    },
+    "Choose a Profile for this link" : {
+      "comment" : "Link picker: the question the panel asks, read by VoiceOver",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose a Profile for this link"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisissez un profil pour ce lien"
+          }
+        }
+      }
+    },
+    "Choose a Space for this link" : {
+      "comment" : "Link picker: the question the panel asks when it asks for the Space, read by VoiceOver",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose a Space for this link"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisissez un espace pour ce lien"
+          }
+        }
+      }
+    },
+    "Choose a Space of %@ for the link to %@" : {
+      "comment" : "Link picker: VoiceOver announcement; a Profile name and the link title",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose a Space of %@ for the link to %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisissez un espace de %@ pour le lien vers %@"
+          }
+        }
+      }
+    },
+    "Creates a Link rule for %@ (A)" : {
+      "comment" : "Link picker: tooltip of the Always checkbox; A is its key",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Creates a Link rule for %@ (A)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crée une règle de lien pour %@ (A)"
+          }
+        }
+      }
+    },
+    "Dismiss the link" : {
+      "comment" : "Link picker: VoiceOver label of the close button",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dismiss the link"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignorer le lien"
+          }
+        }
+      }
+    },
+    "Dismiss the link (Esc)" : {
+      "comment" : "Link picker: tooltip of the close button",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dismiss the link (Esc)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignorer le lien (Échap)"
+          }
+        }
+      }
+    },
+    "Escape dismisses it." : {
+      "comment" : "Link picker: VoiceOver announcement",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escape dismisses it."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Échap l’ignore."
+          }
+        }
+      }
+    },
+    "Key %@" : {
+      "comment" : "Link picker: VoiceOver value of a tile, its number key",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Key %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touche %@"
+          }
+        }
+      }
+    },
+    "Link picker" : {
+      "comment" : "Link picker: VoiceOver label of the panel",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Link picker"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sélecteur de liens"
+          }
+        }
+      }
+    },
+    "Link to %@" : {
+      "comment" : "Link picker: VoiceOver summary; the link title",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Link to %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lien vers %@"
+          }
+        }
+      }
+    },
+    "Link to %@, from %@" : {
+      "comment" : "Link picker: VoiceOver summary; the link title and the app it came from",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Link to %@, from %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lien vers %@, depuis %@"
+          }
+        }
+      }
+    },
+    "Open" : {
+      "comment" : "Link picker: under a tile, the link is already open in this Profile",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvert"
+          }
+        }
+      }
+    },
+    "Opens the link in this Profile" : {
+      "comment" : "Link picker: VoiceOver hint of a Profile tile",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens the link in this Profile"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvre le lien dans ce profil"
+          }
+        }
+      }
+    },
+    "Opens the link in this Space" : {
+      "comment" : "Link picker: VoiceOver hint of a Space tile",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens the link in this Space"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvre le lien dans cet espace"
+          }
+        }
+      }
+    },
+    "Press A to always send links from %@ there." : {
+      "comment" : "Link picker: VoiceOver announcement; the argument is a host",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Press A to always send links from %@ there."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appuyez sur A pour toujours envoyer les liens de %@ à cet endroit."
+          }
+        }
+      }
+    },
+    "Press a number from 1 to %lld, or use the arrow keys and Return." : {
+      "comment" : "Link picker: VoiceOver announcement",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Press a number from 1 to %lld, or use the arrow keys and Return."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appuyez sur un chiffre de 1 à %lld, ou utilisez les flèches et Retour."
+          }
+        }
+      }
+    },
+    "The link is already open here" : {
+      "comment" : "Link picker: VoiceOver value of a tile",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The link is already open here"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le lien est déjà ouvert ici"
+          }
+        }
+      }
+    },
+    "The next links from this site open in the Profile and Space you choose, without asking" : {
+      "comment" : "Link picker: VoiceOver hint of the Always checkbox when the picker asks for the Space",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The next links from this site open in the Profile and Space you choose, without asking"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les prochains liens de ce site s’ouvrent dans le profil et l’espace choisis, sans demander"
+          }
+        }
+      }
+    },
+    "The next links from this site open in the Profile you choose, without asking" : {
+      "comment" : "Link picker: VoiceOver hint of the Always checkbox",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The next links from this site open in the Profile you choose, without asking"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les prochains liens de ce site s’ouvrent dans le profil choisi, sans demander"
+          }
+        }
+      }
+    },
+    "from %@" : {
+      "comment" : "Link picker: subtitle naming the app the link came from",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "from %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "depuis %@"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

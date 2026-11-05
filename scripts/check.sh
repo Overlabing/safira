@@ -86,6 +86,19 @@ step "swift test (SafiraKit)" swift test --package-path Packages/SafiraKit
 step "xcodebuild Safira (Debug)" \
     xcodebuild -project Safira.xcodeproj -scheme Safira -configuration Debug -derivedDataPath .build/dd build
 step "Safira.app signed, hardened runtime, sandboxed" isolated signed_and_sandboxed "$app"
+# The build wrote the strings the compiler localizes (scripts/sync-strings.json). No translation may be lost or
+# unreachable, and every key needs its English and French: sync-strings only notes a key without them, so that note
+# fails here. `"$tools/bin/sync-strings" --config scripts/sync-strings.json .build/dd` merges new keys into the catalogs.
+strings_in_sync() {
+    report=$("$tools/bin/sync-strings" --check --config scripts/sync-strings.json .build/dd) || { echo "$report"; return 1; }
+    echo "$report"
+    if echo "$report" | grep -q 'without English'; then
+        echo "a string is in no catalog yet: merge it with sync-strings, then add its English and French"
+        return 1
+    fi
+    return 0
+}
+step "string catalogs in sync with the sources, every key translated" isolated strings_in_sync
 step "xcodebuild Safira (Benchmark)" \
     xcodebuild -project Safira.xcodeproj -scheme Safira -configuration Benchmark -derivedDataPath .build/dd build
 step "xcodebuild Safira (Release)" \

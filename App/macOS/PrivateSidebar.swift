@@ -46,12 +46,13 @@ struct PrivateSidebar: View {
             }
             .scrollContentBackground(.hidden)
             ThemeBand {
-                Label(String(localized: "Private · \(parent.symbol) \(parent.name)"), systemImage: "eye.slash.fill")
+                Label(String(localized: "Private · \(parent.symbol) \(parent.name)", comment: "Private window sidebar"), systemImage: "eye.slash.fill")
             }
             .padding(.horizontal, tokens.spacing.listMargin)
             .padding(.bottom, tokens.spacing.switcherBottom)
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel(String(localized: "Private window, attached to the Profile \(parent.name). Nothing is saved."))
+            .accessibilityAddTraits(.isStaticText)
+            .accessibilityLabel(String(localized: "Private window, attached to the Profile \(parent.name). Nothing is saved.", comment: "Private window sidebar"))
         }
         .columnSurface(side: side.side == .right ? .right : .left)
         .theme(SidebarComposition.privateTheme)

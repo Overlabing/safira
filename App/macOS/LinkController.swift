@@ -71,11 +71,11 @@ private final class LinkRulesReporter: LinkRoutingReporting {
         if let lastAlerted, lastAlerted.error == error, lastAlerted.modified == modified { return }
         lastAlerted = (error, modified)
         let alert = NSAlert()
-        alert.messageText = String(localized: "The Link rules file is not valid")
+        alert.messageText = String(localized: "The Link rules file is not valid", comment: "Link rules, Slack folder and default browser")
         alert.informativeText = error.explanation + " "
-            + String(localized: "No Link rule applies until it is fixed: links go to the Link picker.")
-        alert.addButton(withTitle: String(localized: "OK"))
-        alert.addButton(withTitle: String(localized: "Show in Finder"))
+            + String(localized: "No Link rule applies until it is fixed: links go to the Link picker.", comment: "Link rules, Slack folder and default browser")
+        alert.addButton(withTitle: String(localized: "OK", comment: "Link rules, Slack folder and default browser"))
+        alert.addButton(withTitle: String(localized: "Show in Finder", comment: "Link rules, Slack folder and default browser"))
         if alert.runModal() == .alertSecondButtonReturn {
             NSWorkspace.shared.activateFileViewerSelecting([rulesFile])
         }
@@ -225,15 +225,15 @@ final class LinkController: NSObject, NSMenuItemValidation {
         panel.allowsMultipleSelection = false
         panel.showsHiddenFiles = true
         panel.directoryURL = Self.slackFolderSuggestion
-        panel.message = String(localized: "Choose Slack's folder (Application Support/Slack) so Slack links can open in the Slack app. Safira reads only the list of your workspaces from it.")
-        panel.prompt = String(localized: "Grant Access")
+        panel.message = String(localized: "Choose Slack's folder (Application Support/Slack) so Slack links can open in the Slack app. Safira reads only the list of your workspaces from it.", comment: "Link rules, Slack folder and default browser")
+        panel.prompt = String(localized: "Grant Access", comment: "Link rules, Slack folder and default browser")
         guard panel.runModal() == .OK, let folder = panel.url else { return }
         do {
             try slackGrant.grant(folder)
         } catch {
             let alert = NSAlert()
-            alert.messageText = String(localized: "That is not Slack's folder")
-            alert.informativeText = String(localized: "Choose the folder named Slack inside Application Support. It holds a folder named storage.")
+            alert.messageText = String(localized: "That is not Slack's folder", comment: "Link rules, Slack folder and default browser")
+            alert.informativeText = String(localized: "Choose the folder named Slack inside Application Support. It holds a folder named storage.", comment: "Link rules, Slack folder and default browser")
             alert.runModal()
         }
     }
@@ -258,9 +258,9 @@ final class LinkController: NSObject, NSMenuItemValidation {
 
     private static func alertRuleNotSaved(_ error: LinkRulesEditError) {
         let alert = NSAlert()
-        alert.messageText = String(localized: "The Link rule was not saved")
-        alert.informativeText = error.explanation + " " + String(localized: "The link opened where you chose.")
-        alert.addButton(withTitle: String(localized: "OK"))
+        alert.messageText = String(localized: "The Link rule was not saved", comment: "Link rules, Slack folder and default browser")
+        alert.informativeText = error.explanation + " " + String(localized: "The link opened where you chose.", comment: "Link rules, Slack folder and default browser")
+        alert.addButton(withTitle: String(localized: "OK", comment: "Link rules, Slack folder and default browser"))
         alert.runModal()
     }
 
@@ -280,7 +280,7 @@ final class LinkController: NSObject, NSMenuItemValidation {
                 try await defaultBrowser.makeDefault()
             } catch {
                 let alert = NSAlert()
-                alert.messageText = String(localized: "Safira could not be made the default browser")
+                alert.messageText = String(localized: "Safira could not be made the default browser", comment: "Link rules, Slack folder and default browser")
                 alert.informativeText = error.localizedDescription
                 alert.runModal()
             }
@@ -302,15 +302,15 @@ final class LinkController: NSObject, NSMenuItemValidation {
             menuItem.toolTip = AskForSpaceSettings.explanation
             return true
         case #selector(grantSlackFolder(_:)):
-            menuItem.title = slackGrant.isGranted ? String(localized: "Change Slack Folder…")
-                                                  : String(localized: "Grant Access to Slack's Folder…")
+            menuItem.title = slackGrant.isGranted ? String(localized: "Change Slack Folder…", comment: "Link rules, Slack folder and default browser")
+                                                  : String(localized: "Grant Access to Slack's Folder…", comment: "Link rules, Slack folder and default browser")
             return true
         case #selector(forgetSlackFolder(_:)):
             return slackGrant.isGranted
         case #selector(makeDefaultBrowser(_:)):
             let isDefault = defaultBrowser.isDefault
-            menuItem.title = isDefault ? String(localized: "Safira Is the Default Browser")
-                                       : String(localized: "Make Safira the Default Browser…")
+            menuItem.title = isDefault ? String(localized: "Safira Is the Default Browser", comment: "Link rules, Slack folder and default browser")
+                                       : String(localized: "Make Safira the Default Browser…", comment: "Link rules, Slack folder and default browser")
             return !isDefault
         default:
             return true

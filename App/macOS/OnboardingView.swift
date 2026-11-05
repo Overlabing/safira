@@ -111,7 +111,9 @@ struct OnboardingView: View {
             VStack(alignment: .leading, spacing: 12) {
                 Text("When Safira is your default browser, links from other apps come to it, and the Link picker asks which Profile receives each one, unless a Link rule decides. macOS asks you to confirm, and you can skip this and do it later from the Safira menu.")
                     .fixedSize(horizontal: false, vertical: true)
-                Button(isDefaultBrowser() ? "Safira Is the Default Browser" : "Make Safira the Default Browser…",
+                Button(isDefaultBrowser()
+                       ? String(localized: "Safira Is the Default Browser", comment: "Disabled button: nothing left to do")
+                       : String(localized: "Make Safira the Default Browser…", comment: "Button"),
                        action: makeDefaultBrowser)
                     .disabled(isDefaultBrowser())
             }
@@ -125,5 +127,8 @@ struct OnboardingView: View {
         }
     }
 
-    static let reminder = String(localized: "Nothing is sent anywhere without an action of yours: Safira has no telemetry, does not check for updates, and does not send what you type for suggestions.")
+    static let reminder = String(localized: """
+        Nothing is sent anywhere without an action of yours: Safira has no telemetry, does not check for updates, and \
+        does not send what you type for suggestions.
+        """, comment: "Onboarding: the reminder on the first and last steps")
 }

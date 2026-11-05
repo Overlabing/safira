@@ -15,6 +15,7 @@ struct SearchEnginePicker: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Choose a search engine")
                 .font(.headline)
+                .accessibilityAddTraits(.isHeader)
             Text("This Profile has no search engine yet. Pick one to search for “\(query)”.")
                 .fixedSize(horizontal: false, vertical: true)
             VStack(alignment: .leading, spacing: 6) {

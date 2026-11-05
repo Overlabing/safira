@@ -64,7 +64,8 @@ public final class ProfileSession {
     }
 
     /// The Space a Profile starts with, the same one the database creates.
-    public static let initialSpaceName = "Home"
+    public static let initialSpaceName = String(localized: "Home", table: "SafiraSession", bundle: .module,
+                                                comment: "Name of the Space a new Profile starts with")
     public static let initialSpaceEmoji = "🏠"
 
     /// - Parameters:
@@ -497,7 +498,8 @@ public final class ProfileSession {
         return folder.id
     }
 
-    public static let initialFolderName = "New Folder"
+    public static let initialFolderName = String(localized: "New Folder", table: "SafiraSession", bundle: .module,
+                                                 comment: "Name of a Folder created without a name")
 
     /// Renames a Folder. A blank name keeps the current one.
     public func renameFolder(_ id: FolderID, name: String) {

@@ -13,17 +13,22 @@ enum MainMenu {
         func item(_ id: CommandID, _ action: Selector?) -> NSMenuItem { commandItem(id, action, shortcuts) }
         let menu = NSMenu()
         menu.addItem(submenu(title: "Safira", items: [
-            NSMenuItem(title: "About Safira", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: ""),
+            NSMenuItem(title: String(localized: "About Safira", comment: "Menu item"),
+                       action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: ""),
             .separator(),
-            target(updates, NSMenuItem(title: "Check for Updates…", action: #selector(UpdateController.checkForUpdates(_:)), keyEquivalent: "")),
-            target(updates, NSMenuItem(title: "Check for Updates Automatically", action: #selector(UpdateController.toggleAutomaticChecks(_:)), keyEquivalent: "")),
+            target(updates, NSMenuItem(title: String(localized: "Check for Updates…", comment: "Menu item"),
+                                       action: #selector(UpdateController.checkForUpdates(_:)), keyEquivalent: "")),
+            target(updates, NSMenuItem(title: UpdateSettings.automaticChecksTitle, action: #selector(UpdateController.toggleAutomaticChecks(_:)), keyEquivalent: "")),
             .separator(),
-            target(shortcutsWindow, NSMenuItem(title: "Shortcuts…", action: #selector(ShortcutsWindowController.show(_:)),
+            target(shortcutsWindow, NSMenuItem(title: String(localized: "Shortcuts…", comment: "Menu item"),
+                                               action: #selector(ShortcutsWindowController.show(_:)),
                                                keyEquivalent: "")),
-            target(defaults, NSMenuItem(title: "Defaults…", action: #selector(DefaultsController.showDefaults(_:)),
+            target(defaults, NSMenuItem(title: String(localized: "Defaults…", comment: "Menu item"),
+                                        action: #selector(DefaultsController.showDefaults(_:)),
                                         keyEquivalent: "")),
             .separator(),
-            target(links, NSMenuItem(title: "Make Safira the Default Browser…", action: #selector(LinkController.makeDefaultBrowser(_:)),
+            target(links, NSMenuItem(title: String(localized: "Make Safira the Default Browser…", comment: "Menu item"),
+                                     action: #selector(LinkController.makeDefaultBrowser(_:)),
                                      keyEquivalent: "")),
             target(links, NSMenuItem(title: LinkChoiceLogSettings.title, action: #selector(LinkController.toggleChoiceLog(_:)),
                                      keyEquivalent: "")),
@@ -31,22 +36,28 @@ enum MainMenu {
                                      keyEquivalent: "")),
             target(links, NSMenuItem(title: AskForSpaceSettings.title, action: #selector(LinkController.toggleAskForSpace(_:)),
                                      keyEquivalent: "")),
-            target(links, NSMenuItem(title: "Link Rules…", action: #selector(LinkController.showLinkRulesWindow(_:)),
+            target(links, NSMenuItem(title: String(localized: "Link Rules…", comment: "Menu item"),
+                                     action: #selector(LinkController.showLinkRulesWindow(_:)),
                                      keyEquivalent: "")),
-            target(links, NSMenuItem(title: "Show Link Rules in Finder", action: #selector(LinkController.showLinkRules(_:)),
+            target(links, NSMenuItem(title: String(localized: "Show Link Rules in Finder", comment: "Menu item"),
+                                     action: #selector(LinkController.showLinkRules(_:)),
                                      keyEquivalent: "")),
-            target(links, NSMenuItem(title: "Grant Access to Slack's Folder…", action: #selector(LinkController.grantSlackFolder(_:)),
+            target(links, NSMenuItem(title: String(localized: "Grant Access to Slack's Folder…", comment: "Menu item"),
+                                     action: #selector(LinkController.grantSlackFolder(_:)),
                                      keyEquivalent: "")),
-            target(links, NSMenuItem(title: "Forget Slack's Folder", action: #selector(LinkController.forgetSlackFolder(_:)),
+            target(links, NSMenuItem(title: String(localized: "Forget Slack's Folder", comment: "Menu item"),
+                                     action: #selector(LinkController.forgetSlackFolder(_:)),
                                      keyEquivalent: "")),
             .separator(),
-            NSMenuItem(title: "Hide Safira", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h"),
+            NSMenuItem(title: String(localized: "Hide Safira", comment: "Menu item"),
+                       action: #selector(NSApplication.hide(_:)), keyEquivalent: "h"),
             hideOthers(),
-            NSMenuItem(title: "Show All", action: #selector(NSApplication.unhideAllApplications(_:)), keyEquivalent: ""),
+            NSMenuItem(title: String(localized: "Show All", comment: "Menu item"),
+                       action: #selector(NSApplication.unhideAllApplications(_:)), keyEquivalent: ""),
             .separator(),
             item(.quit, #selector(NSApplication.terminate(_:))),
         ]))
-        menu.addItem(submenu(title: "File", items: [
+        menu.addItem(submenu(title: String(localized: "File", comment: "Menu bar title"), items: [
             item(.newTab, #selector(MainWindowController.newTab(_:))),
             target(app, item(.newPrivateWindow, #selector(AppDelegate.newPrivateWindow(_:)))),
             item(.openCommandBar, #selector(MainWindowController.focusCommandBar(_:))),
@@ -59,13 +70,17 @@ enum MainMenu {
             .separator(),
             item(.closeWindow, #selector(NSWindow.performClose(_:))),
         ]))
-        menu.addItem(submenu(title: "Edit", items: [
-            NSMenuItem(title: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x"),
-            NSMenuItem(title: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c"),
-            NSMenuItem(title: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v"),
-            NSMenuItem(title: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a"),
+        menu.addItem(submenu(title: String(localized: "Edit", comment: "Menu bar title"), items: [
+            NSMenuItem(title: String(localized: "Cut", comment: "Menu item"),
+                       action: #selector(NSText.cut(_:)), keyEquivalent: "x"),
+            NSMenuItem(title: String(localized: "Copy", comment: "Menu item"),
+                       action: #selector(NSText.copy(_:)), keyEquivalent: "c"),
+            NSMenuItem(title: String(localized: "Paste", comment: "Menu item"),
+                       action: #selector(NSText.paste(_:)), keyEquivalent: "v"),
+            NSMenuItem(title: String(localized: "Select All", comment: "Menu item"),
+                       action: #selector(NSText.selectAll(_:)), keyEquivalent: "a"),
         ]))
-        menu.addItem(submenu(title: "View", items: [
+        menu.addItem(submenu(title: String(localized: "View", comment: "Menu bar title"), items: [
             item(.reload, #selector(MainWindowController.reload(_:))),
             .separator(),
             webContentItem(title: WebContentSettings.fraudulentSiteWarningTitle,
@@ -81,11 +96,11 @@ enum MainMenu {
                        keyEquivalent: ""),
             item(.focusTabList, #selector(MainWindowController.focusTabList(_:))),
         ]))
-        menu.addItem(submenu(title: "History", items: [
+        menu.addItem(submenu(title: String(localized: "History", comment: "Menu bar title"), items: [
             item(.goBack, #selector(MainWindowController.goBack(_:))),
             item(.goForward, #selector(MainWindowController.goForward(_:))),
         ]))
-        menu.addItem(submenu(title: "Spaces", items: [
+        menu.addItem(submenu(title: String(localized: "Spaces", comment: "Menu bar title"), items: [
             item(.newSpace, #selector(MainWindowController.newSpace(_:))),
             item(.renameSpace, #selector(MainWindowController.renameSpace(_:))),
             item(.deleteSpace, #selector(MainWindowController.deleteSpace(_:))),
@@ -98,7 +113,7 @@ enum MainMenu {
         ] + CommandID.selectSpaceCommands.map { id in
             numbered(item(id, #selector(MainWindowController.showSpaceNumber(_:))), id.spaceNumber)
         }))
-        menu.addItem(submenu(title: "Profiles", items: [
+        menu.addItem(submenu(title: String(localized: "Profiles", comment: "Menu bar title"), items: [
             item(.newProfile, #selector(MainWindowController.newProfile(_:))),
             item(.renameProfile, #selector(MainWindowController.renameProfile(_:))),
             item(.deleteProfile, #selector(MainWindowController.deleteProfile(_:))),
@@ -109,9 +124,11 @@ enum MainMenu {
             item(.previousProfile, #selector(MainWindowController.showPreviousProfile(_:))),
             item(.nextProfile, #selector(MainWindowController.showNextProfile(_:))),
         ]))
-        let window = submenu(title: "Window", items: [
-            NSMenuItem(title: "Minimize", action: #selector(NSWindow.performMiniaturize(_:)), keyEquivalent: "m"),
-            NSMenuItem(title: "Zoom", action: #selector(NSWindow.performZoom(_:)), keyEquivalent: ""),
+        let window = submenu(title: String(localized: "Window", comment: "Menu bar title"), items: [
+            NSMenuItem(title: String(localized: "Minimize", comment: "Menu item"),
+                       action: #selector(NSWindow.performMiniaturize(_:)), keyEquivalent: "m"),
+            NSMenuItem(title: String(localized: "Zoom", comment: "Menu item"),
+                       action: #selector(NSWindow.performZoom(_:)), keyEquivalent: ""),
             .separator(),
             item(.showDownloads, #selector(MainWindowController.showDownloads(_:))),
             .separator(),
@@ -125,10 +142,11 @@ enum MainMenu {
         })
         menu.addItem(window)
         NSApplication.shared.windowsMenu = window.submenu
-        let help = submenu(title: "Help", items: [
-            target(diagnostics, NSMenuItem(title: "Debug Mode", action: #selector(DiagnosticsController.toggleDebugMode(_:)),
+        let help = submenu(title: String(localized: "Help", comment: "Menu bar title"), items: [
+            target(diagnostics, NSMenuItem(title: String(localized: "Debug Mode", comment: "Menu item"),
+                                           action: #selector(DiagnosticsController.toggleDebugMode(_:)),
                                            keyEquivalent: "")),
-            target(diagnostics, NSMenuItem(title: "Export Diagnostic Logs…",
+            target(diagnostics, NSMenuItem(title: String(localized: "Export Diagnostic Logs…", comment: "Menu item"),
                                            action: #selector(DiagnosticsController.exportDiagnosticLogs(_:)),
                                            keyEquivalent: "")),
         ])
@@ -173,7 +191,8 @@ enum MainMenu {
     }
 
     private static func hideOthers() -> NSMenuItem {
-        let item = NSMenuItem(title: "Hide Others", action: #selector(NSApplication.hideOtherApplications(_:)), keyEquivalent: "h")
+        let item = NSMenuItem(title: String(localized: "Hide Others", comment: "Menu item"),
+                              action: #selector(NSApplication.hideOtherApplications(_:)), keyEquivalent: "h")
         item.keyEquivalentModifierMask = [.command, .option]
         return item
     }

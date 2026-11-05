@@ -32,6 +32,7 @@ struct SpaceEditor: View {
         VStack(alignment: .leading, spacing: 12) {
             Text(title)
                 .font(.headline)
+                .accessibilityAddTraits(.isHeader)
             Form {
                 TextField("Name", text: $name)
                 TextField("Emoji", text: $emoji)

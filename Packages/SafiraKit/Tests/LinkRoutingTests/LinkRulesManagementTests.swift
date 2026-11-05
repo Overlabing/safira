@@ -311,7 +311,7 @@ private struct Harness {
         let model = try Harness(file: source).model
         model.importFile(Data(#"{"version":1,"rules":[{"host":"c.example","profile":"Work"}]}"#.utf8), mode: .addToEnd)
         #expect(hosts(model) == ["a.example", "b.example", "c.example"])
-        #expect(model.message == LinkRulesMessage(text: "Imported 1 rules.", isError: false))
+        #expect(model.message == LinkRulesMessage(text: "Imported 1 rule.", isError: false))
     }
 
     @Test func aZenPickerFileIsImportedWithEachTargetMappedToAProfile() throws {

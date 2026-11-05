@@ -17,11 +17,16 @@ public enum LinkRulesEditError: Error, Hashable, Sendable {
     public var explanation: String {
         switch self {
         case .existingFileInvalid(let error):
-            "The Link rules file is not valid, so it was left as it is. " + error.explanation
-        case .importInvalid(let error): "The file is not a valid Link rules file. " + error.explanation
-        case .noSuchRule: "That rule no longer exists."
-        case .changedOnDisk: "The Link rules file changed while it was being edited. Try again."
-        case .notSaved: "The Link rules file could not be saved."
+            String(localized: "The Link rules file is not valid, so it was left as it is.", table: "LinkRouting", bundle: .module,
+                   comment: "Link rules edit error, followed by the reason") + " " + error.explanation
+        case .importInvalid(let error):
+            String(localized: "The file is not a valid Link rules file.", table: "LinkRouting", bundle: .module,
+                   comment: "Link rules import error, followed by the reason") + " " + error.explanation
+        case .noSuchRule: String(localized: "That rule no longer exists.", table: "LinkRouting", bundle: .module, comment: "Link rules edit error")
+        case .changedOnDisk:
+            String(localized: "The Link rules file changed while it was being edited. Try again.", table: "LinkRouting", bundle: .module,
+                   comment: "Link rules edit error")
+        case .notSaved: String(localized: "The Link rules file could not be saved.", table: "LinkRouting", bundle: .module, comment: "Link rules edit error")
         }
     }
 }

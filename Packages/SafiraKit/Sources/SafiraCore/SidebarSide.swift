@@ -9,19 +9,23 @@ public enum SidebarSide: String, Sendable, CaseIterable {
     case left
     case right
 
-    public static let title = "Sidebar on the Right"
-    public static let explanation =
-        "The sidebar, with the address and the Tabs, sits on the left of the window. Put it on the right instead; in "
-        + "Compact mode it then comes back from the right edge."
+    public static let title = String(localized: "Sidebar on the Right", table: "SafiraCore", bundle: .module,
+                                     comment: "Menu item and Defaults title")
+    public static let explanation = String(localized: """
+        The sidebar, with the address and the Tabs, sits on the left of the window. Put it on the right instead; in \
+        Compact mode it then comes back from the right edge.
+        """, table: "SafiraCore", bundle: .module, comment: "Defaults: explanation of Sidebar on the Right")
 
     public static var defaultEntries: [DefaultEntry] {
         [
             DefaultEntry(
                 id: SidebarSideStore.key,
                 title: title,
-                value: "Off, on the left",
+                value: String(localized: "Off, on the left", table: "SafiraCore", bundle: .module,
+                              comment: "Defaults: value of Sidebar on the Right"),
                 explanation: explanation,
-                whereToChange: "View menu, or Safira menu, Defaults…",
+                whereToChange: String(localized: "View menu, or Safira menu, Defaults…", table: "SafiraCore",
+                                      bundle: .module, comment: "Defaults: where to change Sidebar on the Right"),
                 control: .toggle(isOn: false)
             ),
         ]

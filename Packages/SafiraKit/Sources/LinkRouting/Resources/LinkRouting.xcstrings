@@ -1,0 +1,904 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "\"%@\" is missing or has the wrong type." : {
+      "comment" : "Link rules file error; the argument is a JSON path such as rules[2].profile",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "\"%@\" is missing or has the wrong type."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "« %@ » est absent ou n’a pas le bon type."
+          }
+        }
+      }
+    },
+    "(no host or Opener)" : {
+      "comment" : "Link rules window: what a rule matches when it names nothing",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "(no host or Opener)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "(ni hôte ni app d’origine)"
+          }
+        }
+      }
+    },
+    "After you choose a Profile for a link, the Link picker also asks which of its Spaces receives it. A Link rule can still name a Space, and then nothing is asked." : {
+      "comment" : "Defaults: explanation of Ask for the Space Too",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "After you choose a Profile for a link, the Link picker also asks which of its Spaces receives it. A Link rule can still name a Space, and then nothing is asked."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Après le choix d’un profil pour un lien, le sélecteur de liens demande aussi lequel de ses espaces le reçoit. Une règle de lien peut toujours nommer un espace, et rien n’est alors demandé."
+          }
+        }
+      }
+    },
+    "Ask for the Space Too" : {
+      "comment" : "Menu item and Defaults title",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ask for the Space Too"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Demander aussi l’espace"
+          }
+        }
+      }
+    },
+    "Deleted rule %lld, %@." : {
+      "comment" : "Link rules window: status message; the rule position and what it matches",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deleted rule %lld, %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Règle %lld supprimée, %@."
+          }
+        }
+      }
+    },
+    "Exported %lld rules." : {
+      "comment" : "Link rules window: status message after export",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Exported %lld rule."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Exported %lld rules."
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld règle exportée."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld règles exportées."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Focus an Open Tab Instead of Opening a Duplicate" : {
+      "comment" : "Menu item and Defaults title",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Focus an Open Tab Instead of Opening a Duplicate"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher l’onglet déjà ouvert au lieu d’un doublon"
+          }
+        }
+      }
+    },
+    "Ignored: it has no host and no Opener" : {
+      "comment" : "Link rules window: why a rule does not apply",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignored: it has no host and no Opener"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignorée : elle n’a ni hôte ni app d’origine"
+          }
+        }
+      }
+    },
+    "Imported %lld rules." : {
+      "comment" : "Link rules window: status message after a ZenPicker import\nLink rules window: status message after import",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Imported %lld rule."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Imported %lld rules."
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld règle importée."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld règles importées."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Imported %lld rules; left out %lld without a Profile or without a host or Opener." : {
+      "comment" : "Link rules window: status message after a ZenPicker import; imported and skipped counts",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Imported %lld rules; left out %lld without a Profile or without a host or Opener."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Règles importées : %1$lld. Écartées faute de profil, ou d’hôte et d’app d’origine : %2$lld."
+          }
+        }
+      }
+    },
+    "It opens in a new Tab of %@, in its last active Space." : {
+      "comment" : "Link rules window: result of the link check; a Profile name",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "It opens in a new Tab of %@, in its last active Space."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il s’ouvre dans un nouvel onglet de %@, dans son dernier espace actif."
+          }
+        }
+      }
+    },
+    "It opens in a new Tab of %@, in the Space %@." : {
+      "comment" : "Link rules window: result of the link check; a Profile and a Space name",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "It opens in a new Tab of %@, in the Space %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il s’ouvre dans un nouvel onglet de %@, dans l’espace %@."
+          }
+        }
+      }
+    },
+    "It opens in the %@ app." : {
+      "comment" : "Link rules window: result of the link check; an app name such as Slack",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "It opens in the %@ app."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il s’ouvre dans l’app %@."
+          }
+        }
+      }
+    },
+    "It shows the Tab that already has this address, in %@, Space %@." : {
+      "comment" : "Link rules window: result of the link check; a Profile and a Space name",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "It shows the Tab that already has this address, in %@, Space %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il affiche l’onglet qui a déjà cette adresse, dans %@, espace %@."
+          }
+        }
+      }
+    },
+    "Links from other apps then come to Safira, and the Link picker asks which Profile receives each one, unless a Link rule decides. macOS asks you to confirm." : {
+      "comment" : "Defaults: explanation of Make Safira the default browser",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Links from other apps then come to Safira, and the Link picker asks which Profile receives each one, unless a Link rule decides. macOS asks you to confirm."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les liens des autres apps arrivent alors dans Safira, et le sélecteur de liens demande quel profil reçoit chacun d’eux, sauf si une règle de lien en décide. macOS vous demande de confirmer."
+          }
+        }
+      }
+    },
+    "Log Link picker choices" : {
+      "comment" : "Menu item and Defaults title",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Log Link picker choices"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Journaliser les choix du sélecteur de liens"
+          }
+        }
+      }
+    },
+    "Make Safira the default browser" : {
+      "comment" : "Defaults: entry title",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Make Safira the default browser"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faire de Safira le navigateur par défaut"
+          }
+        }
+      }
+    },
+    "Moved %@ to place %lld of %lld." : {
+      "comment" : "Link rules window: status message; what the rule matches, its new place and the count",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moved %@ to place %lld of %lld."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Règle %@ déplacée à la place %lld sur %lld."
+          }
+        }
+      }
+    },
+    "Offered" : {
+      "comment" : "Defaults: value of Make Safira the default browser",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Offered"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Proposé"
+          }
+        }
+      }
+    },
+    "On, when the app is installed" : {
+      "comment" : "Defaults: value of opening links in native apps",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On, when the app is installed"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activé, si l’app est installée"
+          }
+        }
+      }
+    },
+    "Open Slack, Linear, Notion and Figma links in their apps" : {
+      "comment" : "Defaults: entry title",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Slack, Linear, Notion and Figma links in their apps"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir les liens Slack, Linear, Notion et Figma dans leurs apps"
+          }
+        }
+      }
+    },
+    "Rule %lld" : {
+      "comment" : "Link rules window: VoiceOver label of a rule row starts with its position",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rule %lld"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Règle %lld"
+          }
+        }
+      }
+    },
+    "Rule %lld decided it." : {
+      "comment" : "Link rules window: result of the link check; the rule position",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rule %lld decided it."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La règle %lld en a décidé."
+          }
+        }
+      }
+    },
+    "Rule %lld is not an object of text fields." : {
+      "comment" : "ZenPicker import error; the argument is the rule's position from 1",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rule %lld is not an object of text fields."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La règle %lld n’est pas un objet de champs texte."
+          }
+        }
+      }
+    },
+    "Rules file" : {
+      "comment" : "Defaults: where to change it, the Link rules file",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rules file"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fichier des règles"
+          }
+        }
+      }
+    },
+    "Safira asks which Profile receives it." : {
+      "comment" : "Link rules window: result of the link check",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safira asks which Profile receives it."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safira demande quel profil le reçoit."
+          }
+        }
+      }
+    },
+    "Skipped: no such Profile" : {
+      "comment" : "Link rules window: why a rule does not apply",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skipped: no such Profile"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignorée : ce profil n’existe pas"
+          }
+        }
+      }
+    },
+    "Skipped: no such Space" : {
+      "comment" : "Link rules window: why a rule does not apply",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skipped: no such Space"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignorée : cet espace n’existe pas"
+          }
+        }
+      }
+    },
+    "Skipped: two Profiles have that name" : {
+      "comment" : "Link rules window: why a rule does not apply",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skipped: two Profiles have that name"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignorée : deux profils portent ce nom"
+          }
+        }
+      }
+    },
+    "Skipped: two Spaces have that name" : {
+      "comment" : "Link rules window: why a rule does not apply",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skipped: two Spaces have that name"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignorée : deux espaces portent ce nom"
+          }
+        }
+      }
+    },
+    "That is not a ZenPicker rules file. %@" : {
+      "comment" : "Link rules window: error message; the argument is the reason",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "That is not a ZenPicker rules file. %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce n’est pas un fichier de règles ZenPicker. %@"
+          }
+        }
+      }
+    },
+    "That is not a web link." : {
+      "comment" : "Link rules window: result of the link check",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "That is not a web link."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce n’est pas un lien web."
+          }
+        }
+      }
+    },
+    "That rule no longer exists." : {
+      "comment" : "Link rules edit error",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "That rule no longer exists."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette règle n’existe plus."
+          }
+        }
+      }
+    },
+    "The Link rules file changed while it was being edited. Try again." : {
+      "comment" : "Link rules edit error",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The Link rules file changed while it was being edited. Try again."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le fichier des règles de lien a changé pendant sa modification. Réessayez."
+          }
+        }
+      }
+    },
+    "The Link rules file could not be changed." : {
+      "comment" : "Link rules window: error message",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The Link rules file could not be changed."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le fichier des règles de lien n’a pas pu être modifié."
+          }
+        }
+      }
+    },
+    "The Link rules file could not be saved." : {
+      "comment" : "Link rules edit error",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The Link rules file could not be saved."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le fichier des règles de lien n’a pas pu être enregistré."
+          }
+        }
+      }
+    },
+    "The Link rules file is not valid, so it was left as it is." : {
+      "comment" : "Link rules edit error, followed by the reason",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The Link rules file is not valid, so it was left as it is."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le fichier des règles de lien n’est pas valide : il a été laissé tel quel."
+          }
+        }
+      }
+    },
+    "The Link rules file is not valid, so no rule applies. %@" : {
+      "comment" : "Link rules window: result of the link check; the argument is the reason",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The Link rules file is not valid, so no rule applies. %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le fichier des règles de lien n’est pas valide : aucune règle ne s’applique. %@"
+          }
+        }
+      }
+    },
+    "The file could not be read." : {
+      "comment" : "Link rules file error",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The file could not be read."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le fichier n’a pas pu être lu."
+          }
+        }
+      }
+    },
+    "The file is not a list of rules." : {
+      "comment" : "ZenPicker import error",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The file is not a list of rules."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le fichier n’est pas une liste de règles."
+          }
+        }
+      }
+    },
+    "The file is not a valid Link rules file." : {
+      "comment" : "Link rules import error, followed by the reason",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The file is not a valid Link rules file."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le fichier n’est pas un fichier de règles de lien valide."
+          }
+        }
+      }
+    },
+    "The file is not valid JSON." : {
+      "comment" : "Link rules file error\nZenPicker import error",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The file is not valid JSON."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le fichier n’est pas du JSON valide."
+          }
+        }
+      }
+    },
+    "The file's \"version\" is missing or is not 1." : {
+      "comment" : "Link rules file error; version is a JSON key, not translated",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The file's \"version\" is missing or is not 1."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La « version » du fichier est absente ou n’est pas 1."
+          }
+        }
+      }
+    },
+    "The rule asks for a new Tab even if the link is already open." : {
+      "comment" : "Link rules window: result of the link check",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The rule asks for a new Tab even if the link is already open."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La règle demande un nouvel onglet même si le lien est déjà ouvert."
+          }
+        }
+      }
+    },
+    "These links skip the Link rules and the Link picker. A Slack link also needs the Slack folder granted in the Safira menu; without it the link goes to the rules or the Link picker. Each app can be turned off in the rules file." : {
+      "comment" : "Defaults: explanation of opening links in native apps",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "These links skip the Link rules and the Link picker. A Slack link also needs the Slack folder granted in the Safira menu; without it the link goes to the rules or the Link picker. Each app can be turned off in the rules file."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ces liens échappent aux règles de lien et au sélecteur de liens. Un lien Slack demande aussi l’accès au dossier de Slack, accordé dans le menu Safira ; sans lui, le lien passe par les règles ou le sélecteur de liens. Chaque app peut être désactivée dans le fichier des règles."
+          }
+        }
+      }
+    },
+    "Type or paste a link first." : {
+      "comment" : "Link rules window: result of the link check with an empty field",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Type or paste a link first."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saisissez ou collez d’abord un lien."
+          }
+        }
+      }
+    },
+    "When a link from another app is already open as a Tab of the Profile that receives it, in any Space, Safira shows that Tab instead of opening a new one, and a banner offers to open the link in a new Tab anyway. Addresses compare without letter case in the scheme and host, trailing slash, fragment and tracking parameters. A Link rule can force a new Tab. The Link picker also marks the Profiles where the link is open. Turned off, every link opens a new Tab." : {
+      "comment" : "Defaults: explanation of focusing a Matching tab",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When a link from another app is already open as a Tab of the Profile that receives it, in any Space, Safira shows that Tab instead of opening a new one, and a banner offers to open the link in a new Tab anyway. Addresses compare without letter case in the scheme and host, trailing slash, fragment and tracking parameters. A Link rule can force a new Tab. The Link picker also marks the Profiles where the link is open. Turned off, every link opens a new Tab."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quand un lien venu d’une autre app est déjà ouvert dans un onglet du profil qui le reçoit, dans n’importe quel espace, Safira affiche cet onglet au lieu d’en ouvrir un nouveau, et un bandeau propose d’ouvrir quand même le lien dans un nouvel onglet. Les adresses sont comparées sans tenir compte de la casse du schéma et de l’hôte, de la barre oblique finale, du fragment et des paramètres de suivi. Une règle de lien peut imposer un nouvel onglet. Le sélecteur de liens signale aussi les profils où le lien est ouvert. Désactivé, chaque lien ouvre un nouvel onglet."
+          }
+        }
+      }
+    },
+    "Writes the host of each link you send to a Profile, and the Profile, to a file on this Mac, never the path or anything after it. The file stays on this Mac; Safira never sends it anywhere." : {
+      "comment" : "Defaults: explanation of Log Link picker choices",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Writes the host of each link you send to a Profile, and the Profile, to a file on this Mac, never the path or anything after it. The file stays on this Mac; Safira never sends it anywhere."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Écrit l’hôte de chaque lien que vous envoyez vers un profil, et ce profil, dans un fichier sur ce Mac, jamais le chemin ni ce qui le suit. Le fichier reste sur ce Mac ; Safira ne l’envoie jamais nulle part."
+          }
+        }
+      }
+    },
+    "always a new Tab" : {
+      "comment" : "Link rules window: VoiceOver label of a rule row, a rule that forces a new Tab",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "always a new Tab"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "toujours un nouvel onglet"
+          }
+        }
+      }
+    },
+    "from %@" : {
+      "comment" : "Link rules window: what a rule matches, the Opener part; the argument is a bundle identifier",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "from %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "depuis %@"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

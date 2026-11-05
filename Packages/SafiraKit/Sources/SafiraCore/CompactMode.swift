@@ -42,20 +42,22 @@ public struct SidebarPresentation: Equatable, Sendable {
         if isCompact { isRevealed.toggle() }
     }
 
-    public static let compactModeTitle = "Compact Mode"
-    public static let compactModeExplanation =
-        "The sidebar is hidden and the page uses the full width. Move the pointer to the window's edge on the sidebar's side, or "
-        + "use Show Sidebar, to bring it back over the page; it hides again when the pointer leaves it or you go back "
-        + "to the page."
+    public static let compactModeTitle = String(localized: "Compact Mode", table: "SafiraCore", bundle: .module,
+                                                comment: "Defaults title of Compact mode")
+    public static let compactModeExplanation = String(localized: """
+        The sidebar is hidden and the page uses the full width. Move the pointer to the window's edge on the \
+        sidebar's side, or use Show Sidebar, to bring it back over the page; it hides again when the pointer leaves it \
+        or you go back to the page.
+        """, table: "SafiraCore", bundle: .module, comment: "Defaults: explanation of Compact mode")
 
     public static var defaultEntries: [DefaultEntry] {
         [
             DefaultEntry(
                 id: "window.compactMode",
                 title: compactModeTitle,
-                value: SidebarPresentation().isCompact ? "On" : "Off",
+                value: DefaultWording.onOff(SidebarPresentation().isCompact),
                 explanation: compactModeExplanation,
-                whereToChange: "View menu",
+                whereToChange: DefaultWording.viewMenu,
                 control: .toggle(isOn: SidebarPresentation().isCompact),
                 isUserFacing: false
             )

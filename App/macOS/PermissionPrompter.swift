@@ -55,15 +55,15 @@ final class PermissionPrompter {
         let alert = NSAlert()
         alert.messageText = Self.question(for: prompt)
         alert.informativeText = isPrivate
-            ? String(localized: "This is a Private window. Nothing is kept once it closes.")
+            ? String(localized: "This is a Private window. Nothing is kept once it closes.", comment: "Permission sheet of a site or a link to another app")
             : String(localized: """
                 This is the Profile “\(profileName(prompt.profileID))”. Another Profile is asked on its own.
-                """)
-        alert.addButton(withTitle: String(localized: "Allow"))
-        alert.addButton(withTitle: String(localized: "Don’t Allow")).keyEquivalent = "\u{1b}"
+                """, comment: "Permission sheet text; the argument is the Profile name")
+        alert.addButton(withTitle: String(localized: "Allow", comment: "Permission sheet of a site or a link to another app"))
+        alert.addButton(withTitle: String(localized: "Don’t Allow", comment: "Permission sheet of a site or a link to another app")).keyEquivalent = "\u{1b}"
         let remember = NSButton(
-            checkboxWithTitle: isPrivate ? String(localized: "Remember my choice for this site until this window closes")
-                                         : String(localized: "Remember my choice for this site in this Profile"),
+            checkboxWithTitle: isPrivate ? String(localized: "Remember my choice for this site until this window closes", comment: "Permission sheet of a site or a link to another app")
+                                         : String(localized: "Remember my choice for this site in this Profile", comment: "Permission sheet of a site or a link to another app"),
             target: nil, action: nil)
         remember.sizeToFit()
         alert.accessoryView = remember
@@ -74,20 +74,20 @@ final class PermissionPrompter {
 
     private func show(_ prompt: AppLinkPrompt) async -> PermissionAnswer {
         let alert = NSAlert()
-        alert.messageText = String(localized: "Open in \(prompt.app.name)?")
+        alert.messageText = String(localized: "Open in \(prompt.app.name)?", comment: "Permission sheet of a site or a link to another app")
         let scheme = prompt.scheme.rawValue
-        let source = prompt.requestedBy.map { String(localized: "“\($0)” wants to open a “\(scheme):” link.") }
-            ?? String(localized: "A page wants to open a “\(scheme):” link.")
+        let source = prompt.requestedBy.map { String(localized: "“\($0)” wants to open a “\(scheme):” link.", comment: "Permission sheet of a site or a link to another app") }
+            ?? String(localized: "A page wants to open a “\(scheme):” link.", comment: "Permission sheet of a site or a link to another app")
         let profile = isPrivate
-            ? String(localized: "This is a Private window. Nothing is kept once it closes.")
-            : String(localized: "This is the Profile “\(profileName(prompt.profileID))”. Another Profile is asked on its own.")
+            ? String(localized: "This is a Private window. Nothing is kept once it closes.", comment: "Permission sheet of a site or a link to another app")
+            : String(localized: "This is the Profile “\(profileName(prompt.profileID))”. Another Profile is asked on its own.", comment: "Permission sheet of a site or a link to another app")
         alert.informativeText = source + " " + profile
-        alert.addButton(withTitle: String(localized: "Don’t Open"))
-        alert.addButton(withTitle: String(localized: "Open"))
+        alert.addButton(withTitle: String(localized: "Don’t Open", comment: "Permission sheet of a site or a link to another app"))
+        alert.addButton(withTitle: String(localized: "Open", comment: "Permission sheet of a site or a link to another app"))
         let remember = NSButton(
             checkboxWithTitle: isPrivate
-                ? String(localized: "Remember my choice for “\(scheme):” links until this window closes")
-                : String(localized: "Remember my choice for “\(scheme):” links in this Profile"),
+                ? String(localized: "Remember my choice for “\(scheme):” links until this window closes", comment: "Permission sheet of a site or a link to another app")
+                : String(localized: "Remember my choice for “\(scheme):” links in this Profile", comment: "Permission sheet of a site or a link to another app"),
             target: nil, action: nil)
         remember.sizeToFit()
         alert.accessoryView = remember
@@ -98,16 +98,16 @@ final class PermissionPrompter {
 
     private func show(_ refusal: AppLinkRefusal) async {
         let alert = NSAlert()
-        alert.messageText = String(localized: "No app can open “\(refusal.scheme.rawValue):” links.")
-        alert.informativeText = String(localized: "Nothing was opened. No app on this Mac is set up for this kind of link.")
-        alert.addButton(withTitle: String(localized: "OK"))
+        alert.messageText = String(localized: "No app can open “\(refusal.scheme.rawValue):” links.", comment: "Permission sheet of a site or a link to another app")
+        alert.informativeText = String(localized: "Nothing was opened. No app on this Mac is set up for this kind of link.", comment: "Permission sheet of a site or a link to another app")
+        alert.addButton(withTitle: String(localized: "OK", comment: "Permission sheet of a site or a link to another app"))
         _ = await present(alert)
     }
 
     private func show(failureOf app: ExternalApp) async {
         let alert = NSAlert()
-        alert.messageText = String(localized: "\(app.name) could not open the link.")
-        alert.addButton(withTitle: String(localized: "OK"))
+        alert.messageText = String(localized: "\(app.name) could not open the link.", comment: "Permission sheet of a site or a link to another app")
+        alert.addButton(withTitle: String(localized: "OK", comment: "Permission sheet of a site or a link to another app"))
         _ = await present(alert)
     }
 
@@ -122,15 +122,15 @@ final class PermissionPrompter {
         let site = prompt.origin.host
         let kinds = Set(prompt.kinds)
         if kinds == [.camera, .microphone] {
-            return String(localized: "“\(site)” wants to use your camera and microphone.")
+            return String(localized: "“\(site)” wants to use your camera and microphone.", comment: "Permission sheet of a site or a link to another app")
         }
         guard let kind = prompt.kinds.first, kinds.count == 1 else {
-            return String(localized: "“\(site)” wants to use your camera, microphone or location.")
+            return String(localized: "“\(site)” wants to use your camera, microphone or location.", comment: "Permission sheet of a site or a link to another app")
         }
         switch kind {
-        case .camera: return String(localized: "“\(site)” wants to use your camera.")
-        case .microphone: return String(localized: "“\(site)” wants to use your microphone.")
-        case .location: return String(localized: "“\(site)” wants to know your location.")
+        case .camera: return String(localized: "“\(site)” wants to use your camera.", comment: "Permission sheet of a site or a link to another app")
+        case .microphone: return String(localized: "“\(site)” wants to use your microphone.", comment: "Permission sheet of a site or a link to another app")
+        case .location: return String(localized: "“\(site)” wants to know your location.", comment: "Permission sheet of a site or a link to another app")
         }
     }
 }

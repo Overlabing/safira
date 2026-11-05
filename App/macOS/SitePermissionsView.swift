@@ -17,6 +17,7 @@ struct SitePermissionsView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Site permissions of “\(profileName)”")
                 .font(.headline)
+                .accessibilityAddTraits(.isHeader)
             Text("A site or a link asks each time until you choose to remember your choice. Revoking a choice makes it ask again.")
                 .font(.callout)
                 .foregroundStyle(.secondary)
@@ -82,23 +83,23 @@ struct SitePermissionsView: View {
 
     static func name(of kind: PermissionKind) -> String {
         switch kind {
-        case .camera: String(localized: "Camera")
-        case .microphone: String(localized: "Microphone")
-        case .location: String(localized: "Location")
+        case .camera: String(localized: "Camera", comment: "Site permissions sheet")
+        case .microphone: String(localized: "Microphone", comment: "Site permissions sheet")
+        case .location: String(localized: "Location", comment: "Site permissions sheet")
         }
     }
 
     static func name(of decision: PermissionDecision, forLinks: Bool) -> String {
         switch decision {
-        case .allow: String(localized: "Opens its app without asking")
-        case .deny: String(localized: "Never opens an app")
+        case .allow: String(localized: "Opens its app without asking", comment: "Site permissions sheet")
+        case .deny: String(localized: "Never opens an app", comment: "Site permissions sheet")
         }
     }
 
     static func name(of decision: PermissionDecision) -> String {
         switch decision {
-        case .allow: String(localized: "Allowed")
-        case .deny: String(localized: "Not allowed")
+        case .allow: String(localized: "Allowed", comment: "Site permissions sheet")
+        case .deny: String(localized: "Not allowed", comment: "Site permissions sheet")
         }
     }
 }

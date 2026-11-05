@@ -111,7 +111,8 @@ private struct PinnedFolder: View {
                 Button("Delete Folder") { session.deleteFolder(folder.id) }
             }
             .accessibilityAction(.default) { session.setFolderExpanded(folder.id, !folder.isExpanded) }
-            .accessibilityAction(named: folder.isExpanded ? "Collapse" : "Expand") {
+            .accessibilityAction(named: folder.isExpanded ? String(localized: "Collapse", comment: "VoiceOver action of a Folder")
+                                                          : String(localized: "Expand", comment: "VoiceOver action of a Folder")) {
                 session.setFolderExpanded(folder.id, !folder.isExpanded)
             }
             .accessibilityAction(named: "Rename Folder") { actions.rename(folder.id) }
@@ -137,6 +138,7 @@ struct FolderEditor: View {
         VStack(alignment: .leading, spacing: 12) {
             Text(title)
                 .font(.headline)
+                .accessibilityAddTraits(.isHeader)
             Form {
                 TextField("Name", text: $name)
                     .focused($nameHasFocus)
