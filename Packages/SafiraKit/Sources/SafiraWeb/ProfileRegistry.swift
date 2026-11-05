@@ -3,6 +3,7 @@
 
 import Appearance
 import Diagnostics
+import DiagnosticsKit
 import Foundation
 import Observation
 import SafiraCore

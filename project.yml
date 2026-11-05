@@ -28,6 +28,10 @@ packages:
   AppSupportKit:
     url: https://github.com/Overlabing/AppSupportKit
     exactVersion: 0.1.1
+  # Linked through Diagnostics and SafiraWeb; the app names DiagnosticLog itself. Pinned here too, as AppSupportKit.
+  DiagnosticsKit:
+    url: https://github.com/Overlabing/DiagnosticsKit
+    exactVersion: 0.1.1
 settings:
   base:
     SWIFT_VERSION: "6.0"
@@ -54,6 +58,8 @@ targets:
         products: [ColorCore, ColorPlatform, ColorUI, DesignKit]
       - package: AppSupportKit
         products: [Preferences, UserFacing, DefaultApps]
+      - package: DiagnosticsKit
+        product: DiagnosticsKit
       - package: Sparkle
         product: Sparkle
         # Re-signs Sparkle.framework with the app's identity on copy: an ad hoc app refuses a framework that keeps

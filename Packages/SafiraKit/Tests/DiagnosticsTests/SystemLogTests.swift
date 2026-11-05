@@ -2,112 +2,122 @@
 // Copyright (c) 2026 Antonin Carlin
 
 import Diagnostics
+import DiagnosticsKit
 import Foundation
 import OSLog
-import Synchronization
 import Testing
-
-private final class RecordingSystemLog: SystemLog {
-    struct Line: Equatable {
-        let message: String
-        let isPrivate: Bool
-    }
-
-    private let recorded = Mutex<[Line]>([])
-
-    var lines: [Line] { recorded.withLock { $0 } }
-
-    func write(_ message: String, level: OSLogType, isPrivate: Bool) {
-        recorded.withLock { $0.append(Line(message: message, isPrivate: isPrivate)) }
-    }
-}
 
 @Suite struct SystemLogTests {
     private let host = LoggedHost(url("https://alias.test/path"))
     private let failure = ErrorSummary(domain: NSURLErrorDomain, code: NSURLErrorTimedOut)
 
-    private func makeLogger(isEnabled: Bool, in directory: URL) -> (DiagnosticLogger, RecordingSystemLog) {
-        let systemLog = RecordingSystemLog()
-        let logger = DiagnosticLogger(subsystem: "test", logsDirectory: directory, isEnabled: isEnabled, systemLog: systemLog)
-        return (logger, systemLog)
+    @Test func safiraLetsAPublicLineAlwaysReachTheSystemLogAndAPrivateOneOnlyInDebugMode() {
+        #expect(DiagnosticsConfiguration.safira(subsystem: "com.overlabing.safira") == DiagnosticsConfiguration(
+            subsystem: "com.overlabing.safira", fileNamePrefix: "safira", archiveName: "Safira",
+            limits: DiagnosticLogFiles.Limits(keepDays: 7, maxFileBytes: 5_000_000, maxTotalBytes: 25_000_000),
+            osLog: .publicMessagesAlways))
     }
 
-    @Test func withDebugModeOffNoHostAndNoPageTimingReachesTheSystemLog() {
+    @Test func withDebugModeOffAFailedLoadWithAHostNeverReachesTheSystemLog() async {
         let directory = makeLogsDirectory()
         defer { removeParent(of: directory) }
-        let (logger, systemLog) = makeLogger(isEnabled: false, in: directory)
+        let systemLog = RecordingSystemLog()
+        let logger = makeLogger(in: directory, isEnabled: false, systemLog: systemLog)
+
+        logger.record(.loadFailed(host: LoggedHost(url("https://bank.example/account?id=42")), error: failure))
+        await logger.sink.flush()
+
+        #expect(systemLog.lines == [])
+        #expect(!FileManager.default.fileExists(atPath: directory.path))
+    }
+
+    @Test func withDebugModeOffNoHostAndNoPageTimingReachesTheSystemLog() async {
+        let directory = makeLogsDirectory()
+        defer { removeParent(of: directory) }
+        let systemLog = RecordingSystemLog()
+        let logger = makeLogger(in: directory, isEnabled: false, systemLog: systemLog)
 
         logger.record(.pageLoaded(host: host, milliseconds: 842))
         logger.record(.pageLoaded(host: nil, milliseconds: 17))
         logger.record(.loadFailed(host: host, error: failure))
-        logger.flush()
+        await logger.sink.flush()
 
         #expect(systemLog.lines == [])
     }
 
-    @Test func withDebugModeOnSiteEventsReachTheSystemLogPrivateAndTheFile() {
+    @Test func withDebugModeOnSiteEventsReachTheSystemLogPrivateAndTheFileWithoutTheirHost() async {
         let directory = makeLogsDirectory()
         defer { removeParent(of: directory) }
-        let (logger, systemLog) = makeLogger(isEnabled: true, in: directory)
+        let systemLog = RecordingSystemLog()
+        let logger = makeLogger(in: directory, isEnabled: true, systemLog: systemLog)
 
         logger.record(.pageLoaded(host: host, milliseconds: 842))
         logger.record(.loadFailed(host: host, error: failure))
-        logger.flush()
+        await logger.sink.flush()
 
         #expect(systemLog.lines == [
-            .init(message: "page-loaded host=alias.test ms=842", isPrivate: true),
-            .init(message: "load-failed host=alias.test domain=NSURLErrorDomain code=-1001", isPrivate: true),
+            .init(category: "navigation", type: .default, redacted: "page-loaded host=<private> ms=842",
+                  full: "page-loaded host=alias.test ms=842"),
+            .init(category: "navigation", type: .error,
+                  redacted: "load-failed host=<private> domain=NSURLErrorDomain code=-1001",
+                  full: "load-failed host=alias.test domain=NSURLErrorDomain code=-1001"),
         ])
-        let lines = allLines(in: directory)
-        #expect(lines.count == 2)
-        #expect(lines[0].hasSuffix(" notice page-loaded host=alias.test ms=842"))
+        #expect(messages(in: directory) == [
+            "notice [navigation] page-loaded host=<private> ms=842",
+            "error [navigation] load-failed host=<private> domain=NSURLErrorDomain code=-1001",
+        ])
     }
 
-    @Test func eventsWithoutSiteInformationReachTheSystemLogPublicWhateverTheMode() {
-        for isEnabled in [false, true] {
-            let directory = makeLogsDirectory()
-            defer { removeParent(of: directory) }
-            let (logger, systemLog) = makeLogger(isEnabled: isEnabled, in: directory)
-
-            logger.record(.loadFailed(host: nil, error: failure))
-            logger.record(.tabCounts(TabCounts(blank: 1, loading: 2, loaded: 3)))
-            logger.record(.memory(footprintBytes: 9))
-            logger.flush()
-
-            #expect(systemLog.lines == [
-                .init(message: "load-failed host=- domain=NSURLErrorDomain code=-1001", isPrivate: false),
-                .init(message: "tabs blank=1 loading=2 loaded=3", isPrivate: false),
-                .init(message: "memory footprint-bytes=9", isPrivate: false),
-            ])
-        }
-    }
-
-    @Test func switchingDebugModeOffStopsTheSiteEventsAndKeepsTheModeLines() {
+    @Test(arguments: [false, true])
+    func eventsWithoutSiteInformationReachTheSystemLogPublicWhateverTheMode(isEnabled: Bool) async {
         let directory = makeLogsDirectory()
         defer { removeParent(of: directory) }
-        let (logger, systemLog) = makeLogger(isEnabled: false, in: directory)
+        let systemLog = RecordingSystemLog()
+        let logger = makeLogger(in: directory, isEnabled: isEnabled, systemLog: systemLog)
 
-        logger.setEnabled(true)
+        logger.record(.loadFailed(host: nil, error: failure))
+        logger.record(.tabCounts(TabCounts(blank: 1, loading: 2, loaded: 3)))
+        logger.record(.memory(footprintBytes: 9))
+        await logger.sink.flush()
+
+        #expect(systemLog.lines == [
+            .init(category: "navigation", type: .error, redacted: "load-failed host=- domain=NSURLErrorDomain code=-1001",
+                  full: nil),
+            .init(category: "sample", type: .default, redacted: "tabs blank=1 loading=2 loaded=3", full: nil),
+            .init(category: "sample", type: .default, redacted: "memory footprint-bytes=9", full: nil),
+        ])
+    }
+
+    @Test func switchingDebugModeOffStopsTheSiteEventsAndKeepsTheModeLines() async {
+        let directory = makeLogsDirectory()
+        defer { removeParent(of: directory) }
+        let systemLog = RecordingSystemLog()
+        let logger = makeLogger(in: directory, isEnabled: false, systemLog: systemLog)
+
+        logger.setDebugMode(true)
         logger.record(.pageLoaded(host: host, milliseconds: 1))
-        logger.setEnabled(false)
+        logger.setDebugMode(false)
         logger.record(.pageLoaded(host: host, milliseconds: 2))
-        logger.flush()
+        await logger.sink.flush()
 
         #expect(systemLog.lines == [
-            .init(message: "debug-mode on", isPrivate: false),
-            .init(message: "page-loaded host=alias.test ms=1", isPrivate: true),
-            .init(message: "debug-mode off", isPrivate: false),
+            .init(category: "app", type: .default, redacted: "debug-mode on", full: nil),
+            .init(category: "navigation", type: .default, redacted: "page-loaded host=<private> ms=1",
+                  full: "page-loaded host=alias.test ms=1"),
+            .init(category: "app", type: .default, redacted: "debug-mode off", full: nil),
         ])
     }
 
-    @Test func theDefaultSystemLogNeverFailsTheLogger() {
+    @Test func theDefaultSystemLogNeverFailsTheLog() async {
         let directory = makeLogsDirectory()
         defer { removeParent(of: directory) }
-        let logger = DiagnosticLogger(subsystem: "test", logsDirectory: directory, isEnabled: true)
+        let log = DiagnosticLog(configuration: .safira(subsystem: "test"), isEnabled: true)
+        log.start { directory }
+        let logger = DiagnosticLogger(category: "navigation", sink: log)
 
         logger.record(.pageLoaded(host: host, milliseconds: 3))
-        logger.flush()
+        await log.flush()
 
-        #expect(allLines(in: directory).count == 1)
+        #expect(messages(in: directory) == ["notice [navigation] page-loaded host=<private> ms=3"])
     }
 }

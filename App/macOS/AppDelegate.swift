@@ -153,12 +153,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     /// Quitting stops the running downloads, so that they can be continued, and waits for the last save of every
-    /// Profile's Tabs, settings and downloads.
+    /// Profile's Tabs, settings and downloads, then for the Debug mode lines still waiting to be written.
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
-        guard let registry else { return .terminateNow }
+        guard let registry else {
+            diagnostics.log.flushBeforeExit()
+            return .terminateNow
+        }
         Task {
             await registry.stopDownloads()
             await registry.saveAll()
+            self.diagnostics.log.flushBeforeExit()
             sender.reply(toApplicationShouldTerminate: true)
         }
         return .terminateLater

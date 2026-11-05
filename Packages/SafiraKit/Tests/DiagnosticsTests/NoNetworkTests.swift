@@ -12,7 +12,7 @@ import Testing
         .appending(path: "Sources/Diagnostics", directoryHint: .isDirectory)
     let files = try FileManager.default.contentsOfDirectory(at: sources, includingPropertiesForKeys: nil)
         .filter { $0.pathExtension == "swift" }
-    #expect(files.count >= 8)
+    #expect(files.count >= 6)
 
     let banned = ["URLSession", "URLRequest", "NWConnection", "NWListener", "CFNetwork", "import Network", "WebKit",
                   "Socket", "NSURLConnection"]

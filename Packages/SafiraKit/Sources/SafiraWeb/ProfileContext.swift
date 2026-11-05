@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Antonin Carlin
 
 import Diagnostics
+import DiagnosticsKit
 import Foundation
 import SafiraCore
 import SafiraSession
