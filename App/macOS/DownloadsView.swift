@@ -16,6 +16,7 @@ struct DownloadsView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Downloads of “\(registry.activeProfile.name)”")
                 .font(.headline)
+                .accessibilityAddTraits(.isHeader)
             if downloads.all.isEmpty {
                 Text("This Profile has no downloads.")
                     .foregroundStyle(.secondary)
@@ -68,6 +69,7 @@ private struct DownloadRow: View {
                             .accessibilityLabel(Text("Progress of \(download.fileName)"))
                     } else {
                         ProgressView().progressViewStyle(.linear)
+                            .accessibilityLabel(Text("Progress of \(download.fileName)"))
                     }
                 }
                 Text(status)

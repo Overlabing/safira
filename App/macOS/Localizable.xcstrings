@@ -3635,6 +3635,23 @@
         }
       }
     },
+    "Search or address" : {
+      "comment" : "Sidebar: placeholder of the address pill with no page; keep it short",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search or address"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher"
+          }
+        }
+      }
+    },
     "Search or enter an address" : {
       "comment" : "Command bar",
       "localizations" : {

@@ -27,6 +27,7 @@ struct ClearBrowsingDataSheet: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Clear history and website data of “\(profileName)”")
                 .font(.headline)
+                .accessibilityAddTraits(.isHeader)
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityAddTraits(.isHeader)
             Text("""

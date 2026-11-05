@@ -95,6 +95,7 @@ private struct ShortcutsSettingsView: View {
             List(CommandRegistry.commands.filter(\.isImplemented)) { command in
                 row(command)
             }
+            .accessibilityLabel(Text("Shortcuts"))
             Text(reservedExplanation)
                 .font(.footnote)
                 .foregroundStyle(.secondary)

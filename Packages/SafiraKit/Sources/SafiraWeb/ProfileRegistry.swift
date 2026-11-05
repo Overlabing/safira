@@ -330,13 +330,14 @@ public final class ProfileRegistry {
     private func database(for id: ProfileID) -> ProfileDatabase {
         if let layout {
             do {
-                return try ProfileDatabase(file: layout.profileDatabaseFile(for: id))
+                return try ProfileDatabase(file: layout.profileDatabaseFile(for: id),
+                                           firstSpaceName: ProfileSession.initialSpaceName)
             } catch {
                 onError("The Profile's database could not be opened; its Tabs will not be saved", error)
             }
         }
         // An in-memory database cannot fail to open.
-        return try! ProfileDatabase.inMemory()
+        return try! ProfileDatabase.inMemory(firstSpaceName: ProfileSession.initialSpaceName)
     }
 
     private func remember(_ id: ProfileID) {

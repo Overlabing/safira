@@ -110,6 +110,7 @@ struct DefaultsWindowView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Defaults")
                 .font(.title2.bold())
+                .accessibilityAddTraits(.isHeader)
             Text("Everything Safira decided for you, and where to change it. Nothing is sent without an action of yours. Web content switches apply to \(controller.activeProfileName), and to pages opened from now on.")
                 .font(.callout)
                 .foregroundStyle(.secondary)

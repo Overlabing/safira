@@ -319,8 +319,8 @@ struct CommandBarPanel: View {
             .surface(.glass(tint: 0), in: shape)
         }
         .theme(appearance.theme)
+        // The field already carries the label "Command bar"; a labelled group around it made VoiceOver say it twice.
         .accessibilityElement(children: .contain)
-        .accessibilityLabel(Text("Command bar"))
     }
 }
 

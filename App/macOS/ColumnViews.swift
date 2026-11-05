@@ -50,7 +50,7 @@ struct BrowserControls: View {
         HStack(spacing: 0) {
             Button(action: actions.editAddress) {
                 FieldPill(systemImage: symbol(for: address), title: address.map { AddressDisplay($0).host } ?? "",
-                          placeholder: FloatingCommandBar.placeholder)
+                          placeholder: Self.placeholder)
             }
             .buttonStyle(PressedOpacityStyle())
             .help(address?.absoluteString ?? FloatingCommandBar.placeholder)
@@ -74,6 +74,11 @@ struct BrowserControls: View {
         .background { Color.clear.contentShape(.rect).gesture(WindowDragGesture()) }
         .padding(.bottom, tokens.spacing.statusLineToList)
     }
+
+    /// Shorter than the Command bar's own placeholder, which the help tag shows in full: the pill shares its row with
+    /// three buttons and the French text did not fit.
+    static let placeholder = String(localized: "Search or address",
+                                    comment: "Sidebar: placeholder of the address pill with no page; keep it short")
 
     /// A lock for an encrypted page, a plain globe otherwise; a magnifying glass with no page.
     private func symbol(for address: URL?) -> String {

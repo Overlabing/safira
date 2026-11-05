@@ -51,6 +51,7 @@ struct PrivateSidebar: View {
             .padding(.horizontal, tokens.spacing.listMargin)
             .padding(.bottom, tokens.spacing.switcherBottom)
             .accessibilityElement(children: .ignore)
+            .accessibilityAddTraits(.isStaticText)
             .accessibilityLabel(String(localized: "Private window, attached to the Profile \(parent.name). Nothing is saved.", comment: "Private window sidebar"))
         }
         .columnSurface(side: side.side == .right ? .right : .left)

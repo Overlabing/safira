@@ -219,6 +219,9 @@ private struct LinkRulesView: View {
         }
         .onDeleteCommand { model.deleteSelected() }
         .accessibilityLabel(Text("Link rules"))
+        // The overlay that says the list is empty is not part of the list's accessibility tree.
+        .accessibilityValue(model.entries.isEmpty
+            ? Text("No Link rules yet. Choose “Always” in the Link picker, or import a file.") : Text(verbatim: ""))
     }
 
     private func row(_ entry: LinkRuleEntry) -> some View {

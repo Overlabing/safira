@@ -9,18 +9,28 @@ import SafiraCore
 public final class ProfileDatabase: Sendable {
     let queue: DatabaseQueue
 
-    public init(file: URL) throws {
+    /// - Parameter firstSpaceName: the name of the Space a new database starts with, in the user's language. The
+    ///   migrations name it "Home" and are never edited; a database that already exists keeps its names.
+    public init(file: URL, firstSpaceName: String? = nil) throws {
+        let isNew = !FileManager.default.fileExists(atPath: file.path(percentEncoded: false))
         queue = try .opened(at: file, migrator: Migrations.profile)
+        if isNew, let firstSpaceName { try nameFirstSpace(firstSpaceName) }
     }
 
     /// A database that writes nothing to disk.
-    public static func inMemory() throws -> ProfileDatabase {
-        try ProfileDatabase(queue: DatabaseQueue())
+    public static func inMemory(firstSpaceName: String? = nil) throws -> ProfileDatabase {
+        let database = try ProfileDatabase(queue: DatabaseQueue())
+        if let firstSpaceName { try database.nameFirstSpace(firstSpaceName) }
+        return database
     }
 
     private init(queue: DatabaseQueue) throws {
         self.queue = queue
         try Migrations.profile.migrate(queue)
+    }
+
+    private func nameFirstSpace(_ name: String) throws {
+        try queue.write { db in try db.execute(sql: "UPDATE space SET name = ?", arguments: [name]) }
     }
 
     /// Every Space with its Tabs, in sidebar order, and the active Space.

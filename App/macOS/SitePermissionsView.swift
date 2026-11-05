@@ -17,6 +17,7 @@ struct SitePermissionsView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Site permissions of “\(profileName)”")
                 .font(.headline)
+                .accessibilityAddTraits(.isHeader)
             Text("A site or a link asks each time until you choose to remember your choice. Revoking a choice makes it ask again.")
                 .font(.callout)
                 .foregroundStyle(.secondary)
