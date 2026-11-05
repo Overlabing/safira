@@ -115,15 +115,17 @@ enum SidebarCellPlacement: Equatable {
 }
 
 extension View {
-    /// The kit's sidebar cell (`sidebarRowCell(state:placement:)`) on the column. In a Folder's panel, the same cell
-    /// with the panel drawn behind it a cell at a time, since a `List` cannot group cells under one `LayerPanel`.
+    /// The kit's sidebar cell (`sidebarRowCell(state:placement:hoverID:)`) on the column. In a Folder's panel, the same
+    /// cell with the panel drawn behind it a cell at a time, since a `List` cannot group cells under one `LayerPanel`.
+    /// The cell tracks the pointer as the row `hoverID` of the column's `ListHover` and draws the hover fill from it,
+    /// so `state` carries no hover and a hover step re-evaluates only the rows it enters and leaves.
     @ViewBuilder
-    func sidebarCell(state: RowState, placement: SidebarCellPlacement) -> some View {
+    func sidebarCell(state: RowState, placement: SidebarCellPlacement, hoverID: AnyHashable) -> some View {
         switch placement {
         case .free:
-            sidebarRowCell(state: state, placement: .free(firstInSection: false))
+            sidebarRowCell(state: state, placement: .free(firstInSection: false), hoverID: hoverID)
         case .panel(let level, let isFirst, let isLast):
-            modifier(PanelCell(state: state, level: level, isFirst: isFirst, isLast: isLast))
+            modifier(PanelCell(state: state, level: level, isFirst: isFirst, isLast: isLast, hoverID: hoverID))
         }
     }
 }
@@ -135,6 +137,7 @@ private struct PanelCell: ViewModifier {
     let level: Int
     let isFirst: Bool
     let isLast: Bool
+    let hoverID: AnyHashable
     @Environment(\.designTokens) private var tokens
 
     func body(content: Content) -> some View {
@@ -148,6 +151,7 @@ private struct PanelCell: ViewModifier {
         let top = isFirst ? panelEnd : 0
         let bottom = isLast ? panelEnd : 0
         content
+            .listHoverTracking(id: hoverID)
             .listRowInsets(EdgeInsets(top: spacing.rowGap / 2 + vertical + top, leading: side + indent,
                                       bottom: spacing.rowGap / 2 + vertical + bottom, trailing: side))
             .listRowSeparator(.hidden)
@@ -159,7 +163,7 @@ private struct PanelCell: ViewModifier {
                         style: .continuous)
                         .fill(Color.primary.opacity(tokens.emphasis.layer))
                         .accessibilityHidden(true)
-                    ListRowBackground(state: state, placement: .layer(level: level))
+                    ListRowBackground(state: state, placement: .layer(level: level), hoverID: hoverID)
                         .padding(.top, top)
                         .padding(.bottom, bottom)
                 }
@@ -241,7 +245,8 @@ struct SiteIconTile: View {
 }
 
 /// A Tab as a sidebar cell: its site's icon (or initial) on a tile, its title, and its host (or "Playing") under it;
-/// the close button while the pointer is over it. A dormant Tab shows the icon cached for its saved address.
+/// the close button while the pointer is over it (`HoverAccessory`, so the row's own body never follows the pointer). A
+/// dormant Tab shows the icon cached for its saved address.
 struct TabRowView: View {
     let tab: SafiraSession.Tab
     let icons: ProfileSiteIcons
@@ -252,7 +257,6 @@ struct TabRowView: View {
     let count: Int
     let select: () -> Void
     let close: () -> Void
-    @State private var isHovered = false
     @Environment(\.designTokens) private var tokens
 
     var body: some View {
@@ -261,7 +265,7 @@ struct TabRowView: View {
                 SiteIconTile(icons: icons, address: tab.address,
                              initial: SiteIconTile.initial(of: tab.address, title: title))
             } trailing: {
-                if isHovered {
+                HoverAccessory(id: tab.id) {
                     Button(action: close) {
                         Image(systemName: "xmark").font(tokens.type.accessory.font)
                     }
@@ -269,14 +273,15 @@ struct TabRowView: View {
                     .foregroundStyle(roles.secondaryText)
                     .help("Close Tab")
                     .accessibilityHidden(true)
-                } else if tab.state.isPlayingMedia {
-                    Image(systemName: "speaker.wave.2.fill")
-                        .font(tokens.type.accessory.font)
-                        .foregroundStyle(roles.secondaryText)
-                        .accessibilityHidden(true)
+                } idle: {
+                    if tab.state.isPlayingMedia {
+                        Image(systemName: "speaker.wave.2.fill")
+                            .font(tokens.type.accessory.font)
+                            .foregroundStyle(roles.secondaryText)
+                            .accessibilityHidden(true)
+                    }
                 }
             }
-            .onHover { isHovered = $0 }
             .onTapGesture(perform: select)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(title)
@@ -285,8 +290,8 @@ struct TabRowView: View {
             .accessibilityAction(.default, select)
             .accessibilityAction(named: "Close Tab", close)
         }
-        .sidebarCell(state: RowState(isSelected: isSelected, isHovered: isHovered, isFocused: isSelected && isListFocused),
-                     placement: placement)
+        .sidebarCell(state: RowState(isSelected: isSelected, isFocused: isSelected && isListFocused),
+                     placement: placement, hoverID: tab.id)
     }
 
     private var title: String {
@@ -316,8 +321,10 @@ struct TabRowView: View {
 struct NewTabRow: View {
     let shortcut: String?
     let newTab: () -> Void
-    @State private var isHovered = false
     @Environment(\.designTokens) private var tokens
+
+    /// Its row in the column's `ListHover`, apart from every Tab's and Folder's.
+    private static let hoverID = "safira.newTabRow"
 
     var body: some View {
         WithColorRoles { roles in
@@ -329,13 +336,12 @@ struct NewTabRow: View {
                         .accessibilityHidden(true)
                 }
             }
-            .onHover { isHovered = $0 }
             .onTapGesture(perform: newTab)
             .accessibilityElement(children: .combine)
             .accessibilityAddTraits(.isButton)
             .accessibilityAction(.default, newTab)
         }
-        .sidebarCell(state: RowState(isHovered: isHovered), placement: .free)
+        .sidebarCell(state: RowState(), placement: .free, hoverID: Self.hoverID)
     }
 }
 
