@@ -6,6 +6,7 @@ import LinkRouting
 import SafiraCore
 import SwiftUI
 import UniformTypeIdentifiers
+import UserFacing
 
 /// The Link rules window: the rules in order with delete and reorder, import and export, and the check "Where would
 /// this link go?".
@@ -68,7 +69,7 @@ final class LinkRulesWindowController: NSWindowController, NSWindowDelegate {
         do {
             try data.write(to: url, options: .atomic)
         } catch {
-            alert(String(localized: "The Link rules could not be saved", comment: "Link rules window"), error.localizedDescription)
+            UserFacingAlert.runModal(.linkRulesNotExported(error))
         }
     }
 
@@ -76,8 +77,7 @@ final class LinkRulesWindowController: NSWindowController, NSWindowDelegate {
         guard let data = pickFile(message: String(localized: "Choose a Link rules JSON file to import.", comment: "Link rules window")) else { return }
         // An invalid file is reported before the user is asked how to import it.
         if case .failure(let error) = LinkRuleSet.parse(data) {
-            alert(String(localized: "That file is not a valid Link rules file", comment: "Link rules window"),
-                  error.explanation + " " + String(localized: "Your existing rules were not changed.", comment: "Link rules window"))
+            UserFacingAlert.runModal(.notALinkRulesFile(error.explanation))
             return
         }
         let imported = (try? LinkRuleSet.parse(data).get().rules.count) ?? 0
@@ -103,14 +103,13 @@ final class LinkRulesWindowController: NSWindowController, NSWindowDelegate {
         let targets: [String]
         switch model.zenPickerTargets(in: data) {
         case .failure(let error):
-            alert(String(localized: "That is not a ZenPicker rules file", comment: "Link rules window"),
-                  error.explanation + " " + String(localized: "Your existing rules were not changed.", comment: "Link rules window"))
+            UserFacingAlert.runModal(.notAZenPickerFile(error.explanation))
             return
         case .success(let found): targets = found
         }
         let profiles = profiles()
         guard !targets.isEmpty else {
-            alert(String(localized: "Nothing to import", comment: "Link rules window"), String(localized: "The file has no rule that names a target.", comment: "Link rules window"))
+            UserFacingAlert.runModal(.nothingToImport)
             return
         }
         let popups = targets.map { target -> (target: String, popup: NSPopUpButton) in
@@ -155,17 +154,10 @@ final class LinkRulesWindowController: NSWindowController, NSWindowDelegate {
         panel.message = message
         guard panel.runModal() == .OK, let url = panel.url else { return nil }
         guard let data = try? Data(contentsOf: url) else {
-            alert(String(localized: "The file could not be read", comment: "Link rules window"), "")
+            UserFacingAlert.runModal(.fileUnreadable)
             return nil
         }
         return data
-    }
-
-    private func alert(_ message: String, _ detail: String) {
-        let alert = NSAlert()
-        alert.messageText = message
-        alert.informativeText = detail
-        alert.runModal()
     }
 }
 
@@ -280,19 +272,9 @@ private struct LinkRulesView: View {
     }
 
     private func invalidFile(_ problem: LinkRulesError) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Label("The Link rules file is not valid", systemImage: "exclamationmark.triangle.fill")
-                .font(.headline)
-                .foregroundStyle(.orange)
-            Text(verbatim: problem.explanation)
-            Text("Safira never overwrites it. No rule applies until it is fixed: links go to the Link picker. Fix it in an editor, or delete it to start again.")
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-            Button("Show in Finder", action: actions.showInFinder)
+        InlineErrorView(error: .linkRulesFileInvalidInWindow(problem)) { action in
+            if case .custom(UserFacingError.showLinkRulesFile, _) = action { actions.showInFinder() }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.vertical, 8)
-        .accessibilityElement(children: .combine)
     }
 
     @ViewBuilder

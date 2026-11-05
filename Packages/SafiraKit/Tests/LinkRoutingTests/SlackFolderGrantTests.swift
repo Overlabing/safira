@@ -3,6 +3,7 @@
 
 import Foundation
 import LinkRouting
+import Preferences
 import Testing
 
 /// A fixture folder shaped like Slack's own, never Slack's real data.
@@ -13,19 +14,19 @@ private func fixtureFolder(workspaces: String = #"{"T0ACME1": {"domain": "acme",
     return folder
 }
 
-private func freshDefaults() -> UserDefaults {
-    UserDefaults(suiteName: "safira-test-\(UUID().uuidString)")!
+private func freshDefaults() -> InMemoryKeyValueStore {
+    InMemoryKeyValueStore()
 }
 
 @Suite struct SlackFolderGrantTests {
     @Test func withoutAGrantNothingIsKnownAndNothingFails() {
-        let grant = SlackFolderGrant(defaults: freshDefaults())
+        let grant = SlackFolderGrant(store: freshDefaults())
         #expect(!grant.isGranted)
         #expect(grant.teamID(forDomain: "acme") == nil)
     }
 
     @Test func aGrantedFolderGivesTheTeamIdentifierOfAWorkspaceDomain() throws {
-        let grant = SlackFolderGrant(defaults: freshDefaults())
+        let grant = SlackFolderGrant(store: freshDefaults())
         try grant.grant(try fixtureFolder())
 
         #expect(grant.isGranted)
@@ -36,12 +37,12 @@ private func freshDefaults() -> UserDefaults {
 
     @Test func theGrantIsKeptAcrossInstances() throws {
         let defaults = freshDefaults()
-        try SlackFolderGrant(defaults: defaults).grant(try fixtureFolder())
-        #expect(SlackFolderGrant(defaults: defaults).teamID(forDomain: "acme") == "T0ACME1")
+        try SlackFolderGrant(store: defaults).grant(try fixtureFolder())
+        #expect(SlackFolderGrant(store: defaults).teamID(forDomain: "acme") == "T0ACME1")
     }
 
     @Test func revokingTheGrantForgetsTheFolder() throws {
-        let grant = SlackFolderGrant(defaults: freshDefaults())
+        let grant = SlackFolderGrant(store: freshDefaults())
         try grant.grant(try fixtureFolder())
 
         grant.revoke()
@@ -51,7 +52,7 @@ private func freshDefaults() -> UserDefaults {
     }
 
     @Test func aFolderThatIsNotSlacksIsRefusedAndKeepsNothing() throws {
-        let grant = SlackFolderGrant(defaults: freshDefaults())
+        let grant = SlackFolderGrant(store: freshDefaults())
         let empty = FileManager.default.temporaryDirectory.appending(path: "safira-empty-\(UUID().uuidString)", directoryHint: .isDirectory)
         try FileManager.default.createDirectory(at: empty, withIntermediateDirectories: true)
 
@@ -60,7 +61,7 @@ private func freshDefaults() -> UserDefaults {
     }
 
     @Test func aGrantedFolderThatLaterDisappearsGivesNothingWithoutAnError() throws {
-        let grant = SlackFolderGrant(defaults: freshDefaults())
+        let grant = SlackFolderGrant(store: freshDefaults())
         let folder = try fixtureFolder()
         try grant.grant(folder)
         try FileManager.default.removeItem(at: folder)

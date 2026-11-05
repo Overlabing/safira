@@ -18,11 +18,11 @@ final class DiagnosticsController: NSObject, NSMenuItemValidation {
     private weak var registry: ProfileRegistry?
     private var sampling: Task<Void, Never>?
 
-    override init() {
+    init(preferenceProblems: PreferenceProblems) {
         logger = DiagnosticLogger(subsystem: Bundle.main.bundleIdentifier ?? "com.overlabing.safira",
                                   logsDirectory: StoreLayout.application.logsDirectory)
         super.init()
-        logger.setEnabled(settings.load().isDebugModeEnabled)
+        logger.setEnabled(settings.load(unreadable: preferenceProblems.record).isDebugModeEnabled)
     }
 
     func attach(to registry: ProfileRegistry) {
@@ -44,9 +44,7 @@ final class DiagnosticsController: NSObject, NSMenuItemValidation {
 
     @objc func exportDiagnosticLogs(_ sender: Any?) {
         guard logger.hasLogs else {
-            show(message: String(localized: "There are no diagnostic logs to export", comment: "Alert title"),
-                 detail: String(localized: "Turn on Debug mode in the Help menu, use Safira, then export again.",
-                                comment: "Alert text, under There are no diagnostic logs to export"))
+            UserFacingAlert.runModal(.noDiagnosticLogs)
             return
         }
         let panel = NSSavePanel()
@@ -64,7 +62,7 @@ final class DiagnosticsController: NSObject, NSMenuItemValidation {
                 try await logger.exportArchive(to: destination)
                 NSWorkspace.shared.activateFileViewerSelecting([destination])
             } catch {
-                show(message: String(localized: "The diagnostic logs could not be exported", comment: "Alert title"), detail: error.localizedDescription)
+                UserFacingAlert.runModal(.diagnosticLogsNotExported(error))
             }
         }
     }
@@ -98,12 +96,5 @@ final class DiagnosticsController: NSObject, NSMenuItemValidation {
         if let bytes = ProcessFootprint.currentBytes() {
             logger.record(.memory(footprintBytes: bytes))
         }
-    }
-
-    private func show(message: String, detail: String) {
-        let alert = NSAlert()
-        alert.messageText = message
-        alert.informativeText = detail
-        alert.runModal()
     }
 }

@@ -3,6 +3,8 @@
 
 import Diagnostics
 import Foundation
+import Preferences
+import SafiraCore
 import Testing
 
 @Suite struct LoggerTests {
@@ -93,16 +95,26 @@ import Testing
         #expect(tracker.didFinish(at: start.advanced(by: .seconds(1))) == nil)
     }
 
-    @Test func debugModeIsKeptAcrossLaunchesAndOffByDefault() throws {
-        let suite = "safira-test-\(UUID().uuidString)"
-        let defaults = try #require(UserDefaults(suiteName: suite))
-        defer { defaults.removePersistentDomain(forName: suite) }
-        let store = DiagnosticsSettingsStore(defaults: defaults)
+    @Test func debugModeIsKeptAcrossLaunchesAndOffByDefault() {
+        let values = InMemoryKeyValueStore()
+        let store = DiagnosticsSettingsStore(store: values)
 
-        #expect(store.load().isDebugModeEnabled == false)
+        #expect(store.load(unreadable: { _ in }).isDebugModeEnabled == false)
 
         store.save(DiagnosticsSettings(isDebugModeEnabled: true))
 
-        #expect(DiagnosticsSettingsStore(defaults: defaults).load().isDebugModeEnabled)
+        #expect(DiagnosticsSettingsStore(store: values).load(unreadable: { _ in }).isDebugModeEnabled)
+        #expect(values.data(forKey: "diagnostics.debugMode") == Data(#"{"isDebugModeEnabled":true}"#.utf8))
+    }
+
+    @Test func debugModeTheOldStoreKeptIsReadAfterTheMigration() throws {
+        let domain = "safira-test-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: domain))
+        defer { defaults.removePersistentDomain(forName: domain) }
+        defaults.set(true, forKey: "diagnostics.debugMode")
+
+        LegacyPreference.migrate([DiagnosticsSettingsStore.legacy], in: defaults, domain: domain)
+
+        #expect(DiagnosticsSettingsStore(store: defaults).load(unreadable: { _ in }).isDebugModeEnabled)
     }
 }

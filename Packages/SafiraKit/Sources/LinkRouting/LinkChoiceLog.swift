@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Antonin Carlin
 
 import Foundation
+import Preferences
 import SafiraCore
 
 /// Whether the Link picker keeps a log of the user's choices. Off until the user turns it on.
@@ -35,20 +36,24 @@ public struct LinkChoiceLogSettings: Hashable, Sendable, Codable {
 }
 
 /// Keeps the choice log setting across launches.
-public struct LinkChoiceLogSettingsStore: @unchecked Sendable {
-    private static let key = "linkPicker.choiceLog"
-    private let defaults: UserDefaults
+public struct LinkChoiceLogSettingsStore: Sendable {
+    public static let key = "linkPicker.choiceLog"
+    /// Until AppSupportKit, a plain Boolean.
+    public static let legacy = LegacyPreference(key: key, as: LinkChoiceLogSettings.self) {
+        LegacyPreference.bool($0).map { LinkChoiceLogSettings(isEnabled: $0) }
+    }
+    private let preference: Preference<LinkChoiceLogSettings>
 
-    public init(defaults: UserDefaults = .standard) {
-        self.defaults = defaults
+    public init(store: any KeyValueStore = UserDefaults.standard) {
+        preference = Preference(key: Self.key, defaultValue: LinkChoiceLogSettings(), store: store)
     }
 
-    public func load() -> LinkChoiceLogSettings {
-        LinkChoiceLogSettings(isEnabled: defaults.bool(forKey: Self.key))
+    public func load(unreadable: (PreferenceError) -> Void) -> LinkChoiceLogSettings {
+        preference.loadRestoringDefault(unreadable)
     }
 
     public func save(_ settings: LinkChoiceLogSettings) {
-        defaults.set(settings.isEnabled, forKey: Self.key)
+        try? preference.save(settings)
     }
 }
 

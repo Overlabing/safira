@@ -3,6 +3,7 @@
 
 import Commands
 import Onboarding
+import Preferences
 import SafiraCore
 import SwiftUI
 

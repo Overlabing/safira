@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Antonin Carlin
 
+import Preferences
+
 /// Whether Safira looks for updates by itself. Sparkle keeps the choice; this type only declares the default.
 public enum UpdateSettings {
     public static let automaticChecksTitle = String(localized: "Check for Updates Automatically", table: "SafiraCore",

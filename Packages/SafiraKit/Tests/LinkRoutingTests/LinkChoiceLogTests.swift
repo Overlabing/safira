@@ -3,6 +3,7 @@
 
 import Foundation
 import LinkRouting
+import Preferences
 import SafiraCore
 import Testing
 
@@ -28,15 +29,24 @@ private func logFile() -> URL {
     ])
 }
 
-@Test func theChoiceLogSettingIsKeptAcrossLaunchesAndIsOffInAFreshDefaultsDomain() throws {
-    let name = "safira-test-\(UUID().uuidString)"
-    let defaults = try #require(UserDefaults(suiteName: name))
-    defer { defaults.removePersistentDomain(forName: name) }
-    let store = LinkChoiceLogSettingsStore(defaults: defaults)
+@Test func theChoiceLogSettingIsKeptAcrossLaunchesAndIsOffInAnEmptyStore() {
+    let values = InMemoryKeyValueStore()
+    let store = LinkChoiceLogSettingsStore(store: values)
 
-    #expect(store.load().isEnabled == false)
+    #expect(store.load(unreadable: { _ in }).isEnabled == false)
     store.save(LinkChoiceLogSettings(isEnabled: true))
-    #expect(LinkChoiceLogSettingsStore(defaults: defaults).load().isEnabled == true)
+    #expect(LinkChoiceLogSettingsStore(store: values).load(unreadable: { _ in }).isEnabled == true)
+}
+
+@Test func theChoiceLogTheOldStoreTurnedOnStaysOnAfterTheMigration() throws {
+    let domain = "safira-test-\(UUID().uuidString)"
+    let defaults = try #require(UserDefaults(suiteName: domain))
+    defer { defaults.removePersistentDomain(forName: domain) }
+    defaults.set(true, forKey: "linkPicker.choiceLog")
+
+    LegacyPreference.migrate([LinkChoiceLogSettingsStore.legacy], in: defaults, domain: domain)
+
+    #expect(LinkChoiceLogSettingsStore(store: defaults).load(unreadable: { _ in }).isEnabled)
 }
 
 @MainActor

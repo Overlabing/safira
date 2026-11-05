@@ -596,6 +596,23 @@
         }
       }
     },
+    "Some settings were reset" : {
+      "comment" : "Banner title when a saved setting could not be read",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Some settings were reset"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Des réglages ont été réinitialisés"
+          }
+        }
+      }
+    },
     "Telemetry" : {
       "comment" : "Defaults: entry title",
       "localizations" : {

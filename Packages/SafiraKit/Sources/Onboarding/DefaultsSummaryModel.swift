@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Antonin Carlin
 
 import Observation
+import Preferences
 import SafiraCore
 
 /// The list of defaults as the user sees it: every user-facing entry of the registry, with the position of its switch.
@@ -19,7 +20,7 @@ public final class DefaultsSummaryModel {
     ///   - current: the position of a switch right now; nil for one it knows nothing about, which then starts at the
     ///     entry's default.
     ///   - apply: called with every change, in the Defaults window; nil during onboarding.
-    public init(entries: [DefaultEntry] = DefaultsRegistry.userFacing, current: (String) -> Bool? = { _ in nil },
+    public init(entries: [DefaultEntry] = DefaultsRegistry.entries.userFacing, current: (String) -> Bool? = { _ in nil },
                 apply: ((String, Bool) -> Void)? = nil) {
         self.entries = entries
         self.apply = apply
