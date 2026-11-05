@@ -21,7 +21,7 @@ final class LinkRulesWindowController: NSWindowController, NSWindowDelegate {
         self.profiles = profiles
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 640, height: 600),
                               styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
-        window.title = String(localized: "Link Rules")
+        window.title = String(localized: "Link Rules", comment: "Link rules window")
         window.isReleasedWhenClosed = false
         window.minSize = NSSize(width: 600, height: 540)
         window.isRestorable = false
@@ -63,33 +63,33 @@ final class LinkRulesWindowController: NSWindowController, NSWindowDelegate {
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.json]
         panel.nameFieldStringValue = "link-rules.json"
-        panel.message = String(localized: "Save your Link rules as a JSON file.")
+        panel.message = String(localized: "Save your Link rules as a JSON file.", comment: "Link rules window")
         guard panel.runModal() == .OK, let url = panel.url else { return }
         do {
             try data.write(to: url, options: .atomic)
         } catch {
-            alert(String(localized: "The Link rules could not be saved"), error.localizedDescription)
+            alert(String(localized: "The Link rules could not be saved", comment: "Link rules window"), error.localizedDescription)
         }
     }
 
     private func importFile() {
-        guard let data = pickFile(message: String(localized: "Choose a Link rules JSON file to import.")) else { return }
+        guard let data = pickFile(message: String(localized: "Choose a Link rules JSON file to import.", comment: "Link rules window")) else { return }
         // An invalid file is reported before the user is asked how to import it.
         if case .failure(let error) = LinkRuleSet.parse(data) {
-            alert(String(localized: "That file is not a valid Link rules file"),
-                  error.explanation + " " + String(localized: "Your existing rules were not changed."))
+            alert(String(localized: "That file is not a valid Link rules file", comment: "Link rules window"),
+                  error.explanation + " " + String(localized: "Your existing rules were not changed.", comment: "Link rules window"))
             return
         }
         let imported = (try? LinkRuleSet.parse(data).get().rules.count) ?? 0
         let existing = model.entries.count
         let ask = NSAlert()
-        ask.messageText = String(localized: "Import \(imported) rules")
+        ask.messageText = String(localized: "Import \(imported) rules", comment: "Link rules window")
         ask.informativeText = existing == 0
-            ? String(localized: "Your Link rules are empty, so the imported rules become your rules.")
-            : String(localized: "Add them after your \(existing) rules, which keep winning, or replace your rules with the imported ones.")
-        ask.addButton(withTitle: existing == 0 ? String(localized: "Import") : String(localized: "Add to the End"))
-        if existing > 0 { ask.addButton(withTitle: String(localized: "Replace My Rules")) }
-        ask.addButton(withTitle: String(localized: "Cancel"))
+            ? String(localized: "Your Link rules are empty, so the imported rules become your rules.", comment: "Link rules window")
+            : String(localized: "Add them after your \(existing) rules, which keep winning, or replace your rules with the imported ones.", comment: "Link rules window")
+        ask.addButton(withTitle: existing == 0 ? String(localized: "Import", comment: "Link rules window") : String(localized: "Add to the End", comment: "Link rules window"))
+        if existing > 0 { ask.addButton(withTitle: String(localized: "Replace My Rules", comment: "Link rules window")) }
+        ask.addButton(withTitle: String(localized: "Cancel", comment: "Link rules window"))
         let answer = ask.runModal()
         if answer == .alertFirstButtonReturn {
             model.importFile(data, mode: .addToEnd)
@@ -99,26 +99,26 @@ final class LinkRulesWindowController: NSWindowController, NSWindowDelegate {
     }
 
     private func importZenPicker() {
-        guard let data = pickFile(message: String(localized: "Choose a ZenPicker rules.json file to import.")) else { return }
+        guard let data = pickFile(message: String(localized: "Choose a ZenPicker rules.json file to import.", comment: "Link rules window")) else { return }
         let targets: [String]
         switch model.zenPickerTargets(in: data) {
         case .failure(let error):
-            alert(String(localized: "That is not a ZenPicker rules file"),
-                  error.explanation + " " + String(localized: "Your existing rules were not changed."))
+            alert(String(localized: "That is not a ZenPicker rules file", comment: "Link rules window"),
+                  error.explanation + " " + String(localized: "Your existing rules were not changed.", comment: "Link rules window"))
             return
         case .success(let found): targets = found
         }
         let profiles = profiles()
         guard !targets.isEmpty else {
-            alert(String(localized: "Nothing to import"), String(localized: "The file has no rule that names a target."))
+            alert(String(localized: "Nothing to import", comment: "Link rules window"), String(localized: "The file has no rule that names a target.", comment: "Link rules window"))
             return
         }
         let popups = targets.map { target -> (target: String, popup: NSPopUpButton) in
             let popup = NSPopUpButton(frame: .zero, pullsDown: false)
-            popup.addItem(withTitle: String(localized: "Do not import"))
+            popup.addItem(withTitle: String(localized: "Do not import", comment: "Link rules window"))
             popup.menu?.addItem(.separator())
             for profile in profiles { popup.addItem(withTitle: "\(profile.symbol) \(profile.name)") }
-            popup.setAccessibilityLabel(String(localized: "Profile for the target \(target)"))
+            popup.setAccessibilityLabel(String(localized: "Profile for the target \(target)", comment: "Link rules window"))
             return (target, popup)
         }
         let rows = popups.map { entry -> NSView in
@@ -135,11 +135,11 @@ final class LinkRulesWindowController: NSWindowController, NSWindowDelegate {
         stack.spacing = 8
         stack.frame = NSRect(x: 0, y: 0, width: 360, height: CGFloat(rows.count) * 30)
         let ask = NSAlert()
-        ask.messageText = String(localized: "Which Profile should each target open in?")
-        ask.informativeText = String(localized: "ZenPicker sends links to a target. Choose the Safira Profile that replaces each one. The rules are added after your own.")
+        ask.messageText = String(localized: "Which Profile should each target open in?", comment: "Link rules window")
+        ask.informativeText = String(localized: "ZenPicker sends links to a target. Choose the Safira Profile that replaces each one. The rules are added after your own.", comment: "Link rules window")
         ask.accessoryView = stack
-        ask.addButton(withTitle: String(localized: "Import"))
-        ask.addButton(withTitle: String(localized: "Cancel"))
+        ask.addButton(withTitle: String(localized: "Import", comment: "Link rules window"))
+        ask.addButton(withTitle: String(localized: "Cancel", comment: "Link rules window"))
         guard ask.runModal() == .alertFirstButtonReturn else { return }
         var mapping: [String: ProfileID] = [:]
         for (target, popup) in popups where popup.indexOfSelectedItem >= 2 {
@@ -155,7 +155,7 @@ final class LinkRulesWindowController: NSWindowController, NSWindowDelegate {
         panel.message = message
         guard panel.runModal() == .OK, let url = panel.url else { return nil }
         guard let data = try? Data(contentsOf: url) else {
-            alert(String(localized: "The file could not be read"), "")
+            alert(String(localized: "The file could not be read", comment: "Link rules window"), "")
             return nil
         }
         return data
@@ -219,6 +219,9 @@ private struct LinkRulesView: View {
         }
         .onDeleteCommand { model.deleteSelected() }
         .accessibilityLabel(Text("Link rules"))
+        // The overlay that says the list is empty is not part of the list's accessibility tree.
+        .accessibilityValue(model.entries.isEmpty
+            ? Text("No Link rules yet. Choose “Always” in the Link picker, or import a file.") : Text(verbatim: ""))
     }
 
     private func row(_ entry: LinkRuleEntry) -> some View {

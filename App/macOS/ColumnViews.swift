@@ -50,7 +50,7 @@ struct BrowserControls: View {
         HStack(spacing: 0) {
             Button(action: actions.editAddress) {
                 FieldPill(systemImage: symbol(for: address), title: address.map { AddressDisplay($0).host } ?? "",
-                          placeholder: FloatingCommandBar.placeholder)
+                          placeholder: Self.placeholder)
             }
             .buttonStyle(PressedOpacityStyle())
             .help(address?.absoluteString ?? FloatingCommandBar.placeholder)
@@ -59,11 +59,11 @@ struct BrowserControls: View {
             .accessibilityValue(Text(verbatim: address?.absoluteString ?? ""))
             .accessibilityHint(Text("Opens the Command bar"))
             HStack(spacing: 0) {
-                IconButton(String(localized: "Back"), systemImage: "chevron.left") { session.goBack() }
+                IconButton(String(localized: "Back", comment: "Sidebar"), systemImage: "chevron.left") { session.goBack() }
                     .disabled(tab?.state.canGoBack != true)
-                IconButton(String(localized: "Forward"), systemImage: "chevron.right") { session.goForward() }
+                IconButton(String(localized: "Forward", comment: "Sidebar"), systemImage: "chevron.right") { session.goForward() }
                     .disabled(tab?.state.canGoForward != true)
-                IconButton(String(localized: "Reload"), systemImage: "arrow.clockwise") { session.reload() }
+                IconButton(String(localized: "Reload", comment: "Sidebar"), systemImage: "arrow.clockwise") { session.reload() }
                     .disabled(address == nil)
             }
             .padding(.trailing, tokens.spacing.listMargin - tokens.spacing.rowInsetHorizontal)
@@ -74,6 +74,11 @@ struct BrowserControls: View {
         .background { Color.clear.contentShape(.rect).gesture(WindowDragGesture()) }
         .padding(.bottom, tokens.spacing.statusLineToList)
     }
+
+    /// Shorter than the Command bar's own placeholder, which the help tag shows in full: the pill shares its row with
+    /// three buttons and the French text did not fit.
+    static let placeholder = String(localized: "Search or address",
+                                    comment: "Sidebar: placeholder of the address pill with no page; keep it short")
 
     /// A lock for an encrypted page, a plain globe otherwise; a magnifying glass with no page.
     private func symbol(for address: URL?) -> String {
@@ -131,12 +136,12 @@ struct TabRowView: View {
 
     private var title: String {
         if let title = tab.state.title, !title.isEmpty { return title }
-        return tab.address.map { AddressDisplay($0).host } ?? String(localized: "New Tab")
+        return tab.address.map { AddressDisplay($0).host } ?? String(localized: "New Tab", comment: "Sidebar")
     }
 
     private var subtitle: String {
-        if tab.state.isPlayingMedia { return String(localized: "Playing") }
-        if tab.state.isLoading { return String(localized: "Loading") }
+        if tab.state.isPlayingMedia { return String(localized: "Playing", comment: "Sidebar") }
+        if tab.state.isLoading { return String(localized: "Loading", comment: "Sidebar") }
         return tab.address.map { AddressDisplay($0).host } ?? ""
     }
 
@@ -148,11 +153,11 @@ struct TabRowView: View {
     /// The Tab's state then its place, as VoiceOver reads it after the title: "Loading, Playing media, 2 of 5".
     private var accessibilityState: String {
         var parts: [String] = []
-        if tab.state.isLoading { parts.append(String(localized: "Loading")) }
-        if tab.state.isPlayingMedia { parts.append(String(localized: "Playing media")) }
-        if tab.isPinned { parts.append(String(localized: "Pinned")) }
+        if tab.state.isLoading { parts.append(String(localized: "Loading", comment: "Sidebar")) }
+        if tab.state.isPlayingMedia { parts.append(String(localized: "Playing media", comment: "Sidebar")) }
+        if tab.isPinned { parts.append(String(localized: "Pinned", comment: "Sidebar")) }
         if let host = tab.address.map({ AddressDisplay($0).host }) { parts.append(host) }
-        parts.append(String(localized: "\(position) of \(count)"))
+        parts.append(String(localized: "\(position) of \(count)", comment: "Sidebar"))
         return parts.joined(separator: ", ")
     }
 }
@@ -166,7 +171,7 @@ struct NewTabRow: View {
 
     var body: some View {
         WithColorRoles { roles in
-            ListRow(String(localized: "New Tab"), state: RowState(isHovered: isHovered)) {
+            ListRow(String(localized: "New Tab", comment: "Sidebar"), state: RowState(isHovered: isHovered)) {
                 Tile(.tintedSymbol("plus"))
             } trailing: {
                 if let shortcut {

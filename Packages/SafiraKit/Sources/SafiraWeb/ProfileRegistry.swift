@@ -41,7 +41,8 @@ public final class ProfileRegistry {
     @ObservationIgnored private let dataStoreRemovalAttempts: Int
 
     /// The Profile a first launch starts with. It has no search engine: the Command bar asks at the first search.
-    public static let firstProfileName = "Default"
+    public static let firstProfileName = String(localized: "Default", table: "SafiraWeb", bundle: .module,
+                                                comment: "Name of the Profile a first launch creates")
 
     /// Opens the Profiles listed in `app.sqlite` under `layout`, creating the first one when none is listed, and
     /// finishes erasing the Profiles whose deletion was cut short. When the app database cannot be opened, Safira still
@@ -329,13 +330,14 @@ public final class ProfileRegistry {
     private func database(for id: ProfileID) -> ProfileDatabase {
         if let layout {
             do {
-                return try ProfileDatabase(file: layout.profileDatabaseFile(for: id))
+                return try ProfileDatabase(file: layout.profileDatabaseFile(for: id),
+                                           firstSpaceName: ProfileSession.initialSpaceName)
             } catch {
                 onError("The Profile's database could not be opened; its Tabs will not be saved", error)
             }
         }
         // An in-memory database cannot fail to open.
-        return try! ProfileDatabase.inMemory()
+        return try! ProfileDatabase.inMemory(firstSpaceName: ProfileSession.initialSpaceName)
     }
 
     private func remember(_ id: ProfileID) {

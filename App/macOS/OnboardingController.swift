@@ -36,7 +36,7 @@ final class OnboardingController {
         let actions = defaults.defaultBrowserActions
         let view = OnboardingView(model: model, isDefaultBrowser: actions.isDefault, makeDefaultBrowser: actions.make)
         let sheet = NSWindow.sheet(view)
-        sheet.title = String(localized: "Welcome to Safira")
+        sheet.title = String(localized: "Welcome to Safira", comment: "Onboarding sheet title")
         self.sheet = sheet
         window.beginSheet(sheet)
     }

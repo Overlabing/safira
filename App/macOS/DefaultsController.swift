@@ -64,8 +64,10 @@ final class DefaultsController: NSObject {
         let model = DefaultsSummaryModel(current: { [unowned self] in isOn($0) }, apply: { [unowned self] id, isOn in
             set(id, isOn: isOn)
         })
-        model.displayedValues["search.engine"] = registry.active.session.settings.searchEngine?.name ?? "Not chosen"
-        model.displayedValues["shortcuts.preset"] = shortcuts.configuration.preset?.data.name ?? "Safira's own shortcuts"
+        model.displayedValues["search.engine"] = registry.active.session.settings.searchEngine?.name
+            ?? String(localized: "Not chosen", comment: "Defaults window: the value of Search engine before a choice")
+        model.displayedValues["shortcuts.preset"] = shortcuts.configuration.preset?.data.name
+            ?? String(localized: "Safira's own shortcuts", comment: "Defaults window: the value of Shortcut preset without a preset")
         return model
     }
 
@@ -103,7 +105,7 @@ final class DefaultsController: NSObject {
         let window = self.window ?? {
             let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 600, height: 640),
                                   styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
-            window.title = String(localized: "Defaults")
+            window.title = String(localized: "Defaults", comment: "Window title")
             window.isRestorable = false
             window.isReleasedWhenClosed = false
             window.center()

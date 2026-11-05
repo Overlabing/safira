@@ -1,0 +1,78 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "NSCameraUsageDescription": {
+      "comment": "System permission prompt, from Info.plist",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A website you allow in the current Profile can use the camera. Safira never uses it for itself."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un site web que vous autorisez dans le profil actuel peut utiliser la caméra. Safira ne l’utilise jamais pour lui-même."
+          }
+        }
+      }
+    },
+    "NSLocationUsageDescription": {
+      "comment": "System permission prompt, from Info.plist",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A website you allow in the current Profile can read your location. Safira never uses it for itself."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un site web que vous autorisez dans le profil actuel peut connaître votre position. Safira ne l’utilise jamais pour lui-même."
+          }
+        }
+      }
+    },
+    "NSLocationWhenInUseUsageDescription": {
+      "comment": "System permission prompt, from Info.plist",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A website you allow in the current Profile can read your location. Safira never uses it for itself."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un site web que vous autorisez dans le profil actuel peut connaître votre position. Safira ne l’utilise jamais pour lui-même."
+          }
+        }
+      }
+    },
+    "NSMicrophoneUsageDescription": {
+      "comment": "System permission prompt, from Info.plist",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A website you allow in the current Profile can use the microphone. Safira never uses it for itself."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un site web que vous autorisez dans le profil actuel peut utiliser le micro. Safira ne l’utilise jamais pour lui-même."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

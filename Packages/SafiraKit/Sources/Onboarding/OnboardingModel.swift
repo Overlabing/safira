@@ -77,7 +77,11 @@ public final class OnboardingModel {
     }
 
     private func refreshDisplayedValues() {
-        defaults.displayedValues["search.engine"] = searchEngine?.name ?? "Not chosen"
-        defaults.displayedValues["shortcuts.preset"] = shortcutPreset?.data.name ?? "Safira's own shortcuts"
+        defaults.displayedValues["search.engine"] = searchEngine?.name
+            ?? String(localized: "Not chosen", table: "Onboarding", bundle: .module,
+                      comment: "Onboarding, defaults step: the value of Search engine before a choice")
+        defaults.displayedValues["shortcuts.preset"] = shortcutPreset?.data.name
+            ?? String(localized: "Safira's own shortcuts", table: "Onboarding", bundle: .module,
+                      comment: "Onboarding, defaults step: the value of Shortcut preset without a preset")
     }
 }

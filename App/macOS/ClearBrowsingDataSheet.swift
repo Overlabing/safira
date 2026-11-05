@@ -7,9 +7,9 @@ import SwiftUI
 extension ClearRange {
     var title: String {
         switch self {
-        case .lastHour: String(localized: "Last hour")
-        case .lastDay: String(localized: "Last day")
-        case .allTime: String(localized: "All time")
+        case .lastHour: String(localized: "Last hour", comment: "Clear history and website data sheet")
+        case .lastDay: String(localized: "Last day", comment: "Clear history and website data sheet")
+        case .allTime: String(localized: "All time", comment: "Clear history and website data sheet")
         }
     }
 }
@@ -27,6 +27,7 @@ struct ClearBrowsingDataSheet: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Clear history and website data of “\(profileName)”")
                 .font(.headline)
+                .accessibilityAddTraits(.isHeader)
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityAddTraits(.isHeader)
             Text("""
@@ -56,8 +57,8 @@ struct ClearBrowsingDataSheet: View {
                 Button(confirmTitle, role: .destructive) { range.map(clear) }
                     .keyboardShortcut(.defaultAction)
                     .disabled(range == nil)
-                    .accessibilityLabel(range.map { String(localized: "Clear \($0.title) of “\(profileName)”") }
-                        ?? String(localized: "Clear"))
+                    .accessibilityLabel(range.map { String(localized: "Clear \($0.title) of “\(profileName)”", comment: "Clear history and website data sheet") }
+                        ?? String(localized: "Clear", comment: "Clear history and website data sheet"))
             }
         }
         .padding(20)
@@ -76,6 +77,6 @@ struct ClearBrowsingDataSheet: View {
     }
 
     private var confirmTitle: String {
-        range.map { String(localized: "Clear \($0.title)") } ?? String(localized: "Clear")
+        range.map { String(localized: "Clear \($0.title)", comment: "Clear history and website data sheet") } ?? String(localized: "Clear", comment: "Clear history and website data sheet")
     }
 }

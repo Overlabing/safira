@@ -36,6 +36,10 @@ public struct PresetData: Sendable {
     /// ISO date (yyyy-MM-dd) the source was last read.
     public let checked: String
     public let note: String?
+    /// `note` in the user's language. A note is data, not code, so its translation is a manual entry of the catalog.
+    public var localizedNote: String? {
+        note.map { Bundle.module.localizedString(forKey: $0, value: $0, table: "Commands") }
+    }
     public let bindings: [CommandID: Binding]
     /// Commands the browser has no equivalent for, each with the reason. Such a command takes Safira's default shortcut
     /// when the preset leaves that key free (see `ShortcutConfiguration.bindings`).
@@ -99,11 +103,14 @@ extension ShortcutPreset {
         [
             DefaultEntry(
                 id: "shortcuts.preset",
-                title: "Shortcut preset",
-                value: "Chosen by you",
-                explanation: "Zen, Arc or Safari shortcuts. A command the preset has no equivalent for keeps Safira's own "
-                    + "shortcut. Without a preset, Safira's own shortcuts apply. You can change any shortcut afterwards.",
-                whereToChange: "Safira menu, Shortcuts…",
+                title: String(localized: "Shortcut preset", table: "Commands", bundle: .module, comment: "Defaults: entry title"),
+                value: String(localized: "Chosen by you", table: "Commands", bundle: .module, comment: "Defaults: value of Shortcut preset"),
+                explanation: String(localized: """
+                    Zen, Arc or Safari shortcuts. A command the preset has no equivalent for keeps Safira's own \
+                    shortcut. Without a preset, Safira's own shortcuts apply. You can change any shortcut afterwards.
+                    """, table: "Commands", bundle: .module, comment: "Defaults: explanation of Shortcut preset"),
+                whereToChange: String(localized: "Safira menu, Shortcuts…", table: "Commands", bundle: .module,
+                                      comment: "Defaults: where to change it; a menu and its item"),
                 control: .choice
             ),
         ]

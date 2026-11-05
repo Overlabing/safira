@@ -163,8 +163,8 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         presentation.toggleCompact()
         compactModeStore.save(presentation)
         layout?.apply(presentation, animated: true)
-        announce(presentation.isCompact ? String(localized: "Compact mode on, sidebar hidden")
-                                        : String(localized: "Compact mode off, sidebar shown"))
+        announce(presentation.isCompact ? String(localized: "Compact mode on, sidebar hidden", comment: "Main window")
+                                        : String(localized: "Compact mode off, sidebar shown", comment: "Main window"))
         if hadFocus {
             if presentation.isCompact { showPage() } else { focusTabList(nil) }
         }
@@ -300,7 +300,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         case #selector(closeTab(_:)): return tab != nil
         case #selector(reopenClosedTab(_:)): return session.canReopenClosedTab
         case #selector(togglePin(_:)):
-            menuItem.title = tab?.isPinned == true ? String(localized: "Unpin Tab") : String(localized: "Pin Tab")
+            menuItem.title = tab?.isPinned == true ? String(localized: "Unpin Tab", comment: "Main window") : String(localized: "Pin Tab", comment: "Main window")
             return tab != nil
         case #selector(moveTabUp(_:)): return tab.map { session.canMove($0.id, by: -1) } ?? false
         case #selector(moveTabDown(_:)): return tab.map { session.canMove($0.id, by: 1) } ?? false
@@ -323,7 +323,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
             menuItem.state = presentation.isCompact ? .on : .off
             return true
         case #selector(toggleRevealedSidebar(_:)):
-            menuItem.title = presentation.isRevealed ? String(localized: "Hide Sidebar") : String(localized: "Show Sidebar")
+            menuItem.title = presentation.isRevealed ? String(localized: "Hide Sidebar", comment: "Main window") : String(localized: "Show Sidebar", comment: "Main window")
             return presentation.isCompact
         case #selector(toggleFraudulentSiteWarning(_:)):
             menuItem.state = registry.active.webContentSettings.isFraudulentSiteWarningEnabled ? .on : .off
@@ -343,7 +343,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         NSApp.activate()
         commandBar.dismiss(returningFocus: false)
         render()
-        announce(String(localized: "Profile: \(registry.activeProfile.name)"))
+        announce(String(localized: "Profile: \(registry.activeProfile.name)", comment: "Main window"))
         showPage()
     }
 
@@ -366,9 +366,9 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         if id != nil, space == nil { return }
         let count = session.spaces.count
         let editor = SpaceEditor(
-            title: space == nil ? String(localized: "New Space") : String(localized: "Edit Space"),
-            confirmTitle: space == nil ? String(localized: "Create") : String(localized: "Save"),
-            name: space?.name ?? String(localized: "Space \(count + 1)"),
+            title: space == nil ? String(localized: "New Space", comment: "Main window") : String(localized: "Edit Space", comment: "Main window"),
+            confirmTitle: space == nil ? String(localized: "Create", comment: "Main window") : String(localized: "Save", comment: "Main window"),
+            name: space?.name ?? String(localized: "Space \(count + 1)", comment: "Main window"),
             emoji: space?.emoji ?? Self.newSpaceEmoji[count % Self.newSpaceEmoji.count],
             paletteID: space?.paletteID ?? ThemeCatalog.nextID(avoiding: session.spaces.map(\.paletteID)),
             save: { [weak self] name, emoji, paletteID in
@@ -401,9 +401,9 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         let existing = id.flatMap { id in session.activeSpace.folder(id) }
         if id != nil, existing == nil { return }
         let editor = FolderEditor(
-            title: existing == nil ? String(localized: "New Folder") : String(localized: "Rename Folder"),
-            confirmTitle: existing == nil ? String(localized: "Create") : String(localized: "Rename"),
-            name: existing?.name ?? String(localized: "New Folder"),
+            title: existing == nil ? String(localized: "New Folder", comment: "Main window") : String(localized: "Rename Folder", comment: "Main window"),
+            confirmTitle: existing == nil ? String(localized: "Create", comment: "Main window") : String(localized: "Rename", comment: "Main window"),
+            name: existing?.name ?? String(localized: "New Folder", comment: "Main window"),
             save: { [weak self] name in
                 guard let self else { return }
                 if let id {
@@ -430,13 +430,13 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     private func confirmDeletion(of id: SpaceID) {
         guard let window, session.canDeleteSpace, let space = session.spaces.first(where: { $0.id == id }) else { return }
         let alert = NSAlert()
-        alert.messageText = String(localized: "Delete the Space “\(space.name)”?")
+        alert.messageText = String(localized: "Delete the Space “\(space.name)”?", comment: "Main window")
         let count = space.allTabs.count
-        let tabs = count == 0 ? String(localized: "It has no Tab.")
-            : String(AttributedString(localized: "Its ^[\(count) Tab](inflect: true) will close.").characters)
-        alert.informativeText = tabs + " " + String(localized: "The Profile's logins and history are kept.")
-        alert.addButton(withTitle: String(localized: "Delete Space")).hasDestructiveAction = true
-        alert.addButton(withTitle: String(localized: "Cancel"))
+        let tabs = count == 0 ? String(localized: "It has no Tab.", comment: "Main window")
+            : String(localized: "Its \(count) Tabs will close.", comment: "Alert text of Delete Space; a count of Tabs, at least 1")
+        alert.informativeText = tabs + " " + String(localized: "The Profile's logins and history are kept.", comment: "Main window")
+        alert.addButton(withTitle: String(localized: "Delete Space", comment: "Main window")).hasDestructiveAction = true
+        alert.addButton(withTitle: String(localized: "Cancel", comment: "Main window"))
         alert.beginSheetModal(for: window) { [weak self] response in
             guard response == .alertFirstButtonReturn else { return }
             self?.session.deleteSpace(id)
@@ -454,7 +454,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         guard registry.activeProfileID != before else { return }
         commandBar.dismiss(returningFocus: false)
         render()
-        announce(String(localized: "Profile: \(registry.activeProfile.name)"))
+        announce(String(localized: "Profile: \(registry.activeProfile.name)", comment: "Main window"))
         if !showPage() { focusCommandBar(nil) }
     }
 
@@ -465,9 +465,9 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         if id != nil, profile == nil { return }
         let count = registry.profiles.count
         let editor = ProfileEditor(
-            title: profile == nil ? String(localized: "New Profile") : String(localized: "Edit Profile"),
-            confirmTitle: profile == nil ? String(localized: "Create") : String(localized: "Save"),
-            name: profile?.name ?? String(localized: "Profile \(count + 1)"),
+            title: profile == nil ? String(localized: "New Profile", comment: "Main window") : String(localized: "Edit Profile", comment: "Main window"),
+            confirmTitle: profile == nil ? String(localized: "Create", comment: "Main window") : String(localized: "Save", comment: "Main window"),
+            name: profile?.name ?? String(localized: "Profile \(count + 1)", comment: "Main window"),
             symbol: profile?.symbol ?? Self.newProfileSymbols[count % Self.newProfileSymbols.count],
             paletteID: profile?.paletteID ?? ThemeCatalog.nextID(avoiding: registry.profiles.map(\.paletteID)),
             asksForSearchEngine: profile == nil,
@@ -504,13 +504,13 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         else { return }
         let alert = NSAlert()
         alert.alertStyle = .critical
-        alert.messageText = String(localized: "Delete the Profile “\(profile.name)”?")
+        alert.messageText = String(localized: "Delete the Profile “\(profile.name)”?", comment: "Main window")
         alert.informativeText = String(localized: """
             Everything “\(profile.name)” holds is erased: its logins, cookies and website data, its history, its \
             Spaces and Tabs, and its settings. This cannot be undone.
-            """)
-        alert.addButton(withTitle: String(localized: "Delete “\(profile.name)”")).hasDestructiveAction = true
-        alert.addButton(withTitle: String(localized: "Cancel")).keyEquivalent = "\u{1b}"
+            """, comment: "Alert text of Delete Profile; the argument is the Profile name")
+        alert.addButton(withTitle: String(localized: "Delete “\(profile.name)”", comment: "Main window")).hasDestructiveAction = true
+        alert.addButton(withTitle: String(localized: "Cancel", comment: "Main window")).keyEquivalent = "\u{1b}"
         alert.beginSheetModal(for: window) { [weak self] response in
             guard response == .alertFirstButtonReturn, let self else { return }
             Task { @MainActor in
@@ -521,7 +521,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
                     self.showDeletionError(error)
                 }
                 if wasActive {
-                    self.announce(String(localized: "Profile: \(self.registry.activeProfile.name)"))
+                    self.announce(String(localized: "Profile: \(self.registry.activeProfile.name)", comment: "Main window"))
                     if !self.showPage() { self.focusCommandBar(nil) }
                 }
             }
@@ -543,7 +543,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
                 Task { @MainActor in
                     do {
                         try await context.clearBrowsingData(range)
-                        self.announce(String(localized: "Cleared \(range.title) of “\(profile.name)”"))
+                        self.announce(String(localized: "Cleared \(range.title) of “\(profile.name)”", comment: "Main window"))
                     } catch {
                         self.showClearingError(profileName: profile.name)
                     }
@@ -565,16 +565,16 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     private func showClearingError(profileName: String) {
         guard let window else { return }
         let alert = NSAlert()
-        alert.messageText = String(localized: "The history of “\(profileName)” could not be cleared")
-        alert.informativeText = String(localized: "Its website data was cleared. Try clearing the history again.")
+        alert.messageText = String(localized: "The history of “\(profileName)” could not be cleared", comment: "Main window")
+        alert.informativeText = String(localized: "Its website data was cleared. Try clearing the history again.", comment: "Main window")
         alert.beginSheetModal(for: window)
     }
 
     private func showDeletionError(_ error: any Error) {
         guard let window else { return }
         let alert = NSAlert()
-        alert.messageText = String(localized: "Some of the Profile’s website data could not be erased yet")
-        alert.informativeText = String(localized: "Safira erases it the next time it opens.")
+        alert.messageText = String(localized: "Some of the Profile’s website data could not be erased yet", comment: "Main window")
+        alert.informativeText = String(localized: "Safira erases it the next time it opens.", comment: "Main window")
         alert.beginSheetModal(for: window)
     }
 
@@ -590,10 +590,10 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     private func applyReveal() {
         layout?.apply(presentation, animated: true)
         if presentation.isRevealed {
-            announce(String(localized: "Sidebar shown"))
+            announce(String(localized: "Sidebar shown", comment: "Main window"))
             focusTabList(nil)
         } else {
-            announce(String(localized: "Sidebar hidden"))
+            announce(String(localized: "Sidebar hidden", comment: "Main window"))
             returnFocusToPage()
         }
     }
@@ -603,7 +603,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         guard presentation.isCompact, !presentation.isRevealed else { return }
         presentation.reveal()
         layout?.apply(presentation, animated: true)
-        announce(String(localized: "Sidebar shown"))
+        announce(String(localized: "Sidebar shown", comment: "Main window"))
     }
 
     private func hideSidebarAfterPointerLeft() {
@@ -677,7 +677,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         bannerHost?.isHidden = banner == nil
         guard let banner, banner.id != announcedBannerID else { return }
         announcedBannerID = banner.id
-        announce(String(localized: "This link was already open, so Safira showed that Tab. A button offers to open it in a new Tab."))
+        announce(String(localized: "This link was already open, so Safira showed that Tab. A button offers to open it in a new Tab.", comment: "Main window"))
         let session = session
         Task { @MainActor [weak session] in
             try? await Task.sleep(for: SafiraDesign.matchBannerLifetime)

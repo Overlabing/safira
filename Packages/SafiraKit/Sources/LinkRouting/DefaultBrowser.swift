@@ -55,11 +55,13 @@ extension DefaultBrowser {
         [
             DefaultEntry(
                 id: "linkPicker.defaultBrowser",
-                title: "Make Safira the default browser",
-                value: "Offered",
-                explanation: "Links from other apps then come to Safira, and the Link picker asks which Profile receives "
-                    + "each one, unless a Link rule decides. macOS asks you to confirm.",
-                whereToChange: "Safira menu",
+                title: String(localized: "Make Safira the default browser", table: "LinkRouting", bundle: .module, comment: "Defaults: entry title"),
+                value: String(localized: "Offered", table: "LinkRouting", bundle: .module, comment: "Defaults: value of Make Safira the default browser"),
+                explanation: String(localized: """
+                    Links from other apps then come to Safira, and the Link picker asks which Profile receives each \
+                    one, unless a Link rule decides. macOS asks you to confirm.
+                    """, table: "LinkRouting", bundle: .module, comment: "Defaults: explanation of Make Safira the default browser"),
+                whereToChange: DefaultWording.safiraMenu,
                 control: .action
             ),
         ]

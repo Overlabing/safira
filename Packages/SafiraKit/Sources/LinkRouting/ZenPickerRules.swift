@@ -13,9 +13,11 @@ public enum ZenPickerImportError: Error, Hashable, Sendable {
 
     public var explanation: String {
         switch self {
-        case .notJSON: "The file is not valid JSON."
-        case .notAList: "The file is not a list of rules."
-        case .invalidRule(let index): "Rule \(index + 1) is not an object of text fields."
+        case .notJSON: String(localized: "The file is not valid JSON.", table: "LinkRouting", bundle: .module, comment: "ZenPicker import error")
+        case .notAList: String(localized: "The file is not a list of rules.", table: "LinkRouting", bundle: .module, comment: "ZenPicker import error")
+        case .invalidRule(let index):
+            String(localized: "Rule \(index + 1) is not an object of text fields.", table: "LinkRouting", bundle: .module,
+                   comment: "ZenPicker import error; the argument is the rule's position from 1")
         }
     }
 }

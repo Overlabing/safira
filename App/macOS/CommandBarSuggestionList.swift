@@ -90,7 +90,7 @@ private struct SuggestionRow: View {
     }
 
     private var accessibilityValue: String {
-        let kind = isOpenTab ? String(localized: "Open Tab") : String(localized: "History")
+        let kind = isOpenTab ? String(localized: "Open Tab", comment: "Command bar: kind of a suggestion, read by VoiceOver") : String(localized: "History", comment: "Command bar: kind of a suggestion, read by VoiceOver")
         return kind + ", " + suggestion.address.absoluteString
     }
 }

@@ -76,7 +76,7 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSMen
         if let origin { window?.setFrameTopLeftPoint(origin) }
         showWindow(nil)
         focusCommandBar(nil)
-        announce(String(localized: "Private window. Nothing is saved. Attached to the Profile \(context.parent.name)."))
+        announce(String(localized: "Private window. Nothing is saved. Attached to the Profile \(context.parent.name).", comment: "Private window"))
     }
 
     // MARK: Menu actions
@@ -263,8 +263,8 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSMen
 
     /// The window title always says it is a Private window, which is also what VoiceOver reads when the window is key.
     private static func title(for page: String?) -> String {
-        guard let page, !page.isEmpty else { return String(localized: "Private Window") }
-        return String(localized: "Private Window – \(page)")
+        guard let page, !page.isEmpty else { return String(localized: "Private Window", comment: "Private window") }
+        return String(localized: "Private Window – \(page)", comment: "Private window")
     }
 
     private func layOut(in window: NSWindow) {
