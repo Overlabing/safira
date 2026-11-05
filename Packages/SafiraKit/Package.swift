@@ -4,6 +4,10 @@
 import PackageDescription
 
 // Dependency direction: docs/architecture-v1.md §2.1. Only SafiraWeb links WebKit.
+let preferences = Target.Dependency.product(name: "Preferences", package: "AppSupportKit")
+let userFacing = Target.Dependency.product(name: "UserFacing", package: "AppSupportKit")
+let defaultApps = Target.Dependency.product(name: "DefaultApps", package: "AppSupportKit")
+
 let package = Package(
     name: "SafiraKit",
     defaultLocalization: "en",
@@ -26,7 +30,7 @@ let package = Package(
         .package(url: "https://github.com/Overlabing/AppSupportKit", exact: "0.1.1"),
     ],
     targets: [
-        .target(name: "SafiraCore", resources: [.process("Resources")]),
+        .target(name: "SafiraCore", dependencies: [preferences, userFacing], resources: [.process("Resources")]),
         .target(name: "Appearance", dependencies: [
             "SafiraCore",
             .product(name: "ColorCore", package: "ThemeKit"),
@@ -39,7 +43,7 @@ let package = Package(
             .product(name: "ColorPlatform", package: "ThemeKit"),
             .product(name: "DesignKit", package: "ThemeKit"),
         ]),
-        .testTarget(name: "SafiraCoreTests", dependencies: ["SafiraCore"]),
+        .testTarget(name: "SafiraCoreTests", dependencies: ["SafiraCore", preferences, userFacing]),
         .target(name: "SafiraStore", dependencies: ["SafiraCore", .product(name: "GRDB", package: "GRDB.swift")]),
         .testTarget(name: "SafiraStoreTests", dependencies: [
             "SafiraStore", "SafiraCore", .product(name: "GRDB", package: "GRDB.swift"),
@@ -54,16 +58,17 @@ let package = Package(
         .testTarget(name: "SafiraWebTests", dependencies: [
             "SafiraWeb", "SafiraStore", "SafiraSession", "SafiraCore", "Diagnostics",
         ]),
-        .target(name: "Commands", dependencies: ["SafiraCore"], resources: [.copy("Presets"), .process("Resources")]),
-        .testTarget(name: "CommandsTests", dependencies: ["Commands"]),
-        .target(name: "LinkRouting", dependencies: ["SafiraCore"], resources: [.process("Resources")]),
-        .testTarget(name: "LinkRoutingTests", dependencies: ["LinkRouting", "SafiraCore"]),
+        .target(name: "Commands", dependencies: ["SafiraCore", preferences],
+                resources: [.copy("Presets"), .process("Resources")]),
+        .testTarget(name: "CommandsTests", dependencies: ["Commands", preferences]),
+        .target(name: "LinkRouting", dependencies: ["SafiraCore", preferences, defaultApps], resources: [.process("Resources")]),
+        .testTarget(name: "LinkRoutingTests", dependencies: ["LinkRouting", "SafiraCore", preferences, defaultApps]),
         .target(name: "LinkPickerUI", dependencies: ["LinkRouting", "SafiraCore"], resources: [.process("Resources")]),
         .testTarget(name: "LinkPickerUITests", dependencies: ["LinkPickerUI", "LinkRouting", "SafiraCore"]),
-        .target(name: "Diagnostics", dependencies: ["SafiraCore"], resources: [.process("Resources")]),
-        .testTarget(name: "DiagnosticsTests", dependencies: ["Diagnostics", "SafiraCore"]),
-        .target(name: "Onboarding", dependencies: ["SafiraCore", "Commands", "LinkRouting", "Diagnostics"],
+        .target(name: "Diagnostics", dependencies: ["SafiraCore", preferences], resources: [.process("Resources")]),
+        .testTarget(name: "DiagnosticsTests", dependencies: ["Diagnostics", "SafiraCore", preferences]),
+        .target(name: "Onboarding", dependencies: ["SafiraCore", "Commands", "LinkRouting", "Diagnostics", preferences],
                 resources: [.process("Resources")]),
-        .testTarget(name: "OnboardingTests", dependencies: ["Onboarding", "Commands", "SafiraCore"]),
+        .testTarget(name: "OnboardingTests", dependencies: ["Onboarding", "Commands", "SafiraCore", preferences]),
     ]
 )

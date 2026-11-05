@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Antonin Carlin
 
 import Foundation
+import Preferences
 import SafiraCore
 
 /// Whether the Link picker asks for the Space after the Profile. Off until the user turns it on: without it a link
@@ -36,20 +37,24 @@ public struct AskForSpaceSettings: Hashable, Sendable, Codable {
 }
 
 /// Keeps the setting across launches.
-public struct AskForSpaceSettingsStore: @unchecked Sendable {
-    private static let key = "linkPicker.askForSpace"
-    private let defaults: UserDefaults
+public struct AskForSpaceSettingsStore: Sendable {
+    public static let key = "linkPicker.askForSpace"
+    /// Until AppSupportKit, a plain Boolean.
+    public static let legacy = LegacyPreference(key: key, as: AskForSpaceSettings.self) {
+        LegacyPreference.bool($0).map { AskForSpaceSettings(isEnabled: $0) }
+    }
+    private let preference: Preference<AskForSpaceSettings>
 
-    public init(defaults: UserDefaults = .standard) {
-        self.defaults = defaults
+    public init(store: any KeyValueStore = UserDefaults.standard) {
+        preference = Preference(key: Self.key, defaultValue: AskForSpaceSettings(), store: store)
     }
 
-    public func load() -> AskForSpaceSettings {
-        AskForSpaceSettings(isEnabled: defaults.bool(forKey: Self.key))
+    public func load(unreadable: (PreferenceError) -> Void) -> AskForSpaceSettings {
+        preference.loadRestoringDefault(unreadable)
     }
 
     public func save(_ settings: AskForSpaceSettings) {
-        defaults.set(settings.isEnabled, forKey: Self.key)
+        try? preference.save(settings)
     }
 }
 

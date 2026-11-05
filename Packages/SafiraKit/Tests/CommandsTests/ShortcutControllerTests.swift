@@ -3,56 +3,72 @@
 
 import Commands
 import Foundation
+import Preferences
+import SafiraCore
 import Testing
 
 /// A defaults domain of its own, removed afterwards: never Safira's real one.
-private func scratchDefaults() -> (UserDefaults, cleanup: @Sendable () -> Void) {
+private func scratchDefaults() -> (UserDefaults, domain: String, cleanup: @Sendable () -> Void) {
     let name = "com.overlabing.safira.tests.\(UUID().uuidString)"
     let defaults = UserDefaults(suiteName: name)!
-    return (defaults, { UserDefaults.standard.removePersistentDomain(forName: name) })
+    return (defaults, name, { UserDefaults.standard.removePersistentDomain(forName: name) })
 }
 
+private func ignored(_ problem: PreferenceError) {}
+
 @Test func nothingIsChosenAtFirstAndTheDefaultsApply() {
-    let (defaults, cleanup) = scratchDefaults()
-    defer { cleanup() }
-    let configuration = ShortcutStore(defaults: defaults).load()
+    let configuration = ShortcutStore(store: InMemoryKeyValueStore()).load(unreadable: ignored)
     #expect(configuration == ShortcutConfiguration())
     #expect(configuration.bindings == KeyBindings.defaults)
 }
 
 @Test func theChosenPresetAndTheOverridesSurviveARelaunch() {
-    let (defaults, cleanup) = scratchDefaults()
-    defer { cleanup() }
+    let store = InMemoryKeyValueStore()
     var configuration = ShortcutConfiguration(preset: .arc)
     configuration.overrides[.reload] = .shortcut(Shortcut(.character("j"), [.command, .option]))
     configuration.overrides[.moveTabUp] = .unbound
-    ShortcutStore(defaults: defaults).save(configuration)
+    ShortcutStore(store: store).save(configuration)
 
-    let reloaded = ShortcutStore(defaults: defaults).load()
+    let reloaded = ShortcutStore(store: store).load(unreadable: ignored)
     #expect(reloaded == configuration)
     #expect(reloaded.bindings[.reload]?.display == "⌥⌘J")
     #expect(reloaded.bindings[.previousTab]?.display == "⌥⌘↑")
 }
 
 @Test func aSavedValueThatNoLongerParsesIsDropped() {
-    let (defaults, cleanup) = scratchDefaults()
-    defer { cleanup() }
-    defaults.set("vivaldi", forKey: "shortcuts.preset")
-    defaults.set(["reload": "command+j", "gone": "command+g", "newTab": "command+wat"], forKey: "shortcuts.overrides")
-    let configuration = ShortcutStore(defaults: defaults).load()
+    let store = InMemoryKeyValueStore()
+    store.setData(Data(#""vivaldi""#.utf8), forKey: "shortcuts.preset")
+    store.setData(Data(#"{"reload": "command+j", "gone": "command+g", "newTab": "command+wat"}"#.utf8),
+                  forKey: "shortcuts.overrides")
+    var problems: [PreferenceError] = []
+    let configuration = ShortcutStore(store: store).load { problems.append($0) }
     #expect(configuration.preset == nil)
     #expect(configuration.overrides == [.reload: .shortcut(Shortcut(.character("j"), .command))])
+    #expect(problems == [])
+}
+
+@Test func theShortcutsTheOldStoreKeptAreReadAfterTheMigration() {
+    let (defaults, domain, cleanup) = scratchDefaults()
+    defer { cleanup() }
+    defaults.set("arc", forKey: "shortcuts.preset")
+    defaults.set(["reload": "command+option+j", "moveTabUp": ""], forKey: "shortcuts.overrides")
+
+    LegacyPreference.migrate(ShortcutStore.legacy, in: defaults, domain: domain)
+
+    var expected = ShortcutConfiguration(preset: .arc)
+    expected.overrides[.reload] = .shortcut(Shortcut(.character("j"), [.command, .option]))
+    expected.overrides[.moveTabUp] = .unbound
+    #expect(ShortcutStore(store: defaults).load(unreadable: ignored) == expected)
 }
 
 @MainActor
 @Test func theControllerSavesEveryChangeAndReportsConflicts() {
-    let (defaults, cleanup) = scratchDefaults()
-    defer { cleanup() }
-    let controller = ShortcutController(store: ShortcutStore(defaults: defaults))
+    let store = InMemoryKeyValueStore()
+    let controller = ShortcutController(store: ShortcutStore(store: store), unreadable: ignored)
     controller.choose(.safari)
     controller.setShortcut(Shortcut(.character("l"), .command), for: .reload)
     #expect(controller.conflicts.map(\.commands) == [[.openCommandBar, .reload]])
-    #expect(ShortcutController(store: ShortcutStore(defaults: defaults)).conflicts.map(\.commands) == [[.openCommandBar, .reload]])
+    #expect(ShortcutController(store: ShortcutStore(store: store), unreadable: ignored).conflicts.map(\.commands) == [[.openCommandBar, .reload]])
 
     controller.setShortcut(nil, for: .reload)
     #expect(controller.conflicts == [])
@@ -63,9 +79,7 @@ private func scratchDefaults() -> (UserDefaults, cleanup: @Sendable () -> Void) 
 
 @MainActor
 @Test func choosingAnotherPresetDropsTheOverridesButResettingKeepsThePreset() {
-    let (defaults, cleanup) = scratchDefaults()
-    defer { cleanup() }
-    let controller = ShortcutController(store: ShortcutStore(defaults: defaults))
+    let controller = ShortcutController(store: ShortcutStore(store: InMemoryKeyValueStore()), unreadable: ignored)
     controller.choose(.zen)
     controller.setShortcut(Shortcut(.character("j"), .command), for: .reload)
     controller.resetAll()

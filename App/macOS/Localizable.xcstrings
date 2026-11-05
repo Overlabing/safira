@@ -899,6 +899,23 @@
         }
       }
     },
+    "Copy Details" : {
+      "comment" : "Alert button",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copy Details"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copier les détails"
+          }
+        }
+      }
+    },
     "Create" : {
       "comment" : "Main window",
       "localizations" : {
@@ -2627,7 +2644,7 @@
       }
     },
     "OK" : {
-      "comment" : "Link rules, Slack folder and default browser\nPermission sheet of a site or a link to another app",
+      "comment" : "Alert button",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3587,6 +3604,7 @@
       }
     },
     "Safira never overwrites it. No rule applies until it is fixed: links go to the Link picker. Fix it in an editor, or delete it to start again." : {
+      "comment" : "Link rules window",
       "localizations" : {
         "en" : {
           "stringUnit" : {

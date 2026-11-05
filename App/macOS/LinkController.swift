@@ -2,13 +2,16 @@
 // Copyright (c) 2026 Antonin Carlin
 
 import AppKit
+import DefaultApps
 import Diagnostics
 import LinkPickerUI
 import LinkRouting
+import Observation
 import SafiraCore
 import SafiraStore
 import SafiraWeb
 import UniformTypeIdentifiers
+import UserFacing
 
 /// `NSRunningApplication` as the Opener lookup. A process that is not an application (the `open` command) has none.
 struct WorkspaceApplicationLookup: RunningApplicationLookup {
@@ -19,20 +22,19 @@ struct WorkspaceApplicationLookup: RunningApplicationLookup {
     }
 }
 
-/// `NSWorkspace` as the registry of default applications.
-struct WorkspaceDefaultApplications: DefaultApplicationRegistry {
-    func defaultApplication(forScheme scheme: String) -> URL? {
-        URL(string: "\(scheme)://example.com/").flatMap { NSWorkspace.shared.urlForApplication(toOpen: $0) }
+/// `NSWorkspace` for the HTML files that go with the default browser; the schemes go through AppSupportKit's
+/// `WorkspaceDefaultApplications`.
+struct WorkspaceDefaultDocuments: DefaultDocumentApplications {
+    func makeDefault(_ application: URL, forContentType type: UTType) async throws {
+        try await NSWorkspace.shared.setDefaultApplication(at: application, toOpen: type)
     }
+}
 
-    func setDefaultApplication(toOpenScheme scheme: String) async throws {
-        try await NSWorkspace.shared.setDefaultApplication(at: Bundle.main.bundleURL, toOpenURLsWithScheme: scheme)
-    }
-
-    func setDefaultApplication(toOpenContentType identifier: String) async throws {
-        guard let type = UTType(identifier) else { return }
-        try await NSWorkspace.shared.setDefaultApplication(at: Bundle.main.bundleURL, toOpen: type)
-    }
+/// Whether Safira is the default browser, as last read: the menu and the Defaults window show it without waiting.
+@MainActor
+@Observable
+final class DefaultBrowserStatus {
+    var isDefault = false
 }
 
 /// `NSWorkspace` as the installed apps of Slack, Linear, Notion and Figma, and the way to open a link in one.
@@ -70,14 +72,10 @@ private final class LinkRulesReporter: LinkRoutingReporting {
         let modified = try? rulesFile.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate
         if let lastAlerted, lastAlerted.error == error, lastAlerted.modified == modified { return }
         lastAlerted = (error, modified)
-        let alert = NSAlert()
-        alert.messageText = String(localized: "The Link rules file is not valid", comment: "Link rules, Slack folder and default browser")
-        alert.informativeText = error.explanation + " "
-            + String(localized: "No Link rule applies until it is fixed: links go to the Link picker.", comment: "Link rules, Slack folder and default browser")
-        alert.addButton(withTitle: String(localized: "OK", comment: "Link rules, Slack folder and default browser"))
-        alert.addButton(withTitle: String(localized: "Show in Finder", comment: "Link rules, Slack folder and default browser"))
-        if alert.runModal() == .alertSecondButtonReturn {
-            NSWorkspace.shared.activateFileViewerSelecting([rulesFile])
+        UserFacingAlert.runModal(.linkRulesFileInvalid(error)) { [rulesFile] action in
+            if case .custom(UserFacingError.showLinkRulesFile, _) = action {
+                NSWorkspace.shared.activateFileViewerSelecting([rulesFile])
+            }
         }
     }
 
@@ -151,14 +149,18 @@ final class LinkController: NSObject, NSMenuItemValidation {
     private lazy var rulesStore = LinkRulesStore(url: rulesFile)
     private let registry: ProfileRegistry
     private var rulesWindow: LinkRulesWindowController?
-    private let defaultBrowser = DefaultBrowser(registry: WorkspaceDefaultApplications(), appURL: Bundle.main.bundleURL)
+    private let defaultBrowser = DefaultBrowser(
+        client: WorkspaceDefaultApplications(), documents: WorkspaceDefaultDocuments(),
+        applicationURL: Bundle.main.bundleURL, bundleIdentifier: Bundle.main.bundleIdentifier ?? "com.overlabing.safira")
+    let defaultBrowserStatus = DefaultBrowserStatus()
 
-    init(registry: ProfileRegistry, mainWindow: MainWindowController, diagnostics: DiagnosticsController) {
+    init(registry: ProfileRegistry, mainWindow: MainWindowController, diagnostics: DiagnosticsController,
+         preferenceProblems: PreferenceProblems) {
         self.registry = registry
         choiceLog = LinkChoiceLog(file: StoreLayout.application.linkChoiceLogFile,
-                                  isEnabled: settings.load().isEnabled)
-        asksForSpace = askForSpaceStore.load().isEnabled
-        matchesOpenTabs = matchingStore.load().isEnabled
+                                  isEnabled: settings.load(unreadable: preferenceProblems.record).isEnabled)
+        asksForSpace = askForSpaceStore.load(unreadable: preferenceProblems.record).isEnabled
+        matchesOpenTabs = matchingStore.load(unreadable: preferenceProblems.record).isEnabled
         let applications = WorkspaceNativeApplications()
         super.init()
         let router = LinkRouter(
@@ -173,6 +175,10 @@ final class LinkController: NSObject, NSMenuItemValidation {
                 store: LinkRulesStore(url: rulesFile), didFail: { Self.alertRuleNotSaved($0) },
                 didAdd: { [weak self] in self?.rulesWindow?.model.reload() }),
             asksForSpace: { [weak self] in self?.asksForSpace ?? false })
+        refreshDefaultBrowserStatus()
+        // The user can change the default browser in System Settings while Safira is in the background.
+        NotificationCenter.default.addObserver(self, selector: #selector(applicationDidBecomeActive(_:)),
+                                               name: NSApplication.didBecomeActiveNotification, object: nil)
     }
 
     func receive(_ link: IncomingLink) {
@@ -203,7 +209,15 @@ final class LinkController: NSObject, NSMenuItemValidation {
         }
     }
 
-    var isDefaultBrowser: Bool { defaultBrowser.isDefault }
+    var isDefaultBrowser: Bool { defaultBrowserStatus.isDefault }
+
+    func refreshDefaultBrowserStatus() {
+        Task { @MainActor in defaultBrowserStatus.isDefault = await defaultBrowser.isDefault() }
+    }
+
+    @objc private func applicationDidBecomeActive(_ notification: Notification) {
+        refreshDefaultBrowserStatus()
+    }
 
     @objc func toggleChoiceLog(_ sender: Any?) {
         logsChoices.toggle()
@@ -231,10 +245,7 @@ final class LinkController: NSObject, NSMenuItemValidation {
         do {
             try slackGrant.grant(folder)
         } catch {
-            let alert = NSAlert()
-            alert.messageText = String(localized: "That is not Slack's folder", comment: "Link rules, Slack folder and default browser")
-            alert.informativeText = String(localized: "Choose the folder named Slack inside Application Support. It holds a folder named storage.", comment: "Link rules, Slack folder and default browser")
-            alert.runModal()
+            UserFacingAlert.runModal(.notSlackFolder)
         }
     }
 
@@ -257,11 +268,7 @@ final class LinkController: NSObject, NSMenuItemValidation {
     }
 
     private static func alertRuleNotSaved(_ error: LinkRulesEditError) {
-        let alert = NSAlert()
-        alert.messageText = String(localized: "The Link rule was not saved", comment: "Link rules, Slack folder and default browser")
-        alert.informativeText = error.explanation + " " + String(localized: "The link opened where you chose.", comment: "Link rules, Slack folder and default browser")
-        alert.addButton(withTitle: String(localized: "OK", comment: "Link rules, Slack folder and default browser"))
-        alert.runModal()
+        UserFacingAlert.runModal(.linkRuleNotSaved(error))
     }
 
     /// The file is made on first use, so there is something to edit.
@@ -279,11 +286,9 @@ final class LinkController: NSObject, NSMenuItemValidation {
             do {
                 try await defaultBrowser.makeDefault()
             } catch {
-                let alert = NSAlert()
-                alert.messageText = String(localized: "Safira could not be made the default browser", comment: "Link rules, Slack folder and default browser")
-                alert.informativeText = error.localizedDescription
-                alert.runModal()
+                UserFacingAlert.runModal(.defaultBrowserNotSet(error))
             }
+            defaultBrowserStatus.isDefault = await defaultBrowser.isDefault()
         }
     }
 
@@ -308,7 +313,7 @@ final class LinkController: NSObject, NSMenuItemValidation {
         case #selector(forgetSlackFolder(_:)):
             return slackGrant.isGranted
         case #selector(makeDefaultBrowser(_:)):
-            let isDefault = defaultBrowser.isDefault
+            let isDefault = defaultBrowserStatus.isDefault
             menuItem.title = isDefault ? String(localized: "Safira Is the Default Browser", comment: "Link rules, Slack folder and default browser")
                                        : String(localized: "Make Safira the Default Browser…", comment: "Link rules, Slack folder and default browser")
             return !isDefault

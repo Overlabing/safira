@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Antonin Carlin
 
+import Preferences
+
 /// How a Profile's web pages behave by default. A change applies to the pages created after it: WebKit reads the
 /// configuration once, when it builds a page.
 public struct WebContentSettings: Hashable, Sendable, Codable {

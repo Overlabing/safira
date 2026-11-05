@@ -5,8 +5,9 @@ component that ships inside Safira.
 
 When a dependency is added, its full licence notice goes here. The dependencies of v1 are GRDB.swift (MIT), Sparkle
 (MIT, with BSD and zlib components), ThemeKit, Safira's theme module, kept in its own MIT repository
-(`docs/adr/0003-theme-module-separate-mit-repository.md`), and AppSupportKit (MIT), whose SiteIcons module finds and
-caches site icons (`docs/adr/0005-shared-code-lives-in-public-kits.md`).
+(`docs/adr/0003-theme-module-separate-mit-repository.md`), and AppSupportKit (MIT), whose modules find and cache site
+icons, keep preferences and the entries of the registry of defaults, model the errors shown to the user, and read and
+change default apps (`docs/adr/0005-shared-code-lives-in-public-kits.md`).
 
 ## Sparkle 2.10.1
 
@@ -197,8 +198,9 @@ SOFTWARE.
 
 ## AppSupportKit 0.1.1
 
-Support code shared with Oisillon, <https://github.com/Overlabing/AppSupportKit>. Only its SiteIcons module is linked,
-through the SafiraSession module. The text below is the `LICENSE` file of the 0.1.1 release, unmodified.
+Support code shared with Oisillon, <https://github.com/Overlabing/AppSupportKit>. Its SiteIcons, Preferences,
+UserFacing and DefaultApps modules are linked, with Localization, which Preferences and UserFacing use for their own
+strings. The text below is the `LICENSE` file of the 0.1.1 release, unmodified.
 
 ```text
 MIT License

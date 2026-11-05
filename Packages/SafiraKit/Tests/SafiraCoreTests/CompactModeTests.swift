@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Antonin Carlin
 
 import Foundation
+import Preferences
 import SafiraCore
 import Testing
 
@@ -62,41 +63,44 @@ import Testing
     #expect(presentation.isRevealed == false)
 }
 
-@Test func compactModeSurvivesARelaunchButARevealedSidebarDoesNot() throws {
-    let suite = "CompactModeTests-\(UUID().uuidString)"
-    let defaults = try #require(UserDefaults(suiteName: suite))
-    defer { defaults.removePersistentDomain(forName: suite) }
+@Test func compactModeSurvivesARelaunchButARevealedSidebarDoesNot() {
+    let store = InMemoryKeyValueStore()
     var presentation = SidebarPresentation(isCompact: true)
     presentation.reveal()
 
-    CompactModeStore(defaults: defaults).save(presentation)
-    let relaunched = CompactModeStore(defaults: defaults).load()
+    CompactModeStore(store: store).save(presentation)
+    let relaunched = CompactModeStore(store: store).load(unreadable: { _ in })
 
     #expect(relaunched.isCompact == true)
     #expect(relaunched.isRevealed == false)
 }
 
-@Test func compactModeIsWhatIsSavedNotWhetherTheSidebarWasRevealed() throws {
-    let suite = "CompactModeTests-\(UUID().uuidString)"
-    let defaults = try #require(UserDefaults(suiteName: suite))
-    defer { defaults.removePersistentDomain(forName: suite) }
+@Test func compactModeIsWhatIsSavedNotWhetherTheSidebarWasRevealed() {
+    let store = InMemoryKeyValueStore()
     let presentation = SidebarPresentation(isCompact: true)
     #expect(presentation.isRevealed == false)
 
-    CompactModeStore(defaults: defaults).save(presentation)
-    let relaunched = CompactModeStore(defaults: defaults).load()
+    CompactModeStore(store: store).save(presentation)
+    let relaunched = CompactModeStore(store: store).load(unreadable: { _ in })
 
     #expect(relaunched == SidebarPresentation(isCompact: true))
     #expect(relaunched.isCompact == true)
     #expect(relaunched.isRevealed == false)
 }
 
-@Test func aFreshInstallStartsOutsideCompactMode() throws {
-    let suite = "CompactModeTests-\(UUID().uuidString)"
-    let defaults = try #require(UserDefaults(suiteName: suite))
-    defer { defaults.removePersistentDomain(forName: suite) }
+@Test func aFreshInstallStartsOutsideCompactMode() {
+    #expect(CompactModeStore(store: InMemoryKeyValueStore()).load(unreadable: { _ in }).isCompact == false)
+}
 
-    #expect(CompactModeStore(defaults: defaults).load().isCompact == false)
+@Test func compactModeTheOldStoreKeptIsReadAfterTheMigration() throws {
+    let (defaults, domain) = try scratchDefaults()
+    defer { defaults.removePersistentDomain(forName: domain) }
+    defaults.set(true, forKey: "window.compactMode")
+
+    LegacyPreference.migrate([CompactModeStore.legacy], in: defaults, domain: domain)
+
+    #expect(CompactModeStore(store: defaults).load(unreadable: { _ in }).isCompact == true)
+    #expect(defaults.data(forKey: "window.compactMode") == Data("true".utf8))
 }
 
 @Test func theRegistryListsCompactModeAsOffAndChangedFromTheViewMenu() throws {

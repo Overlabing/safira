@@ -14,8 +14,8 @@ final class SidebarSideSetting {
         didSet { store.save(side) }
     }
 
-    init() {
-        side = store.load()
+    init(preferenceProblems: PreferenceProblems) {
+        side = store.load(unreadable: preferenceProblems.record)
     }
 
     var isRight: Bool {

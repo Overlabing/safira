@@ -17,9 +17,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private static let log = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.overlabing.safira",
                                     category: "persistence")
 
-    let diagnostics = DiagnosticsController()
-    let shortcuts = ShortcutController()
-    let sidebarSide = SidebarSideSetting()
+    /// What the stores could not read at launch, told once the Main window is up.
+    private let preferenceProblems: PreferenceProblems
+    let diagnostics: DiagnosticsController
+    let shortcuts: ShortcutController
+    let sidebarSide: SidebarSideSetting
     /// Started behind the frontmost app with the launch argument `-launchedInBackground YES`
     /// (`open -g … --args -launchedInBackground YES`): Safira then never takes the focus. The argument is read from
     /// the launch, never saved.
@@ -40,6 +42,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var benchmark: BenchmarkRun?
     #endif
 
+    /// - Parameter preferenceProblems: shared by every store that reads a saved setting.
+    init(preferenceProblems: PreferenceProblems) {
+        self.preferenceProblems = preferenceProblems
+        diagnostics = DiagnosticsController(preferenceProblems: preferenceProblems)
+        shortcuts = ShortcutController(unreadable: preferenceProblems.record)
+        sidebarSide = SidebarSideSetting(preferenceProblems: preferenceProblems)
+        super.init()
+    }
+
     func applicationWillFinishLaunching(_ notification: Notification) {
         // The Apple event that carries a clicked link, and its sender, is read here: `application(_:open:)` does not
         // give the sender, and a launch started by a link delivers the event right after this.
@@ -54,10 +65,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         self.registry = registry
         diagnostics.attach(to: registry)
-        let controller = MainWindowController(registry: registry, shortcuts: shortcuts, sideSetting: sidebarSide)
+        let controller = MainWindowController(registry: registry, shortcuts: shortcuts, sideSetting: sidebarSide,
+                                              preferenceProblems: preferenceProblems)
         controller.showWindow(nil)
         mainWindow = controller
-        let links = LinkController(registry: registry, mainWindow: controller, diagnostics: diagnostics)
+        let links = LinkController(registry: registry, mainWindow: controller, diagnostics: diagnostics,
+                                   preferenceProblems: preferenceProblems)
+        if let problem = preferenceProblems.take() { controller.showBanner(problem) }
         self.links = links
         let defaults = DefaultsController(registry: registry, updates: updates, diagnostics: diagnostics, links: links,
                                           shortcuts: shortcuts, sidebarSide: sidebarSide)

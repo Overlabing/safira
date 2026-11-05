@@ -4,10 +4,12 @@
 import Commands
 import Diagnostics
 import LinkRouting
+import Preferences
 import SafiraCore
 
-/// Every default Safira makes for the user, declared once (docs/architecture-v1.md §7.2). Onboarding and the Defaults
-/// window render this list; a test asserts it against the documented values.
+/// Every default Safira makes for the user, declared once (docs/architecture-v1.md §7.2). The entry type and its
+/// `userFacing` and `entry(_:)` are AppSupportKit's; Safira supplies the entries. Onboarding and the Defaults window render
+/// `entries.userFacing`; a test asserts it against the documented values.
 public enum DefaultsRegistry {
     /// In the order the user reads them.
     public static var entries: [DefaultEntry] {
@@ -29,14 +31,5 @@ public enum DefaultsRegistry {
             }
             + SidebarSide.defaultEntries
             + SidebarPresentation.defaultEntries
-    }
-
-    /// The entries onboarding and the Defaults window show.
-    public static var userFacing: [DefaultEntry] {
-        entries.filter(\.isUserFacing)
-    }
-
-    public static func entry(_ id: String) -> DefaultEntry? {
-        entries.first { $0.id == id }
     }
 }

@@ -2,10 +2,11 @@
 // Copyright (c) 2026 Antonin Carlin
 
 import Foundation
+import Preferences
 
 /// Which side of the window the sidebar sits on, for every window and every Profile. The page takes the other side;
 /// in Compact mode the sidebar comes back from the same side.
-public enum SidebarSide: String, Sendable, CaseIterable {
+public enum SidebarSide: String, Sendable, CaseIterable, Codable {
     case left
     case right
 
@@ -32,21 +33,25 @@ public enum SidebarSide: String, Sendable, CaseIterable {
     }
 }
 
-/// Keeps the side of the sidebar across launches, for the whole app. Anything but "right" reads as the left side, so
-/// a missing or damaged value never moves the sidebar.
-public struct SidebarSideStore: @unchecked Sendable {
+/// Keeps the side of the sidebar across launches, for the whole app. A missing or damaged value reads as the left side,
+/// so it never moves the sidebar.
+public struct SidebarSideStore: Sendable {
     public static let key = "window.sidebarSide"
-    private let defaults: UserDefaults
+    /// Until AppSupportKit, the side's name as plain text; anything but "right" was the left side.
+    public static let legacy = LegacyPreference(key: key, as: SidebarSide.self) {
+        ($0 as? String) == SidebarSide.right.rawValue ? SidebarSide.right : .left
+    }
+    private let preference: Preference<SidebarSide>
 
-    public init(defaults: UserDefaults = .standard) {
-        self.defaults = defaults
+    public init(store: any KeyValueStore = UserDefaults.standard) {
+        preference = Preference(key: Self.key, defaultValue: .left, store: store)
     }
 
-    public func load() -> SidebarSide {
-        defaults.string(forKey: Self.key) == SidebarSide.right.rawValue ? .right : .left
+    public func load(unreadable: (PreferenceError) -> Void) -> SidebarSide {
+        preference.loadRestoringDefault(unreadable)
     }
 
     public func save(_ side: SidebarSide) {
-        defaults.set(side.rawValue, forKey: Self.key)
+        try? preference.save(side)
     }
 }

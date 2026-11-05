@@ -3,12 +3,14 @@
 
 import Foundation
 import LinkRouting
+import Preferences
+import SafiraCore
 import Testing
 
 @Suite struct AskForSpaceSettingsTests {
     @Test func theLinkPickerDoesNotAskForTheSpaceUntilTheUserTurnsItOn() {
         #expect(AskForSpaceSettings().isEnabled == false)
-        #expect(AskForSpaceSettingsStore(defaults: UserDefaults(suiteName: "safira-test-\(UUID().uuidString)")!).load().isEnabled == false)
+        #expect(AskForSpaceSettingsStore(store: InMemoryKeyValueStore()).load(unreadable: { _ in }).isEnabled == false)
     }
 
     @Test func theDefaultIsListedInTheRegistryOfDefaults() throws {
@@ -26,8 +28,19 @@ import Testing
     }
 
     @Test func theSettingIsKeptAcrossLaunches() {
-        let defaults = UserDefaults(suiteName: "safira-test-\(UUID().uuidString)")!
-        AskForSpaceSettingsStore(defaults: defaults).save(AskForSpaceSettings(isEnabled: true))
-        #expect(AskForSpaceSettingsStore(defaults: defaults).load().isEnabled)
+        let store = InMemoryKeyValueStore()
+        AskForSpaceSettingsStore(store: store).save(AskForSpaceSettings(isEnabled: true))
+        #expect(AskForSpaceSettingsStore(store: store).load(unreadable: { _ in }).isEnabled)
+    }
+
+    @Test func aSettingTheOldStoreTurnedOnStaysOnAfterTheMigration() throws {
+        let domain = "safira-test-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: domain))
+        defer { defaults.removePersistentDomain(forName: domain) }
+        defaults.set(true, forKey: "linkPicker.askForSpace")
+
+        LegacyPreference.migrate([AskForSpaceSettingsStore.legacy], in: defaults, domain: domain)
+
+        #expect(AskForSpaceSettingsStore(store: defaults).load(unreadable: { _ in }).isEnabled)
     }
 }

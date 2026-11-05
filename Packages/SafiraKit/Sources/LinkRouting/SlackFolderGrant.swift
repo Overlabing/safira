@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Antonin Carlin
 
 import Foundation
+import Preferences
 
 /// Why Slack's folder was not accepted.
 public enum SlackFolderError: Error, Hashable, Sendable {
@@ -11,17 +12,18 @@ public enum SlackFolderError: Error, Hashable, Sendable {
 
 /// The folder of the Slack app that the user grants once. The App Sandbox forbids reading it directly, so the user picks
 /// it in an open panel and the choice is kept app-wide as a security-scoped bookmark. Without a grant, no Slack link is
-/// rewritten and nothing is reported.
-public struct SlackFolderGrant: SlackWorkspaceLookup, @unchecked Sendable {
-    private static let defaultsKey = "linkRules.slackFolderBookmark"
-    private let defaults: UserDefaults
+/// rewritten and nothing is reported. The bookmark is kept as the raw bytes it always was, in AppSupportKit's key-value
+/// store: a JSON `Preference` would only wrap the same bytes in text.
+public struct SlackFolderGrant: SlackWorkspaceLookup, Sendable {
+    public static let key = "linkRules.slackFolderBookmark"
+    private let store: any KeyValueStore
 
-    public init(defaults: UserDefaults = .standard) {
-        self.defaults = defaults
+    public init(store: any KeyValueStore = UserDefaults.standard) {
+        self.store = store
     }
 
     public var isGranted: Bool {
-        defaults.data(forKey: Self.defaultsKey) != nil
+        store.data(forKey: Self.key) != nil
     }
 
     /// Keeps the folder the user picked. Throws when it has no Slack workspace state, and keeps nothing then.
@@ -31,11 +33,11 @@ public struct SlackFolderGrant: SlackWorkspaceLookup, @unchecked Sendable {
         guard FileManager.default.fileExists(atPath: Self.stateFile(in: folder).path(percentEncoded: false)) else {
             throw SlackFolderError.notSlackFolder
         }
-        defaults.set(try folder.bookmarkData(options: .withSecurityScope), forKey: Self.defaultsKey)
+        store.setData(try folder.bookmarkData(options: .withSecurityScope), forKey: Self.key)
     }
 
     public func revoke() {
-        defaults.removeObject(forKey: Self.defaultsKey)
+        store.setData(nil, forKey: Self.key)
     }
 
     public func teamID(forDomain domain: String) -> String? {
@@ -56,12 +58,12 @@ public struct SlackFolderGrant: SlackWorkspaceLookup, @unchecked Sendable {
     }
 
     private func grantedFolder() -> URL? {
-        guard let bookmark = defaults.data(forKey: Self.defaultsKey) else { return nil }
+        guard let bookmark = store.data(forKey: Self.key) else { return nil }
         var isStale = false
         guard let folder = try? URL(resolvingBookmarkData: bookmark, options: .withSecurityScope, relativeTo: nil,
                                     bookmarkDataIsStale: &isStale) else { return nil }
         if isStale, let fresh = try? folder.bookmarkData(options: .withSecurityScope) {
-            defaults.set(fresh, forKey: Self.defaultsKey)
+            store.setData(fresh, forKey: Self.key)
         }
         return folder
     }
