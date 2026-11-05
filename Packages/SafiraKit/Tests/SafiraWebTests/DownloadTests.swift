@@ -152,16 +152,18 @@ private final class TemporaryRoot {
         let root = TemporaryRoot()
         try await run(root) { registry in
             let context = profile(registry, saving: root)
+            server.hold(after: 30_000)
 
             context.session.submitCommandBar(server.url("/slow.bin").absoluteString)
-            try await waitUntil("some bytes arrive") { (context.downloads.all.first?.receivedBytes ?? 0) >= 20_000 }
+            try await waitUntil("some bytes arrive") { (context.downloads.all.first?.receivedBytes ?? 0) >= 10_000 }
             let id = try #require(context.downloads.all.first?.id)
             await context.downloads.cancel(id)
+            server.release()
 
             let cancelled = try #require(context.downloads.download(id))
             #expect(cancelled.state == .cancelled)
             #expect(cancelled.resumeData != nil)
-            #expect(cancelled.receivedBytes >= 20_000)
+            #expect(cancelled.receivedBytes >= 10_000)
             #expect(cancelled.receivedBytes < 100_000)
             #expect(root.files() == ["slow.bin.part"])
 
@@ -205,16 +207,63 @@ private final class TemporaryRoot {
         }
     }
 
+    @Test func aTransferStartedOverWhileTheMainThreadIsBusyIsStillHeardFrom() async throws {
+        let server = try await DownloadServer.start()
+        defer { server.stop() }
+        let root = TemporaryRoot()
+        try await run(root) { registry in
+            let context = profile(registry, saving: root)
+            context.session.submitCommandBar(server.url("/broken.bin").absoluteString)
+            try await waitUntil("the download fails") { context.downloads.all.first?.state == .failed }
+            let id = try #require(context.downloads.all.first?.id)
+
+            #expect(context.downloads.retry(id))
+            await Task.yield()
+            // WebKit's answer to the new transfer and its question for a destination now arrive together.
+            holdMainThread(until: { server.requestCount("/broken.bin") == 2 }, margin: .milliseconds(500))
+            try await waitUntil("the second transfer fails") { context.downloads.all.first?.state == .failed }
+
+            #expect(context.downloads.all.map(\.state) == [.failed])
+            #expect(root.files() == ["broken.bin.part"])
+        }
+    }
+
+    @Test func aTransferContinuedWhileTheMainThreadIsBusyIsStillHeardFrom() async throws {
+        let server = try await DownloadServer.start()
+        defer { server.stop() }
+        let root = TemporaryRoot()
+        try await run(root) { registry in
+            let context = profile(registry, saving: root)
+            server.hold(after: 30_000)
+            context.session.submitCommandBar(server.url("/slow.bin").absoluteString)
+            try await waitUntil("some bytes arrive") { (context.downloads.all.first?.receivedBytes ?? 0) >= 10_000 }
+            let id = try #require(context.downloads.all.first?.id)
+            await context.downloads.cancel(id)
+            server.release()
+
+            #expect(context.downloads.retry(id))
+            await Task.yield()
+            // Long enough for the rest of the file to arrive: WebKit's answer to the transfer and its end come together.
+            holdMainThread(until: { server.rangeRequests.count == 1 }, margin: .seconds(3.5))
+            try await waitUntil("the download is saved") { isFinished(context) }
+
+            #expect(context.downloads.all.map(\.state) == [.completed])
+            #expect(root.files() == ["slow.bin"])
+            #expect(try Data(contentsOf: root.downloads.appending(path: "slow.bin")) == DownloadServer.bytes(0..<100_000))
+        }
+    }
+
     @Test func aDownloadSurvivesClosingItsTabAndTheTabsWebViewIsReleased() async throws {
         let server = try await DownloadServer.start()
         defer { server.stop() }
         let root = TemporaryRoot()
         try await run(root) { registry in
             let context = profile(registry, saving: root)
+            server.hold(after: 30_000)
 
             context.session.submitCommandBar(server.url("/slow.bin").absoluteString)
             let tab = try #require(context.session.selectedTabID)
-            try await waitUntil("some bytes arrive") { (context.downloads.all.first?.receivedBytes ?? 0) >= 20_000 }
+            try await waitUntil("some bytes arrive") { (context.downloads.all.first?.receivedBytes ?? 0) >= 10_000 }
             weak var released = context.web.webView(for: tab)
             #expect(released != nil)
             let before = try #require(context.downloads.all.first?.receivedBytes)
@@ -223,7 +272,8 @@ private final class TemporaryRoot {
             try await waitUntil("the Tab's web view is released") { released == nil }
 
             #expect(context.web.webView(for: tab) == nil)
-            try await waitUntil("more bytes arrive after the Tab is gone", timeout: .seconds(5)) {
+            server.release()
+            try await waitUntil("more bytes arrive after the Tab is gone") {
                 (context.downloads.all.first?.receivedBytes ?? 0) > before
             }
             try await waitUntil("the download is saved", timeout: .seconds(20)) { isFinished(context) }
@@ -240,6 +290,7 @@ private final class TemporaryRoot {
             let context = profile(registry, saving: root)
             context.session.submitCommandBar(server.url("/small.bin").absoluteString)
             try await waitUntil("the small file is saved") { isFinished(context) }
+            server.hold(after: 30_000)
             context.session.submitCommandBar(server.url("/slow.bin").absoluteString)
             try await waitUntil("some bytes arrive") { (context.downloads.all.first?.receivedBytes ?? 0) >= 10_000 }
             let slow = try #require(context.downloads.all.first?.id)
@@ -274,6 +325,7 @@ private final class TemporaryRoot {
     private func startSlowDownload(in registry: ProfileRegistry, root: TemporaryRoot, server: DownloadServer) async throws
         -> ProfileDownloads {
         let context = profile(registry, saving: root)
+        server.hold(after: 30_000)
         context.session.submitCommandBar(server.url("/slow.bin").absoluteString)
         try await waitUntil("some bytes arrive") { (context.downloads.all.first?.receivedBytes ?? 0) >= 10_000 }
         return context.downloads

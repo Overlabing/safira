@@ -94,14 +94,15 @@ final class DownloadController: NSObject, WKDownloadDelegate, DownloadEngine {
         if record.resumeData == nil, !isInUse(partial, byAnotherThan: record.id) {
             try? FileManager.default.removeItem(at: partial)
         }
-        Task { @MainActor in
-            let host = self.host ?? makeHost()
-            self.host = host
-            let download: WKDownload
-            if let resumeData = record.resumeData {
-                download = await host.resumeDownload(fromResumeData: resumeData)
-            } else {
-                download = await host.startDownload(using: URLRequest(url: record.sourceURL))
+        let host = self.host ?? makeHost()
+        self.host = host
+        // The delegate is set in the completion handler itself, never after an `await`: WebKit asks it for a
+        // destination, or reports a short transfer's end, in the messages that follow, and a download with no delegate
+        // by then is cancelled or ends unheard, leaving the retried download listed as running forever.
+        let started: @MainActor @Sendable (WKDownload) -> Void = { [weak self] download in
+            guard let self else {
+                download.cancel(nil)
+                return
             }
             let transfer = track(download, as: record.id)
             // WebKit resumes into the file it was writing and does not ask for a destination again.
@@ -110,6 +111,11 @@ final class DownloadController: NSObject, WKDownloadDelegate, DownloadEngine {
                 transfer.partial = partial
                 transfer.folder = folder
             }
+        }
+        if let resumeData = record.resumeData {
+            host.resumeDownload(fromResumeData: resumeData, completionHandler: started)
+        } else {
+            host.startDownload(using: URLRequest(url: record.sourceURL), completionHandler: started)
         }
     }
 
