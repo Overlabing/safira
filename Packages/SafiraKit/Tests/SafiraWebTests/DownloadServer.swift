@@ -56,6 +56,7 @@ final class DownloadServer: @unchecked Sendable {
     }
 
     /// Every `/slow.bin` transfer, running or to come, sends nothing past this byte of the file until `release()`.
+    /// Wait for fewer bytes than this: WebKit may not report the last bytes before a pause until more arrive.
     func hold(after byte: Int) { lock.withLock { heldAfter = byte } }
 
     func release() { lock.withLock { heldAfter = nil } }
