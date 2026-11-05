@@ -18,18 +18,36 @@
         }
       }
     },
-    "%@ is used by %@" : {
+    "%@ edits text in a field, so the menu cannot use it." : {
+      "comment" : "Shortcuts window: a key such as ⌃⌘← that is never a menu key",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ is used by %@"
+            "value" : "%@ edits text in a field, so the menu cannot use it."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ est utilisé par %@"
+            "value" : "%@ modifie le texte d’un champ : le menu ne peut pas l’utiliser."
+          }
+        }
+      }
+    },
+    "%@ is also on “%@”." : {
+      "comment" : "Shortcuts window: two commands share a key; a key, then a command name",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ is also on “%2$@”."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ est aussi sur « %2$@ »."
           }
         }
       }
@@ -170,6 +188,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Une caméra, un micro ou une localisation qu’une page utilise déjà continue de fonctionner jusqu’à ce que la page l’arrête."
+          }
+        }
+      }
+    },
+    "A command %@ has no equivalent for keeps Safira's key, marked “Inherited from Safira”. Choosing another preset clears your changes." : {
+      "comment" : "Shortcuts window footnote; the argument is a browser's name",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A command %@ has no equivalent for keeps Safira's key, marked “Inherited from Safira”. Choosing another preset clears your changes."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une commande sans équivalent dans %@ garde la touche de Safira, signalée « Hérité de Safira ». Choisir un autre préréglage efface vos modifications."
           }
         }
       }
@@ -384,7 +419,7 @@
       }
     },
     "Cancel" : {
-      "comment" : "Button\nLink rules window\nMain window",
+      "comment" : "Link rules window\nMain window",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -433,19 +468,19 @@
         }
       }
     },
-    "Change" : {
-      "comment" : "Shortcuts window: button that records new keys",
+    "Change Preset" : {
+      "comment" : "Shortcuts window: confirmation button",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Change"
+            "value" : "Change Preset"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Modifier"
+            "value" : "Changer de préréglage"
           }
         }
       }
@@ -463,6 +498,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Changer le dossier de Slack…"
+          }
+        }
+      }
+    },
+    "Change the Shortcut preset?" : {
+      "comment" : "Shortcuts window: confirmation title",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Change the Shortcut preset?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Changer de préréglage de raccourcis ?"
+          }
+        }
+      }
+    },
+    "Changed" : {
+      "comment" : "Shortcuts window: the user changed this command's shortcut",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Changed"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifié"
           }
         }
       }
@@ -732,18 +801,36 @@
         }
       }
     },
-    "Click Change, then press the new keys. Delete removes the shortcut, Escape cancels." : {
+    "Click a shortcut, then press the new keys. Delete removes the shortcut, Escape cancels." : {
+      "comment" : "Shortcuts window footnote",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Click Change, then press the new keys. Delete removes the shortcut, Escape cancels."
+            "value" : "Click a shortcut, then press the new keys. Delete removes the shortcut, Escape cancels."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Cliquez sur Modifier, puis appuyez sur les nouvelles touches. Supprimer retire le raccourci, Échap annule."
+            "value" : "Cliquez sur un raccourci, puis appuyez sur les nouvelles touches. Supprimer retire le raccourci, Échap annule."
+          }
+        }
+      }
+    },
+    "Click, then press the new shortcut; Delete removes it, Escape cancels." : {
+      "comment" : "Shortcuts window: help of a shortcut button",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Click, then press the new shortcut; Delete removes it, Escape cancels."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cliquez, puis appuyez sur le nouveau raccourci ; Supprimer le retire, Échap annule."
           }
         }
       }
@@ -1840,6 +1927,23 @@
         }
       }
     },
+    "Inherited from Safira" : {
+      "comment" : "Shortcuts window: the preset has no key for this command",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inherited from Safira"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hérité de Safira"
+          }
+        }
+      }
+    },
     "It has no Tab." : {
       "comment" : "Main window",
       "localizations" : {
@@ -2926,6 +3030,7 @@
       }
     },
     "Preset" : {
+      "comment" : "Shortcuts window: the Shortcut preset picker",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3360,6 +3465,7 @@
       }
     },
     "Reset" : {
+      "comment" : "Shortcuts window: gives one command its preset's keys back",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3375,12 +3481,13 @@
         }
       }
     },
-    "Reset All Overrides" : {
+    "Reset All Changes" : {
+      "comment" : "Shortcuts window: button that gives every command its preset's keys back",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Reset All Overrides"
+            "value" : "Reset All Changes"
           }
         },
         "fr" : {
@@ -3637,6 +3744,23 @@
         }
       }
     },
+    "Safira's own shortcuts. A preset gives you the keys of Zen, Arc or Safari." : {
+      "comment" : "Shortcuts window footnote without a preset",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safira's own shortcuts. A preset gives you the keys of Zen, Arc or Safari."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les raccourcis de Safira. Un préréglage vous donne les touches de Zen, d’Arc ou de Safari."
+          }
+        }
+      }
+    },
     "Save" : {
       "comment" : "Main window",
       "localizations" : {
@@ -3751,6 +3875,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tout sélectionner"
+          }
+        }
+      }
+    },
+    "Shortcut of “%@”" : {
+      "comment" : "Shortcuts window: a recorder button; the argument is a command name",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shortcut of “%@”"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Raccourci de « %@ »"
           }
         }
       }
@@ -4132,6 +4273,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Onglets"
+          }
+        }
+      }
+    },
+    "Take the preset's key again" : {
+      "comment" : "Shortcuts window: help of Reset",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Take the preset's key again"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reprendre la touche du préréglage"
           }
         }
       }
@@ -4638,6 +4796,23 @@
         }
       }
     },
+    "Waiting for a shortcut" : {
+      "comment" : "Shortcuts window: a recorder button's value while recording",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Waiting for a shortcut"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En attente d’un raccourci"
+          }
+        }
+      }
+    },
     "Welcome to Safira" : {
       "comment" : "Onboarding sheet title",
       "localizations" : {
@@ -4767,6 +4942,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vos règles existantes n’ont pas été modifiées."
+          }
+        }
+      }
+    },
+    "Your shortcut changes will be lost." : {
+      "comment" : "Shortcuts window: confirmation message",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your shortcut changes will be lost."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vos modifications de raccourcis seront perdues."
           }
         }
       }

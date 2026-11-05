@@ -27,11 +27,16 @@ packages:
   # too so the app resolves the same release as SafiraKit.
   AppSupportKit:
     url: https://github.com/Overlabing/AppSupportKit
-    exactVersion: 0.1.1
+    exactVersion: 0.1.2
   # Linked through Diagnostics and SafiraWeb; the app names DiagnosticLog itself. Pinned here too, as AppSupportKit.
   DiagnosticsKit:
     url: https://github.com/Overlabing/DiagnosticsKit
-    exactVersion: 0.1.1
+    exactVersion: 0.1.2
+  # Linked through Commands; the app links CommandKit and CommandKitAppKit itself for the menu, the window's reserved
+  # keys and the Shortcuts window. Pinned here too so the app resolves the same release as SafiraKit.
+  CommandKit:
+    url: https://github.com/Overlabing/CommandKit
+    exactVersion: 0.1.3
 settings:
   base:
     SWIFT_VERSION: "6.0"
@@ -58,6 +63,8 @@ targets:
         products: [ColorCore, ColorPlatform, ColorUI, DesignKit]
       - package: AppSupportKit
         products: [Preferences, UserFacing, DefaultApps]
+      - package: CommandKit
+        products: [CommandKit, CommandKitAppKit]
       - package: DiagnosticsKit
         product: DiagnosticsKit
       - package: Sparkle

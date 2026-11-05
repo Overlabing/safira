@@ -1,96 +1,137 @@
 {
-  "preset": "safari",
-  "name": "Safari",
+  "id": "safari",
   "source": "https://support.apple.com/guide/safari/keyboard-and-other-shortcuts-cpsh003/mac",
   "checked": "2026-11-04",
   "note": "Safari's File and View menus carry a few shortcuts the cited page does not list; those are marked in 'from'.",
-  "bindings": {
-    "newTab": {
-      "shortcut": "command+t",
-      "from": "Safari File menu: New Tab; not on the cited page"
-    },
-    "newWindow": {
-      "shortcut": "command+n",
-      "from": "Safari File menu: New Window; not on the cited page"
-    },
-    "newPrivateWindow": {
-      "shortcut": "command+shift+n",
-      "from": "Safari File menu: New Private Window; not on the cited page"
-    },
-    "closeTab": {
-      "shortcut": "command+w",
-      "from": "Close active tab (Command-W)"
-    },
-    "closeWindow": {
-      "shortcut": "command+shift+w",
-      "from": "Safari File menu: Close Window; not on the cited page"
-    },
-    "quit": {
-      "shortcut": "command+q",
-      "from": "macOS convention; the cited page does not list it"
-    },
-    "reopenClosedTab": {
-      "shortcut": "command+shift+t",
-      "from": "Reopen last closed tab (Shift-Command-T)"
-    },
-    "openCommandBar": {
-      "shortcut": "command+l",
-      "from": "Select Smart Search field (Command-L)"
-    },
-    "reload": {
-      "shortcut": "command+r",
-      "from": "Safari View menu: Reload Page; not on the cited page"
-    },
-    "goBack": {
-      "shortcut": "command+[",
-      "from": "Go back to previous webpage (Command-[)"
-    },
-    "goForward": {
-      "shortcut": "command+]",
-      "from": "Go forward to next webpage (Command-])"
-    },
-    "previousTab": {
-      "shortcut": "command+shift+[",
-      "from": "Go to previous tab (Shift-Command-[; also Control-Shift-Tab)"
-    },
-    "nextTab": {
-      "shortcut": "command+shift+]",
-      "from": "Go to next tab (Shift-Command-]; also Control-Tab)"
-    },
-    "selectTab1": {
-      "shortcut": "command+1",
-      "from": "Select one of your first eight tabs (Command-1 to Command-8)"
-    },
-    "selectTab2": {
-      "shortcut": "command+2",
-      "from": "Select one of your first eight tabs (Command-1 to Command-8)"
-    },
-    "selectTab3": {
-      "shortcut": "command+3",
-      "from": "Select one of your first eight tabs (Command-1 to Command-8)"
-    },
-    "selectTab4": {
-      "shortcut": "command+4",
-      "from": "Select one of your first eight tabs (Command-1 to Command-8)"
-    },
-    "selectTab5": {
-      "shortcut": "command+5",
-      "from": "Select one of your first eight tabs (Command-1 to Command-8)"
-    },
-    "selectTab6": {
-      "shortcut": "command+6",
-      "from": "Select one of your first eight tabs (Command-1 to Command-8)"
-    },
-    "selectTab7": {
-      "shortcut": "command+7",
-      "from": "Select one of your first eight tabs (Command-1 to Command-8)"
-    },
-    "selectTab8": {
-      "shortcut": "command+8",
-      "from": "Select one of your first eight tabs (Command-1 to Command-8)"
-    }
+  "shortcuts": {
+    "newTab": [
+      {
+        "shortcut": "⌘T",
+        "from": "Safari File menu: New Tab; not on the cited page"
+      }
+    ],
+    "newWindow": [
+      {
+        "shortcut": "⌘N",
+        "from": "Safari File menu: New Window; not on the cited page"
+      }
+    ],
+    "newPrivateWindow": [
+      {
+        "shortcut": "⇧⌘N",
+        "from": "Safari File menu: New Private Window; not on the cited page"
+      }
+    ],
+    "closeTab": [
+      {
+        "shortcut": "⌘W",
+        "from": "Close active tab (Command-W)"
+      }
+    ],
+    "closeWindow": [
+      {
+        "shortcut": "⇧⌘W",
+        "from": "Safari File menu: Close Window; not on the cited page"
+      }
+    ],
+    "quit": [
+      {
+        "shortcut": "⌘Q",
+        "from": "macOS convention; the cited page does not list it"
+      }
+    ],
+    "reopenClosedTab": [
+      {
+        "shortcut": "⇧⌘T",
+        "from": "Reopen last closed tab (Shift-Command-T)"
+      }
+    ],
+    "openCommandBar": [
+      {
+        "shortcut": "⌘L",
+        "from": "Select Smart Search field (Command-L)"
+      }
+    ],
+    "reload": [
+      {
+        "shortcut": "⌘R",
+        "from": "Safari View menu: Reload Page; not on the cited page"
+      }
+    ],
+    "goBack": [
+      {
+        "shortcut": "⌘[",
+        "from": "Go back to previous webpage (Command-[)"
+      }
+    ],
+    "goForward": [
+      {
+        "shortcut": "⌘]",
+        "from": "Go forward to next webpage (Command-])"
+      }
+    ],
+    "previousTab": [
+      {
+        "shortcut": "⇧⌘[",
+        "from": "Go to previous tab (Shift-Command-[; also Control-Shift-Tab)"
+      }
+    ],
+    "nextTab": [
+      {
+        "shortcut": "⇧⌘]",
+        "from": "Go to next tab (Shift-Command-]; also Control-Tab)"
+      }
+    ],
+    "selectTab1": [
+      {
+        "shortcut": "⌘1",
+        "from": "Select one of your first eight tabs (Command-1 to Command-8)"
+      }
+    ],
+    "selectTab2": [
+      {
+        "shortcut": "⌘2",
+        "from": "Select one of your first eight tabs (Command-1 to Command-8)"
+      }
+    ],
+    "selectTab3": [
+      {
+        "shortcut": "⌘3",
+        "from": "Select one of your first eight tabs (Command-1 to Command-8)"
+      }
+    ],
+    "selectTab4": [
+      {
+        "shortcut": "⌘4",
+        "from": "Select one of your first eight tabs (Command-1 to Command-8)"
+      }
+    ],
+    "selectTab5": [
+      {
+        "shortcut": "⌘5",
+        "from": "Select one of your first eight tabs (Command-1 to Command-8)"
+      }
+    ],
+    "selectTab6": [
+      {
+        "shortcut": "⌘6",
+        "from": "Select one of your first eight tabs (Command-1 to Command-8)"
+      }
+    ],
+    "selectTab7": [
+      {
+        "shortcut": "⌘7",
+        "from": "Select one of your first eight tabs (Command-1 to Command-8)"
+      }
+    ],
+    "selectTab8": [
+      {
+        "shortcut": "⌘8",
+        "from": "Select one of your first eight tabs (Command-1 to Command-8)"
+      }
+    ]
   },
-  "unbound": {
+  "notFound": {
     "compactMode": "The cited page lists no command to hide or show a tab list; its only sidebar commands are Control-Command-1 (Bookmarks) and Control-Command-2 (Reading List).",
     "showSidebar": "The cited page lists no command to reveal a hidden tab list over the page.",
     "focusTabList": "Safari has no command to move the focus to a tab list.",

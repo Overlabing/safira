@@ -58,7 +58,7 @@ struct DefaultsListView: View {
                 if let actions {
                     Picker(entry.title, selection: actions.preset) {
                         Text("Safira's own shortcuts").tag(ShortcutPreset?.none)
-                        ForEach(ShortcutPreset.allCases, id: \.self) { Text($0.data.name).tag(Optional($0)) }
+                        ForEach(ShortcutPreset.allCases, id: \.self) { Text($0.name).tag(Optional($0)) }
                     }
                     .accessibilityHint(entry.explanation)
                 }

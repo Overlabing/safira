@@ -2,6 +2,8 @@
 // Copyright (c) 2026 Antonin Carlin
 
 import AppKit
+import CommandKit
+import CommandKitAppKit
 import Commands
 import LinkRouting
 import SafiraCore
@@ -9,7 +11,7 @@ import SafiraCore
 @MainActor
 enum MainMenu {
     static func make(updates: UpdateController, diagnostics: DiagnosticsController, links: LinkController,
-                     defaults: DefaultsController, shortcuts: KeyBindings, shortcutsWindow: ShortcutsWindowController, app: AppDelegate) -> NSMenu {
+                     defaults: DefaultsController, shortcuts: ShortcutBindings<CommandID>, shortcutsWindow: ShortcutsWindowController, app: AppDelegate) -> NSMenu {
         func item(_ id: CommandID, _ action: Selector?) -> NSMenuItem { commandItem(id, action, shortcuts) }
         let menu = NSMenu()
         menu.addItem(submenu(title: "Safira", items: [
@@ -163,12 +165,13 @@ enum MainMenu {
         return item
     }
 
-    /// A menu item for a registry command: its title and key equivalent come from the registry and the bindings in force.
-    private static func commandItem(_ id: CommandID, _ action: Selector?, _ bindings: KeyBindings) -> NSMenuItem {
-        let item = NSMenuItem(title: CommandRegistry.command(id).title, action: action, keyEquivalent: "")
-        if let shortcut = bindings[id] {
-            item.keyEquivalent = shortcut.menuKeyEquivalent
-            item.keyEquivalentModifierMask = shortcut.modifiers.eventFlags
+    /// A menu item for a command: its title, and the key equivalent of the bindings in force (CommandKit's menu key,
+    /// never a key that edits text).
+    private static func commandItem(_ id: CommandID, _ action: Selector?, _ bindings: ShortcutBindings<CommandID>) -> NSMenuItem {
+        let item = NSMenuItem(title: id.title, action: action, keyEquivalent: "")
+        if let shortcut = bindings.shortcut(id) {
+            item.keyEquivalent = String(shortcut.key)
+            item.keyEquivalentModifierMask = shortcut.modifierFlags
         }
         return item
     }

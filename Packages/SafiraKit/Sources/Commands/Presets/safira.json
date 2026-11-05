@@ -1,0 +1,242 @@
+{
+  "id": "safira",
+  "shortcuts": {
+    "newTab": [
+      {
+        "shortcut": "⌘T",
+        "from": "Browser-level shortcut: always reaches the menu, never the page"
+      }
+    ],
+    "newWindow": [
+      {
+        "shortcut": "⌘N",
+        "from": "Browser-level shortcut: always reaches the menu, never the page"
+      }
+    ],
+    "newPrivateWindow": [
+      "⇧⌘N"
+    ],
+    "closeTab": [
+      {
+        "shortcut": "⌘W",
+        "from": "Browser-level shortcut: always reaches the menu, never the page"
+      }
+    ],
+    "closeWindow": [
+      "⇧⌘W"
+    ],
+    "reopenClosedTab": [
+      {
+        "shortcut": "⇧⌘T",
+        "from": "Browser-level shortcut: always reaches the menu, never the page"
+      }
+    ],
+    "quit": [
+      {
+        "shortcut": "⌘Q",
+        "from": "Browser-level shortcut: always reaches the menu, never the page"
+      }
+    ],
+    "openCommandBar": [
+      {
+        "shortcut": "⌘L",
+        "from": "Browser-level shortcut: always reaches the menu, never the page"
+      }
+    ],
+    "compactMode": [
+      {
+        "shortcut": "⌃⌘S",
+        "from": "The system's sidebar shortcut"
+      }
+    ],
+    "showSidebar": [
+      "⌥⌘S"
+    ],
+    "reload": [
+      "⌘R"
+    ],
+    "goBack": [
+      "⌘["
+    ],
+    "goForward": [
+      "⌘]"
+    ],
+    "previousTab": [
+      {
+        "shortcut": "⇧⌘[",
+        "from": "Browser-level shortcut: a page cannot block Tab switching"
+      }
+    ],
+    "nextTab": [
+      {
+        "shortcut": "⇧⌘]",
+        "from": "Browser-level shortcut: a page cannot block Tab switching"
+      }
+    ],
+    "moveTabUp": [
+      "⌥⌘↑"
+    ],
+    "moveTabDown": [
+      "⌥⌘↓"
+    ],
+    "commandBarNext": [
+      {
+        "shortcut": "⇥",
+        "from": "Tab leaves the Command bar for the sidebar"
+      }
+    ],
+    "commandBarPrevious": [
+      {
+        "shortcut": "⇧⇥",
+        "from": "Shift-Tab leaves the Command bar for the sidebar"
+      }
+    ],
+    "newSpace": [
+      {
+        "shortcut": "⌃⌘N",
+        "from": "⌃⌘ with N or an arrow: no browser-level, preset or system shortcut uses it"
+      }
+    ],
+    "previousSpace": [
+      {
+        "shortcut": "⌃⌘←",
+        "from": "⌃⌘ with N or an arrow: no browser-level, preset or system shortcut uses it"
+      }
+    ],
+    "nextSpace": [
+      {
+        "shortcut": "⌃⌘→",
+        "from": "⌃⌘ with N or an arrow: no browser-level, preset or system shortcut uses it"
+      }
+    ],
+    "previousProfile": [
+      {
+        "shortcut": "⌃⌥⌘←",
+        "from": "⌃⌥⌘ with an arrow: distinct from the Space keys, so a Profile never changes by accident"
+      }
+    ],
+    "nextProfile": [
+      {
+        "shortcut": "⌃⌥⌘→",
+        "from": "⌃⌥⌘ with an arrow: distinct from the Space keys, so a Profile never changes by accident"
+      }
+    ],
+    "clearBrowsingData": [
+      "⇧⌘⌫"
+    ],
+    "showDownloads": [
+      {
+        "shortcut": "⌥⌘L",
+        "from": "Safari's own key for its download list"
+      }
+    ],
+    "selectTab1": [
+      {
+        "shortcut": "⌘1",
+        "from": "Safari's and Firefox's tab keys"
+      }
+    ],
+    "selectTab2": [
+      {
+        "shortcut": "⌘2",
+        "from": "Safari's and Firefox's tab keys"
+      }
+    ],
+    "selectTab3": [
+      {
+        "shortcut": "⌘3",
+        "from": "Safari's and Firefox's tab keys"
+      }
+    ],
+    "selectTab4": [
+      {
+        "shortcut": "⌘4",
+        "from": "Safari's and Firefox's tab keys"
+      }
+    ],
+    "selectTab5": [
+      {
+        "shortcut": "⌘5",
+        "from": "Safari's and Firefox's tab keys"
+      }
+    ],
+    "selectTab6": [
+      {
+        "shortcut": "⌘6",
+        "from": "Safari's and Firefox's tab keys"
+      }
+    ],
+    "selectTab7": [
+      {
+        "shortcut": "⌘7",
+        "from": "Safari's and Firefox's tab keys"
+      }
+    ],
+    "selectTab8": [
+      {
+        "shortcut": "⌘8",
+        "from": "Safari's and Firefox's tab keys"
+      }
+    ],
+    "selectTab9": [
+      {
+        "shortcut": "⌘9",
+        "from": "Safari's and Firefox's tab keys"
+      }
+    ],
+    "selectSpace1": [
+      {
+        "shortcut": "⌃1",
+        "from": "Arc's Space keys"
+      }
+    ],
+    "selectSpace2": [
+      {
+        "shortcut": "⌃2",
+        "from": "Arc's Space keys"
+      }
+    ],
+    "selectSpace3": [
+      {
+        "shortcut": "⌃3",
+        "from": "Arc's Space keys"
+      }
+    ],
+    "selectSpace4": [
+      {
+        "shortcut": "⌃4",
+        "from": "Arc's Space keys"
+      }
+    ],
+    "selectSpace5": [
+      {
+        "shortcut": "⌃5",
+        "from": "Arc's Space keys"
+      }
+    ],
+    "selectSpace6": [
+      {
+        "shortcut": "⌃6",
+        "from": "Arc's Space keys"
+      }
+    ],
+    "selectSpace7": [
+      {
+        "shortcut": "⌃7",
+        "from": "Arc's Space keys"
+      }
+    ],
+    "selectSpace8": [
+      {
+        "shortcut": "⌃8",
+        "from": "Arc's Space keys"
+      }
+    ],
+    "selectSpace9": [
+      {
+        "shortcut": "⌃9",
+        "from": "Arc's Space keys"
+      }
+    ]
+  }
+}

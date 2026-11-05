@@ -1,92 +1,97 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Antonin Carlin
 
+import CommandKit
 import Commands
 import Testing
 
-private func press(_ characters: String, _ modifiers: ShortcutModifiers) -> KeyStroke {
-    KeyStroke(characters: characters, modifiers: modifiers)
+/// A key press as the window reads it: AppKit's characters, those with no modifier, and the modifiers held.
+private func press(_ characters: String, _ base: String, _ modifiers: Set<Shortcut.Modifier>) -> Shortcut? {
+    Shortcut(characters: characters, baseCharacters: base, modifiers: modifiers)
+}
+
+private func press(_ characters: String, _ modifiers: Set<Shortcut.Modifier>) -> Shortcut? {
+    Shortcut(characters: characters, modifiers: modifiers)
+}
+
+private func takesFirst(_ bindings: ShortcutBindings<CommandID>, _ press: Shortcut?) -> Bool {
+    press.map { bindings.takesKeyBeforeFocusedView($0, rules: SafiraShortcuts.rules) } ?? false
 }
 
 /// The six that every preset keeps.
-private let reservedPresses: [KeyStroke] = [
-    press("t", .command), press("n", .command), press("w", .command), press("T", [.command, .shift]),
-    press("l", .command), press("q", .command),
+private let reservedPresses: [Shortcut?] = [
+    press("t", [.command]), press("n", [.command]), press("w", [.command]), press("T", "t", [.command, .shift]),
+    press("l", [.command]), press("q", [.command]),
 ]
 
-/// ⇧⌘[ and ⇧⌘] arrive as "{" and "}" because Shift is held.
-private let tabSwitchingPresses: [KeyStroke] = [press("{", [.command, .shift]), press("}", [.command, .shift])]
+/// ⇧⌘[ and ⇧⌘] type "{" and "}" because Shift is held; the key is the one with no modifier.
+private let tabSwitchingPresses: [Shortcut?] = [press("{", "[", [.command, .shift]), press("}", "]", [.command, .shift])]
 
-private let unreservedPresses: [KeyStroke] = [
-    press("r", .command), press("t", []), press("t", .control), press("t", [.command, .option]),
-    press("t", [.command, .control]), press("W", [.command, .shift]), press("a", .command), press("x", .command),
-    press("[", .command), press("{", .command), press("}", .command), press("\u{F700}", [.command, .option]),
-    press("\t", []), press("", .command),
+private let unreservedPresses: [Shortcut?] = [
+    press("r", [.command]), press("t", []), press("\u{14}", "t", [.control]), press("†", "t", [.command, .option]),
+    press("\u{14}", "t", [.command, .control]), press("W", "w", [.command, .shift]), press("a", [.command]),
+    press("x", [.command]), press("[", [.command]), press("{", "[", [.command]), press("}", "]", [.command]),
+    press("\u{F700}", [.command, .option]), press("\t", []), press("", [.command]),
 ]
 
 /// The key equivalents the window offers to the menu before a web page sees them (standing order 22). ⌘N has no menu
 /// item yet, so the menu will decline it, but it is reserved all the same.
 @Test(arguments: reservedPresses + tabSwitchingPresses)
-func theBrowserLevelShortcutsAreReservedByDefault(key: KeyStroke) {
-    #expect(KeyBindings.defaults.reservesKeyEquivalent(key))
+func theBrowserLevelShortcutsAreReservedByDefault(key: Shortcut?) {
+    #expect(takesFirst(bindings(nil), key))
 }
 
 @Test(arguments: unreservedPresses)
-func otherKeysGoToThePage(key: KeyStroke) {
-    #expect(!KeyBindings.defaults.reservesKeyEquivalent(key))
+func otherKeysGoToThePage(key: Shortcut?) {
+    #expect(!takesFirst(bindings(nil), key))
 }
 
 @Test func aShiftedLetterIsReservedOnlyForTheCommandsThatAskForShift() {
-    // ⇧⌘N is not ⌘N; ⌘T is not ⇧⌘T.
-    #expect(!KeyBindings.defaults.reservesKeyEquivalent(press("N", [.command, .shift])))
-    #expect(KeyBindings.defaults.reservesKeyEquivalent(press("t", .command)))
-    #expect(KeyBindings.defaults.reservesKeyEquivalent(press("T", [.command, .shift])))
+    #expect(!takesFirst(bindings(nil), press("N", "n", [.command, .shift])))
+    #expect(takesFirst(bindings(nil), press("t", [.command])))
+    #expect(takesFirst(bindings(nil), press("T", "t", [.command, .shift])))
 }
 
-@Test func theReservedKeysFollowTheBindingsOfTheReservedCommands() {
-    var bindings = KeyBindings.defaults
-    bindings[.newTab] = Shortcut(.character("k"), .command)
-    #expect(!bindings.reservesKeyEquivalent(press("t", .command)))
-    #expect(bindings.reservesKeyEquivalent(press("k", .command)))
-    bindings[.closeTab] = nil
-    #expect(!bindings.reservesKeyEquivalent(press("w", .command)))
+@Test func theReservedKeysFollowTheBindingsOfTheReservedCommands() throws {
+    var changed = bindings(nil)
+    try changed.record(Shortcut("k"), for: .newTab, rules: SafiraShortcuts.rules)
+    #expect(!takesFirst(changed, press("t", [.command])))
+    #expect(takesFirst(changed, press("k", [.command])))
+    try changed.unbind(.closeTab, rules: SafiraShortcuts.rules)
+    #expect(!takesFirst(changed, press("w", [.command])))
 }
 
-@Test func aCommandThatIsNotReservedNeverReachesTheMenuFirst() {
-    var bindings = KeyBindings.defaults
-    bindings[.reload] = Shortcut(.character("j"), .command)
-    #expect(!bindings.reservesKeyEquivalent(press("j", .command)))
+@Test func aCommandThatIsNotReservedNeverReachesTheMenuFirst() throws {
+    var changed = bindings(nil)
+    try changed.record(Shortcut("j"), for: .reload, rules: SafiraShortcuts.rules)
+    #expect(!takesFirst(changed, press("j", [.command])))
 }
 
 @Test(arguments: ShortcutPreset.allCases)
 func everyPresetReservesTheSameBrowserShortcuts(preset: ShortcutPreset) {
-    let bindings = ShortcutConfiguration(preset: preset).bindings
     for key in reservedPresses {
-        #expect(bindings.reservesKeyEquivalent(key), "\(preset) \(key.characters)")
+        #expect(takesFirst(bindings(preset), key), "\(preset) \(key?.symbols ?? "")")
     }
 }
 
-@Test func theRegistryMarksExactlyTheEightReservedCommands() {
-    let reserved = CommandRegistry.commands.filter(\.isReserved).map(\.id)
-    #expect(Set(reserved) == [.newTab, .newWindow, .closeTab, .reopenClosedTab, .openCommandBar, .quit, .previousTab, .nextTab])
+@Test func theRulesReserveExactlyTheEightBrowserLevelCommands() {
+    #expect(SafiraShortcuts.rules.beforeFocusedView
+        == [.newTab, .newWindow, .closeTab, .reopenClosedTab, .openCommandBar, .quit, .previousTab, .nextTab])
 }
 
 @Test func theReservedShortcutsByDefaultAreTheseEightLiterally() {
-    let shortcuts = CommandRegistry.commands.filter(\.isReserved).compactMap { $0.defaultShortcut?.display }
+    let shortcuts = SafiraShortcuts.rules.beforeFocusedView.compactMap { bindings(nil).shortcut($0)?.symbols }
     #expect(Set(shortcuts) == ["⌘T", "⌘N", "⌘W", "⇧⌘T", "⌘L", "⌘Q", "⇧⌘[", "⇧⌘]"])
     #expect(shortcuts.count == 8)
 }
 
-@Test func showingThePreviousAndNextTabIsReservedWhereverThePresetOrItsFallbackBindsIt() {
-    func reserves(_ preset: ShortcutPreset, _ key: KeyStroke) -> Bool {
-        ShortcutConfiguration(preset: preset).bindings.reservesKeyEquivalent(key)
-    }
+@Test func showingThePreviousAndNextTabIsReservedWhereverThePresetOrSafirasSetBindsIt() {
     for key in tabSwitchingPresses {
-        #expect(reserves(.safari, key))
-        #expect(reserves(.zen, key))
-        #expect(!reserves(.arc, key))
+        #expect(takesFirst(bindings(.safari), key))
+        #expect(takesFirst(bindings(.zen), key))
+        #expect(!takesFirst(bindings(.arc), key))
     }
-    #expect(reserves(.arc, press("\u{F700}", [.command, .option])))
-    #expect(reserves(.arc, press("\u{F701}", [.command, .option])))
-    #expect(!reserves(.zen, press("\u{F700}", [.command, .option])))
+    #expect(takesFirst(bindings(.arc), press("\u{F700}", [.command, .option])))
+    #expect(takesFirst(bindings(.arc), press("\u{F701}", [.command, .option])))
+    #expect(!takesFirst(bindings(.zen), press("\u{F700}", [.command, .option])))
 }
