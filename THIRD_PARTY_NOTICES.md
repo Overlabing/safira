@@ -165,11 +165,11 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-## ThemeKit 0.2.4
+## ThemeKit 0.2.6
 
 Themes, Palettes, text legibility and the design kit, <https://github.com/Overlabing/ThemeKit>. Linked into the app
 through the Appearance module (ColorCore, ColorPlatform, DesignKit) and the windows' views (ColorUI, DesignKit). The
-text below is the `LICENSE` file of the 0.2.4 release, unmodified.
+text below is the `LICENSE` file of the 0.2.6 release, unmodified.
 
 ```text
 MIT License

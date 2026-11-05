@@ -25,10 +25,9 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     private let sideSetting: SidebarSideSetting
     private lazy var commandBar = FloatingCommandBar { [unowned self] in session }
     private let columnFocus = ColumnFocus()
-    private var windowButtons: WindowButtonsReveal?
     private let pageArea = TabHostView()
-    private var sidebar: NSViewController?
     private var layout: BrowserWindowLayout?
+    private var toolbar: SidebarToolbar?
     private let compactModeStore = CompactModeStore()
     private var presentation: SidebarPresentation
     private var searchEngineSheet: NSWindow?
@@ -171,7 +170,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     }
 
     /// Not named `toggleSidebar(_:)`: the split view controller answers that selector itself and would disable the item.
-    /// In Compact mode, shows the sidebar over the page with the keyboard focus on its list, or hides it again.
+    /// In Compact mode, shows the sidebar beside the page with the keyboard focus on its list, or hides it again.
     @objc func toggleRevealedSidebar(_ sender: Any?) {
         presentation.toggleRevealed()
         applyReveal()
@@ -652,13 +651,25 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
             commandBar.field.stringValue = tab?.address?.absoluteString ?? ""
         }
         commandBar.appearance.theme = spaceTheme
-        layout?.setSide(sideSetting.side)
+        applySide()
         window?.title = tab?.state.title.flatMap { $0.isEmpty ? nil : $0 } ?? "Safira"
         pageArea.show(tab.flatMap { webContext.webView(for: $0.id) })
         updateSearchEngineSheet(query: session.searchAwaitingEngine)
         showPopups()
         showMatchBanner()
         updateDockIcon()
+    }
+
+    /// The column follows the side setting, and the toolbar's sidebar button follows the column.
+    private func applySide() {
+        guard let layout, let window, layout.side != sideSetting.side else { return }
+        layout.setSide(sideSetting.side)
+        toolbar?.install(in: window)
+    }
+
+    func window(_ window: NSWindow, willUseFullScreenPresentationOptions proposedOptions: NSApplication.PresentationOptions)
+        -> NSApplication.PresentationOptions {
+        SidebarFullScreen.options(proposedOptions)
     }
 
     /// The Dock icon is the Active profile's Theme. Private windows leave it as it is.
@@ -739,8 +750,8 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     }
 
     private func layOut(in window: NSWindow) {
-        // The content reaches the top edge under a transparent title bar; the title is still set, for the Window menu
-        // and VoiceOver.
+        // The content reaches the top edge under a transparent title bar and toolbar; the title is not shown but still
+        // set, for the Window menu and VoiceOver.
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
         commandBar.suggestions = { session, text in await session.suggestions(for: text) }
@@ -782,24 +793,21 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
             delete: { [weak self] id in self?.confirmDeletion(ofProfile: id) },
             clearBrowsingData: { [weak self] id in self?.askToClearBrowsingData(ofProfile: id) }
         )
-        let sidebar = NSHostingController(rootView: TabSidebar(
+        let column = TabSidebar(
             registry: registry, focus: columnFocus, pageActions: pageActions, profileActions: profileActions,
             spaceActions: spaceActions, folderActions: folderActions,
-            side: sideSetting, shortcut: { [weak self] id in self?.shortcuts.bindings[id]?.display }))
-        sidebar.sizingOptions = []
-        // The column starts at the window's top edge: the title bar's buttons only show on demand.
-        sidebar.safeAreaRegions = []
-        self.sidebar = sidebar
+            shortcut: { [weak self] id in self?.shortcuts.bindings[id]?.display })
         let theme: () -> Theme = { [weak self] in self?.spaceTheme ?? ThemeCatalog.first }
-        let layout = BrowserWindowLayout(
-            background: NSHostingView(rootView: WindowBackdrop(theme: theme)),
-            overlayBackground: NSHostingView(rootView: WindowBackdrop(theme: theme)),
-            column: sidebar, canvas: canvas, side: sideSetting.side)
+        let layout = BrowserWindowLayout(background: NSHostingView(rootView: WindowBackdrop(theme: theme)),
+                                         column: column, canvas: canvas, side: sideSetting.side)
         layout.onPointerReachedEdge = { [weak self] in self?.revealSidebarFromEdge() }
         layout.onPointerLeftSidebar = { [weak self] in self?.hideSidebarAfterPointerLeft() }
+        layout.onToggleSidebar = { [weak self] in self?.toggleCompactMode(nil) }
         self.layout = layout
         window.contentViewController = layout
-        windowButtons = WindowButtonsReveal(window: window, layout: layout)
+        let toolbar = SidebarToolbar { [weak layout] in layout?.toolbarItems ?? [] }
+        toolbar.install(in: window)
+        self.toolbar = toolbar
         window.setContentSize(SafiraDesign.mainWindowSize)
     }
 }

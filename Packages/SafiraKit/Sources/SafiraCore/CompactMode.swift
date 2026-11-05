@@ -4,11 +4,11 @@
 import Foundation
 
 /// Whether the Main window shows its sidebar. In Compact mode the sidebar is hidden and the page takes the full width;
-/// the sidebar comes back over the page on demand and goes away again. Only `isCompact` is kept across launches:
+/// the sidebar comes back beside the page on demand and goes away again. Only `isCompact` is kept across launches:
 /// a relaunch always starts with the sidebar hidden, never revealed.
 public struct SidebarPresentation: Equatable, Sendable {
     public private(set) var isCompact: Bool
-    /// The sidebar is drawn over the page. Always false outside Compact mode.
+    /// The sidebar is shown again in Compact mode. Always false outside Compact mode.
     public private(set) var isRevealed = false
 
     public init(isCompact: Bool = false) {
@@ -46,7 +46,7 @@ public struct SidebarPresentation: Equatable, Sendable {
                                                 comment: "Defaults title of Compact mode")
     public static let compactModeExplanation = String(localized: """
         The sidebar is hidden and the page uses the full width. Move the pointer to the window's edge on the \
-        sidebar's side, or use Show Sidebar, to bring it back over the page; it hides again when the pointer leaves it \
+        sidebar's side, or use Show Sidebar, to bring it back beside the page; it hides again when the pointer leaves it \
         or you go back to the page.
         """, table: "SafiraCore", bundle: .module, comment: "Defaults: explanation of Compact mode")
 

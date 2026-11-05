@@ -4,7 +4,7 @@
 import Foundation
 
 /// Which side of the window the sidebar sits on, for every window and every Profile. The page takes the other side;
-/// in Compact mode the sidebar comes back over the page from the same side.
+/// in Compact mode the sidebar comes back from the same side.
 public enum SidebarSide: String, Sendable, CaseIterable {
     case left
     case right

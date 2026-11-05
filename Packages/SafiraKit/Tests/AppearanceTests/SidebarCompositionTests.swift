@@ -59,16 +59,6 @@ struct SidebarCompositionTests {
         }
     }
 
-    @Test(arguments: SidebarCompositionTests.cases)
-    func theColumnEdgeReachesThreeAgainstTheGradientAndItsFill(_ theme: Theme, _ appearance: Appearance) {
-        let cases = SidebarComposition.cases(of: SidebarComposition.columnEdge, for: theme, in: appearance)
-        #expect(!cases.isEmpty)
-        for found in cases {
-            #expect(found.threshold == 3)
-            #expect(found.after >= 3, "\(found)")
-        }
-    }
-
     /// The worst page behind the Command bar is white in dark and black in light: the field's text, a suggestion's
     /// title and detail, and the highlighted suggestion all stay at 4.5:1.
     @Test(arguments: SidebarCompositionTests.cases)
@@ -96,8 +86,9 @@ struct SidebarCompositionTests {
         #expect(tokens.emphasis.textContrast == 4.5)
         #expect(SidebarComposition.texts.map(\.name) == [
             "Tab title", "Tab subtitle", "Address", "Private band", "Space rail caption", "Space rail caption detail",
-            "Selected Tab marker", "Column edge",
+            "Selected Tab marker",
         ])
+        #expect(SidebarComposition.texts.allSatisfy { $0.placement == .frame })
         #expect(SidebarComposition.themes.count == 8)
         #expect(SidebarComposition.privateTheme.primary == .purple)
     }

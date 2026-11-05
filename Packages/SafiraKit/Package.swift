@@ -22,7 +22,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/groue/GRDB.swift", exact: "7.11.1"),
-        .package(url: "https://github.com/Overlabing/ThemeKit", exact: "0.2.4"),
+        .package(url: "https://github.com/Overlabing/ThemeKit", exact: "0.2.6"),
         .package(url: "https://github.com/Overlabing/AppSupportKit", exact: "0.1.1"),
     ],
     targets: [

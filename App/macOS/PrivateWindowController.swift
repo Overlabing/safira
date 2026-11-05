@@ -25,10 +25,11 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSMen
     private let sideSetting: SidebarSideSetting
     private lazy var commandBar = FloatingCommandBar { [unowned self] in session }
     private let columnFocus = ColumnFocus()
-    private var windowButtons: WindowButtonsReveal?
     private let pageArea = TabHostView()
     private var layout: BrowserWindowLayout?
-    private var sidebar: NSViewController?
+    private var toolbar: SidebarToolbar?
+    /// The sidebar button hides and shows this window's column; a Private window has no Compact mode and keeps nothing.
+    private var presentation = SidebarPresentation()
     private var searchEngineSheet: NSWindow?
     private var popupPanels: [PopupID: PopupPanelController] = [:]
     private var renderedTabID: TabID?
@@ -209,13 +210,30 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSMen
         if commandBar.isShown, shownTabChanged, session.commandBarTarget == .selectedTab {
             commandBar.field.stringValue = tab?.address?.absoluteString ?? ""
         }
-        layout?.setSide(sideSetting.side)
+        applySide()
         let title = Self.title(for: tab?.state.title)
         window?.title = title
         window?.setAccessibilityLabel(title)
         pageArea.show(tab.flatMap { context.web.webView(for: $0.id) })
         updateSearchEngineSheet(query: session.searchAwaitingEngine)
         showPopups()
+    }
+
+    private func toggleColumn() {
+        presentation.toggleCompact()
+        layout?.apply(presentation, animated: true)
+    }
+
+    /// The column follows the side setting, and the toolbar's sidebar button follows the column.
+    private func applySide() {
+        guard let layout, let window, layout.side != sideSetting.side else { return }
+        layout.setSide(sideSetting.side)
+        toolbar?.install(in: window)
+    }
+
+    func window(_ window: NSWindow, willUseFullScreenPresentationOptions proposedOptions: NSApplication.PresentationOptions)
+        -> NSApplication.PresentationOptions {
+        SidebarFullScreen.options(proposedOptions)
     }
 
     private func showPopups() {
@@ -284,21 +302,16 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSMen
             editAddress: { [weak self] in self?.focusCommandBar(nil) },
             newTab: { [weak self] in self?.newTab(nil) },
             showPage: { [weak self] in self?.showPage() })
-        let sidebar = NSHostingController(rootView: PrivateSidebar(
-            session: session, parent: context.parent, focus: columnFocus, pageActions: pageActions,
-            side: sideSetting))
-        sidebar.sizingOptions = []
-        // The column starts at the window's top edge: the title bar's buttons only show on demand.
-        sidebar.safeAreaRegions = []
-        self.sidebar = sidebar
+        let column = PrivateSidebar(session: session, parent: context.parent, focus: columnFocus, pageActions: pageActions)
         let theme: () -> Theme = { SidebarComposition.privateTheme }
-        let layout = BrowserWindowLayout(
-            background: NSHostingView(rootView: WindowBackdrop(theme: theme)),
-            overlayBackground: NSHostingView(rootView: WindowBackdrop(theme: theme)),
-            column: sidebar, canvas: canvas, side: sideSetting.side)
+        let layout = BrowserWindowLayout(background: NSHostingView(rootView: WindowBackdrop(theme: theme)),
+                                         column: column, canvas: canvas, side: sideSetting.side)
+        layout.onToggleSidebar = { [weak self] in self?.toggleColumn() }
         self.layout = layout
         window.contentViewController = layout
-        windowButtons = WindowButtonsReveal(window: window, layout: layout)
+        let toolbar = SidebarToolbar { [weak layout] in layout?.toolbarItems ?? [] }
+        toolbar.install(in: window)
+        self.toolbar = toolbar
         window.setContentSize(SafiraDesign.privateWindowSize)
     }
 }

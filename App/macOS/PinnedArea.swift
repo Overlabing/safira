@@ -41,40 +41,25 @@ private extension String {
     }
 }
 
-/// The active Space's pinned area: its Pinned tabs and its Folders, each Folder a kit `FolderRow` whose open content
-/// sits on one `LayerPanel`; a Folder inside a Folder is indented one level in the same panel.
+/// The active Space's pinned area: its Pinned tabs and its Folders. An open Folder's content sits on one panel, drawn a
+/// cell at a time (`SidebarCellPlacement.panel`); a Folder inside a Folder is indented one level in the same panel.
 struct PinnedSection: View {
     let session: ProfileSession
     let focus: ColumnFocus
     let actions: FolderActions
 
     var body: some View {
-        ForEach(session.pinnedItems) { item in
-            switch item {
+        ForEach(PinnedCell.cells(of: session.pinnedItems)) { cell in
+            switch cell.item {
             case .tab(let tab):
-                pinnedTab(tab, placement: .free(firstInSection: false))
+                pinnedTab(tab, placement: cell.placement)
             case .folder(let folder):
-                PinnedFolder(folder: folder, session: session, actions: actions)
-                if folder.isExpanded, !folder.items.isEmpty {
-                    LayerPanel { contents(of: folder, level: 1) }
-                }
+                PinnedFolder(folder: folder, session: session, actions: actions, placement: cell.placement)
             }
         }
     }
 
-    private func contents(of folder: Folder, level: Int) -> AnyView {
-        AnyView(ForEach(folder.items) { item in
-            switch item {
-            case .tab(let tab):
-                pinnedTab(tab, placement: .layer(level: level))
-            case .folder(let inner):
-                PinnedFolder(folder: inner, session: session, actions: actions)
-                if inner.isExpanded { contents(of: inner, level: level + 1) }
-            }
-        })
-    }
-
-    private func pinnedTab(_ tab: SafiraSession.Tab, placement: RowPlacement) -> some View {
+    private func pinnedTab(_ tab: SafiraSession.Tab, placement: SidebarCellPlacement) -> some View {
         let pinned = session.activeSpace.pinnedTabs
         return TabRowView(tab: tab, icons: session.siteIcons, isSelected: session.selectedTabID == tab.id,
                           isListFocused: focus.isListFocused,
@@ -86,37 +71,85 @@ struct PinnedSection: View {
     }
 }
 
+/// The pinned area flattened into the `List`'s cells: every Pinned tab and Folder in order, an open Folder's content
+/// right after it in that Folder's panel, the panel's first and last cells marked so its ends are rounded.
+@MainActor
+struct PinnedCell: @MainActor Identifiable {
+    let item: PinnedItem
+    let placement: SidebarCellPlacement
+
+    var id: PinnedItemID { item.id }
+
+    static func cells(of items: [PinnedItem]) -> [PinnedCell] {
+        items.flatMap { item -> [PinnedCell] in
+            let head = PinnedCell(item: item, placement: .free)
+            guard case .folder(let folder) = item, folder.isExpanded else { return [head] }
+            let inside = contents(of: folder, level: 1)
+            return [head] + inside.enumerated().map { index, cell in
+                PinnedCell(item: cell.item, placement: .panel(level: cell.level, isFirst: index == 0,
+                                                              isLast: index == inside.count - 1))
+            }
+        }
+    }
+
+    private static func contents(of folder: Folder, level: Int) -> [(item: PinnedItem, level: Int)] {
+        folder.items.flatMap { item -> [(item: PinnedItem, level: Int)] in
+            guard case .folder(let inner) = item, inner.isExpanded else { return [(item, level)] }
+            return [(item, level)] + contents(of: inner, level: level + 1)
+        }
+    }
+}
+
 private struct PinnedFolder: View {
     let folder: Folder
     let session: ProfileSession
     let actions: FolderActions
+    let placement: SidebarCellPlacement
     @State private var isHovered = false
     @State private var isDropTarget = false
+    @Environment(\.designTokens) private var tokens
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        FolderRow(folder.name, count: folder.items.count, isOpen: folder.isExpanded,
-                  state: RowState(isCurrent: isDropTarget, isHovered: isHovered),
-                  symbol: folder.isExpanded ? "folder.fill" : "folder")
-            .onHover { isHovered = $0 }
-            .onTapGesture { session.setFolderExpanded(folder.id, !folder.isExpanded) }
-            .draggable(PinnedDrag.text(for: .folder(folder.id)))
-            .dropDestination(for: String.self, action: { texts, _ in
-                guard let item = texts.first.flatMap(PinnedDrag.item(from:)) else { return false }
-                return session.movePinned(item, into: folder.id)
-            }, isTargeted: { isDropTarget = $0 })
-            .contextMenu {
-                Button("New Folder Inside…") { actions.create(folder.id) }
-                Button("Rename Folder…") { actions.rename(folder.id) }
-                Divider()
-                Button("Delete Folder") { session.deleteFolder(folder.id) }
+        WithColorRoles { roles in
+            SidebarRowContent(title: folder.name) {
+                Tile(.tintedSymbol(folder.isExpanded ? "folder.fill" : "folder"))
+            } trailing: {
+                HStack(spacing: tokens.spacing.pillActionGap) {
+                    Text(folder.items.count, format: .number).role(tokens.type.count).foregroundStyle(roles.secondaryText)
+                    Image(systemName: "chevron.right")
+                        .font(tokens.type.accessory.font)
+                        .foregroundStyle(roles.secondaryText)
+                        .rotationEffect(folder.isExpanded ? .degrees(tokens.size.disclosureDegrees) : .zero)
+                        .animation(MotionRole.indicatorRotation.animation(reduceMotion: reduceMotion), value: folder.isExpanded)
+                }
             }
-            .accessibilityAction(.default) { session.setFolderExpanded(folder.id, !folder.isExpanded) }
-            .accessibilityAction(named: folder.isExpanded ? String(localized: "Collapse", comment: "VoiceOver action of a Folder")
-                                                          : String(localized: "Expand", comment: "VoiceOver action of a Folder")) {
-                session.setFolderExpanded(folder.id, !folder.isExpanded)
-            }
-            .accessibilityAction(named: "Rename Folder") { actions.rename(folder.id) }
-            .accessibilityAction(named: "Delete Folder") { session.deleteFolder(folder.id) }
+        }
+        .onHover { isHovered = $0 }
+        .onTapGesture { session.setFolderExpanded(folder.id, !folder.isExpanded) }
+        .draggable(PinnedDrag.text(for: .folder(folder.id)))
+        .dropDestination(for: String.self, action: { texts, _ in
+            guard let item = texts.first.flatMap(PinnedDrag.item(from:)) else { return false }
+            return session.movePinned(item, into: folder.id)
+        }, isTargeted: { isDropTarget = $0 })
+        .contextMenu {
+            Button("New Folder Inside…") { actions.create(folder.id) }
+            Button("Rename Folder…") { actions.rename(folder.id) }
+            Divider()
+            Button("Delete Folder") { session.deleteFolder(folder.id) }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
+        .accessibilityValue(folder.isExpanded ? String(localized: "Expanded", comment: "VoiceOver value of a Folder")
+                                              : String(localized: "Collapsed", comment: "VoiceOver value of a Folder"))
+        .accessibilityAction(.default) { session.setFolderExpanded(folder.id, !folder.isExpanded) }
+        .accessibilityAction(named: folder.isExpanded ? String(localized: "Collapse", comment: "VoiceOver action of a Folder")
+                                                      : String(localized: "Expand", comment: "VoiceOver action of a Folder")) {
+            session.setFolderExpanded(folder.id, !folder.isExpanded)
+        }
+        .accessibilityAction(named: "Rename Folder") { actions.rename(folder.id) }
+        .accessibilityAction(named: "Delete Folder") { session.deleteFolder(folder.id) }
+        .sidebarCell(state: RowState(isCurrent: isDropTarget, isHovered: isHovered), placement: placement)
     }
 }
 
