@@ -781,6 +781,23 @@
         }
       }
     },
+    "Collapsed" : {
+      "comment" : "VoiceOver value of a Folder",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Collapsed"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Replié"
+          }
+        }
+      }
+    },
     "Command bar" : {
       "comment" : "Command bar",
       "localizations" : {
@@ -1459,6 +1476,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Déplier"
+          }
+        }
+      }
+    },
+    "Expanded" : {
+      "comment" : "VoiceOver value of a Folder",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Expanded"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déplié"
           }
         }
       }
