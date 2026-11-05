@@ -18,9 +18,9 @@ import Testing
     }
 
     @Test func aSuggestionRowShowsTheHostAndThePathWithoutQueryOrScheme() {
-        let display = AddressDisplay(URL(string: "https://jellyfin.example.com/web/?x=1#/home")!)
+        let display = AddressDisplay(URL(string: "https://media.example.com/web/?x=1#/home")!)
 
-        #expect(display.hostAndPath == "jellyfin.example.com/web/")
+        #expect(display.hostAndPath == "media.example.com/web/")
     }
 
     @Test func aLoneSlashIsDropped() {
