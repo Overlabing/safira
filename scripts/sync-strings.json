@@ -19,6 +19,7 @@
      "sources": ["Packages/SafiraKit/Sources/Onboarding"]}
   ],
   "notExtracted": ["App/macOS/InfoPlist.xcstrings"],
+  "locales": "all",
   "allowEnv": "SAFIRA_ALLOW_TRANSLATION_REMOVAL",
   "baseBranches": ["main", "origin/main"],
   "hint": "A translation is lost or unreachable. Fix the key, or set SAFIRA_ALLOW_TRANSLATION_REMOVAL=1 when the removal is deliberate."
