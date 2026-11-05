@@ -4,6 +4,8 @@
 import Appearance
 import AppKit
 import ColorCore
+import CommandKit
+import CommandKitAppKit
 import Commands
 import DesignKit
 import SafiraCore
@@ -809,7 +811,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         let column = TabSidebar(
             registry: registry, focus: columnFocus, pageActions: pageActions, profileActions: profileActions,
             spaceActions: spaceActions, folderActions: folderActions,
-            shortcut: { [weak self] id in self?.shortcuts.bindings[id]?.display })
+            shortcut: { [weak self] id in self?.shortcuts.bindings.shortcut(id)?.symbols })
         let theme: () -> Theme = { [weak self] in self?.spaceTheme ?? ThemeCatalog.first }
         let layout = BrowserWindowLayout(background: NSHostingView(rootView: WindowBackdrop(theme: theme)),
                                          column: column, canvas: canvas, side: sideSetting.side)
@@ -826,12 +828,12 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
 }
 
 /// Keeps the reserved browser-level shortcuts for the menu: a focused web page sees key equivalents before the menu
-/// does and could otherwise swallow them. Which keys those are is decided by `KeyBindings.reservesKeyEquivalent`.
+/// does and could otherwise swallow them. Which keys those are is decided by `ShortcutController.takesKeyBeforeFocusedView`.
 private final class MainWindow: NSWindow {
     var shortcuts: ShortcutController?
 
     override func performKeyEquivalent(with event: NSEvent) -> Bool {
-        if shortcuts?.bindings.reservesKeyEquivalent(KeyStroke(event)) == true,
+        if let shortcut = Shortcut(event: event), shortcuts?.takesKeyBeforeFocusedView(shortcut) == true,
            NSApp.mainMenu?.performKeyEquivalent(with: event) == true {
             return true
         }

@@ -86,6 +86,23 @@
         }
       }
     },
+    "Command Bar" : {
+      "comment" : "Shortcuts window: section title",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Command Bar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Barre de commande"
+          }
+        }
+      }
+    },
     "Command Bar: Move to the Tab List" : {
       "comment" : "Command name in the Shortcuts window; Tab moves from the Command bar",
       "localizations" : {
@@ -528,6 +545,23 @@
         }
       }
     },
+    "Profiles" : {
+      "comment" : "Shortcuts window: section title",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profiles"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profils"
+          }
+        }
+      }
+    },
     "Quit Safira" : {
       "comment" : "Command: menu item and Shortcuts row",
       "localizations" : {
@@ -852,6 +886,40 @@
         }
       }
     },
+    "Spaces" : {
+      "comment" : "Shortcuts window: section title",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spaces"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Espaces"
+          }
+        }
+      }
+    },
+    "Tabs and Windows" : {
+      "comment" : "Shortcuts window: section title",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tabs and Windows"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Onglets et fenêtres"
+          }
+        }
+      }
+    },
     "The help center answers automated requests with 403; the list was read from the Internet Archive snapshot of the same page (web.archive.org/web/2025/) on the check date." : {
       "comment" : "Shortcuts window: the note of the Arc preset (Presets/arc.json)",
       "extractionState" : "manual",
@@ -884,6 +952,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "La page indique Ctrl et Alt sans dire à quoi elles correspondent sur macOS ; elles sont lues comme ⌘ et ⌥, comme dans Firefox, sur lequel Zen repose. À revérifier sur un Mac où Zen est installé."
+          }
+        }
+      }
+    },
+    "View and History" : {
+      "comment" : "Shortcuts window: section title",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "View and History"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Présentation et historique"
           }
         }
       }

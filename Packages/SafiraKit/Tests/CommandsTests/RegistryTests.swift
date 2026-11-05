@@ -1,187 +1,153 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Antonin Carlin
 
+import CommandKit
 import Commands
 import Testing
 
-@Test func everyCommandIsInTheRegistryOnce() {
-    #expect(CommandRegistry.commands.map(\.id).sorted { $0.rawValue < $1.rawValue }
-        == CommandID.allCases.sorted { $0.rawValue < $1.rawValue })
-    #expect(Set(CommandRegistry.commands.map(\.title)).count == CommandRegistry.commands.count)
+@Test func everyCommandHasItsOwnTitle() {
+    #expect(Set(CommandID.allCases.map(\.title)).count == CommandID.allCases.count)
+    #expect(CommandID.allCases.count == 55)
+    #expect(CommandID.compactMode.title == "Compact Mode")
+    #expect(CommandID.showSidebar.title == "Show Sidebar")
+    #expect(CommandID.selectTab1.title == "Show Tab 1")
+    #expect(CommandID.selectSpace9.title == "Show Space 9")
 }
 
 @Test func theDefaultsAreTheProductDefaultsDecidedSoFar() {
-    func display(_ id: CommandID) -> String? { CommandRegistry.command(id).defaultShortcut?.display }
-    #expect(display(.newTab) == "⌘T")
-    #expect(display(.newWindow) == "⌘N")
-    #expect(display(.closeTab) == "⌘W")
-    #expect(display(.reopenClosedTab) == "⇧⌘T")
-    #expect(display(.openCommandBar) == "⌘L")
-    #expect(display(.quit) == "⌘Q")
-    #expect(display(.compactMode) == "⌃⌘S")
-    #expect(display(.showSidebar) == "⌥⌘S")
-    #expect(display(.previousTab) == "⇧⌘[")
-    #expect(display(.nextTab) == "⇧⌘]")
-    #expect(display(.moveTabUp) == "⌥⌘↑")
-    #expect(display(.moveTabDown) == "⌥⌘↓")
-    #expect(display(.commandBarNext) == "⇥")
-    #expect(display(.commandBarPrevious) == "⇧⇥")
-    #expect(KeyBindings.defaults.conflicts == [])
+    #expect(key(nil, .newTab) == "⌘T")
+    #expect(key(nil, .newWindow) == "⌘N")
+    #expect(key(nil, .closeTab) == "⌘W")
+    #expect(key(nil, .reopenClosedTab) == "⇧⌘T")
+    #expect(key(nil, .openCommandBar) == "⌘L")
+    #expect(key(nil, .quit) == "⌘Q")
+    #expect(key(nil, .compactMode) == "⌃⌘S")
+    #expect(key(nil, .showSidebar) == "⌥⌘S")
+    #expect(key(nil, .previousTab) == "⇧⌘[")
+    #expect(key(nil, .nextTab) == "⇧⌘]")
+    #expect(key(nil, .moveTabUp) == "⌥⌘↑")
+    #expect(key(nil, .moveTabDown) == "⌥⌘↓")
+    #expect(key(nil, .commandBarNext) == "⇥")
+    #expect(key(nil, .commandBarPrevious) == "⇧⇥")
+    #expect(key(nil, .newPrivateWindow) == "⇧⌘N")
+    #expect(key(nil, .showDownloads) == "⌥⌘L")
+    #expect(bindings(nil).conflicts == [])
 }
 
-@Test func theCommandBarKeysAreFixedAndHearOnlyTheCommandBar() {
-    for id in [CommandID.commandBarNext, .commandBarPrevious] {
-        let command = CommandRegistry.command(id)
-        #expect(command.scope == .commandBar)
-        #expect(!command.isRebindable)
+@Test func safirasOwnSetHasNoParentAndNamesNoSource() {
+    let standard = SafiraShortcuts.standard
+    #expect(standard.id == "safira")
+    #expect(standard.source == nil)
+    #expect(standard.notFound.isEmpty)
+    #expect(SafiraShortcuts.sets.map(\.id) == ["safira", "zen", "arc", "safari"])
+}
+
+@Test func theCommandBarKeysAreFixed() {
+    for command in [CommandID.commandBarNext, .commandBarPrevious] {
+        #expect(!SafiraShortcuts.rules.isRebindable(command))
+    }
+    #expect(rebindable.count == 53)
+}
+
+@Test func aFixedCommandRefusesARecordedKey() {
+    var arc = bindings(.arc)
+    #expect(throws: ShortcutBindingError<CommandID>.notRebindable(.commandBarNext)) {
+        try arc.record(Shortcut("j"), for: .commandBarNext, rules: SafiraShortcuts.rules)
+    }
+    #expect(arc.keys(.commandBarNext).map(\.symbols) == ["⇥"])
+}
+
+@Test func theSpaceCommandsUseControlCommandKeys() {
+    #expect(key(nil, .newSpace) == "⌃⌘N")
+    #expect(key(nil, .previousSpace) == "⌃⌘←")
+    #expect(key(nil, .nextSpace) == "⌃⌘→")
+    for command in [CommandID.renameSpace, .deleteSpace, .moveSpaceLeft, .moveSpaceRight] {
+        #expect(key(nil, command) == nil)
+        #expect(SafiraShortcuts.rules.isRebindable(command))
     }
 }
 
-@Test func aFixedCommandIgnoresPresetsAndOverrides() {
-    var configuration = ShortcutConfiguration(preset: .arc)
-    configuration.overrides[.commandBarNext] = .unbound
-    #expect(configuration.bindings[.commandBarNext]?.display == "⇥")
-}
-
-@Test func theCompactModeCommandsAreWindowCommandsYouCanRebind() {
-    for id in [CommandID.compactMode, .showSidebar] {
-        let command = CommandRegistry.command(id)
-        #expect(command.scope == .window)
-        #expect(command.isRebindable)
-        #expect(command.isImplemented)
-        #expect(!command.isReserved)
+/// CommandKit's rule (`Shortcut.editsText`): ⌘ with an arrow and ⌫ with any modifier edit the text of a field, so they
+/// are never a menu item's key. Safira's ⌃⌘←, ⌃⌘→ and ⇧⌘⌫ keep their key but lose their menu item's key equivalent.
+@Test func theKeysThatEditTextHaveNoMenuKey() {
+    #expect(menuKey(nil, .previousSpace) == nil)
+    #expect(menuKey(nil, .nextSpace) == nil)
+    #expect(menuKey(nil, .clearBrowsingData) == nil)
+    #expect(menuKey(.safari, .previousSpace) == nil)
+    #expect(menuKey(.zen, .clearBrowsingData) == nil)
+    #expect(menuKey(.arc, .previousSpace) == "⌥⌘←")
+    #expect(menuKey(nil, .previousProfile) == "⌃⌥⌘←")
+    var withMenuKey: [CommandID] = []
+    for preset in [nil] + ShortcutPreset.allCases.map(Optional.some) {
+        withMenuKey += CommandID.allCases.filter { !bindings(preset).keys($0).isEmpty && menuKey(preset, $0) == nil }
     }
-    #expect(CommandRegistry.command(.compactMode).title == "Compact Mode")
-    #expect(CommandRegistry.command(.showSidebar).title == "Show Sidebar")
-    #expect(CommandRegistry.commands.count == 55)
-}
-
-@Test func theSpaceCommandsAreRebindableWindowCommandsOnControlCommandKeys() {
-    func display(_ id: CommandID) -> String? { CommandRegistry.command(id).defaultShortcut?.display }
-    #expect(display(.newSpace) == "⌃⌘N")
-    #expect(display(.previousSpace) == "⌃⌘←")
-    #expect(display(.nextSpace) == "⌃⌘→")
-    for id in [CommandID.renameSpace, .deleteSpace, .moveSpaceLeft, .moveSpaceRight] {
-        #expect(display(id) == nil)
-    }
-    for id in [CommandID.newSpace, .renameSpace, .deleteSpace, .previousSpace, .nextSpace, .moveSpaceLeft, .moveSpaceRight] {
-        let command = CommandRegistry.command(id)
-        #expect(command.scope == .window)
-        #expect(command.isRebindable)
-        #expect(command.isImplemented)
-        #expect(!command.isReserved)
-    }
+    #expect(withMenuKey == [.previousSpace, .nextSpace, .clearBrowsingData, .clearBrowsingData, .clearBrowsingData,
+                            .previousSpace, .nextSpace, .clearBrowsingData])
 }
 
 @Test func arcAndZenSwitchSpacesWithTheirOwnKeys() {
-    func display(_ preset: ShortcutPreset, _ id: CommandID) -> String? {
-        ShortcutConfiguration(preset: preset).bindings[id]?.display
-    }
-    #expect(display(.arc, .previousSpace) == "⌥⌘←")
-    #expect(display(.arc, .nextSpace) == "⌥⌘→")
-    #expect(display(.zen, .previousSpace) == "⌥⌘Q")
-    #expect(display(.zen, .nextSpace) == "⌥⌘E")
-    #expect(display(.safari, .nextSpace) == "⌃⌘→")
+    #expect(key(.arc, .previousSpace) == "⌥⌘←")
+    #expect(key(.arc, .nextSpace) == "⌥⌘→")
+    #expect(key(.zen, .previousSpace) == "⌥⌘Q")
+    #expect(key(.zen, .nextSpace) == "⌥⌘E")
+    #expect(key(.safari, .nextSpace) == "⌃⌘→")
 }
 
-@Test func clearHistoryAndWebsiteDataIsARebindableWindowCommandOnShiftCommandDelete() {
-    let command = CommandRegistry.command(.clearBrowsingData)
-    #expect(command.title == "Clear History and Website Data…")
-    #expect(command.scope == .window)
-    #expect(command.defaultShortcut?.display == "⇧⌘⌫")
-    #expect(command.isRebindable)
-    #expect(command.isImplemented)
-    #expect(!command.isReserved)
+@Test func zenBindsClearBrowsingDataFromItsPageAndArcAndSafariInheritSafirasKey() {
+    #expect(ShortcutPreset.zen.set.own[.clearBrowsingData]?.first?.from == "Clear Browsing Data (Shift+Ctrl+Delete)")
+    #expect(key(nil, .clearBrowsingData) == "⇧⌘⌫")
+    #expect(key(.zen, .clearBrowsingData) == "⇧⌘⌫")
+    #expect(ShortcutPreset.arc.set.inherits(.clearBrowsingData))
+    #expect(ShortcutPreset.safari.set.inherits(.clearBrowsingData))
+    #expect(key(.arc, .clearBrowsingData) == "⇧⌘⌫")
+    #expect(key(.safari, .clearBrowsingData) == "⇧⌘⌫")
 }
 
-@Test func zenBindsClearBrowsingDataFromItsPageAndArcAndSafariFallBackToSafirasKey() {
-    func display(_ preset: ShortcutPreset) -> String? {
-        ShortcutConfiguration(preset: preset).bindings[.clearBrowsingData]?.display
-    }
-    #expect(ShortcutPreset.zen.data.bindings[.clearBrowsingData]?.from == "Clear Browsing Data (Shift+Ctrl+Delete)")
-    #expect(display(.zen) == "⇧⌘⌫")
-    #expect(ShortcutPreset.arc.data.unbound[.clearBrowsingData]?.isEmpty == false)
-    #expect(ShortcutPreset.safari.data.unbound[.clearBrowsingData]?.isEmpty == false)
-    #expect(display(.arc) == "⇧⌘⌫")
-    #expect(display(.safari) == "⇧⌘⌫")
-}
-
-@Test func newPrivateWindowIsAnUnreservedWindowCommandOnShiftCommandN() {
-    let command = CommandRegistry.command(.newPrivateWindow)
-    #expect(command.title == "New Private Window")
-    #expect(command.scope == .window)
-    #expect(command.isRebindable)
-    #expect(command.isImplemented)
-    #expect(!command.isReserved)
-    #expect(command.defaultShortcut?.display == "⇧⌘N")
-}
-
-@Test func thePinCommandsAreRebindableWindowCommandsWithNoDefaultShortcut() {
-    for id in [CommandID.togglePin, .newFolder] {
-        let command = CommandRegistry.command(id)
-        #expect(command.scope == .window)
-        #expect(command.isRebindable)
-        #expect(command.isImplemented)
-        #expect(!command.isReserved)
-        #expect(command.defaultShortcut == nil)
-    }
-}
-
-@Test func onlyArcHasAShortcutToPinATab() {
-    func display(_ preset: ShortcutPreset, _ id: CommandID) -> String? {
-        ShortcutConfiguration(preset: preset).bindings[id]?.display
-    }
-    #expect(display(.arc, .togglePin) == "⌘D")
-    #expect(display(.zen, .togglePin) == nil)
-    #expect(display(.safari, .togglePin) == nil)
+@Test func thePinCommandsHaveNoDefaultShortcutAndOnlyArcPinsATab() {
+    #expect(key(nil, .togglePin) == nil)
+    #expect(key(nil, .newFolder) == nil)
+    #expect(key(.arc, .togglePin) == "⌘D")
+    #expect(key(.zen, .togglePin) == nil)
+    #expect(key(.safari, .togglePin) == nil)
     for preset in ShortcutPreset.allCases {
-        #expect(display(preset, .newFolder) == nil)
+        #expect(key(preset, .newFolder) == nil)
     }
 }
 
-@Test func theDownloadsCommandOpensTheDownloadManagerAndFallsBackToSafirasKeyWhereAPresetHasNone() {
-    func display(_ preset: ShortcutPreset) -> String? {
-        ShortcutConfiguration(preset: preset).bindings[.showDownloads]?.display
-    }
-    let command = CommandRegistry.command(.showDownloads)
-    #expect(command.title == "Downloads")
-    #expect(command.defaultShortcut?.display == "⌥⌘L")
-    #expect(command.isRebindable && command.isImplemented && !command.isReserved)
-    #expect(display(.zen) == "⇧⌘Y")
-    #expect(display(.arc) == "⌥⌘L")
-    #expect(display(.safari) == "⌥⌘L")
+@Test func theDownloadsCommandInheritsSafirasKeyWhereAPresetHasNone() {
+    #expect(CommandID.showDownloads.title == "Downloads")
+    #expect(key(.zen, .showDownloads) == "⇧⌘Y")
+    #expect(key(.arc, .showDownloads) == "⌥⌘L")
+    #expect(key(.safari, .showDownloads) == "⌥⌘L")
 }
 
 @Test func commandOneToNineShowATabAndControlOneToNineShowASpace() {
-    func display(_ id: CommandID) -> String? { CommandRegistry.command(id).defaultShortcut?.display }
-    #expect(CommandID.selectTabCommands.map(display) == ["⌘1", "⌘2", "⌘3", "⌘4", "⌘5", "⌘6", "⌘7", "⌘8", "⌘9"])
-    #expect(CommandID.selectSpaceCommands.map(display) == ["⌃1", "⌃2", "⌃3", "⌃4", "⌃5", "⌃6", "⌃7", "⌃8", "⌃9"])
-    #expect(CommandRegistry.command(.selectTab1).title == "Show Tab 1")
-    #expect(CommandRegistry.command(.selectSpace9).title == "Show Space 9")
+    #expect(CommandID.selectTabCommands.map { key(nil, $0) } == ["⌘1", "⌘2", "⌘3", "⌘4", "⌘5", "⌘6", "⌘7", "⌘8", "⌘9"])
+    #expect(CommandID.selectSpaceCommands.map { key(nil, $0) } == ["⌃1", "⌃2", "⌃3", "⌃4", "⌃5", "⌃6", "⌃7", "⌃8", "⌃9"])
     #expect(CommandID.selectTab4.tabNumber == 4)
     #expect(CommandID.selectTab4.spaceNumber == nil)
     #expect(CommandID.selectSpace7.spaceNumber == 7)
     #expect(CommandID.newTab.tabNumber == nil)
-    for id in CommandID.selectTabCommands + CommandID.selectSpaceCommands {
-        let command = CommandRegistry.command(id)
-        #expect(command.scope == .window && command.isRebindable && command.isImplemented && !command.isReserved)
-    }
 }
 
 @Test func everyPresetKeepsTheNumberedKeysAndSafariAndZenCiteTheirTabKeys() {
-    func display(_ preset: ShortcutPreset, _ id: CommandID) -> String? {
-        ShortcutConfiguration(preset: preset).bindings[id]?.display
-    }
     for preset in ShortcutPreset.allCases {
-        #expect(display(preset, .selectTab1) == "⌘1")
-        #expect(display(preset, .selectTab9) == "⌘9")
-        #expect(display(preset, .selectSpace1) == "⌃1")
-        #expect(display(preset, .selectSpace9) == "⌃9")
-        #expect(ShortcutConfiguration(preset: preset).bindings.conflicts == [])
+        #expect(key(preset, .selectTab1) == "⌘1")
+        #expect(key(preset, .selectTab9) == "⌘9")
+        #expect(key(preset, .selectSpace1) == "⌃1")
+        #expect(key(preset, .selectSpace9) == "⌃9")
     }
-    #expect(ShortcutPreset.safari.data.bindings[.selectTab8]?.from == "Select one of your first eight tabs (Command-1 to Command-8)")
-    #expect(ShortcutPreset.safari.data.unbound[.selectTab9]?.isEmpty == false)
-    #expect(ShortcutPreset.zen.data.bindings[.selectTab1]?.shortcut.display == "⌘1")
-    #expect(ShortcutPreset.zen.data.unbound[.selectSpace1] == "Switch to Workspace (1-10) is not set by default.")
-    #expect(ShortcutPreset.arc.data.bindings[.selectTab1] == nil)
+    #expect(ShortcutPreset.safari.set.own[.selectTab8]?.first?.from == "Select one of your first eight tabs (Command-1 to Command-8)")
+    #expect(ShortcutPreset.safari.set.notFound[.selectTab9] == .some("Safari's Command-9 selects the last tab, not the ninth; Safira's own key applies."))
+    #expect(ShortcutPreset.zen.set.own[.selectTab1]?.first?.shortcut.symbols == "⌘1")
+    #expect(ShortcutPreset.zen.set.notFound[.selectSpace1] == .some("Switch to Workspace (1-10) is not set by default."))
+    #expect(ShortcutPreset.arc.set.own[.selectTab1] == nil)
+}
+
+@Test func theShortcutsWindowShowsEveryImplementedCommandOnce() {
+    let listed = SafiraShortcuts.groups.flatMap(\.commands)
+    #expect(listed.count == Set(listed).count)
+    #expect(Set(listed) == Set(CommandID.allCases.filter(\.isImplemented)))
+    #expect(!CommandID.newWindow.isImplemented)
+    #expect(SafiraShortcuts.groups.map(\.title) == ["Tabs and Windows", "View and History", "Spaces", "Profiles", "Command Bar"])
 }

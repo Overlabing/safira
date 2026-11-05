@@ -82,7 +82,7 @@ step "singleton guard self test (fixtures)" scripts/test-guard-singletons.sh
 step "attribution check self test" scripts/test-check-attribution.sh
 step "singleton guard (App, Packages)" "$tools/bin/guard-pattern.sh" --patterns scripts/singleton-patterns.txt \
     --allow "$allowed" --message "Shared singletons are allowed only in $allowed" App Packages
-# AppSupportKit's own strings follow OVERLABING_TEST_LANGUAGE, as the kit documents: the tests that read them get English.
+# AppSupportKit's and CommandKit's own strings follow OVERLABING_TEST_LANGUAGE, as the kits document: the tests that read them get English.
 step "swift test (SafiraKit)" env OVERLABING_TEST_LANGUAGE=en swift test --package-path Packages/SafiraKit
 step "xcodebuild Safira (Debug)" \
     xcodebuild -project Safira.xcodeproj -scheme Safira -configuration Debug -derivedDataPath .build/dd build

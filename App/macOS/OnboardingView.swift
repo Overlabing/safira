@@ -102,7 +102,7 @@ struct OnboardingView: View {
                 Text("Pick the set of shortcuts you already know. Continue without picking to keep Safira's own shortcuts. You can change any shortcut later in Safira > Shortcuts.")
                     .fixedSize(horizontal: false, vertical: true)
                 List(ShortcutPreset.allCases, id: \.self, selection: Bindable(model).shortcutPreset) { preset in
-                    Text(preset.data.name)
+                    Text(preset.name)
                 }
                 .focused($focus, equals: .list)
                 .accessibilityLabel("Shortcut preset")

@@ -28,6 +28,11 @@ packages:
   AppSupportKit:
     url: https://github.com/Overlabing/AppSupportKit
     exactVersion: 0.1.1
+  # Linked through Commands; the app links CommandKit and CommandKitAppKit itself for the menu, the window's reserved
+  # keys and the Shortcuts window. Pinned here too so the app resolves the same release as SafiraKit.
+  CommandKit:
+    url: https://github.com/Overlabing/CommandKit
+    exactVersion: 0.1.1
 settings:
   base:
     SWIFT_VERSION: "6.0"
@@ -54,6 +59,8 @@ targets:
         products: [ColorCore, ColorPlatform, ColorUI, DesignKit]
       - package: AppSupportKit
         products: [Preferences, UserFacing, DefaultApps]
+      - package: CommandKit
+        products: [CommandKit, CommandKitAppKit]
       - package: Sparkle
         product: Sparkle
         # Re-signs Sparkle.framework with the app's identity on copy: an ad hoc app refuses a framework that keeps

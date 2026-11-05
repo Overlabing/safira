@@ -66,7 +66,7 @@ final class DefaultsController: NSObject {
         })
         model.displayedValues["search.engine"] = registry.active.session.settings.searchEngine?.name
             ?? String(localized: "Not chosen", comment: "Defaults window: the value of Search engine before a choice")
-        model.displayedValues["shortcuts.preset"] = shortcuts.configuration.preset?.data.name
+        model.displayedValues["shortcuts.preset"] = shortcuts.preset?.name
             ?? String(localized: "Safira's own shortcuts", comment: "Defaults window: the value of Shortcut preset without a preset")
         return model
     }
@@ -128,7 +128,7 @@ final class DefaultsController: NSObject {
     }
 
     var shortcutPreset: ShortcutPreset? {
-        get { shortcuts.configuration.preset }
+        get { shortcuts.preset }
         set { shortcuts.choose(newValue) }
     }
 }

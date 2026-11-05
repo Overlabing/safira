@@ -1,123 +1,149 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Antonin Carlin
 
+import CommandKit
 import Commands
 import Foundation
 import Testing
 
 @Test func thePresetsAreZenArcAndSafari() {
     #expect(ShortcutPreset.allCases.map(\.rawValue) == ["zen", "arc", "safari"])
+    #expect(ShortcutPreset.allCases.map(\.name) == ["Zen", "Arc", "Safari"])
+    #expect(ShortcutPreset.allCases.map(\.set.id) == ["zen", "arc", "safari"])
+    #expect(ShortcutPreset(SafiraShortcuts.standard) == nil)
+    #expect(ShortcutPreset(ShortcutPreset.arc.set) == .arc)
 }
 
 @Test(arguments: ShortcutPreset.allCases)
 func aPresetCitesAnHttpsSourceAndAnIsoCheckDate(preset: ShortcutPreset) throws {
-    let data = preset.data
-    #expect(data.preset == preset)
-    #expect(data.source.scheme == "https")
-    #expect(data.checked.wholeMatch(of: /\d{4}-\d{2}-\d{2}/) != nil)
-    #expect(!data.name.isEmpty)
+    let set = preset.set
+    #expect(set.source?.scheme == "https")
+    #expect(try #require(set.checked).wholeMatch(of: /\d{4}-\d{2}-\d{2}/) != nil)
 }
 
 @Test(arguments: ShortcutPreset.allCases)
 func aPresetBindsOrExplainsEveryRebindableCommand(preset: ShortcutPreset) {
-    let data = preset.data
-    for command in CommandRegistry.commands where command.isRebindable {
-        let bound = data.bindings[command.id] != nil
-        let explained = !(data.unbound[command.id] ?? "").isEmpty
-        #expect(bound != explained, "\(preset) must either bind or explain \(command.id), not both nor neither")
+    let set = preset.set
+    for command in rebindable {
+        let bound = set.own[command] != nil
+        let explained = !((set.notFound[command] ?? nil) ?? "").isEmpty
+        #expect(bound != explained, "\(preset) must either bind or explain \(command), not both nor neither")
     }
-    for id in data.bindings.keys + Array(data.unbound.keys) {
-        #expect(CommandRegistry.command(id).isRebindable)
+    for command in Array(set.own.keys) + Array(set.notFound.keys) {
+        #expect(SafiraShortcuts.rules.isRebindable(command))
     }
 }
 
 @Test(arguments: ShortcutPreset.allCases)
 func aPresetSaysWhereEachShortcutComesFrom(preset: ShortcutPreset) {
-    for (id, binding) in preset.data.bindings {
-        #expect(!binding.from.isEmpty, "\(preset) \(id)")
+    for (command, keys) in preset.set.own {
+        #expect(keys.count == 1, "\(preset) \(command)")
+        for key in keys {
+            #expect(!(key.from ?? "").isEmpty, "\(preset) \(command)")
+        }
     }
 }
 
 @Test(arguments: ShortcutPreset.allCases)
-func aPresetHasNoConflict(preset: ShortcutPreset) {
-    #expect(ShortcutConfiguration(preset: preset).conflicts == [])
+func aPresetHasNoConflictAndTakesNoFixedMenuKey(preset: ShortcutPreset) {
+    #expect(bindings(preset).conflicts == [])
+    for command in CommandID.allCases {
+        for key in bindings(preset).keys(command) {
+            #expect(!SafiraShortcuts.rules.reserved.contains(key), "\(preset) \(command) \(key.symbols)")
+        }
+    }
+}
+
+@Test(arguments: ShortcutPreset.allCases)
+func aPresetSaysHowItsSourceWasRead(preset: ShortcutPreset) throws {
+    let note = try #require(preset.set.note)
+    #expect(!note.isEmpty)
+    #expect(preset.localizedNote == note)
 }
 
 @Test func zenArcAndSafariKeepTheBrowserShortcutsInTheMenu() {
     for preset in ShortcutPreset.allCases {
-        let bindings = ShortcutConfiguration(preset: preset).bindings
-        #expect(bindings[.newTab]?.display == "⌘T", "\(preset)")
-        #expect(bindings[.newWindow]?.display == "⌘N", "\(preset)")
-        #expect(bindings[.closeTab]?.display == "⌘W", "\(preset)")
-        #expect(bindings[.reopenClosedTab]?.display == "⇧⌘T", "\(preset)")
-        #expect(bindings[.openCommandBar]?.display == "⌘L", "\(preset)")
-        #expect(bindings[.quit]?.display == "⌘Q", "\(preset)")
+        #expect(menuKey(preset, .newTab) == "⌘T", "\(preset)")
+        #expect(menuKey(preset, .newWindow) == "⌘N", "\(preset)")
+        #expect(menuKey(preset, .closeTab) == "⌘W", "\(preset)")
+        #expect(menuKey(preset, .reopenClosedTab) == "⇧⌘T", "\(preset)")
+        #expect(menuKey(preset, .openCommandBar) == "⌘L", "\(preset)")
+        #expect(menuKey(preset, .quit) == "⌘Q", "\(preset)")
     }
 }
 
 @Test func thePresetsDifferWhereTheBrowsersDo() {
-    func display(_ preset: ShortcutPreset, _ id: CommandID) -> String? {
-        ShortcutConfiguration(preset: preset).bindings[id]?.display
-    }
-    #expect(display(.arc, .previousTab) == "⌥⌘↑")
-    #expect(display(.arc, .nextTab) == "⌥⌘↓")
-    #expect(display(.safari, .previousTab) == "⇧⌘[")
-    #expect(display(.safari, .nextTab) == "⇧⌘]")
-    #expect(display(.zen, .previousTab) == "⇧⌘[")
-    #expect(display(.zen, .closeWindow) == "⇧⌘W")
+    #expect(key(.arc, .previousTab) == "⌥⌘↑")
+    #expect(key(.arc, .nextTab) == "⌥⌘↓")
+    #expect(key(.safari, .previousTab) == "⇧⌘[")
+    #expect(key(.safari, .nextTab) == "⇧⌘]")
+    #expect(key(.zen, .previousTab) == "⇧⌘[")
+    #expect(key(.zen, .closeWindow) == "⇧⌘W")
 }
 
-@Test func aCommandWithNoEquivalentKeepsItsReasonAndTakesSafirasDefault() {
-    #expect(ShortcutPreset.safari.data.unbound[.moveTabUp]?.isEmpty == false)
-    #expect(ShortcutConfiguration(preset: .safari).bindings[.moveTabUp]?.display == "⌥⌘↑")
-    #expect(ShortcutPreset.arc.data.unbound[.previousProfile] == "The page lists no Profile command; Arc attaches a Profile to Spaces and switches it with them.")
-    #expect(ShortcutPreset.zen.data.unbound[.nextProfile] == "The page lists no Profile command.")
-    #expect(ShortcutPreset.safari.data.unbound[.nextProfile] == "The cited page lists no Profile shortcut.")
+@Test func aCommandTheBrowserDoesNotDocumentKeepsItsReasonAndInheritsSafirasKey() {
+    #expect(ShortcutPreset.safari.set.inherits(.moveTabUp))
+    #expect(bindings(.safari).isInherited(.moveTabUp))
+    #expect(key(.safari, .moveTabUp) == "⌥⌘↑")
+    #expect(ShortcutPreset.arc.set.notFound[.previousProfile]
+        == .some("The page lists no Profile command; Arc attaches a Profile to Spaces and switches it with them."))
+    #expect(ShortcutPreset.zen.set.notFound[.nextProfile] == .some("The page lists no Profile command."))
+    #expect(ShortcutPreset.safari.set.notFound[.nextProfile] == .some("The cited page lists no Profile shortcut."))
+    #expect(!bindings(.safari).isInherited(.newTab))
 }
 
 @Test(arguments: ShortcutPreset.allCases)
-func showPreviousAndNextProfileFallBackToSafirasDefaultInEveryPreset(preset: ShortcutPreset) {
-    let bindings = ShortcutConfiguration(preset: preset).bindings
-    #expect(bindings[.previousProfile]?.display == "⌃⌥⌘←", "\(preset)")
-    #expect(bindings[.nextProfile]?.display == "⌃⌥⌘→", "\(preset)")
+func showPreviousAndNextProfileInheritSafirasKeyInEveryPreset(preset: ShortcutPreset) {
+    #expect(menuKey(preset, .previousProfile) == "⌃⌥⌘←", "\(preset)")
+    #expect(menuKey(preset, .nextProfile) == "⌃⌥⌘→", "\(preset)")
 }
 
-@Test func theSpaceCommandsAMissingPresetEquivalentLeavesAreStillReachable() {
-    func display(_ preset: ShortcutPreset, _ id: CommandID) -> String? {
-        ShortcutConfiguration(preset: preset).bindings[id]?.display
-    }
-    #expect(display(.zen, .newSpace) == "⌃⌘N")
-    #expect(display(.safari, .newSpace) == "⌃⌘N")
-    #expect(display(.safari, .previousSpace) == "⌃⌘←")
-    #expect(display(.safari, .nextSpace) == "⌃⌘→")
-    #expect(display(.arc, .newSpace) == "⌃⌘N")
-    #expect(display(.arc, .previousSpace) == "⌥⌘←")
-    #expect(display(.arc, .nextSpace) == "⌥⌘→")
+@Test func theSpaceCommandsAPresetDoesNotDocumentAreStillReachable() {
+    #expect(key(.zen, .newSpace) == "⌃⌘N")
+    #expect(key(.safari, .newSpace) == "⌃⌘N")
+    #expect(key(.safari, .previousSpace) == "⌃⌘←")
+    #expect(key(.safari, .nextSpace) == "⌃⌘→")
+    #expect(key(.arc, .newSpace) == "⌃⌘N")
+    #expect(key(.arc, .previousSpace) == "⌥⌘←")
+    #expect(key(.arc, .nextSpace) == "⌥⌘→")
 }
 
-@Test func aFallbackNeverTakesAKeyThePresetAlreadyUses() throws {
-    let json = #"{"preset":"zen","name":"Zen","source":"https://example.org","checked":"2026-11-04","bindings":{"reload":{"shortcut":"command+control+option+left","from":"x"}},"unbound":{"previousProfile":"no Profile command","nextProfile":"no Profile command"}}"#
-    let bindings = ShortcutConfiguration.bindings(of: try PresetData.decode(Data(json.utf8)))
-    #expect(bindings[.reload]?.display == "⌃⌥⌘←")
-    #expect(bindings[.previousProfile] == nil)
-    #expect(bindings[.nextProfile]?.display == "⌃⌥⌘→")
+private func preset(_ json: String) throws -> ShortcutSet<CommandID> {
+    try ShortcutSet(data: Data(json.utf8), expecting: "zen", inheritingFrom: SafiraShortcuts.standard)
+}
+
+@Test func anInheritedKeyIsNeverOneThePresetAlreadyUses() throws {
+    let set = try preset(#"{"id":"zen","shortcuts":{"reload":["⌃⌥⌘←"]},"notFound":{"previousProfile":"no Profile command","nextProfile":"no Profile command"}}"#)
+    let bindings = ShortcutBindings(set: set)
+    #expect(bindings.keys(.reload).map(\.symbols) == ["⌃⌥⌘←"])
+    #expect(bindings.keys(.previousProfile) == [])
+    #expect(bindings.keys(.nextProfile).map(\.symbols) == ["⌃⌥⌘→"])
+}
+
+/// CommandKit's rule, which differs from Safira's before it: a command a preset lists with no key gets none, where
+/// Safira used to give it its own key; only a command the preset does not list, or lists under `notFound`, inherits.
+@Test func aCommandListedWithNoKeyInheritsNothing() throws {
+    let set = try preset(#"{"id":"zen","shortcuts":{"reload":[]},"notFound":["moveTabUp"]}"#)
+    let bindings = ShortcutBindings(set: set)
+    #expect(bindings.keys(.reload) == [])
+    #expect(bindings.keys(.moveTabUp).map(\.symbols) == ["⌥⌘↑"])
+    #expect(bindings.keys(.goBack).map(\.symbols) == ["⌘["])
+    #expect(!bindings.isInherited(.goBack))
+    #expect(bindings.isInherited(.moveTabUp))
 }
 
 @Test func aMalformedPresetFileIsRejected() {
-    func decode(_ json: String) throws -> PresetData { try PresetData.decode(Data(json.utf8)) }
-    let valid = #"{"preset":"zen","name":"Zen","source":"https://example.org","checked":"2026-11-04","bindings":{"newTab":{"shortcut":"command+t","from":"x"}},"unbound":{}}"#
-    #expect(throws: Never.self) { try decode(valid) }
-    #expect(throws: (any Error).self) { try decode(valid.replacingOccurrences(of: "command+t", with: "command+wat")) }
-    #expect(throws: (any Error).self) { try decode(valid.replacingOccurrences(of: "newTab", with: "newDoor")) }
-    #expect(throws: (any Error).self) { try decode(valid.replacingOccurrences(of: "https://example.org", with: "http://example.org")) }
-    #expect(throws: (any Error).self) { try decode(valid.replacingOccurrences(of: "\"zen\"", with: "\"vivaldi\"")) }
+    let valid = #"{"id":"zen","source":"https://example.org","checked":"2026-11-04","shortcuts":{"newTab":[{"shortcut":"⌘T","from":"x"}]},"notFound":{}}"#
+    #expect(throws: Never.self) { try preset(valid) }
+    #expect(throws: (any Error).self) { try preset(valid.replacingOccurrences(of: "⌘T", with: "command+t")) }
+    #expect(throws: (any Error).self) { try preset(valid.replacingOccurrences(of: "newTab", with: "newDoor")) }
+    #expect(throws: (any Error).self) { try preset(valid.replacingOccurrences(of: "\"zen\"", with: "\"vivaldi\"")) }
 }
 
 @Test func eachPresetOpensAPrivateWindowWithThePrivateWindowKeyOfItsSource() {
-    func display(_ preset: ShortcutPreset) -> String? { ShortcutConfiguration(preset: preset).bindings[.newPrivateWindow]?.display }
-    #expect(display(.safari) == "⇧⌘N")
-    #expect(display(.arc) == "⇧⌘N")
-    #expect(display(.zen) == "⇧⌘P")
-    #expect(ShortcutPreset.zen.data.bindings[.newPrivateWindow]?.from == "Open Private Browsing Window (Shift+Ctrl+P)")
-    #expect(ShortcutPreset.arc.data.bindings[.newPrivateWindow]?.from == "New incognito window (Command-Shift-N)")
+    #expect(key(.safari, .newPrivateWindow) == "⇧⌘N")
+    #expect(key(.arc, .newPrivateWindow) == "⇧⌘N")
+    #expect(key(.zen, .newPrivateWindow) == "⇧⌘P")
+    #expect(ShortcutPreset.zen.set.own[.newPrivateWindow]?.first?.from == "Open Private Browsing Window (Shift+Ctrl+P)")
+    #expect(ShortcutPreset.arc.set.own[.newPrivateWindow]?.first?.from == "New incognito window (Command-Shift-N)")
 }

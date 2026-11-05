@@ -4,6 +4,8 @@
 import Appearance
 import AppKit
 import ColorCore
+import CommandKit
+import CommandKitAppKit
 import Commands
 import SafiraCore
 import SafiraSession
@@ -321,7 +323,7 @@ private final class PrivateWindow: NSWindow {
     var shortcuts: ShortcutController?
 
     override func performKeyEquivalent(with event: NSEvent) -> Bool {
-        if shortcuts?.bindings.reservesKeyEquivalent(KeyStroke(event)) == true,
+        if let shortcut = Shortcut(event: event), shortcuts?.takesKeyBeforeFocusedView(shortcut) == true,
            NSApp.mainMenu?.performKeyEquivalent(with: event) == true {
             return true
         }
