@@ -300,6 +300,16 @@ final class SidebarToolbar: NSObject, NSToolbarDelegate {
                  willBeInsertedIntoToolbar flag: Bool) -> NSToolbarItem? {
         nil
     }
+
+    /// On the right the column is the split's inspector item, but it is still the sidebar: its button says so to
+    /// VoiceOver and in its help tag, as the system's sidebar button does on the left.
+    func toolbarWillAddItem(_ notification: Notification) {
+        guard let item = notification.userInfo?["item"] as? NSToolbarItem, item.itemIdentifier == .toggleInspector
+        else { return }
+        let title = String(localized: "Sidebar", comment: "Toolbar: the button that hides and shows the sidebar on the right")
+        item.label = title
+        item.toolTip = title
+    }
 }
 
 /// The full screen shows the toolbar only while the pointer is at the top of the screen, as the kit's
