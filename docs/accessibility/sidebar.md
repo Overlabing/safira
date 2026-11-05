@@ -12,9 +12,9 @@ the Tabs list, the Space rail; then the page.
 | New Tab row | Nouvel onglet | button | yes | pass | owed |
 | Tab row | page title; value: host, “2 sur 3”; selected trait on the shown Tab | button | yes | pass | owed |
 | Tab row actions | Fermer l’onglet (named action); context menu (AXShowMenu) with Pin, Move, Close | actions | n/a | pass | owed |
-| Space rail | Espaces et profils; context menu with the Profile commands | group | n/a | pass | owed |
-| Space glyph | “Espace Accueil, 1 sur 1”; selected trait | button | yes | pass | owed |
-| Other Profile dot | “Profil Personal, 3 espaces”; hint “Ouvre Reading.” | button | yes | fixed: ThemeKit 0.2.6 (#99), read again in #98 | owed |
+| Space rail | Espaces et profils; no menu of its own (each item has one, below) | group | n/a | pass | owed |
+| Space glyph | “Espace Accueil, 1 sur 1”; selected trait; context menu for that Space, then its Profile | button | yes | pass; menu per Space since ThemeKit 0.2.8 (#109) | owed |
+| Other Profile dot | “Profil Personal, 3 espaces”; hint “Ouvre Reading.”; context menu for that Profile | button | yes | fixed: ThemeKit 0.2.6 (#99), read again in #98; menu per Profile since ThemeKit 0.2.8 (#109) | owed |
 | Rail + button | Ajouter ou modifier un espace ou un profil | button | yes | fixed: ThemeKit 0.2.6 (#99), read again in #98 | owed |
 | Rail popover | Nouvel espace dans …, Nouveau profil…, Modifier l’espace …, Modifier le profil … | buttons | n/a | pass | owed |
 | First Space name | “Home” in a French Profile | text | n/a | fixed: a new Profile names its first Space in the user’s language (Accueil) | owed |
