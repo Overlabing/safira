@@ -346,6 +346,7 @@ private final class Prompt: @unchecked Sendable {
         try await run(folders) { context in
             context.web.downloadsAccess = { _ in true }
             let controller = context.web.downloadController!
+            server.hold(after: 10_000)
             context.session.submitCommandBar(server.url("/slow.bin").absoluteString)
             try await waitUntil("some bytes arrive") { (context.downloads.all.first?.receivedBytes ?? 0) >= 10_000 }
             #expect(folders.files(in: folders.downloads) == ["slow.bin.part"])
@@ -364,6 +365,7 @@ private final class Prompt: @unchecked Sendable {
             #expect(folders.files(in: elsewhere) == [])
             #expect(folders.files(in: folders.downloads) == ["slow.bin.part"])
 
+            server.release()
             try await waitUntil("the download is saved", timeout: .seconds(20)) { isFinished(context) }
             #expect(folders.files(in: folders.downloads) == ["slow.bin"])
         }

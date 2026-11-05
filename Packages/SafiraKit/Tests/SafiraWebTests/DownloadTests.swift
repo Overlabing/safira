@@ -152,11 +152,13 @@ private final class TemporaryRoot {
         let root = TemporaryRoot()
         try await run(root) { registry in
             let context = profile(registry, saving: root)
+            server.hold(after: 20_000)
 
             context.session.submitCommandBar(server.url("/slow.bin").absoluteString)
             try await waitUntil("some bytes arrive") { (context.downloads.all.first?.receivedBytes ?? 0) >= 20_000 }
             let id = try #require(context.downloads.all.first?.id)
             await context.downloads.cancel(id)
+            server.release()
 
             let cancelled = try #require(context.downloads.download(id))
             #expect(cancelled.state == .cancelled)
@@ -232,10 +234,12 @@ private final class TemporaryRoot {
         let root = TemporaryRoot()
         try await run(root) { registry in
             let context = profile(registry, saving: root)
+            server.hold(after: 20_000)
             context.session.submitCommandBar(server.url("/slow.bin").absoluteString)
             try await waitUntil("some bytes arrive") { (context.downloads.all.first?.receivedBytes ?? 0) >= 20_000 }
             let id = try #require(context.downloads.all.first?.id)
             await context.downloads.cancel(id)
+            server.release()
 
             #expect(context.downloads.retry(id))
             await Task.yield()
@@ -255,6 +259,7 @@ private final class TemporaryRoot {
         let root = TemporaryRoot()
         try await run(root) { registry in
             let context = profile(registry, saving: root)
+            server.hold(after: 20_000)
 
             context.session.submitCommandBar(server.url("/slow.bin").absoluteString)
             let tab = try #require(context.session.selectedTabID)
@@ -267,7 +272,8 @@ private final class TemporaryRoot {
             try await waitUntil("the Tab's web view is released") { released == nil }
 
             #expect(context.web.webView(for: tab) == nil)
-            try await waitUntil("more bytes arrive after the Tab is gone", timeout: .seconds(5)) {
+            server.release()
+            try await waitUntil("more bytes arrive after the Tab is gone") {
                 (context.downloads.all.first?.receivedBytes ?? 0) > before
             }
             try await waitUntil("the download is saved", timeout: .seconds(20)) { isFinished(context) }
@@ -284,6 +290,7 @@ private final class TemporaryRoot {
             let context = profile(registry, saving: root)
             context.session.submitCommandBar(server.url("/small.bin").absoluteString)
             try await waitUntil("the small file is saved") { isFinished(context) }
+            server.hold(after: 10_000)
             context.session.submitCommandBar(server.url("/slow.bin").absoluteString)
             try await waitUntil("some bytes arrive") { (context.downloads.all.first?.receivedBytes ?? 0) >= 10_000 }
             let slow = try #require(context.downloads.all.first?.id)
@@ -318,6 +325,7 @@ private final class TemporaryRoot {
     private func startSlowDownload(in registry: ProfileRegistry, root: TemporaryRoot, server: DownloadServer) async throws
         -> ProfileDownloads {
         let context = profile(registry, saving: root)
+        server.hold(after: 10_000)
         context.session.submitCommandBar(server.url("/slow.bin").absoluteString)
         try await waitUntil("some bytes arrive") { (context.downloads.all.first?.receivedBytes ?? 0) >= 10_000 }
         return context.downloads
