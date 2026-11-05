@@ -14,14 +14,18 @@ public struct WebContentSettings: Hashable, Sendable, Codable {
         self.isAutoplayingSoundAllowed = isAutoplayingSoundAllowed
     }
 
-    public static let fraudulentSiteWarningTitle = "Warn about fraudulent websites"
-    public static let autoplayingSoundTitle = "Allow autoplaying sound"
+    public static let fraudulentSiteWarningTitle = String(localized: "Warn about fraudulent websites", table: "SafiraCore",
+                                                          bundle: .module, comment: "Menu item and Defaults title")
+    public static let autoplayingSoundTitle = String(localized: "Allow autoplaying sound", table: "SafiraCore",
+                                                     bundle: .module, comment: "Menu item and Defaults title")
 
-    public static let fraudulentSiteWarningExplanation =
-        "Before a page loads, WebKit checks the site against a list of known fraudulent sites and warns you if it "
-        + "matches. This check may consult a third-party service, which can learn which sites you visit."
-    public static let autoplayingSoundExplanation =
-        "A page cannot play sound until you click or press a key on it. Silent video can still start by itself."
+    public static let fraudulentSiteWarningExplanation = String(localized: """
+        Before a page loads, WebKit checks the site against a list of known fraudulent sites and warns you if it \
+        matches. This check may consult a third-party service, which can learn which sites you visit.
+        """, table: "SafiraCore", bundle: .module, comment: "Defaults: explanation of the fraudulent website warning")
+    public static let autoplayingSoundExplanation = String(localized: """
+        A page cannot play sound until you click or press a key on it. Silent video can still start by itself.
+        """, table: "SafiraCore", bundle: .module, comment: "Defaults: explanation of autoplaying sound")
 
     /// The entries this type contributes to the registry of defaults, with the values of a fresh `WebContentSettings`.
     public static var defaultEntries: [DefaultEntry] {
@@ -30,17 +34,19 @@ public struct WebContentSettings: Hashable, Sendable, Codable {
             DefaultEntry(
                 id: "web.fraudulentSiteWarning",
                 title: fraudulentSiteWarningTitle,
-                value: defaults.isFraudulentSiteWarningEnabled ? "On" : "Off",
+                value: DefaultWording.onOff(defaults.isFraudulentSiteWarningEnabled),
                 explanation: fraudulentSiteWarningExplanation,
-                whereToChange: "View menu",
+                whereToChange: DefaultWording.viewMenu,
                 control: .toggle(isOn: defaults.isFraudulentSiteWarningEnabled)
             ),
             DefaultEntry(
                 id: "web.autoplayingSound",
                 title: autoplayingSoundTitle,
-                value: defaults.isAutoplayingSoundAllowed ? "Allowed" : "Blocked",
+                value: defaults.isAutoplayingSoundAllowed
+                    ? String(localized: "Allowed", table: "SafiraCore", bundle: .module, comment: "Defaults: value of autoplaying sound")
+                    : String(localized: "Blocked", table: "SafiraCore", bundle: .module, comment: "Defaults: value of autoplaying sound"),
                 explanation: autoplayingSoundExplanation,
-                whereToChange: "View menu",
+                whereToChange: DefaultWording.viewMenu,
                 control: .toggle(isOn: defaults.isAutoplayingSoundAllowed)
             ),
         ]

@@ -44,22 +44,27 @@ final class DiagnosticsController: NSObject, NSMenuItemValidation {
 
     @objc func exportDiagnosticLogs(_ sender: Any?) {
         guard logger.hasLogs else {
-            show(message: "There are no diagnostic logs to export",
-                 detail: "Turn on Debug mode in the Help menu, use Safira, then export again.")
+            show(message: String(localized: "There are no diagnostic logs to export", comment: "Alert title"),
+                 detail: String(localized: "Turn on Debug mode in the Help menu, use Safira, then export again.",
+                                comment: "Alert text, under There are no diagnostic logs to export"))
             return
         }
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.zip]
-        panel.nameFieldStringValue = "Safira Diagnostics \(Date.now.formatted(Date.ISO8601FormatStyle(timeZone: .current).year().month().day())).zip"
-        panel.message = "The archive holds Safira's local diagnostic logs: site hosts, error codes, load times and memory. "
-            + "Nothing is sent anywhere."
+        let day = Date.now.formatted(Date.ISO8601FormatStyle(timeZone: .current).year().month().day())
+        panel.nameFieldStringValue = String(localized: "Safira Diagnostics \(day).zip",
+                                            comment: "File name of the diagnostics export; the argument is a date such as 2026-11-05")
+        panel.message = String(localized: """
+            The archive holds Safira's local diagnostic logs: site hosts, error codes, load times and memory. \
+            Nothing is sent anywhere.
+            """, comment: "Save panel message of the diagnostics export")
         guard panel.runModal() == .OK, let destination = panel.url else { return }
         Task {
             do {
                 try await logger.exportArchive(to: destination)
                 NSWorkspace.shared.activateFileViewerSelecting([destination])
             } catch {
-                show(message: "The diagnostic logs could not be exported", detail: error.localizedDescription)
+                show(message: String(localized: "The diagnostic logs could not be exported", comment: "Alert title"), detail: error.localizedDescription)
             }
         }
     }

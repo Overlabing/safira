@@ -37,14 +37,14 @@ final class FloatingCommandBar: NSObject, NSTextFieldDelegate {
     /// The text the shown suggestions were computed for: Return opens a highlighted one only while the text still is it.
     private var suggestionText: String?
 
-    static let placeholder = String(localized: "Search or enter an address")
-    static let newTabPlaceholder = String(localized: "Search or enter an address to open in a new Tab")
+    static let placeholder = String(localized: "Search or enter an address", comment: "Command bar")
+    static let newTabPlaceholder = String(localized: "Search or enter an address to open in a new Tab", comment: "Command bar")
 
     init(session: @escaping () -> ProfileSession) {
         self.session = session
         super.init()
         field.placeholderString = Self.placeholder
-        field.setAccessibilityLabel(String(localized: "Command bar"))
+        field.setAccessibilityLabel(String(localized: "Command bar", comment: "Command bar"))
         field.delegate = self
         field.isBordered = false
         field.isBezeled = false
@@ -155,7 +155,7 @@ final class FloatingCommandBar: NSObject, NSTextFieldDelegate {
             suggestionModel.show(found, typing: text)
             suggestionText = text
             if !found.isEmpty {
-                announce(String(AttributedString(localized: "^[\(found.count) suggestion](inflect: true)").characters))
+                announce(String(localized: "\(found.count) suggestions", comment: "Command bar: VoiceOver announcement, a count of suggestions"))
             }
         }
     }

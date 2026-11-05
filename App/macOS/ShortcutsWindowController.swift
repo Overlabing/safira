@@ -25,7 +25,7 @@ final class ShortcutsWindowController: NSWindowController {
     @objc func show(_ sender: Any?) {
         if window == nil {
             let window = NSWindow(contentViewController: NSHostingController(rootView: ShortcutsSettingsView(shortcuts: shortcuts)))
-            window.title = "Shortcuts"
+            window.title = String(localized: "Shortcuts", comment: "Window title")
             window.styleMask = [.titled, .closable, .resizable]
             window.isReleasedWhenClosed = false
             window.isRestorable = false
@@ -129,7 +129,7 @@ private struct ShortcutsSettingsView: View {
                     Text("checked \(data.checked)").foregroundStyle(.secondary)
                 }
                 .font(.footnote)
-                if let note = data.note {
+                if let note = data.localizedNote {
                     Text(note).font(.footnote).foregroundStyle(.secondary)
                 }
             }
@@ -157,11 +157,12 @@ private struct ShortcutsSettingsView: View {
         return HStack {
             Text(command.title)
             Spacer()
-            Text(isRecording ? "Press keys…" : shortcut?.display ?? "Unbound")
+            Text(isRecording ? String(localized: "Press keys…", comment: "Shortcuts window: a row waiting for the new keys")
+                 : shortcut?.display ?? String(localized: "Unbound", comment: "Shortcuts window: a command with no shortcut"))
                 .monospaced()
                 .foregroundStyle(shortcut == nil && !isRecording ? .secondary : .primary)
             if command.isRebindable {
-                Button(isRecording ? "Cancel" : "Change") {
+                Button(isRecording ? String(localized: "Cancel", comment: "Button") : String(localized: "Change", comment: "Shortcuts window: button that records new keys")) {
                     if isRecording {
                         recorder.stop()
                     } else {
@@ -179,6 +180,7 @@ private struct ShortcutsSettingsView: View {
 
     private var reservedExplanation: String {
         let titles = CommandRegistry.commands.filter(\.isReserved).map(\.title).formatted()
-        return "\(titles) reach the menu before the page sees the key, whatever the page does with it."
+        return String(localized: "\(titles) reach the menu before the page sees the key, whatever the page does with it.",
+                      comment: "Shortcuts window footnote; the argument lists command names")
     }
 }

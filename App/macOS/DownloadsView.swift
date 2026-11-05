@@ -114,15 +114,15 @@ private struct DownloadRow: View {
         switch download.state {
         case .active:
             if let total = download.totalBytes {
-                return String(localized: "\(size(download.receivedBytes)) of \(size(total))")
+                return String(localized: "\(size(download.receivedBytes)) of \(size(total))", comment: "Downloads window")
             }
             return size(download.receivedBytes)
         case .completed:
-            return String(localized: "Completed, \(size(download.receivedBytes))")
+            return String(localized: "Completed, \(size(download.receivedBytes))", comment: "Downloads window")
         case .cancelled:
-            return String(localized: "Cancelled, \(size(download.receivedBytes)) received")
+            return String(localized: "Cancelled, \(size(download.receivedBytes)) received", comment: "Downloads window")
         case .failed:
-            return String(localized: "Failed, \(size(download.receivedBytes)) received")
+            return String(localized: "Failed, \(size(download.receivedBytes)) received", comment: "Downloads window")
         }
     }
 }
@@ -132,7 +132,7 @@ private struct DownloadRow: View {
 final class DownloadsWindowController: NSWindowController {
     init(registry: ProfileRegistry) {
         let window = NSWindow(contentViewController: NSHostingController(rootView: DownloadsView(registry: registry)))
-        window.title = String(localized: "Downloads")
+        window.title = String(localized: "Downloads", comment: "Downloads window")
         window.styleMask = [.titled, .closable, .resizable]
         window.isReleasedWhenClosed = false
         window.isRestorable = false

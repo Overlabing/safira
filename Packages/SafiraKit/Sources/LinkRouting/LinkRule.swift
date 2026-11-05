@@ -112,10 +112,14 @@ public enum LinkRulesError: Error, Hashable, Sendable {
 
     public var explanation: String {
         switch self {
-        case .unreadable: "The file could not be read."
-        case .notJSON: "The file is not valid JSON."
-        case .unsupportedVersion: "The file's \"version\" is missing or is not 1."
-        case .invalidField(let location): "\"\(location)\" is missing or has the wrong type."
+        case .unreadable: String(localized: "The file could not be read.", table: "LinkRouting", bundle: .module, comment: "Link rules file error")
+        case .notJSON: String(localized: "The file is not valid JSON.", table: "LinkRouting", bundle: .module, comment: "Link rules file error")
+        case .unsupportedVersion:
+            String(localized: "The file's \"version\" is missing or is not 1.", table: "LinkRouting", bundle: .module,
+                   comment: "Link rules file error; version is a JSON key, not translated")
+        case .invalidField(let location):
+            String(localized: "\"\(location)\" is missing or has the wrong type.", table: "LinkRouting", bundle: .module,
+                   comment: "Link rules file error; the argument is a JSON path such as rules[2].profile")
         }
     }
 }

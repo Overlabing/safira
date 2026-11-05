@@ -11,10 +11,12 @@ public struct DiagnosticsSettings: Hashable, Sendable, Codable {
         self.isDebugModeEnabled = isDebugModeEnabled
     }
 
-    public static let debugModeTitle = "Debug mode"
+    public static let debugModeTitle = String(localized: "Debug mode", table: "Diagnostics", bundle: .module,
+                                              comment: "Defaults: entry title")
 
-    public static let debugModeExplanation =
-        "Logs stay on this Mac, masked to site hosts, and leave it only through a manual export."
+    public static let debugModeExplanation = String(
+        localized: "Logs stay on this Mac, masked to site hosts, and leave it only through a manual export.",
+        table: "Diagnostics", bundle: .module, comment: "Defaults: explanation of Debug mode")
 
     /// The entry this type contributes to the registry of defaults, with the value of a fresh `DiagnosticsSettings`.
     public static var defaultEntries: [DefaultEntry] {
@@ -22,9 +24,9 @@ public struct DiagnosticsSettings: Hashable, Sendable, Codable {
             DefaultEntry(
                 id: "diagnostics.debugMode",
                 title: debugModeTitle,
-                value: DiagnosticsSettings().isDebugModeEnabled ? "On" : "Off",
+                value: DefaultWording.onOff(DiagnosticsSettings().isDebugModeEnabled),
                 explanation: debugModeExplanation,
-                whereToChange: "Help menu",
+                whereToChange: DefaultWording.helpMenu,
                 control: .toggle(isOn: DiagnosticsSettings().isDebugModeEnabled)
             ),
         ]

@@ -69,7 +69,8 @@ struct TabMenu: View {
     let session: ProfileSession
 
     var body: some View {
-        Button(tab.isPinned ? "Unpin Tab" : "Pin Tab") { session.togglePin(tab.id) }
+        Button(tab.isPinned ? String(localized: "Unpin Tab", comment: "Tab context menu")
+                            : String(localized: "Pin Tab", comment: "Tab context menu")) { session.togglePin(tab.id) }
         Divider()
         Button("Move Up") { session.move(tab.id, by: -1) }
             .disabled(!session.canMove(tab.id, by: -1))
@@ -108,16 +109,16 @@ private struct SpaceRailBar: View {
             commands: [
                 [
                     SpaceRailCommand(id: Command.newSpace.rawValue,
-                                     title: String(localized: "New Space in \(profile.name)…"), systemImage: "plus"),
-                    SpaceRailCommand(id: Command.newProfile.rawValue, title: String(localized: "New Profile…"),
+                                     title: String(localized: "New Space in \(profile.name)…", comment: "Sidebar menu"), systemImage: "plus"),
+                    SpaceRailCommand(id: Command.newProfile.rawValue, title: String(localized: "New Profile…", comment: "Sidebar menu"),
                                      systemImage: "person.crop.circle.badge.plus"),
                 ],
                 [
                     SpaceRailCommand(id: Command.editSpace.rawValue,
-                                     title: String(localized: "Edit Space \(session.activeSpace.name)…"),
+                                     title: String(localized: "Edit Space \(session.activeSpace.name)…", comment: "Sidebar menu"),
                                      systemImage: "pencil"),
                     SpaceRailCommand(id: Command.editProfile.rawValue,
-                                     title: String(localized: "Edit Profile \(profile.name)…"),
+                                     title: String(localized: "Edit Profile \(profile.name)…", comment: "Sidebar menu"),
                                      systemImage: "person.crop.circle"),
                 ],
             ],

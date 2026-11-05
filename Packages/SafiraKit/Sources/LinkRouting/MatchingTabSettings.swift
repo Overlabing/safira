@@ -13,14 +13,16 @@ public struct MatchingTabSettings: Hashable, Sendable, Codable {
         self.isEnabled = isEnabled
     }
 
-    public static let title = "Focus an Open Tab Instead of Opening a Duplicate"
+    public static let title = String(localized: "Focus an Open Tab Instead of Opening a Duplicate", table: "LinkRouting", bundle: .module,
+                                     comment: "Menu item and Defaults title")
 
-    public static let explanation =
-        "When a link from another app is already open as a Tab of the Profile that receives it, in any Space, Safira "
-        + "shows that Tab instead of opening a new one, and a banner offers to open the link in a new Tab anyway. "
-        + "Addresses compare without letter case in the scheme and host, trailing slash, fragment and tracking "
-        + "parameters. A Link rule can force a new Tab. The Link picker also marks the Profiles where the link is open. "
-        + "Turned off, every link opens a new Tab."
+    public static let explanation = String(localized: """
+        When a link from another app is already open as a Tab of the Profile that receives it, in any Space, Safira \
+        shows that Tab instead of opening a new one, and a banner offers to open the link in a new Tab anyway. \
+        Addresses compare without letter case in the scheme and host, trailing slash, fragment and tracking \
+        parameters. A Link rule can force a new Tab. The Link picker also marks the Profiles where the link is open. \
+        Turned off, every link opens a new Tab.
+        """, table: "LinkRouting", bundle: .module, comment: "Defaults: explanation of focusing a Matching tab")
 
     /// The entry this type contributes to the registry of defaults, with the value of a fresh `MatchingTabSettings`.
     public static var defaultEntries: [DefaultEntry] {
@@ -28,9 +30,9 @@ public struct MatchingTabSettings: Hashable, Sendable, Codable {
             DefaultEntry(
                 id: "linkMatching.focusOpenTab",
                 title: title,
-                value: MatchingTabSettings().isEnabled ? "On" : "Off",
+                value: DefaultWording.onOff(MatchingTabSettings().isEnabled),
                 explanation: explanation,
-                whereToChange: "Safira menu",
+                whereToChange: DefaultWording.safiraMenu,
                 control: .toggle(isOn: MatchingTabSettings().isEnabled)
             ),
         ]

@@ -1,6 +1,24 @@
 {
-  "groups": [],
-  "notExtracted": [],
+  "groups": [
+    {"catalogs": ["App/macOS/Localizable.xcstrings"], "targets": ["Safira"], "sources": ["App/macOS"]},
+    {"catalogs": ["Packages/SafiraKit/Sources/SafiraCore/Resources/SafiraCore.xcstrings"], "targets": ["SafiraCore"],
+     "sources": ["Packages/SafiraKit/Sources/SafiraCore"]},
+    {"catalogs": ["Packages/SafiraKit/Sources/SafiraSession/Resources/SafiraSession.xcstrings"], "targets": ["SafiraSession"],
+     "sources": ["Packages/SafiraKit/Sources/SafiraSession"]},
+    {"catalogs": ["Packages/SafiraKit/Sources/SafiraWeb/Resources/SafiraWeb.xcstrings"], "targets": ["SafiraWeb"],
+     "sources": ["Packages/SafiraKit/Sources/SafiraWeb"]},
+    {"catalogs": ["Packages/SafiraKit/Sources/Commands/Resources/Commands.xcstrings"], "targets": ["Commands"],
+     "sources": ["Packages/SafiraKit/Sources/Commands"]},
+    {"catalogs": ["Packages/SafiraKit/Sources/LinkRouting/Resources/LinkRouting.xcstrings"], "targets": ["LinkRouting"],
+     "sources": ["Packages/SafiraKit/Sources/LinkRouting"]},
+    {"catalogs": ["Packages/SafiraKit/Sources/LinkPickerUI/Resources/LinkPickerUI.xcstrings"], "targets": ["LinkPickerUI"],
+     "sources": ["Packages/SafiraKit/Sources/LinkPickerUI"]},
+    {"catalogs": ["Packages/SafiraKit/Sources/Diagnostics/Resources/Diagnostics.xcstrings"], "targets": ["Diagnostics"],
+     "sources": ["Packages/SafiraKit/Sources/Diagnostics"]},
+    {"catalogs": ["Packages/SafiraKit/Sources/Onboarding/Resources/Onboarding.xcstrings"], "targets": ["Onboarding"],
+     "sources": ["Packages/SafiraKit/Sources/Onboarding"]}
+  ],
+  "notExtracted": ["App/macOS/InfoPlist.xcstrings"],
   "allowEnv": "SAFIRA_ALLOW_TRANSLATION_REMOVAL",
   "baseBranches": ["main", "origin/main"],
   "hint": "A translation is lost or unreachable. Fix the key, or set SAFIRA_ALLOW_TRANSLATION_REMOVAL=1 when the removal is deliberate."

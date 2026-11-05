@@ -38,12 +38,18 @@ struct LinkPickerWording: Equatable {
 
     let rememberHint: String
 
-    static let profile = LinkPickerWording(question: String(localized: "Choose a Profile for this link"),
-                                           rowHint: String(localized: "Opens the link in this Profile"),
-                                           rememberHint: String(localized: "The next links from this site open in the Profile you choose, without asking"))
-    static let space = LinkPickerWording(question: String(localized: "Choose a Space for this link"),
-                                         rowHint: String(localized: "Opens the link in this Space"),
-                                         rememberHint: String(localized: "The next links from this site open in the Profile and Space you choose, without asking"))
+    static let profile = LinkPickerWording(question: String(localized: "Choose a Profile for this link", table: "LinkPickerUI", bundle: .module,
+                                                                     comment: "Link picker: the question the panel asks, read by VoiceOver"),
+                                           rowHint: String(localized: "Opens the link in this Profile", table: "LinkPickerUI", bundle: .module,
+                                                                    comment: "Link picker: VoiceOver hint of a Profile tile"),
+                                           rememberHint: String(localized: "The next links from this site open in the Profile you choose, without asking", table: "LinkPickerUI", bundle: .module,
+                                                                         comment: "Link picker: VoiceOver hint of the Always checkbox"))
+    static let space = LinkPickerWording(question: String(localized: "Choose a Space for this link", table: "LinkPickerUI", bundle: .module,
+                                                                   comment: "Link picker: the question the panel asks when it asks for the Space, read by VoiceOver"),
+                                         rowHint: String(localized: "Opens the link in this Space", table: "LinkPickerUI", bundle: .module,
+                                                                  comment: "Link picker: VoiceOver hint of a Space tile"),
+                                         rememberHint: String(localized: "The next links from this site open in the Profile and Space you choose, without asking", table: "LinkPickerUI", bundle: .module,
+                                                                       comment: "Link picker: VoiceOver hint of the Always checkbox when the picker asks for the Space"))
 }
 
 struct LinkPickerView<ID: Hashable & Sendable>: View {
@@ -111,8 +117,8 @@ struct LinkPickerView<ID: Hashable & Sendable>: View {
                     .background(Circle().fill(Color.white.opacity(0.1)))
             }
             .buttonStyle(.plain)
-            .accessibilityLabel(String(localized: "Dismiss the link"))
-            .help(String(localized: "Dismiss the link (Esc)"))
+            .accessibilityLabel(String(localized: "Dismiss the link", table: "LinkPickerUI", bundle: .module, comment: "Link picker: VoiceOver label of the close button"))
+            .help(String(localized: "Dismiss the link (Esc)", table: "LinkPickerUI", bundle: .module, comment: "Link picker: tooltip of the close button"))
         }
     }
 
@@ -121,7 +127,8 @@ struct LinkPickerView<ID: Hashable & Sendable>: View {
         if let host = model.rememberedHost {
             Toggle(isOn: Binding(get: { model.remembers }, set: { model.setRemembers($0) })) {
                 HStack(spacing: 6) {
-                    Text("Always send links from \(host) here")
+                    Text("Always send links from \(host) here", tableName: "LinkPickerUI", bundle: .module,
+                         comment: "Link picker: checkbox that creates a Link rule; the argument is a host")
                         .font(.system(size: 11))
                         .foregroundStyle(.white.opacity(0.75))
                     Text(verbatim: "A")
@@ -130,22 +137,25 @@ struct LinkPickerView<ID: Hashable & Sendable>: View {
                 }
             }
             .toggleStyle(.checkbox)
-            .accessibilityLabel(String(localized: "Always send links from \(host) here"))
+            .accessibilityLabel(String(localized: "Always send links from \(host) here", table: "LinkPickerUI", bundle: .module,
+                                       comment: "Link picker: checkbox that creates a Link rule; the argument is a host"))
             .accessibilityHint(wording.rememberHint)
-            .help(String(localized: "Creates a Link rule for \(host) (A)"))
+            .help(String(localized: "Creates a Link rule for \(host) (A)", table: "LinkPickerUI", bundle: .module,
+                          comment: "Link picker: tooltip of the Always checkbox; A is its key"))
         }
     }
 
     private var subtitle: String {
         guard let opener = model.openerName else { return model.detail }
-        return String(localized: "from \(opener)") + "  ·  " + model.detail
+        return String(localized: "from \(opener)", table: "LinkPickerUI", bundle: .module, comment: "Link picker: subtitle naming the app the link came from") + "  ·  " + model.detail
     }
 
     private var accessibleSummary: String {
         if let opener = model.openerName {
-            return String(localized: "Link to \(model.title), from \(opener)")
+            return String(localized: "Link to \(model.title), from \(opener)", table: "LinkPickerUI", bundle: .module,
+                          comment: "Link picker: VoiceOver summary; the link title and the app it came from")
         }
-        return String(localized: "Link to \(model.title)")
+        return String(localized: "Link to \(model.title)", table: "LinkPickerUI", bundle: .module, comment: "Link picker: VoiceOver summary; the link title")
     }
 
     /// The number key, and "Open" in green when a Tab of this Profile already shows the link.
@@ -153,7 +163,7 @@ struct LinkPickerView<ID: Hashable & Sendable>: View {
         let key = Text(verbatim: row.numberKey.map(String.init) ?? " ").foregroundStyle(.white.opacity(0.5))
         guard row.isLinkOpen else { return key }
         return key + Text(verbatim: "  ·  ").foregroundStyle(.white.opacity(0.5))
-            + Text("Open").foregroundStyle(Color.green)
+            + Text("Open", tableName: "LinkPickerUI", bundle: .module, comment: "Link picker: under a tile, the link is already open in this Profile").foregroundStyle(Color.green)
     }
 
     private func tile(_ row: LinkPickerRow<ID>, isHighlighted: Bool) -> some View {
@@ -179,8 +189,9 @@ struct LinkPickerView<ID: Hashable & Sendable>: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(row.name)
-        .accessibilityValue([row.numberKey.map { String(localized: "Key \(String($0))") },
-                             row.isLinkOpen ? String(localized: "The link is already open here") : nil]
+        .accessibilityValue([row.numberKey.map { String(localized: "Key \(String($0))", table: "LinkPickerUI", bundle: .module, comment: "Link picker: VoiceOver value of a tile, its number key") },
+                             row.isLinkOpen ? String(localized: "The link is already open here", table: "LinkPickerUI", bundle: .module,
+                                                                    comment: "Link picker: VoiceOver value of a tile") : nil]
             .compactMap { $0 }.joined(separator: ", "))
         .accessibilityHint(wording.rowHint)
         .accessibilityAddTraits(isHighlighted ? .isSelected : [])

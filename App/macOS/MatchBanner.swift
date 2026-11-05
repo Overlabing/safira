@@ -27,10 +27,10 @@ struct MatchBannerBar: View {
     var body: some View {
         if model.banner != nil {
             Banner(systemImage: "arrow.uturn.backward.circle",
-                   message: String(localized: "This link was already open, so Safira showed that Tab.")) {
+                   message: String(localized: "This link was already open, so Safira showed that Tab.", comment: "Banner shown after Safira focused a Tab that already had the link")) {
                 Button("Open in New Tab", action: openInNewTab)
                     .controlSize(.small)
-                IconButton(String(localized: "Dismiss"), systemImage: "xmark", action: dismiss)
+                IconButton(String(localized: "Dismiss", comment: "Banner shown after Safira focused a Tab that already had the link"), systemImage: "xmark", action: dismiss)
             }
             .theme(theme())
             .accessibilityLabel(Text("Link already open"))

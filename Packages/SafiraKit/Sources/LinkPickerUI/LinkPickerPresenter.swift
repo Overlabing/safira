@@ -37,8 +37,10 @@ public final class LinkPickerPresenter: ProfileChoosing {
         guard !profiles.isEmpty else { return nil }
         let open = profiles.filter { alreadyOpenIn.contains($0.id) }.map(\.name).formatted(.list(type: .and))
         let announcement = Self.announcement(for: link, rowCount: profiles.count) {
-            String(localized: "Choose a Profile for the link to \($0)")
-        } + (open.isEmpty ? "" : " " + String(localized: "Already open in \(open)."))
+            String(localized: "Choose a Profile for the link to \($0)", table: "LinkPickerUI", bundle: .module,
+                   comment: "Link picker: VoiceOver announcement; the argument is the link title")
+        } + (open.isEmpty ? "" : " " + String(localized: "Already open in \(open).", table: "LinkPickerUI", bundle: .module,
+                                                  comment: "Link picker: VoiceOver announcement; the argument lists Profiles"))
         return await ask(LinkPickerModel(link: link, profiles: profiles, alreadyOpenIn: alreadyOpenIn),
                          wording: .profile, announcement: announcement)
     }
@@ -47,7 +49,8 @@ public final class LinkPickerPresenter: ProfileChoosing {
                             remembering: Bool) async -> PickerAnswer<SpaceID>? {
         guard !spaces.isEmpty else { return nil }
         let announcement = Self.announcement(for: link, rowCount: spaces.count) {
-            String(localized: "Choose a Space of \(profile.name) for the link to \($0)")
+            String(localized: "Choose a Space of \(profile.name) for the link to \($0)", table: "LinkPickerUI", bundle: .module,
+                   comment: "Link picker: VoiceOver announcement; a Profile name and the link title")
         }
         return await ask(LinkPickerModel(link: link, spaces: spaces, remembers: remembering), wording: .space,
                          announcement: announcement)
@@ -65,9 +68,19 @@ public final class LinkPickerPresenter: ProfileChoosing {
     }
 
     private static func announcement(for link: IncomingLink, rowCount: Int, question: (String) -> String) -> String {
-        let from = link.opener?.name.map { String(localized: ", from \($0)") } ?? ""
-        let always = link.rememberableHost.map { String(localized: " Press A to always send links from \($0) there.") } ?? ""
-        return question(link.title) + from + String(localized: ". Press a number from 1 to \(min(rowCount, 9)), or use the arrow keys and Return.") + always + String(localized: " Escape dismisses it.")
+        let from = link.opener?.name.map {
+            String(localized: ", from \($0)", table: "LinkPickerUI", bundle: .module,
+                   comment: "Link picker: VoiceOver announcement, after the question; the app the link came from")
+        } ?? ""
+        let keys = String(localized: "Press a number from 1 to \(min(rowCount, 9)), or use the arrow keys and Return.",
+                          table: "LinkPickerUI", bundle: .module, comment: "Link picker: VoiceOver announcement")
+        let always = link.rememberableHost.map {
+            String(localized: "Press A to always send links from \($0) there.", table: "LinkPickerUI", bundle: .module,
+                   comment: "Link picker: VoiceOver announcement; the argument is a host")
+        }
+        let escape = String(localized: "Escape dismisses it.", table: "LinkPickerUI", bundle: .module,
+                            comment: "Link picker: VoiceOver announcement")
+        return [question(link.title) + from + ".", keys, always, escape].compactMap { $0 }.joined(separator: " ")
     }
 
     /// Keeps the open question alive without naming its choice type.
@@ -105,7 +118,7 @@ public final class LinkPickerPresenter: ProfileChoosing {
             panel.isReleasedWhenClosed = false
             panel.level = .mainMenu + 3
             panel.collectionBehavior = [.fullScreenAuxiliary, .stationary, .canJoinAllSpaces, .ignoresCycle]
-            panel.setAccessibilityLabel(String(localized: "Link picker"))
+            panel.setAccessibilityLabel(String(localized: "Link picker", table: "LinkPickerUI", bundle: .module, comment: "Link picker: VoiceOver label of the panel"))
             panel.contentView = NSHostingView(rootView: LinkPickerView(
                 model: model, layout: layout, wording: wording,
                 choose: { [weak self] id in self?.apply(self?.model.choose(id) ?? .none) },
@@ -129,11 +142,14 @@ public final class LinkPickerPresenter: ProfileChoosing {
             if let input = Self.input(for: event) {
                 apply(model.handle(input))
                 if model.remembers != remembered {
-                    Self.announce(model.remembers ? String(localized: "Always on: the choice becomes a Link rule")
-                                                  : String(localized: "Always off"))
+                    Self.announce(model.remembers ? String(localized: "Always on: the choice becomes a Link rule", table: "LinkPickerUI",
+                                                                           bundle: .module, comment: "Link picker: VoiceOver announcement after A")
+                                                  : String(localized: "Always off", table: "LinkPickerUI", bundle: .module,
+                                                                  comment: "Link picker: VoiceOver announcement after A"))
                 }
                 if let row = model.highlightedRow, row != before, !isDone {
-                    Self.announce(String(localized: "\(row.name), key \(row.number)"))
+                    Self.announce(String(localized: "\(row.name), key \(row.number)", table: "LinkPickerUI", bundle: .module,
+                                                comment: "Link picker: VoiceOver announcement; a Profile or Space name and its number key"))
                 }
             }
             // Swallow the rest rather than leak half a keystroke to the app behind.

@@ -1,0 +1,910 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Back" : {
+      "comment" : "Command: menu item and Shortcuts row",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Précédent"
+          }
+        }
+      }
+    },
+    "Chosen by you" : {
+      "comment" : "Defaults: value of Shortcut preset",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chosen by you"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisi par vous"
+          }
+        }
+      }
+    },
+    "Clear History and Website Data…" : {
+      "comment" : "Command: menu item and Shortcuts row",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear History and Website Data…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effacer l’historique et les données de sites…"
+          }
+        }
+      }
+    },
+    "Close Tab" : {
+      "comment" : "Command: menu item and Shortcuts row",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close Tab"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fermer l’onglet"
+          }
+        }
+      }
+    },
+    "Close Window" : {
+      "comment" : "Command: menu item and Shortcuts row",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close Window"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fermer la fenêtre"
+          }
+        }
+      }
+    },
+    "Command Bar: Move to the Tab List" : {
+      "comment" : "Command name in the Shortcuts window; Tab moves from the Command bar",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Command Bar: Move to the Tab List"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Barre de commande : aller à la liste des onglets"
+          }
+        }
+      }
+    },
+    "Command Bar: Move to the Tab List, Backward" : {
+      "comment" : "Command name in the Shortcuts window; Tab moves from the Command bar",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Command Bar: Move to the Tab List, Backward"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Barre de commande : aller à la liste des onglets, en arrière"
+          }
+        }
+      }
+    },
+    "Compact Mode" : {
+      "comment" : "Command: menu item and Shortcuts row",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compact Mode"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mode compact"
+          }
+        }
+      }
+    },
+    "Copy" : {
+      "comment" : "Menu item",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copy"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copier"
+          }
+        }
+      }
+    },
+    "Cut" : {
+      "comment" : "Menu item",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cut"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couper"
+          }
+        }
+      }
+    },
+    "Delete Profile…" : {
+      "comment" : "Command: menu item and Shortcuts row",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete Profile…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer le profil…"
+          }
+        }
+      }
+    },
+    "Delete Space…" : {
+      "comment" : "Command: menu item and Shortcuts row",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete Space…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer l’espace…"
+          }
+        }
+      }
+    },
+    "Downloads" : {
+      "comment" : "Command: menu item and Shortcuts row",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Downloads"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Téléchargements"
+          }
+        }
+      }
+    },
+    "Focus Tab List" : {
+      "comment" : "Command: menu item and Shortcuts row",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Focus Tab List"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aller à la liste des onglets"
+          }
+        }
+      }
+    },
+    "Forward" : {
+      "comment" : "Command: menu item and Shortcuts row",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Forward"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suivant"
+          }
+        }
+      }
+    },
+    "Hide Others" : {
+      "comment" : "Menu item",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hide Others"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masquer les autres"
+          }
+        }
+      }
+    },
+    "Hide Safira" : {
+      "comment" : "Menu item",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hide Safira"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masquer Safira"
+          }
+        }
+      }
+    },
+    "Minimize" : {
+      "comment" : "Menu item",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minimize"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Placer dans le Dock"
+          }
+        }
+      }
+    },
+    "Move Space Left" : {
+      "comment" : "Command: menu item and Shortcuts row",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move Space Left"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déplacer l’espace vers la gauche"
+          }
+        }
+      }
+    },
+    "Move Space Right" : {
+      "comment" : "Command: menu item and Shortcuts row",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move Space Right"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déplacer l’espace vers la droite"
+          }
+        }
+      }
+    },
+    "Move Tab Down" : {
+      "comment" : "Command: menu item and Shortcuts row",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move Tab Down"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descendre l’onglet"
+          }
+        }
+      }
+    },
+    "Move Tab Up" : {
+      "comment" : "Command: menu item and Shortcuts row",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move Tab Up"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monter l’onglet"
+          }
+        }
+      }
+    },
+    "New Folder…" : {
+      "comment" : "Command: menu item and Shortcuts row",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New Folder…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouveau dossier…"
+          }
+        }
+      }
+    },
+    "New Private Window" : {
+      "comment" : "Command: menu item and Shortcuts row",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New Private Window"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouvelle fenêtre privée"
+          }
+        }
+      }
+    },
+    "New Profile…" : {
+      "comment" : "Command: menu item and Shortcuts row",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New Profile…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouveau profil…"
+          }
+        }
+      }
+    },
+    "New Space…" : {
+      "comment" : "Command: menu item and Shortcuts row",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New Space…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouvel espace…"
+          }
+        }
+      }
+    },
+    "New Tab" : {
+      "comment" : "Command: menu item and Shortcuts row",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New Tab"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouvel onglet"
+          }
+        }
+      }
+    },
+    "New Window" : {
+      "comment" : "Command: menu item and Shortcuts row",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New Window"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouvelle fenêtre"
+          }
+        }
+      }
+    },
+    "Open Command Bar" : {
+      "comment" : "Command: menu item and Shortcuts row",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Command Bar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir la barre de commande"
+          }
+        }
+      }
+    },
+    "Paste" : {
+      "comment" : "Menu item",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paste"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coller"
+          }
+        }
+      }
+    },
+    "Pin or Unpin Tab" : {
+      "comment" : "Command: menu item and Shortcuts row",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pin or Unpin Tab"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Épingler ou désépingler l’onglet"
+          }
+        }
+      }
+    },
+    "Quit Safira" : {
+      "comment" : "Command: menu item and Shortcuts row",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quit Safira"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quitter Safira"
+          }
+        }
+      }
+    },
+    "Reload Page" : {
+      "comment" : "Command: menu item and Shortcuts row",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reload Page"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recharger la page"
+          }
+        }
+      }
+    },
+    "Rename Profile…" : {
+      "comment" : "Command: menu item and Shortcuts row",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rename Profile…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Renommer le profil…"
+          }
+        }
+      }
+    },
+    "Rename Space…" : {
+      "comment" : "Command: menu item and Shortcuts row",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rename Space…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Renommer l’espace…"
+          }
+        }
+      }
+    },
+    "Reopen Closed Tab" : {
+      "comment" : "Command: menu item and Shortcuts row",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reopen Closed Tab"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rouvrir l’onglet fermé"
+          }
+        }
+      }
+    },
+    "Safari's File and View menus carry a few shortcuts the cited page does not list; those are marked in 'from'." : {
+      "comment" : "Shortcuts window: the note of the Safari preset (Presets/safari.json); from is a JSON key",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safari's File and View menus carry a few shortcuts the cited page does not list; those are marked in 'from'."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les menus Fichier et Présentation de Safari comportent quelques raccourcis que la page citée ne liste pas ; ils sont signalés dans « from »."
+          }
+        }
+      }
+    },
+    "Safira menu, Shortcuts…" : {
+      "comment" : "Defaults: where to change it; a menu and its item",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safira menu, Shortcuts…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "menu Safira, Raccourcis…"
+          }
+        }
+      }
+    },
+    "Select All" : {
+      "comment" : "Menu item",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Select All"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout sélectionner"
+          }
+        }
+      }
+    },
+    "Shortcut preset" : {
+      "comment" : "Defaults: entry title",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shortcut preset"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Préréglage de raccourcis"
+          }
+        }
+      }
+    },
+    "Show Next Profile" : {
+      "comment" : "Command: menu item and Shortcuts row",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show Next Profile"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher le profil suivant"
+          }
+        }
+      }
+    },
+    "Show Next Space" : {
+      "comment" : "Command: menu item and Shortcuts row",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show Next Space"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher l’espace suivant"
+          }
+        }
+      }
+    },
+    "Show Next Tab" : {
+      "comment" : "Command: menu item and Shortcuts row",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show Next Tab"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher l’onglet suivant"
+          }
+        }
+      }
+    },
+    "Show Previous Profile" : {
+      "comment" : "Command: menu item and Shortcuts row",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show Previous Profile"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher le profil précédent"
+          }
+        }
+      }
+    },
+    "Show Previous Space" : {
+      "comment" : "Command: menu item and Shortcuts row",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show Previous Space"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher l’espace précédent"
+          }
+        }
+      }
+    },
+    "Show Previous Tab" : {
+      "comment" : "Command: menu item and Shortcuts row",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show Previous Tab"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher l’onglet précédent"
+          }
+        }
+      }
+    },
+    "Show Sidebar" : {
+      "comment" : "Command: menu item and Shortcuts row",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show Sidebar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher la barre latérale"
+          }
+        }
+      }
+    },
+    "Show Space %lld" : {
+      "comment" : "Command name; the Space's number from 1 to 9",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show Space %lld"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher l’espace %lld"
+          }
+        }
+      }
+    },
+    "Show Tab %lld" : {
+      "comment" : "Command name; the Tab's number from 1 to 9",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show Tab %lld"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher l’onglet %lld"
+          }
+        }
+      }
+    },
+    "Site Permissions…" : {
+      "comment" : "Command: menu item and Shortcuts row",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Site Permissions…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autorisations des sites…"
+          }
+        }
+      }
+    },
+    "The help center answers automated requests with 403; the list was read from the Internet Archive snapshot of the same page (web.archive.org/web/2025/) on the check date." : {
+      "comment" : "Shortcuts window: the note of the Arc preset (Presets/arc.json)",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The help center answers automated requests with 403; the list was read from the Internet Archive snapshot of the same page (web.archive.org/web/2025/) on the check date."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le centre d’aide répond 403 aux requêtes automatisées ; la liste a été lue dans la copie de la même page sur l’Internet Archive (web.archive.org/web/2025/), à la date de vérification."
+          }
+        }
+      }
+    },
+    "The page prints Ctrl and Alt and does not say how they map on macOS; they are read as ⌘ and ⌥, as in Firefox, which Zen is built on. Re-check on a Mac with Zen installed." : {
+      "comment" : "Shortcuts window: the note of the Zen preset (Presets/zen.json)",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The page prints Ctrl and Alt and does not say how they map on macOS; they are read as ⌘ and ⌥, as in Firefox, which Zen is built on. Re-check on a Mac with Zen installed."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La page indique Ctrl et Alt sans dire à quoi elles correspondent sur macOS ; elles sont lues comme ⌘ et ⌥, comme dans Firefox, sur lequel Zen repose. À revérifier sur un Mac où Zen est installé."
+          }
+        }
+      }
+    },
+    "Zen, Arc or Safari shortcuts. A command the preset has no equivalent for keeps Safira's own shortcut. Without a preset, Safira's own shortcuts apply. You can change any shortcut afterwards." : {
+      "comment" : "Defaults: explanation of Shortcut preset",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zen, Arc or Safari shortcuts. A command the preset has no equivalent for keeps Safira's own shortcut. Without a preset, Safira's own shortcuts apply. You can change any shortcut afterwards."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les raccourcis de Zen, d’Arc ou de Safari. Une commande sans équivalent dans le préréglage garde le raccourci de Safira. Sans préréglage, les raccourcis de Safira s’appliquent. Vous pouvez modifier n’importe quel raccourci ensuite."
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

@@ -1,0 +1,142 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Continue over HTTP" : {
+      "comment" : "HTTPS warning page: the link that loads the site without encryption",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continue over HTTP"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continuer en HTTP"
+          }
+        }
+      }
+    },
+    "Default" : {
+      "comment" : "Name of the Profile a first launch creates",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Default"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Par défaut"
+          }
+        }
+      }
+    },
+    "If you continue, the page and anything you type into it travel unencrypted and can be read or changed by others on the network." : {
+      "comment" : "HTTPS warning page: the risk of continuing",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "If you continue, the page and anything you type into it travel unencrypted and can be read or changed by others on the network."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si vous continuez, la page et tout ce que vous y saisissez circulent sans chiffrement et peuvent être lus ou modifiés par d’autres personnes sur le réseau."
+          }
+        }
+      }
+    },
+    "No secure connection to %@" : {
+      "comment" : "HTTPS warning page: the page title; the argument is a host",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No secure connection to %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune connexion sécurisée à %@"
+          }
+        }
+      }
+    },
+    "Safira tried %@ over HTTPS and %@." : {
+      "comment" : "HTTPS warning page: the first argument is a host, the second says what failed",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safira tried %@ over HTTPS and %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safira a essayé %@ en HTTPS et %@."
+          }
+        }
+      }
+    },
+    "This site does not offer a secure connection" : {
+      "comment" : "HTTPS warning page: heading",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This site does not offer a secure connection"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce site n’offre pas de connexion sécurisée"
+          }
+        }
+      }
+    },
+    "could not connect securely" : {
+      "comment" : "HTTPS warning page: ends “Safira tried <host> over HTTPS and …”",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "could not connect securely"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "n’a pas pu se connecter de façon sécurisée"
+          }
+        }
+      }
+    },
+    "could not verify its certificate" : {
+      "comment" : "HTTPS warning page: ends “Safira tried <host> over HTTPS and …”",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "could not verify its certificate"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "n’a pas pu vérifier son certificat"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

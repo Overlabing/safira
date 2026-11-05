@@ -12,11 +12,12 @@ public struct LinkChoiceLogSettings: Hashable, Sendable, Codable {
         self.isEnabled = isEnabled
     }
 
-    public static let title = "Log Link picker choices"
+    public static let title = String(localized: "Log Link picker choices", table: "LinkRouting", bundle: .module, comment: "Menu item and Defaults title")
 
-    public static let explanation =
-        "Writes the host of each link you send to a Profile, and the Profile, to a file on this Mac, never the path "
-        + "or anything after it. The file stays on this Mac; Safira never sends it anywhere."
+    public static let explanation = String(localized: """
+        Writes the host of each link you send to a Profile, and the Profile, to a file on this Mac, never the path or \
+        anything after it. The file stays on this Mac; Safira never sends it anywhere.
+        """, table: "LinkRouting", bundle: .module, comment: "Defaults: explanation of Log Link picker choices")
 
     /// The entry this type contributes to the registry of defaults, with the value of a fresh `LinkChoiceLogSettings`.
     public static var defaultEntries: [DefaultEntry] {
@@ -24,9 +25,9 @@ public struct LinkChoiceLogSettings: Hashable, Sendable, Codable {
             DefaultEntry(
                 id: "linkPicker.choiceLog",
                 title: title,
-                value: LinkChoiceLogSettings().isEnabled ? "On" : "Off",
+                value: DefaultWording.onOff(LinkChoiceLogSettings().isEnabled),
                 explanation: explanation,
-                whereToChange: "Safira menu",
+                whereToChange: DefaultWording.safiraMenu,
                 control: .toggle(isOn: LinkChoiceLogSettings().isEnabled)
             ),
         ]

@@ -66,7 +66,9 @@ struct DefaultsListView: View {
                     HStack {
                         Text(entry.title).font(.body)
                         Spacer()
-                        Button(actions.isDefaultBrowser() ? "Safira Is the Default Browser" : "Make Safira the Default Browser…",
+                        Button(actions.isDefaultBrowser()
+                               ? String(localized: "Safira Is the Default Browser", comment: "Disabled button: nothing left to do")
+                               : String(localized: "Make Safira the Default Browser…", comment: "Button"),
                                action: actions.makeDefaultBrowser)
                             .disabled(actions.isDefaultBrowser())
                     }

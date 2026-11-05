@@ -30,10 +30,16 @@ settings:
     MARKETING_VERSION: "0.1.0"
     CURRENT_PROJECT_VERSION: "1"
     ARCHS: arm64
+    # The compiler writes the strings it localizes next to each object file, which scripts/check.sh hands to
+    # sync-strings to keep the String Catalogs complete.
+    SWIFT_EMIT_LOC_STRINGS: YES
+    LOCALIZATION_PREFERS_STRING_CATALOGS: YES
 targets:
   Safira:
     type: application
     platform: macOS
+    # App/macOS holds the String Catalogs too: Localizable.xcstrings (English keys, French translation) and
+    # InfoPlist.xcstrings (the usage descriptions below).
     sources: [App/macOS]
     scheme: {}
     dependencies:

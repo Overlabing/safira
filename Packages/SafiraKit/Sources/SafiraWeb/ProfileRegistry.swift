@@ -41,7 +41,8 @@ public final class ProfileRegistry {
     @ObservationIgnored private let dataStoreRemovalAttempts: Int
 
     /// The Profile a first launch starts with. It has no search engine: the Command bar asks at the first search.
-    public static let firstProfileName = "Default"
+    public static let firstProfileName = String(localized: "Default", table: "SafiraWeb", bundle: .module,
+                                                comment: "Name of the Profile a first launch creates")
 
     /// Opens the Profiles listed in `app.sqlite` under `layout`, creating the first one when none is listed, and
     /// finishes erasing the Profiles whose deletion was cut short. When the app database cannot be opened, Safira still

@@ -35,7 +35,7 @@ final class PopupPanelController: NSObject, NSWindowDelegate {
         panel.becomesKeyOnlyIfNeeded = false
         panel.contentView = webView
         panel.delegate = self
-        panel.setAccessibilityLabel(String(localized: "Sign-in window"))
+        panel.setAccessibilityLabel(String(localized: "Sign-in window", comment: "Sign-in panel"))
         updateTitle()
         track()
     }
@@ -59,7 +59,7 @@ final class PopupPanelController: NSObject, NSWindowDelegate {
     }
 
     private func updateTitle() {
-        panel.title = popup.state.url?.host() ?? String(localized: "Loading…")
+        panel.title = popup.state.url?.host() ?? String(localized: "Loading…", comment: "Sign-in panel")
     }
 
     private func track() {
