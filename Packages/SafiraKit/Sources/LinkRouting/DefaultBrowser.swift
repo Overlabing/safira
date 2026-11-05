@@ -7,12 +7,6 @@ import Preferences
 import SafiraCore
 import UniformTypeIdentifiers
 
-/// Making an app the default for a kind of file. AppSupportKit's `DefaultApplicationClient` reads the default of a
-/// content type but changes the default of URL schemes only, so Safira keeps this one call for its HTML files.
-public protocol DefaultDocumentApplications: Sendable {
-    func makeDefault(_ application: URL, forContentType type: UTType) async throws
-}
-
 /// Safira as the default browser. macOS counts an app as the default browser when it opens both http and https, and
 /// the system settings move HTML files with them, so all of them are set together.
 public struct DefaultBrowser: Sendable {
@@ -21,17 +15,12 @@ public struct DefaultBrowser: Sendable {
     public static let contentTypes = ["public.html", "public.xhtml"]
 
     private let check: DefaultApplicationCheck
-    private let documents: any DefaultDocumentApplications
-    private let applicationURL: URL
 
     /// - Parameters:
     ///   - applicationURL: the running app's bundle (`Bundle.main.bundleURL`).
     ///   - bundleIdentifier: its bundle identifier; another copy of Safira that is the default counts as Safira.
-    public init(client: any DefaultApplicationClient, documents: any DefaultDocumentApplications, applicationURL: URL,
-                bundleIdentifier: String) {
+    public init(client: any DefaultApplicationClient, applicationURL: URL, bundleIdentifier: String) {
         check = DefaultApplicationCheck(client: client, applicationURL: applicationURL, bundleIdentifier: bundleIdentifier)
-        self.documents = documents
-        self.applicationURL = applicationURL
     }
 
     /// True when Safira opens both http and https links. Read when it is shown and when Safira comes back to the front:
@@ -52,7 +41,7 @@ public struct DefaultBrowser: Sendable {
         }
         for identifier in Self.contentTypes {
             guard let type = UTType(identifier) else { continue }
-            do { try await documents.makeDefault(applicationURL, forContentType: type) } catch { firstError = firstError ?? error }
+            do { try await check.makeDefault(forContentType: type) } catch { firstError = firstError ?? error }
         }
         if let firstError { throw firstError }
     }

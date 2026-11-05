@@ -11,7 +11,6 @@ import Observation
 import SafiraCore
 import SafiraStore
 import SafiraWeb
-import UniformTypeIdentifiers
 import UserFacing
 
 /// `NSRunningApplication` as the Opener lookup. A process that is not an application (the `open` command) has none.
@@ -20,14 +19,6 @@ struct WorkspaceApplicationLookup: RunningApplicationLookup {
         NSRunningApplication(processIdentifier: processIdentifier).map {
             Opener(bundleIdentifier: $0.bundleIdentifier, name: $0.localizedName)
         }
-    }
-}
-
-/// `NSWorkspace` for the HTML files that go with the default browser; the schemes go through AppSupportKit's
-/// `WorkspaceDefaultApplications`.
-struct WorkspaceDefaultDocuments: DefaultDocumentApplications {
-    func makeDefault(_ application: URL, forContentType type: UTType) async throws {
-        try await NSWorkspace.shared.setDefaultApplication(at: application, toOpen: type)
     }
 }
 
@@ -151,8 +142,7 @@ final class LinkController: NSObject, NSMenuItemValidation {
     private let registry: ProfileRegistry
     private var rulesWindow: LinkRulesWindowController?
     private let defaultBrowser = DefaultBrowser(
-        client: WorkspaceDefaultApplications(), documents: WorkspaceDefaultDocuments(),
-        applicationURL: Bundle.main.bundleURL, bundleIdentifier: Bundle.main.bundleIdentifier ?? "com.overlabing.safira")
+        client: WorkspaceDefaultApplications(), applicationURL: Bundle.main.bundleURL, bundleIdentifier: Bundle.main.bundleIdentifier ?? "com.overlabing.safira")
     let defaultBrowserStatus = DefaultBrowserStatus()
 
     init(registry: ProfileRegistry, mainWindow: MainWindowController, diagnostics: DiagnosticsController,
