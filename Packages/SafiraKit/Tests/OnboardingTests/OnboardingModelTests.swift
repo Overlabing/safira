@@ -3,6 +3,7 @@
 
 import Commands
 import Onboarding
+import Preferences
 import SafiraCore
 import Testing
 
@@ -78,13 +79,13 @@ import Testing
     @Test func onboardingShowsEveryUserFacingDefaultOfTheRegistry() {
         let model = model()
 
-        #expect(model.defaults.entries.map(\.id) == DefaultsRegistry.userFacing.map(\.id))
+        #expect(model.defaults.entries.map(\.id) == DefaultsRegistry.entries.userFacing.map(\.id))
         #expect(model.defaults.entries.allSatisfy { $0.isUserFacing })
     }
 
     @Test func eachSwitchStartsAtItsDocumentedPositionAndCanBeChanged() {
         let model = model()
-        let switches = DefaultsRegistry.userFacing.filter { if case .toggle = $0.control { true } else { false } }
+        let switches = DefaultsRegistry.entries.userFacing.filter { if case .toggle = $0.control { true } else { false } }
 
         #expect(model.defaults.toggles == [
             "updates.automaticChecks": false, "diagnostics.debugMode": false, "web.fraudulentSiteWarning": true,

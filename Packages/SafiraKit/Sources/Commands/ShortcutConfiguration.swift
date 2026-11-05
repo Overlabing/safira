@@ -2,6 +2,8 @@
 // Copyright (c) 2026 Antonin Carlin
 
 import Foundation
+import Preferences
+import SafiraCore
 
 /// What the user did to one command's shortcut.
 public enum ShortcutOverride: Hashable, Sendable {
@@ -54,22 +56,29 @@ public struct ShortcutConfiguration: Hashable, Sendable {
     }
 }
 
-/// Keeps the configuration across launches in UserDefaults: three plain values, no schema to migrate. A saved value
+/// Keeps the configuration across launches, under two keys: the preset's name and the overrides as text. A saved value
 /// that no longer parses (a command or shortcut renamed since) is dropped, never fatal.
-public struct ShortcutStore: @unchecked Sendable {
-    private static let presetKey = "shortcuts.preset"
-    private static let overridesKey = "shortcuts.overrides"
+public struct ShortcutStore: Sendable {
+    public static let presetKey = "shortcuts.preset"
+    public static let overridesKey = "shortcuts.overrides"
+    /// Until AppSupportKit, the preset's name as plain text and the overrides as a dictionary of text.
+    public static let legacy = [
+        LegacyPreference(key: presetKey, as: String?.self) { ($0 as? String).map { String?.some($0) } },
+        LegacyPreference(key: overridesKey, as: [String: String].self) { $0 as? [String: String] },
+    ]
     private static let unboundMarker = ""
-    private let defaults: UserDefaults
+    private let preset: Preference<String?>
+    private let overrides: Preference<[String: String]>
 
-    public init(defaults: UserDefaults = .standard) {
-        self.defaults = defaults
+    public init(store: any KeyValueStore = UserDefaults.standard) {
+        preset = Preference(key: Self.presetKey, defaultValue: nil, store: store)
+        overrides = Preference(key: Self.overridesKey, defaultValue: [:], store: store)
     }
 
-    public func load() -> ShortcutConfiguration {
-        let preset = defaults.string(forKey: Self.presetKey).flatMap(ShortcutPreset.init(rawValue:))
+    public func load(unreadable: (PreferenceError) -> Void) -> ShortcutConfiguration {
+        let preset = self.preset.loadRestoringDefault(unreadable).flatMap(ShortcutPreset.init(rawValue:))
         var overrides: [CommandID: ShortcutOverride] = [:]
-        for (key, value) in defaults.dictionary(forKey: Self.overridesKey) as? [String: String] ?? [:] {
+        for (key, value) in self.overrides.loadRestoringDefault(unreadable) {
             guard let id = CommandID(rawValue: key) else { continue }
             if value == Self.unboundMarker {
                 overrides[id] = .unbound
@@ -81,18 +90,13 @@ public struct ShortcutStore: @unchecked Sendable {
     }
 
     public func save(_ configuration: ShortcutConfiguration) {
-        if let preset = configuration.preset {
-            defaults.set(preset.rawValue, forKey: Self.presetKey)
-        } else {
-            defaults.removeObject(forKey: Self.presetKey)
-        }
-        let overrides = Dictionary(uniqueKeysWithValues: configuration.overrides.map { id, override in
+        try? preset.save(configuration.preset?.rawValue)
+        try? overrides.save(Dictionary(uniqueKeysWithValues: configuration.overrides.map { id, override in
             switch override {
             case .shortcut(let shortcut): (id.rawValue, shortcut.encoded)
             case .unbound: (id.rawValue, Self.unboundMarker)
             }
-        })
-        defaults.set(overrides, forKey: Self.overridesKey)
+        }))
     }
 }
 
@@ -105,9 +109,10 @@ public final class ShortcutController {
     public private(set) var conflicts: [ShortcutConflict]
     private let store: ShortcutStore
 
-    public init(store: ShortcutStore = ShortcutStore()) {
+    /// - Parameter unreadable: told when a saved value could not be read and the defaults replaced it.
+    public init(store: ShortcutStore = ShortcutStore(), unreadable: (PreferenceError) -> Void) {
         self.store = store
-        let configuration = store.load()
+        let configuration = store.load(unreadable: unreadable)
         self.configuration = configuration
         bindings = configuration.bindings
         conflicts = configuration.conflicts

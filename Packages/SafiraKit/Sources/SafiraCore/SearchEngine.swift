@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Antonin Carlin
 
 import Foundation
+import Preferences
 
 /// The search engines a Profile can choose from, in the order they are offered. None is preselected.
 public enum SearchEngine: String, CaseIterable, Sendable, Codable {

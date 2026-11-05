@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Antonin Carlin
 
 import Foundation
+import Preferences
 import SafiraCore
 
 /// Whether a link that is already open in the Target profile focuses its Matching tab instead of opening a new Tab. On
@@ -40,19 +41,23 @@ public struct MatchingTabSettings: Hashable, Sendable, Codable {
 }
 
 /// Keeps the setting across launches.
-public struct MatchingTabSettingsStore: @unchecked Sendable {
-    private static let key = "linkMatching.focusOpenTab"
-    private let defaults: UserDefaults
+public struct MatchingTabSettingsStore: Sendable {
+    public static let key = "linkMatching.focusOpenTab"
+    /// Until AppSupportKit, a plain Boolean; anything else read as the default.
+    public static let legacy = LegacyPreference(key: key, as: MatchingTabSettings.self) {
+        ($0 as? Bool).map { MatchingTabSettings(isEnabled: $0) }
+    }
+    private let preference: Preference<MatchingTabSettings>
 
-    public init(defaults: UserDefaults = .standard) {
-        self.defaults = defaults
+    public init(store: any KeyValueStore = UserDefaults.standard) {
+        preference = Preference(key: Self.key, defaultValue: MatchingTabSettings(), store: store)
     }
 
-    public func load() -> MatchingTabSettings {
-        MatchingTabSettings(isEnabled: defaults.object(forKey: Self.key) as? Bool ?? MatchingTabSettings().isEnabled)
+    public func load(unreadable: (PreferenceError) -> Void) -> MatchingTabSettings {
+        preference.loadRestoringDefault(unreadable)
     }
 
     public func save(_ settings: MatchingTabSettings) {
-        defaults.set(settings.isEnabled, forKey: Self.key)
+        try? preference.save(settings)
     }
 }

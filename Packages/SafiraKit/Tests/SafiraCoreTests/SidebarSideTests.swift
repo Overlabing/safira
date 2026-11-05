@@ -2,34 +2,41 @@
 // Copyright (c) 2026 Antonin Carlin
 
 import Foundation
+import Preferences
 import SafiraCore
 import Testing
 
 @Suite struct SidebarSideTests {
-    private func emptyDefaults() -> UserDefaults {
-        let name = "SidebarSideTests.\(UUID().uuidString)"
-        let defaults = UserDefaults(suiteName: name)!
-        defaults.removePersistentDomain(forName: name)
-        return defaults
-    }
-
     @Test func theSidebarStartsOnTheLeft() {
-        #expect(SidebarSideStore(defaults: emptyDefaults()).load() == .left)
+        #expect(SidebarSideStore(store: InMemoryKeyValueStore()).load(unreadable: { _ in }) == .left)
     }
 
     @Test func theChosenSideIsKeptAcrossLaunches() {
-        let defaults = emptyDefaults()
-        SidebarSideStore(defaults: defaults).save(.right)
+        let store = InMemoryKeyValueStore()
+        SidebarSideStore(store: store).save(.right)
 
-        #expect(SidebarSideStore(defaults: defaults).load() == .right)
-        #expect(defaults.string(forKey: "window.sidebarSide") == "right")
+        #expect(SidebarSideStore(store: store).load(unreadable: { _ in }) == .right)
+        #expect(store.data(forKey: "window.sidebarSide") == Data(#""right""#.utf8))
     }
 
-    @Test func aDamagedValueKeepsTheSidebarOnTheLeft() {
-        let defaults = emptyDefaults()
-        defaults.set("middle", forKey: "window.sidebarSide")
+    @Test func aDamagedValueKeepsTheSidebarOnTheLeftAndIsReportedOnce() {
+        let store = InMemoryKeyValueStore()
+        store.setData(Data(#""middle""#.utf8), forKey: "window.sidebarSide")
+        var problems: [PreferenceError] = []
 
-        #expect(SidebarSideStore(defaults: defaults).load() == .left)
+        #expect(SidebarSideStore(store: store).load { problems.append($0) } == .left)
+        #expect(SidebarSideStore(store: store).load { problems.append($0) } == .left)
+        #expect(problems == [.unreadable(key: "window.sidebarSide")])
+    }
+
+    @Test func theSideTheOldStoreKeptIsReadAfterTheMigration() throws {
+        let (defaults, domain) = try scratchDefaults()
+        defer { defaults.removePersistentDomain(forName: domain) }
+        defaults.set("right", forKey: "window.sidebarSide")
+
+        LegacyPreference.migrate([SidebarSideStore.legacy], in: defaults, domain: domain)
+
+        #expect(SidebarSideStore(store: defaults).load(unreadable: { _ in }) == .right)
     }
 
     @Test func theDefaultIsListedAsASwitchThatStartsOff() throws {

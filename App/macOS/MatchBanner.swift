@@ -8,24 +8,37 @@ import ColorUI
 import DesignKit
 import SafiraSession
 import SwiftUI
+import UserFacing
 
-/// What the banner over the page shows: nothing, or the offer that follows a link a Matching tab answered.
+/// What the banner over the page shows: nothing, an error shown as a banner (AppSupportKit's model), or the offer that
+/// follows a link a Matching tab answered. The error comes first.
 @MainActor
 @Observable
 final class MatchBannerModel {
     var banner: MatchBanner?
+    var error: UserFacingError?
+
+    var isEmpty: Bool { banner == nil && error == nil }
 }
 
-/// ThemeKit's banner, floating over the top of the page: the link was already open, and it can still open in a new Tab.
+/// ThemeKit's banner, floating over the top of the page: an error that needs nothing from the user, or the link was
+/// already open and it can still open in a new Tab.
 struct MatchBannerBar: View {
     let model: MatchBannerModel
     let theme: () -> Theme
     let openInNewTab: () -> Void
     let dismiss: () -> Void
+    let dismissError: () -> Void
     @Environment(\.designTokens) private var tokens
 
     var body: some View {
-        if model.banner != nil {
+        if let error = model.error {
+            Banner(systemImage: error.symbol, message: error.message) {
+                IconButton(String(localized: "Dismiss", comment: "Banner shown after Safira focused a Tab that already had the link"), systemImage: "xmark", action: dismissError)
+            }
+            .theme(theme())
+            .accessibilityLabel(Text(error.title))
+        } else if model.banner != nil {
             Banner(systemImage: "arrow.uturn.backward.circle",
                    message: String(localized: "This link was already open, so Safira showed that Tab.", comment: "Banner shown after Safira focused a Tab that already had the link")) {
                 Button("Open in New Tab", action: openInNewTab)

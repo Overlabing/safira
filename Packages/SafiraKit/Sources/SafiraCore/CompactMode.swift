@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Antonin Carlin
 
 import Foundation
+import Preferences
 
 /// Whether the Main window shows its sidebar. In Compact mode the sidebar is hidden and the page takes the full width;
 /// the sidebar comes back beside the page on demand and goes away again. Only `isCompact` is kept across launches:
@@ -66,19 +67,21 @@ public struct SidebarPresentation: Equatable, Sendable {
 }
 
 /// Keeps the Compact mode choice across launches, until Profiles persist their settings.
-public struct CompactModeStore: @unchecked Sendable {
-    private static let key = "window.compactMode"
-    private let defaults: UserDefaults
+public struct CompactModeStore: Sendable {
+    public static let key = "window.compactMode"
+    /// Until AppSupportKit, a plain Boolean.
+    public static let legacy = LegacyPreference(key: key, as: Bool.self) { LegacyPreference.bool($0) }
+    private let preference: Preference<Bool>
 
-    public init(defaults: UserDefaults = .standard) {
-        self.defaults = defaults
+    public init(store: any KeyValueStore = UserDefaults.standard) {
+        preference = Preference(key: Self.key, defaultValue: SidebarPresentation().isCompact, store: store)
     }
 
-    public func load() -> SidebarPresentation {
-        SidebarPresentation(isCompact: defaults.bool(forKey: Self.key))
+    public func load(unreadable: (PreferenceError) -> Void) -> SidebarPresentation {
+        SidebarPresentation(isCompact: preference.loadRestoringDefault(unreadable))
     }
 
     public func save(_ presentation: SidebarPresentation) {
-        defaults.set(presentation.isCompact, forKey: Self.key)
+        try? preference.save(presentation.isCompact)
     }
 }

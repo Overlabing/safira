@@ -10,6 +10,7 @@ import SafiraCore
 import SafiraSession
 import SafiraWeb
 import SwiftUI
+import UserFacing
 
 /// The Main window: AppKit owns the window, the Command bar field and the menu actions; SwiftUI draws the sidebar
 /// column from ThemeKit's kit; the page canvas shows the selected Tab's web view, taken from the Profile's registry, or
@@ -48,11 +49,12 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     private var bannerHost: MatchBannerHostingView?
     private var announcedBannerID: UUID?
 
-    init(registry: ProfileRegistry, shortcuts: ShortcutController, sideSetting: SidebarSideSetting) {
+    init(registry: ProfileRegistry, shortcuts: ShortcutController, sideSetting: SidebarSideSetting,
+         preferenceProblems: PreferenceProblems) {
         self.registry = registry
         self.shortcuts = shortcuts
         self.sideSetting = sideSetting
-        presentation = compactModeStore.load()
+        presentation = compactModeStore.load(unreadable: preferenceProblems.record)
         let window = MainWindow(
             contentRect: NSRect(origin: .zero, size: SafiraDesign.mainWindowSize),
             styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
@@ -563,18 +565,12 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
 
     private func showClearingError(profileName: String) {
         guard let window else { return }
-        let alert = NSAlert()
-        alert.messageText = String(localized: "The history of “\(profileName)” could not be cleared", comment: "Main window")
-        alert.informativeText = String(localized: "Its website data was cleared. Try clearing the history again.", comment: "Main window")
-        alert.beginSheetModal(for: window)
+        Task { await UserFacingAlert.show(.historyNotCleared(profileName: profileName), on: window) }
     }
 
     private func showDeletionError(_ error: any Error) {
         guard let window else { return }
-        let alert = NSAlert()
-        alert.messageText = String(localized: "Some of the Profile’s website data could not be erased yet", comment: "Main window")
-        alert.informativeText = String(localized: "Safira erases it the next time it opens.", comment: "Main window")
-        alert.beginSheetModal(for: window)
+        Task { await UserFacingAlert.show(.websiteDataNotErasedYet, on: window) }
     }
 
     /// Return or Escape in the Tab list. With no page to go to, a revealed sidebar that is hiding must not keep the
@@ -685,7 +681,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     private func showMatchBanner() {
         let banner = session.matchBanner
         bannerModel.banner = banner
-        bannerHost?.isHidden = banner == nil
+        bannerHost?.isHidden = bannerModel.isEmpty
         guard let banner, banner.id != announcedBannerID else { return }
         announcedBannerID = banner.id
         announce(String(localized: "This link was already open, so Safira showed that Tab. A button offers to open it in a new Tab.", comment: "Main window"))
@@ -694,6 +690,22 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
             try? await Task.sleep(for: SafiraDesign.matchBannerLifetime)
             if session?.matchBanner?.id == banner.id { session?.dismissMatchBanner() }
         }
+    }
+
+    /// An error that needs nothing from the user, over the page: announced, and gone by itself after a while.
+    func showBanner(_ error: UserFacingError) {
+        bannerModel.error = error
+        bannerHost?.isHidden = false
+        announce(error.title + ". " + error.message)
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: SafiraDesign.matchBannerLifetime)
+            if self?.bannerModel.error == error { self?.dismissErrorBanner() }
+        }
+    }
+
+    private func dismissErrorBanner() {
+        bannerModel.error = nil
+        bannerHost?.isHidden = bannerModel.isEmpty
     }
 
     /// A popup shows in a floating panel while the Tab that opened it is the shown Tab of the Active profile, and is
@@ -770,7 +782,8 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
                 session.openMatchBannerLinkInNewTab()
                 showPage()
             },
-            dismiss: { [weak self] in self?.session.dismissMatchBanner() }))
+            dismiss: { [weak self] in self?.session.dismissMatchBanner() },
+            dismissError: { [weak self] in self?.dismissErrorBanner() }))
         banner.isHidden = true
         bannerHost = banner
         let canvas = PageCanvasView(page: pageArea, banner: banner, commandBar: commandBar.overlay)

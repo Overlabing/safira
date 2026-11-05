@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Antonin Carlin
 
 import Foundation
+import Preferences
 import SafiraCore
 
 /// A named set of keyboard shortcuts, chosen at onboarding and editable afterwards.

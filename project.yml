@@ -23,7 +23,8 @@ packages:
   ThemeKit:
     url: https://github.com/Overlabing/ThemeKit
     exactVersion: 0.2.6
-  # Only its SiteIcons product, linked through SafiraSession; pinned here too so the app resolves the same release.
+  # SiteIcons is linked through SafiraSession; the app links Preferences, UserFacing and DefaultApps itself. Pinned here
+  # too so the app resolves the same release as SafiraKit.
   AppSupportKit:
     url: https://github.com/Overlabing/AppSupportKit
     exactVersion: 0.1.1
@@ -51,6 +52,8 @@ targets:
         products: [SafiraCore, SafiraStore, SafiraSession, SafiraWeb, Commands, LinkRouting, LinkPickerUI, Diagnostics, Onboarding, Appearance]
       - package: ThemeKit
         products: [ColorCore, ColorPlatform, ColorUI, DesignKit]
+      - package: AppSupportKit
+        products: [Preferences, UserFacing, DefaultApps]
       - package: Sparkle
         product: Sparkle
         # Re-signs Sparkle.framework with the app's identity on copy: an ad hoc app refuses a framework that keeps

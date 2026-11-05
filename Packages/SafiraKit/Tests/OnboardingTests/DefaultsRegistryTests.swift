@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Antonin Carlin
 
 import Onboarding
+import Preferences
 import SafiraCore
 import Testing
 
@@ -31,7 +32,7 @@ private let documentedDefaults: [(id: String, value: String, control: DefaultCon
 
 @Suite struct DefaultsRegistryTests {
     @Test func theUserFacingDefaultsAreTheDocumentedOnesInOrderWithTheirValues() {
-        let entries = DefaultsRegistry.userFacing
+        let entries = DefaultsRegistry.entries.userFacing
 
         #expect(entries.map(\.id) == documentedDefaults.map(\.id))
         #expect(entries.map(\.value) == documentedDefaults.map(\.value))
@@ -48,20 +49,20 @@ private let documentedDefaults: [(id: String, value: String, control: DefaultCon
     }
 
     @Test func compactModeKeepsItsIdentifierButIsNotOneOfTheDecidedDefaults() throws {
-        let compact = try #require(DefaultsRegistry.entry("window.compactMode"))
+        let compact = try #require(DefaultsRegistry.entries.entry("window.compactMode"))
 
         #expect(compact.isUserFacing == false)
-        #expect(!DefaultsRegistry.userFacing.contains(compact))
+        #expect(!DefaultsRegistry.entries.userFacing.contains(compact))
     }
 
     @Test func theEntriesThatCannotBeChangedYetSayTheyCannot() {
-        let fixed = DefaultsRegistry.userFacing.filter { $0.whereToChange == BuiltInDefaults.notAdjustable }
+        let fixed = DefaultsRegistry.entries.userFacing.filter { $0.whereToChange == BuiltInDefaults.notAdjustable }
 
         #expect(fixed.map(\.id) == ["search.remoteSuggestions", "web.httpsFirst", "session.lazyRestoration", "downloads.folder"])
     }
 
     @Test func noSearchEngineIsNamedInTheDefaultValue() throws {
-        let engine = try #require(DefaultsRegistry.entry("search.engine"))
+        let engine = try #require(DefaultsRegistry.entries.entry("search.engine"))
 
         #expect(SearchEngine.allCases.allSatisfy { !engine.value.contains($0.name) })
     }

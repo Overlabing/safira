@@ -97,18 +97,11 @@ final class PermissionPrompter {
     }
 
     private func show(_ refusal: AppLinkRefusal) async {
-        let alert = NSAlert()
-        alert.messageText = String(localized: "No app can open “\(refusal.scheme.rawValue):” links.", comment: "Permission sheet of a site or a link to another app")
-        alert.informativeText = String(localized: "Nothing was opened. No app on this Mac is set up for this kind of link.", comment: "Permission sheet of a site or a link to another app")
-        alert.addButton(withTitle: String(localized: "OK", comment: "Permission sheet of a site or a link to another app"))
-        _ = await present(alert)
+        await UserFacingAlert.show(.noApp(for: refusal), on: window())
     }
 
     private func show(failureOf app: ExternalApp) async {
-        let alert = NSAlert()
-        alert.messageText = String(localized: "\(app.name) could not open the link.", comment: "Permission sheet of a site or a link to another app")
-        alert.addButton(withTitle: String(localized: "OK", comment: "Permission sheet of a site or a link to another app"))
-        _ = await present(alert)
+        await UserFacingAlert.show(.appCouldNotOpenLink(app), on: window())
     }
 
     private func present(_ alert: NSAlert) async -> NSApplication.ModalResponse {

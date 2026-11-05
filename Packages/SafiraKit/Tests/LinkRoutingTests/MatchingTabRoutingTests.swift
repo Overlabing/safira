@@ -3,6 +3,7 @@
 
 import Foundation
 import LinkRouting
+import Preferences
 import SafiraCore
 import Testing
 
@@ -214,15 +215,26 @@ private func decide(_ link: IncomingLink, profiles: [Profile] = [workProfile, ho
 @Suite struct MatchingTabSettingsTests {
     @Test func theSettingIsOnUntilTheUserTurnsItOff() {
         #expect(MatchingTabSettings().isEnabled)
-        #expect(MatchingTabSettingsStore(defaults: UserDefaults(suiteName: "safira-test-\(UUID().uuidString)")!).load().isEnabled)
+        #expect(MatchingTabSettingsStore(store: InMemoryKeyValueStore()).load(unreadable: { _ in }).isEnabled)
     }
 
     @Test func theSettingIsKeptAcrossLaunches() {
-        let defaults = UserDefaults(suiteName: "safira-test-\(UUID().uuidString)")!
-        MatchingTabSettingsStore(defaults: defaults).save(MatchingTabSettings(isEnabled: false))
-        #expect(!MatchingTabSettingsStore(defaults: defaults).load().isEnabled)
-        MatchingTabSettingsStore(defaults: defaults).save(MatchingTabSettings(isEnabled: true))
-        #expect(MatchingTabSettingsStore(defaults: defaults).load().isEnabled)
+        let store = InMemoryKeyValueStore()
+        MatchingTabSettingsStore(store: store).save(MatchingTabSettings(isEnabled: false))
+        #expect(!MatchingTabSettingsStore(store: store).load(unreadable: { _ in }).isEnabled)
+        MatchingTabSettingsStore(store: store).save(MatchingTabSettings(isEnabled: true))
+        #expect(MatchingTabSettingsStore(store: store).load(unreadable: { _ in }).isEnabled)
+    }
+
+    @Test func aSettingTheOldStoreTurnedOffStaysOffAfterTheMigration() throws {
+        let domain = "safira-test-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: domain))
+        defer { defaults.removePersistentDomain(forName: domain) }
+        defaults.set(false, forKey: "linkMatching.focusOpenTab")
+
+        LegacyPreference.migrate([MatchingTabSettingsStore.legacy], in: defaults, domain: domain)
+
+        #expect(MatchingTabSettingsStore(store: defaults).load(unreadable: { _ in }).isEnabled == false)
     }
 
     @Test func theDefaultIsListedInTheRegistryOfDefaults() throws {

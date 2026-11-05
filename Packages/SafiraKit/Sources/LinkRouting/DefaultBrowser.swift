@@ -1,38 +1,46 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Antonin Carlin
 
+import DefaultApps
 import Foundation
+import Preferences
 import SafiraCore
+import UniformTypeIdentifiers
 
-/// What the system can tell and do about the default application for web links. The app backs it with `NSWorkspace`;
-/// tests record the calls.
-@MainActor
-public protocol DefaultApplicationRegistry {
-    /// The bundle URL of the app that opens links with this scheme, or nil when none does.
-    func defaultApplication(forScheme scheme: String) -> URL?
-    func setDefaultApplication(toOpenScheme scheme: String) async throws
-    func setDefaultApplication(toOpenContentType identifier: String) async throws
+/// Making an app the default for a kind of file. AppSupportKit's `DefaultApplicationClient` reads the default of a
+/// content type but changes the default of URL schemes only, so Safira keeps this one call for its HTML files.
+public protocol DefaultDocumentApplications: Sendable {
+    func makeDefault(_ application: URL, forContentType type: UTType) async throws
 }
 
 /// Safira as the default browser. macOS counts an app as the default browser when it opens both http and https, and
 /// the system settings move HTML files with them, so all of them are set together.
-@MainActor
-public struct DefaultBrowser {
+public struct DefaultBrowser: Sendable {
     public static let schemes = ["http", "https"]
     /// Local HTML files: the kinds the app declares in its Info.plist.
     public static let contentTypes = ["public.html", "public.xhtml"]
 
-    private let registry: any DefaultApplicationRegistry
-    private let appURL: URL
+    private let check: DefaultApplicationCheck
+    private let documents: any DefaultDocumentApplications
+    private let applicationURL: URL
 
-    public init(registry: any DefaultApplicationRegistry, appURL: URL) {
-        self.registry = registry
-        self.appURL = appURL
+    /// - Parameters:
+    ///   - applicationURL: the running app's bundle (`Bundle.main.bundleURL`).
+    ///   - bundleIdentifier: its bundle identifier; another copy of Safira that is the default counts as Safira.
+    public init(client: any DefaultApplicationClient, documents: any DefaultDocumentApplications, applicationURL: URL,
+                bundleIdentifier: String) {
+        check = DefaultApplicationCheck(client: client, applicationURL: applicationURL, bundleIdentifier: bundleIdentifier)
+        self.documents = documents
+        self.applicationURL = applicationURL
     }
 
-    /// True when Safira opens both http and https links.
-    public var isDefault: Bool {
-        Self.schemes.allSatisfy { registry.defaultApplication(forScheme: $0)?.standardizedFileURL == appURL.standardizedFileURL }
+    /// True when Safira opens both http and https links. Read when it is shown and when Safira comes back to the front:
+    /// the user can change the default browser elsewhere in between.
+    public func isDefault() async -> Bool {
+        for scheme in Self.schemes {
+            guard await check.status(forScheme: scheme).isThisApp else { return false }
+        }
+        return true
     }
 
     /// Asks the system to make Safira the default for http, https and HTML files. The system asks the user to confirm.
@@ -40,10 +48,11 @@ public struct DefaultBrowser {
     public func makeDefault() async throws {
         var firstError: (any Error)?
         for scheme in Self.schemes {
-            do { try await registry.setDefaultApplication(toOpenScheme: scheme) } catch { firstError = firstError ?? error }
+            do { try await check.makeDefault(forScheme: scheme) } catch { firstError = firstError ?? error }
         }
-        for type in Self.contentTypes {
-            do { try await registry.setDefaultApplication(toOpenContentType: type) } catch { firstError = firstError ?? error }
+        for identifier in Self.contentTypes {
+            guard let type = UTType(identifier) else { continue }
+            do { try await documents.makeDefault(applicationURL, forContentType: type) } catch { firstError = firstError ?? error }
         }
         if let firstError { throw firstError }
     }
@@ -51,7 +60,7 @@ public struct DefaultBrowser {
 
 extension DefaultBrowser {
     /// The entry for the default browser: offered, never set without the user's confirmation in the system dialog.
-    nonisolated public static var defaultEntries: [DefaultEntry] {
+    public static var defaultEntries: [DefaultEntry] {
         [
             DefaultEntry(
                 id: "linkPicker.defaultBrowser",
