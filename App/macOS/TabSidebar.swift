@@ -12,9 +12,8 @@ import SafiraWeb
 import SwiftUI
 
 /// The Main window's column, from top to bottom: the address and Back, Forward and Reload; the active Space's pinned
-/// area with its Folders; a hairline; the New Tab row and the other Tabs; the Space switcher; the Active
-/// profile's chooser. Arrow keys in the list move the selection, which shows the Tab; Delete closes it; Return or Escape
-/// goes to its page. Tabs can be dragged to reorder, and Pinned tabs and Folders into Folders.
+/// area with its Folders; a hairline; the New Tab row and the other Tabs; the Space rail with the Spaces and Profiles.
+/// Arrow keys in the list move the selection, which shows the Tab; Delete closes it; Return or Escape goes to its page. Tabs can be dragged to reorder, and Pinned tabs and Folders into Folders.
 struct TabSidebar: View {
     let registry: ProfileRegistry
     let focus: ColumnFocus
@@ -50,8 +49,8 @@ struct TabSidebar: View {
                 .modifier(TabListKeyboard(session: session, focus: focus, showPage: pageActions.showPage))
             }
             .scrollContentBackground(.hidden)
-            SpaceSwitcher(session: session, actions: spaceActions, shortcut: shortcut)
-            ProfileBar(registry: registry, profileActions: profileActions, spaceActions: spaceActions)
+            SpaceRailBar(registry: registry, profileActions: profileActions, spaceActions: spaceActions,
+                         shortcut: shortcut)
         }
         .columnSurface(side: side.side == .right ? .right : .left)
         .theme(spaceTheme)
@@ -81,90 +80,87 @@ struct TabMenu: View {
     }
 }
 
-/// The Space switcher: ThemeKit's glass bar of the Profile's Spaces, each its initial on its Theme's colour and the
-/// active one named; absent with one Space. It is the only place the column names the Space (with the window's
-/// gradient); a glyph showing the emoji would show it twice next to the name. Its context menu renames, moves or deletes the active Space.
-private struct SpaceSwitcher: View {
-    let session: ProfileSession
-    let actions: SpaceActions
-    let shortcut: (CommandID) -> String?
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    var body: some View {
-        let profileTheme = ThemeCatalog.first
-        let keys = CommandID.selectSpaceCommands
-        GlassSwitcher(
-            session.spaces.enumerated().map { index, space in
-                SwitcherItem(id: space.id.rawValue.uuidString, name: space.name,
-                             theme: ThemeCatalog.theme(id: space.paletteID, fallback: profileTheme),
-                             shortcut: index < keys.count ? shortcut(keys[index]) : nil)
-            },
-            selection: session.activeSpaceID.rawValue.uuidString,
-            label: String(localized: "Spaces")
-        ) { id in
-            guard let space = session.spaces.first(where: { $0.id.rawValue.uuidString == id }) else { return }
-            withAnimation(MotionRole.themeChange.animation(reduceMotion: reduceMotion)) {
-                session.selectSpace(space.id)
-            }
-        }
-        .contextMenu {
-            Button("Rename Space…") { actions.edit(session.activeSpaceID) }
-            Divider()
-            Button("Move Left") { session.moveSpace(session.activeSpaceID, by: -1) }
-                .disabled(session.spaces.first?.id == session.activeSpaceID)
-            Button("Move Right") { session.moveSpace(session.activeSpaceID, by: 1) }
-                .disabled(session.spaces.last?.id == session.activeSpaceID)
-            Divider()
-            Button("Delete Space…") { actions.delete(session.activeSpaceID) }
-                .disabled(!session.canDeleteSpace)
-        }
-    }
-}
-
-/// The Active profile's chooser, a menu that switches Profile, and the button that adds a Space. It is a kit status
-/// line: the Profile's own symbol on a tile of its hue, then its name, on the column's fill, so it does not outweigh
-/// the Tabs. It sits at the other end of the column from the address, apart from the Space switcher, so that a Profile
-/// never changes by accident.
-private struct ProfileBar: View {
+/// The Space rail, ThemeKit's one selector at the bottom of the column: the Active profile's Spaces as glyphs, the
+/// other Profiles folded into dots after a hairline, and a `+` with the commands that add or edit them. A click on a
+/// folded Profile shows it on its last Space. Its context menu acts on the active Space and the Active profile.
+private struct SpaceRailBar: View {
     let registry: ProfileRegistry
     let profileActions: ProfileActions
     let spaceActions: SpaceActions
-    @State private var isHovered = false
-    @Environment(\.designTokens) private var tokens
+    let shortcut: (CommandID) -> String?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private enum Command: String {
+        case newSpace, newProfile, editSpace, editProfile
+    }
+
+    private var session: ProfileSession { registry.active.session }
 
     var body: some View {
         let profile = registry.activeProfile
-        HStack(spacing: 0) {
-            Menu {
-                ForEach(registry.profiles) { item in
-                    Toggle(isOn: Binding(get: { registry.activeProfileID == item.id },
-                                         set: { if $0 { profileActions.select(item.id) } })) {
-                        Text(verbatim: "\(item.symbol) \(item.name)")
-                    }
-                }
-                Divider()
-                Button("New Profile…") { profileActions.edit(nil) }
-                Button("Rename Profile…") { profileActions.edit(registry.activeProfileID) }
-                Button("Delete Profile…") { profileActions.delete(registry.activeProfileID) }
-                    .disabled(!registry.canDeleteProfile)
-                Divider()
-                Button("Clear History and Website Data…") { profileActions.clearBrowsingData(registry.activeProfileID) }
-            } label: {
-                StatusLine(tile: .initial(profile.symbol), title: profile.name, isOpen: false,
-                           state: RowState(isHovered: isHovered))
-                    .theme(ThemeCatalog.theme(id: profile.paletteID, fallback: ThemeCatalog.first))
-            }
-            .menuStyle(.button)
-            .buttonStyle(.plain)
-            .menuIndicator(.hidden)
-            .onHover { isHovered = $0 }
-            .help("Switch Profile")
-            .accessibilityLabel(String(localized: "Profile: \(profile.name)"))
-            .accessibilityHint("Opens the list of Profiles")
-            IconButton(String(localized: "New Space"), systemImage: "plus") { spaceActions.edit(nil) }
-                .padding(.trailing, tokens.spacing.listMargin - tokens.spacing.rowInsetHorizontal)
+        let shortcuts = SpaceRailContent.Shortcuts(
+            spaces: CommandID.selectSpaceCommands.map(shortcut),
+            previousProfile: shortcut(.previousProfile), nextProfile: shortcut(.nextProfile))
+        SpaceRail(
+            profiles: SpaceRailContent.profiles(registry.profiles, activeID: registry.activeProfileID,
+                                                spaces: registry.spaceSummary(of:), shortcuts: shortcuts),
+            selection: session.activeSpaceID.rawValue.uuidString,
+            commands: [
+                [
+                    SpaceRailCommand(id: Command.newSpace.rawValue,
+                                     title: String(localized: "New Space in \(profile.name)…"), systemImage: "plus"),
+                    SpaceRailCommand(id: Command.newProfile.rawValue, title: String(localized: "New Profile…"),
+                                     systemImage: "person.crop.circle.badge.plus"),
+                ],
+                [
+                    SpaceRailCommand(id: Command.editSpace.rawValue,
+                                     title: String(localized: "Edit Space \(session.activeSpace.name)…"),
+                                     systemImage: "pencil"),
+                    SpaceRailCommand(id: Command.editProfile.rawValue,
+                                     title: String(localized: "Edit Profile \(profile.name)…"),
+                                     systemImage: "person.crop.circle"),
+                ],
+            ],
+            selectSpace: selectSpace,
+            selectProfile: { id in ProfileID(uuidString: id).map(profileActions.select) },
+            perform: perform)
+        .contextMenu {
+            Button("Edit Space…") { spaceActions.edit(session.activeSpaceID) }
+            Button("Move Space Left") { session.moveSpace(session.activeSpaceID, by: -1) }
+                .disabled(session.spaces.first?.id == session.activeSpaceID)
+            Button("Move Space Right") { session.moveSpace(session.activeSpaceID, by: 1) }
+                .disabled(session.spaces.last?.id == session.activeSpaceID)
+            Button("Delete Space…") { spaceActions.delete(session.activeSpaceID) }
+                .disabled(!session.canDeleteSpace)
+            Divider()
+            Button("Edit Profile…") { profileActions.edit(registry.activeProfileID) }
+            Button("Delete Profile…") { profileActions.delete(registry.activeProfileID) }
+                .disabled(!registry.canDeleteProfile)
+            Divider()
+            Button("Clear History and Website Data…") { profileActions.clearBrowsingData(registry.activeProfileID) }
         }
-        .padding(.bottom, tokens.spacing.switcherBottom)
+    }
+
+    /// A Space of the Active profile, or, from the "+n" panel, of another Profile: that Profile is shown first.
+    private func selectSpace(_ id: String) {
+        guard let space = SpaceID(uuidString: id) else { return }
+        if !session.spaces.contains(where: { $0.id == space }),
+           let owner = registry.profiles.first(where: { registry.spaceSummary(of: $0.id).spaces.contains { $0.id == space } }) {
+            profileActions.select(owner.id)
+        }
+        withAnimation(MotionRole.themeChange.animation(reduceMotion: reduceMotion)) {
+            session.selectSpace(space)
+        }
+    }
+
+    private func perform(_ id: String) {
+        switch Command(rawValue: id) {
+        case .newSpace: spaceActions.edit(nil)
+        case .newProfile: profileActions.edit(nil)
+        case .editSpace: spaceActions.edit(session.activeSpaceID)
+        case .editProfile: profileActions.edit(registry.activeProfileID)
+        case nil: break
+        }
     }
 }
 

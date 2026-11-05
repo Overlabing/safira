@@ -233,7 +233,7 @@ public final class ProfileSession {
         selectSpace(spaces[((index + offset) % count + count) % count].id)
     }
 
-    /// Shows the Space at `number` (1 for the first) in the switcher's order. A number past the last Space does
+    /// Shows the Space at `number` (1 for the first) in the Space rail's order. A number past the last Space does
     /// nothing.
     public func selectSpace(number: Int) {
         guard number >= 1, number <= spaces.count else { return }

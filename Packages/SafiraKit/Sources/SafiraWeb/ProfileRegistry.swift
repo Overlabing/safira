@@ -22,6 +22,8 @@ public final class ProfileRegistry {
     /// app that already had Profiles when onboarding was introduced.
     public private(set) var isOnboardingPending = false
     @ObservationIgnored private var contexts: [ProfileID: ProfileContext] = [:]
+    /// The saved Spaces of Profiles not loaded since launch, read once: such a Profile cannot change until it loads.
+    @ObservationIgnored private var savedSpaces: [ProfileID: ProfileSpaces] = [:]
     /// Asks the user about a camera, microphone or location request no Profile has a decision for. Every Profile's
     /// owner uses it, the ones created later included; without it such requests are refused.
     @ObservationIgnored public var permissionPrompt: (@MainActor (PermissionPrompt) async -> PermissionAnswer)? {
@@ -126,6 +128,30 @@ public final class ProfileRegistry {
     public func spaces(in id: ProfileID) -> [Space] {
         guard profiles.contains(where: { $0.id == id }) else { return [] }
         return context(for: id).session.spaces
+    }
+
+    /// What the Space rail shows of a Profile: its Spaces and the one it was last on. A loaded Profile answers from its
+    /// session; one not loaded since launch from its saved Spaces, with no owner created and no page loaded. Empty for
+    /// a Profile that does not exist or has nothing saved yet.
+    public func spaceSummary(of id: ProfileID) -> ProfileSpaces {
+        guard profiles.contains(where: { $0.id == id }) else { return ProfileSpaces() }
+        if let session = contexts[id]?.session {
+            return ProfileSpaces(
+                spaces: session.spaces.map { SpaceSummary(id: $0.id, name: $0.name, emoji: $0.emoji, paletteID: $0.paletteID) },
+                lastSpaceID: session.activeSpaceID)
+        }
+        if let saved = savedSpaces[id] { return saved }
+        var saved = ProfileSpaces()
+        if let file = layout?.profileDatabaseFile(for: id),
+           FileManager.default.fileExists(atPath: file.path(percentEncoded: false)) {
+            do {
+                saved = try ProfileDatabase(file: file).savedSpaces()
+            } catch {
+                onError("The Profile's Spaces could not be read", error)
+            }
+        }
+        savedSpaces[id] = saved
+        return saved
     }
 
     /// Opens a link from another app as a new Tab in a Space of the Profile, or in its last active Space when `space`
@@ -251,6 +277,7 @@ public final class ProfileRegistry {
         }
         try appDatabase?.markForDeletion(id)
         profiles.remove(at: index)
+        savedSpaces[id] = nil
         await contexts.removeValue(forKey: id)?.discard()
         try await erase(id)
     }

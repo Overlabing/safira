@@ -43,8 +43,20 @@ struct SidebarCompositionTests {
     }
 
     @Test(arguments: SidebarCompositionTests.cases)
-    func theProfileChooserReachesFourPointFiveInTheColumn(_ theme: Theme, _ appearance: Appearance) {
-        expectLegible(SidebarComposition.profileChooser, theme, appearance, count: 2)
+    func theSpaceRailCaptionReachesFourPointFiveInTheColumn(_ theme: Theme, _ appearance: Appearance) {
+        expectLegible(SidebarComposition.railCaption, theme, appearance, count: 1)
+        expectLegible(SidebarComposition.railCaptionDetail, theme, appearance, count: 1)
+    }
+
+    /// Quiet glyphs at 4.5:1 on the fill and the hover disc; the marker, a folded Profile's dots and the hairline at 3:1.
+    @Test(arguments: ThemeCatalog.palette.themes.flatMap { theme in Appearance.allCases.map { (theme, $0) } })
+    func theSpaceRailMarksReachTheirThresholdsInTheColumn(_ theme: Theme, _ appearance: Appearance) {
+        let cases = SidebarComposition.railCases(for: theme, in: appearance)
+        #expect(cases.map(\.role) == [.railGlyph, .railGlyph, .railMarker, .railDot, .railDot, .railDivider])
+        for found in cases {
+            #expect(found.threshold == (found.role == .railGlyph ? 4.5 : 3), "\(found)")
+            #expect(found.after >= found.threshold, "\(found)")
+        }
     }
 
     @Test(arguments: SidebarCompositionTests.cases)
@@ -82,7 +94,10 @@ struct SidebarCompositionTests {
     @Test func theTextsAreMeasuredAgainstTheKitsThresholds() {
         let tokens = DesignTokens.standard
         #expect(tokens.emphasis.textContrast == 4.5)
-        #expect(SidebarComposition.texts.map(\.name) == ["Tab title", "Tab subtitle", "Address", "Private band", "Profile chooser", "Selected Tab marker", "Column edge"])
+        #expect(SidebarComposition.texts.map(\.name) == [
+            "Tab title", "Tab subtitle", "Address", "Private band", "Space rail caption", "Space rail caption detail",
+            "Selected Tab marker", "Column edge",
+        ])
         #expect(SidebarComposition.themes.count == 8)
         #expect(SidebarComposition.privateTheme.primary == .purple)
     }

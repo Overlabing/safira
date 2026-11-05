@@ -142,7 +142,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         session.selectTab(number: number)
     }
 
-    /// ⌃1…⌃9: the menu item's tag is the Space's place in the switcher. The window's gradient moves to the Space's
+    /// ⌃1…⌃9: the menu item's tag is the Space's place in the rail. The window's gradient moves to the Space's
     /// Theme with the kit's Theme change.
     @objc func showSpaceNumber(_ sender: Any?) {
         guard let number = (sender as? NSMenuItem)?.tag else { return }

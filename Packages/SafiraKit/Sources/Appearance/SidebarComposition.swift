@@ -30,9 +30,12 @@ public enum SidebarComposition {
     /// The Private window's band: `ColorRoles.bandText` on `ColorRoles.bandFill`, the Theme's hue, opaque. Text on the
     /// opaque hue is measured with the frame's cases.
     public static let privateBand = Text(name: "Private band", role: .textOnHue, surfaces: [.solidHue], placement: .frame)
-    /// The Active profile's chooser at the bottom of the column: a status line, its name in the label colour on the
-    /// column's fill or its hover fill.
-    public static let profileChooser = Text(name: "Profile chooser", role: .primaryText, surfaces: [.columnFill, .hoveredRow])
+    /// The Space rail's caption above the row: the hovered or focused item's name in the label colour, on the column's
+    /// fill.
+    public static let railCaption = Text(name: "Space rail caption", role: .primaryText, surfaces: [.columnFill])
+    /// The caption's detail and shortcut ("3 Spaces · opens Home", "⌃2"), in the kit's secondary ink.
+    public static let railCaptionDetail = Text(name: "Space rail caption detail", role: .secondaryText,
+                                               surfaces: [.columnFill])
     /// The column's edge, against the gradient beside it and against its own fill.
     public static let columnEdge = Text(name: "Column edge", role: .columnEdge, surfaces: [.frame, .columnFill])
 
@@ -40,7 +43,8 @@ public enum SidebarComposition {
     /// Increase Contrast the row's outline takes its place.
     public static let selectedTabMarker = Text(name: "Selected Tab marker", role: .selectionMarker, surfaces: [.selectedRow])
 
-    public static let texts = [tabTitle, tabSubtitle, address, privateBand, profileChooser, selectedTabMarker, columnEdge]
+    public static let texts = [tabTitle, tabSubtitle, address, privateBand, railCaption, railCaptionDetail, selectedTabMarker,
+                               columnEdge]
 
     /// The floating Command bar sits over any page, so its glass stands on a veil of the window background this opaque:
     /// whatever the page behind it, white or black, its text and rows read as on the plain window.
@@ -58,6 +62,13 @@ public enum SidebarComposition {
 
     /// The Themes Safira draws with: the Palette, and the Private window's.
     public static var themes: [Theme] { ThemeCatalog.palette.themes + [privateTheme] }
+
+    /// The Space rail's marks at the bottom of the Main window's column: a quiet glyph on the fill and on its hover disc
+    /// (4.5:1), the selected Space's marker, a folded Profile's dots with every system hue counted, and the hairline
+    /// before them (3:1). A Private window has no rail.
+    public static func railCases(for theme: Theme, in appearance: Appearance) -> [LegibilityCase] {
+        DesignTokens.standard.railCases(for: theme, in: appearance)
+    }
 
     /// The solver's cases for `text` in `theme` and `appearance`, measured with the kit's tokens.
     public static func cases(of text: Text, for theme: Theme, in appearance: Appearance) -> [LegibilityCase] {

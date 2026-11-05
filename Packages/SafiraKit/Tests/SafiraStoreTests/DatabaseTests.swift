@@ -93,6 +93,22 @@ private func schema(_ file: URL) throws -> [String] {
         #expect(try ProfileDatabase(file: root.layout.profileDatabaseFile(for: work)).savedSession() == saved)
     }
 
+    @Test func theSpacesAloneComeBackInOrderWithTheActiveOneAndNoTabs() throws {
+        let root = TemporaryRoot()
+        try ProfileDatabase(file: root.layout.profileDatabaseFile(for: work)).save(SavedSession(spaces: [
+            SpaceRecord(id: readingSpace, name: "Reading", emoji: "📚", paletteID: "teal-green",
+                        tabs: [TabRecord(id: firstTab)]),
+            SpaceRecord(id: homeSpace, name: "Home", emoji: "🏠"),
+        ], activeSpaceID: homeSpace))
+
+        #expect(try ProfileDatabase(file: root.layout.profileDatabaseFile(for: work)).savedSpaces() == ProfileSpaces(
+            spaces: [
+                SpaceSummary(id: readingSpace, name: "Reading", emoji: "📚", paletteID: "teal-green"),
+                SpaceSummary(id: homeSpace, name: "Home", emoji: "🏠"),
+            ],
+            lastSpaceID: homeSpace))
+    }
+
     @Test func savingReplacesTheTabsSavedBefore() async throws {
         let root = TemporaryRoot()
         let database = try ProfileDatabase(file: root.layout.profileDatabaseFile(for: work))

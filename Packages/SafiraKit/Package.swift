@@ -21,7 +21,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/groue/GRDB.swift", exact: "7.11.1"),
-        .package(url: "https://github.com/Overlabing/ThemeKit", exact: "0.2.3"),
+        .package(url: "https://github.com/Overlabing/ThemeKit", exact: "0.2.4"),
     ],
     targets: [
         .target(name: "SafiraCore"),

@@ -6,7 +6,7 @@ import SafiraCore
 import SafiraSession
 import Testing
 
-/// ⌘1…⌘9 show a Tab by its place in the sidebar, ⌃1…⌃9 a Space by its place in the switcher.
+/// ⌘1…⌘9 show a Tab by its place in the sidebar, ⌃1…⌃9 a Space by its place in the Space rail.
 @MainActor
 @Suite struct NumberedSelectionTests {
     private func open(_ fixture: SessionFixture, _ addresses: [String]) -> [TabID] {
