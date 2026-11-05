@@ -233,7 +233,7 @@ public final class ProfileWebContext {
 @MainActor
 private final class PageEventHandler: NSObject, WKScriptMessageHandler {
     weak var context: ProfileWebContext?
-    private static let world = WKContentWorld.world(name: "Safira")
+    private static var world: WKContentWorld { WebKitPage.contentWorld }
     private static let media = "media"
     private static let passwordField = "passwordField"
     private static let scripts = [

@@ -152,7 +152,7 @@ final class FloatingCommandBar: NSObject, NSTextFieldDelegate {
             let found = await suggestions(session, text)
             guard let self, !Task.isCancelled, self.session() === session, field.stringValue == text,
                   field.currentEditor() != nil else { return }
-            suggestionModel.show(found, typing: text)
+            suggestionModel.show(found, typing: text, icons: session.siteIcons)
             suggestionText = text
             if !found.isEmpty {
                 announce(String(localized: "\(found.count) suggestions", comment: "Command bar: VoiceOver announcement, a count of suggestions"))

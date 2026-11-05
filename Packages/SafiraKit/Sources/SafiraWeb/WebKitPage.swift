@@ -19,7 +19,13 @@ public final class WebKitPage: NSObject, WebPageHandle {
     public var onNonWebLink: (@MainActor (NonWebLink) -> Void)?
     public var onDidClose: (@MainActor () -> Void)?
     public var onDownloadStarted: (@MainActor () -> Void)?
+    public var onIconLinks: (@MainActor (PageIconLinks) -> Void)?
+    /// Safira's own content world: its scripts run out of the page's reach.
+    static let contentWorld = WKContentWorld.world(name: "Safira")
     private var isPlayingMedia = false
+    private var isClosed = false
+    /// The icon fetches running; WebKit holds a download's delegate weakly.
+    private var resourceFetches: Set<SiteResourceDownload> = []
     /// The warning the page currently shows; only its own "Continue over HTTP" link is intercepted.
     private var showing: InsecureConnectionWarning?
     private var httpsFirstAddress: URL?
@@ -114,6 +120,8 @@ public final class WebKitPage: NSObject, WebPageHandle {
     }
 
     public func close() {
+        isClosed = true
+        resourceFetches.forEach { $0.cancel() }
         observations.forEach { $0.invalidate() }
         observations = []
         onStateChange = nil
@@ -123,11 +131,48 @@ public final class WebKitPage: NSObject, WebPageHandle {
         onNonWebLink = nil
         onDidClose = nil
         onDownloadStarted = nil
+        onIconLinks = nil
         webView.stopLoading()
         webView.removeFromSuperview()
         webView.navigationDelegate = nil
         webView.uiDelegate = nil
         onClose()
+    }
+
+    /// Fetches through this page's web view, so the request carries the Profile's data store (its cookies, and later
+    /// its proxy) and no other; a WebKit download, not a navigation, so the page itself does not change.
+    public func fetchSiteResource(_ url: URL, byteLimit: Int) async -> SiteResourceResponse {
+        guard !isClosed else { return .failed }
+        let fetch = SiteResourceDownload(byteLimit: byteLimit)
+        resourceFetches.insert(fetch)
+        defer { resourceFetches.remove(fetch) }
+        return await fetch.run(URLRequest(url: url, timeoutInterval: 15), in: webView)
+    }
+
+    /// Reads the `<link>` elements of the loaded document in Safira's content world, attributes only: the page's
+    /// scripts cannot see or change what is read.
+    private func readIconLinks() {
+        guard onIconLinks != nil, showing == nil, let page = webView.url else { return }
+        let script = """
+            return {
+                base: document.baseURI,
+                tags: Array.from(document.querySelectorAll("link[rel][href]"), (link) => {
+                    const attributes = {};
+                    for (const name of ["rel", "href", "sizes", "type", "color"]) {
+                        const value = link.getAttribute(name);
+                        if (value !== null) attributes[name] = value;
+                    }
+                    return attributes;
+                }),
+            };
+            """
+        webView.callAsyncJavaScript(script, arguments: [:], in: nil, in: Self.contentWorld) { [weak self] result in
+            guard let self, !isClosed, webView.url == page, case .success(let value) = result,
+                  let object = value as? [String: Any], let tags = object["tags"] as? [[String: Any]] else { return }
+            let base = (object["base"] as? String).flatMap(URL.init(string:)) ?? page
+            let strings = tags.map { $0.compactMapValues { $0 as? String } }
+            onIconLinks?(PageIconLinks(page: page, base: base, tags: strings))
+        }
     }
 
     /// A frame of the shown page has a password field.
@@ -258,6 +303,7 @@ extension WebKitPage: WKNavigationDelegate {
 
     public func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         navigationDiagnostics?.webView(webView, didFinish: navigation)
+        readIconLinks()
     }
 
     public func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: any Error) {

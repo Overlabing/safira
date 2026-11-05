@@ -4,6 +4,7 @@
 import DesignKit
 import Observation
 import SafiraCore
+import SafiraSession
 import SwiftUI
 
 /// What the Command bar's suggestion list shows. The Command bar sets it as the user types.
@@ -12,13 +13,16 @@ import SwiftUI
 final class CommandBarSuggestionModel {
     private(set) var suggestions: [CommandBarSuggestion] = []
     private(set) var highlight = SuggestionHighlight(typing: "", count: 0)
+    /// The site icons of the Profile the suggestions come from.
+    private(set) var icons: ProfileSiteIcons?
 
     var highlighted: CommandBarSuggestion? {
         highlight.index.map { suggestions[$0] }
     }
 
-    func show(_ suggestions: [CommandBarSuggestion], typing text: String) {
+    func show(_ suggestions: [CommandBarSuggestion], typing text: String, icons: ProfileSiteIcons) {
         self.suggestions = suggestions
+        self.icons = icons
         highlight = SuggestionHighlight(typing: text, count: suggestions.count)
     }
 
@@ -46,7 +50,8 @@ struct CommandBarSuggestionList: View {
     var body: some View {
         VStack(spacing: 0) {
             ForEach(Array(model.suggestions.enumerated()), id: \.element.id) { index, suggestion in
-                SuggestionRow(suggestion: suggestion, isHighlighted: model.highlight.index == index) { choose(suggestion) }
+                SuggestionRow(suggestion: suggestion, icons: model.icons,
+                              isHighlighted: model.highlight.index == index) { choose(suggestion) }
             }
         }
         .padding(.vertical, tokens.spacing.rowGap)
@@ -57,6 +62,7 @@ struct CommandBarSuggestionList: View {
 
 private struct SuggestionRow: View {
     let suggestion: CommandBarSuggestion
+    let icons: ProfileSiteIcons?
     let isHighlighted: Bool
     let choose: () -> Void
     @State private var isHovered = false
@@ -66,7 +72,9 @@ private struct SuggestionRow: View {
         WithColorRoles { roles in
             ListRow(suggestion.title, details: [AddressDisplay(suggestion.address).hostAndPath],
                     state: RowState(isSelected: isHighlighted, isHovered: isHovered)) {
-                Tile(.tintedSymbol(isOpenTab ? "macwindow" : "clock"), size: .compact)
+                SiteIconTile(icons: icons, address: suggestion.address,
+                             initial: SiteIconTile.initial(of: suggestion.address, title: suggestion.title),
+                             size: .compact)
             } trailing: {
                 if let emoji = suggestion.spaceEmoji {
                     HStack(spacing: tokens.spacing.pillActionGap) {

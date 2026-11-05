@@ -17,6 +17,7 @@ private final class LoadingPage: WebPageHandle {
     var onNonWebLink: (@MainActor (NonWebLink) -> Void)?
     var onDidClose: (@MainActor () -> Void)?
     var onDownloadStarted: (@MainActor () -> Void)?
+    var onIconLinks: (@MainActor (PageIconLinks) -> Void)?
     let navigationState: Data? = nil
     let sensitiveContent: SensitiveContent = []
 
@@ -38,6 +39,7 @@ private final class LoadingPage: WebPageHandle {
     func goForward() {}
     func reload() {}
     func close() {}
+    func fetchSiteResource(_ url: URL, byteLimit: Int) async -> SiteResourceResponse { .failed }
 }
 
 @MainActor

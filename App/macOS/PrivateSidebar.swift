@@ -23,7 +23,7 @@ struct PrivateSidebar: View {
         List {
             NewTabRow(shortcut: nil, newTab: pageActions.newTab)
             ForEach(Array(session.tabs.enumerated()), id: \.element.id) { index, tab in
-                TabRowView(tab: tab, isSelected: session.selectedTabID == tab.id,
+                TabRowView(tab: tab, icons: session.siteIcons, isSelected: session.selectedTabID == tab.id,
                            isListFocused: focus.isListFocused, placement: .free,
                            position: index + 1, count: session.tabs.count,
                            select: { session.select(tab.id) }, close: { session.close(tab.id) })

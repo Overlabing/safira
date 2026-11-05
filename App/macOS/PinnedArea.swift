@@ -61,7 +61,8 @@ struct PinnedSection: View {
 
     private func pinnedTab(_ tab: SafiraSession.Tab, placement: SidebarCellPlacement) -> some View {
         let pinned = session.activeSpace.pinnedTabs
-        return TabRowView(tab: tab, isSelected: session.selectedTabID == tab.id, isListFocused: focus.isListFocused,
+        return TabRowView(tab: tab, icons: session.siteIcons, isSelected: session.selectedTabID == tab.id,
+                          isListFocused: focus.isListFocused,
                           placement: placement, position: (pinned.firstIndex { $0.id == tab.id } ?? 0) + 1,
                           count: session.activeSpace.allTabs.count,
                           select: { session.select(tab.id) }, close: { session.close(tab.id) })
