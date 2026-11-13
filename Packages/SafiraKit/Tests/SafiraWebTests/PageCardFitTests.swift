@@ -12,9 +12,10 @@ import Testing
 import WebKit
 
 /// The page fills the card exactly in every layout of the window: the web view's frame is the card's inner bounds, and
-/// the page lays out at the card's width, so nothing of it hides past the card's edge.
+/// the page lays out at the card's width, so nothing of it hides past the card's edge. One window at a time: the other
+/// real-WebKit suites run alongside and time their page loads.
 @MainActor
-@Suite struct PageCardFitTests {
+@Suite(.serialized) struct PageCardFitTests {
     enum Layout: String, CaseIterable, CustomTestStringConvertible {
         case sidebarShown, compactHidden, compactRevealed, sidebarShownAfterCompact
 
