@@ -25,10 +25,9 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     private var session: ProfileSession { registry.active.session }
     private var webContext: ProfileWebContext { registry.active.web }
     private let shortcuts: ShortcutController
-    private let sideSetting: SidebarSideSetting
     private lazy var commandBar = FloatingCommandBar { [unowned self] in session }
     private let columnFocus = ColumnFocus()
-    private let pageArea = TabHostView()
+    private let pageArea = TabHostView.withEmptyPage()
     private var layout: BrowserWindowLayout?
     private var toolbar: SidebarToolbar?
     private let compactModeStore = CompactModeStore()
@@ -51,11 +50,9 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     private var bannerHost: MatchBannerHostingView?
     private var announcedBannerID: UUID?
 
-    init(registry: ProfileRegistry, shortcuts: ShortcutController, sideSetting: SidebarSideSetting,
-         preferenceProblems: PreferenceProblems) {
+    init(registry: ProfileRegistry, shortcuts: ShortcutController, preferenceProblems: PreferenceProblems) {
         self.registry = registry
         self.shortcuts = shortcuts
-        self.sideSetting = sideSetting
         presentation = compactModeStore.load(unreadable: preferenceProblems.record)
         let window = MainWindow(
             contentRect: NSRect(origin: .zero, size: SafiraDesign.mainWindowSize),
@@ -90,9 +87,16 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
 
     // MARK: Menu actions
 
-    /// Opens the Command bar for a new Tab; the Tab is created only when the user presses Enter.
+    /// Opens the Command bar for a new Tab; the Tab is created only when the user presses Enter. Meanwhile the page
+    /// stays and the sidebar shows the New Tab row as selected.
     @objc func newTab(_ sender: Any?) {
         commandBar.open(for: .newTab, text: "")
+    }
+
+    /// The New Tab row: the Command bar opens once the click is over, so that the focus the click gives the Tab list
+    /// does not end the field's editing, which would close the Command bar at once.
+    private func newTabFromSidebar() {
+        Task { @MainActor [weak self] in self?.newTab(nil) }
     }
 
     @objc func closeTab(_ sender: Any?) {
@@ -153,11 +157,6 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         withAnimation(MotionRole.themeChange.animation(reduceMotion: reduceMotion)) {
             session.selectSpace(number: number)
         }
-    }
-
-    /// The sidebar goes to the other side of every window; the choice is kept for the whole app.
-    @objc func toggleSidebarSide(_ sender: Any?) {
-        sideSetting.isRight.toggle()
     }
 
     /// Compact mode hides the sidebar and gives the page the full width; the choice is kept across launches.
@@ -313,9 +312,6 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         case #selector(showNextTab(_:)), #selector(showPreviousTab(_:)): return session.activeSpace.allTabs.count > 1
         case #selector(showTabNumber(_:)): return menuItem.tag <= session.activeSpace.allTabs.count
         case #selector(showSpaceNumber(_:)): return menuItem.tag <= session.spaces.count
-        case #selector(toggleSidebarSide(_:)):
-            menuItem.state = sideSetting.isRight ? .on : .off
-            return true
         case #selector(deleteSpace(_:)): return session.canDeleteSpace
         case #selector(deleteProfile(_:)): return registry.canDeleteProfile
         case #selector(showNextProfile(_:)), #selector(showPreviousProfile(_:)): return registry.profiles.count > 1
@@ -599,7 +595,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         }
     }
 
-    /// The pointer touched the window's edge on the sidebar's side.
+    /// The pointer touched the window's left edge.
     private func revealSidebarFromEdge() {
         guard presentation.isCompact, !presentation.isRevealed else { return }
         presentation.reveal()
@@ -653,20 +649,12 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
             commandBar.field.stringValue = tab?.address?.absoluteString ?? ""
         }
         commandBar.appearance.theme = spaceTheme
-        applySide()
         window?.title = tab?.state.title.flatMap { $0.isEmpty ? nil : $0 } ?? "Safira"
         pageArea.show(tab.flatMap { webContext.webView(for: $0.id) })
         updateSearchEngineSheet(query: session.searchAwaitingEngine)
         showPopups()
         showMatchBanner()
         updateDockIcon()
-    }
-
-    /// The column follows the side setting, and the toolbar's sidebar button follows the column.
-    private func applySide() {
-        guard let layout, let window, layout.side != sideSetting.side else { return }
-        layout.setSide(sideSetting.side)
-        toolbar?.install(in: window)
     }
 
     func window(_ window: NSWindow, willUseFullScreenPresentationOptions proposedOptions: NSApplication.PresentationOptions)
@@ -796,7 +784,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
 
         let pageActions = PageActions(
             editAddress: { [weak self] in self?.focusCommandBar(nil) },
-            newTab: { [weak self] in self?.newTab(nil) },
+            newTab: { [weak self] in self?.newTabFromSidebar() },
             showPage: { [weak self] in self?.leaveSidebar() })
         let spaceActions = SpaceActions(
             edit: { [weak self] id in self?.editSpace(id) },
@@ -818,13 +806,13 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
             shortcut: { [weak self] id in self?.shortcuts.bindings.shortcut(id)?.symbols })
         let theme: () -> Theme = { [weak self] in self?.spaceTheme ?? ThemeCatalog.first }
         let layout = BrowserWindowLayout(background: NSHostingView(rootView: WindowBackdrop(theme: theme)),
-                                         column: column, canvas: canvas, side: sideSetting.side)
+                                         column: column, canvas: canvas)
         layout.onPointerReachedEdge = { [weak self] in self?.revealSidebarFromEdge() }
         layout.onPointerLeftSidebar = { [weak self] in self?.hideSidebarAfterPointerLeft() }
         layout.onToggleSidebar = { [weak self] in self?.toggleCompactMode(nil) }
         self.layout = layout
         window.contentViewController = layout
-        let toolbar = SidebarToolbar { [weak layout] in layout?.toolbarItems ?? [] }
+        let toolbar = SidebarToolbar(items: layout.toolbarItems)
         toolbar.install(in: window)
         self.toolbar = toolbar
         window.setContentSize(SafiraDesign.mainWindowSize)

@@ -17,12 +17,10 @@ final class DefaultsController: NSObject {
     private let diagnostics: DiagnosticsController
     private let links: LinkController
     private let shortcuts: ShortcutController
-    private let sidebarSide: SidebarSideSetting
     private var window: NSWindow?
 
     init(registry: ProfileRegistry, updates: UpdateController, diagnostics: DiagnosticsController, links: LinkController,
-         shortcuts: ShortcutController, sidebarSide: SidebarSideSetting) {
-        self.sidebarSide = sidebarSide
+         shortcuts: ShortcutController) {
         self.registry = registry
         self.updates = updates
         self.diagnostics = diagnostics
@@ -40,7 +38,6 @@ final class DefaultsController: NSObject {
         case "linkMatching.focusOpenTab": links.focusesMatchingTab
         case "linkPicker.askForSpace": links.asksForSpaceToo
         case "linkPicker.choiceLog": links.logsChoices
-        case SidebarSideStore.key: sidebarSide.isRight
         default: nil
         }
     }
@@ -54,7 +51,6 @@ final class DefaultsController: NSObject {
         case "linkMatching.focusOpenTab": links.focusesMatchingTab = isOn
         case "linkPicker.askForSpace": links.asksForSpaceToo = isOn
         case "linkPicker.choiceLog": links.logsChoices = isOn
-        case SidebarSideStore.key: sidebarSide.isRight = isOn
         default: break
         }
     }

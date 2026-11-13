@@ -61,7 +61,7 @@ let package = Package(
                                                 diagnosticsKit],
                 resources: [.process("Resources")]),
         .testTarget(name: "SafiraWebTests", dependencies: [
-            "SafiraWeb", "SafiraStore", "SafiraSession", "SafiraCore", "Diagnostics", diagnosticsKit,
+            "SafiraWeb", "SafiraStore", "SafiraSession", "SafiraCore", "Diagnostics", "Appearance", diagnosticsKit,
         ]),
         .target(name: "Commands", dependencies: ["SafiraCore", preferences, commandKit],
                 resources: [.copy("Presets"), .process("Resources")]),

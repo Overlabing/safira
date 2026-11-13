@@ -20,7 +20,7 @@ the Tabs list, the Space rail; then the page.
 | First Space name | “Home” in a French Profile | text | n/a | fixed: a new Profile names its first Space in the user’s language (Accueil) | owed |
 | Pinned tab row | same row as a Tab, value adds “Épinglé” | button | yes | code | owed |
 | Folder row | “Docs, 2”; value Déplié or Replié; actions Déplier/Replier, Renommer le dossier, Supprimer le dossier | button | yes | pass (value read in #98) | owed |
-| Sidebar button (toolbar) | Barre latérale; help Masquer la barre latérale; on the right, the inspector button relabelled Barre latérale | button | no (⌃⌘S) | pass | owed |
+| Sidebar button (toolbar) | Barre latérale; help Masquer la barre latérale | button | no (⌃⌘S) | pass | owed |
 | Empty page text | Saisissez une adresse ou une recherche; Appuyez sur ⌘L… | text | n/a | pass | owed |
 
 No empty or duplicate label in the tree. Captures: `sidebar-fr.png`, `sidebar-en-light.png`, `sidebar-en-dark.png`.

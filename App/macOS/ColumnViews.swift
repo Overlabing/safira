@@ -172,7 +172,8 @@ private struct PanelCell: ViewModifier {
 }
 
 /// A sidebar row's content, with no padding of its own (the kit's sidebar cell carries it): a tile, the title in the
-/// row's style (semibold when selected), detail lines in the secondary ink, a trailing accessory.
+/// row's style (semibold when selected), detail lines in the secondary ink, a trailing accessory. A click anywhere on
+/// the cell lands on the row, its insets included, not only on its tile and text.
 struct SidebarRowContent<Leading: View, Trailing: View>: View {
     let title: String
     var details: [String] = []
@@ -196,8 +197,21 @@ struct SidebarRowContent<Leading: View, Trailing: View>: View {
                 Spacer(minLength: 0)
                 trailing
             }
-            .contentShape(.rect)
+            .contentShape(WholeCell(horizontal: tokens.spacing.listMargin,
+                                    vertical: tokens.spacing.rowGap / 2 + tokens.spacing.rowInsetVertical
+                                        + tokens.spacing.textLines))
         }
+    }
+}
+
+/// The content's rectangle grown by the insets the kit's sidebar cell puts around it, so the row's whole background
+/// takes the click.
+private struct WholeCell: Shape {
+    let horizontal: CGFloat
+    let vertical: CGFloat
+
+    func path(in rect: CGRect) -> Path {
+        Path(rect.insetBy(dx: -horizontal, dy: -vertical))
     }
 }
 
@@ -317,9 +331,11 @@ struct TabRowView: View {
     }
 }
 
-/// The cell that opens the Command bar for a new Tab, with its shortcut.
+/// The cell that opens the Command bar for a new Tab, with its shortcut. It shows as selected while the Command bar is
+/// open for a new Tab.
 struct NewTabRow: View {
     let shortcut: String?
+    let isSelected: Bool
     let newTab: () -> Void
     @Environment(\.designTokens) private var tokens
 
@@ -328,20 +344,22 @@ struct NewTabRow: View {
 
     var body: some View {
         WithColorRoles { roles in
-            SidebarRowContent(title: String(localized: "New Tab", comment: "Sidebar")) {
-                Tile(.tintedSymbol("plus"))
-            } trailing: {
-                if let shortcut {
-                    Text(verbatim: shortcut).role(tokens.type.count).foregroundStyle(roles.secondaryText)
-                        .accessibilityHidden(true)
+            Button(action: newTab) {
+                SidebarRowContent(title: String(localized: "New Tab", comment: "Sidebar"), isSelected: isSelected) {
+                    Tile(.tintedSymbol("plus"))
+                } trailing: {
+                    if let shortcut {
+                        Text(verbatim: shortcut).role(tokens.type.count).foregroundStyle(roles.secondaryText)
+                            .accessibilityHidden(true)
+                    }
                 }
             }
-            .onTapGesture(perform: newTab)
+            .buttonStyle(PressedOpacityStyle())
+            .focusEffectDisabled()
             .accessibilityElement(children: .combine)
-            .accessibilityAddTraits(.isButton)
-            .accessibilityAction(.default, newTab)
+            .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
         }
-        .sidebarCell(state: RowState(), placement: .free, hoverID: Self.hoverID)
+        .sidebarCell(state: RowState(isSelected: isSelected), placement: .free, hoverID: Self.hoverID)
     }
 }
 

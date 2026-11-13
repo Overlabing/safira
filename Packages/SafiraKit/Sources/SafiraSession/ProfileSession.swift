@@ -15,6 +15,15 @@ public enum CommandBarTarget: Hashable, Sendable {
     case newTab
 }
 
+/// The row the sidebar shows as selected.
+public enum SidebarSelection: Hashable, Sendable {
+    /// The New Tab row, while the Command bar is open for a new Tab: the shown page stays, but it is not the Tab the
+    /// text will go to.
+    case newTab
+    case tab(TabID)
+    case none
+}
+
 /// The navigation facade of one Profile: its Spaces, their Tabs, the selection, and every navigation the user asks
 /// for. Tab commands act on the active Space. It reaches web pages only through `WebPageHandle`, so it runs headless
 /// with simulated pages.
@@ -112,6 +121,13 @@ public final class ProfileSession {
 
     public var selectedTab: Tab? {
         activeSpace.selectedTab
+    }
+
+    /// The New Tab row while the Command bar is open for a new Tab, otherwise the selected Tab. Closing the Command bar
+    /// without opening anything gives the selection back to the Tab it was on.
+    public var sidebarSelection: SidebarSelection {
+        if commandBarTarget == .newTab { return .newTab }
+        return selectedTabID.map(SidebarSelection.tab) ?? .none
     }
 
     public var canReopenClosedTab: Bool {
