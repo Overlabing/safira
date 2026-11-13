@@ -27,6 +27,15 @@ public struct CommandBarSuggestion: Hashable, Sendable, Identifiable {
     }
 
     public var id: Kind { kind }
+
+    /// The SF Symbol shown while no icon is cached for the suggestion's site: a globe for an open Tab's address, a clock
+    /// for a page from history.
+    public var fallbackSymbol: String {
+        switch kind {
+        case .openTab: "globe"
+        case .history: "clock"
+        }
+    }
 }
 
 /// How typed text is compared with the text of Tabs and history: letter case and accents are ignored.
