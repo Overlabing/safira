@@ -342,13 +342,13 @@
         }
       }
     },
-    "Pin or Unpin Tab" : {
+    "Pin Tab" : {
       "comment" : "Command: menu item and Shortcuts row",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Épingler ou désépingler l’onglet"
+            "value" : "Épingler l’onglet"
           }
         }
       }

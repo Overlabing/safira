@@ -80,6 +80,27 @@ struct SpaceRailMenuTests {
             == [[true, false, false, false], [true, false], [true]])
     }
 
+    /// Work is shown: a command on Personal or one of its Spaces shows Personal first, except Delete Profile.
+    @Test func aCommandOnAProfileThatIsNotShownShowsItFirst() {
+        let personalSpace = SpaceRailMenu.space(key(family), in: rail).flatMap { $0 }
+            .map { $0.action.profileToShow(in: rail) }
+        let personalItself = SpaceRailMenu.profile(key(personal), in: rail).flatMap { $0 }
+            .map { $0.action.profileToShow(in: rail) }
+
+        #expect(personalSpace == [personal.id, personal.id, personal.id, personal.id, personal.id, nil, personal.id])
+        #expect(personalItself == [personal.id, nil, personal.id])
+    }
+
+    @Test func aCommandOnTheShownProfileNamesThatProfile() {
+        let actions = SpaceRailMenu.space(key(reading), in: rail).flatMap { $0 }.map { $0.action.profileToShow(in: rail) }
+
+        #expect(actions == [work.id, work.id, work.id, work.id, work.id, nil, work.id])
+    }
+
+    @Test func aSpaceNoProfileHoldsShowsNoProfile() {
+        #expect(SpaceRailMenu.Action.editSpace(SpaceID(rawValue: UUID())).profileToShow(in: rail) == nil)
+    }
+
     @Test func anUnknownItemHasNoMenu() {
         #expect(SpaceRailMenu.space(UUID().uuidString, in: rail).isEmpty)
         #expect(SpaceRailMenu.profile("not-a-profile", in: rail).isEmpty)

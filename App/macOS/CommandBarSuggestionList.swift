@@ -73,8 +73,7 @@ private struct SuggestionRow: View {
             ListRow(suggestion.title, details: [AddressDisplay(suggestion.address).hostAndPath],
                     state: RowState(isSelected: isHighlighted, isHovered: isHovered)) {
                 SiteIconTile(icons: icons, address: suggestion.address,
-                             initial: SiteIconTile.initial(of: suggestion.address, title: suggestion.title),
-                             size: .compact)
+                             fallback: .tintedSymbol(suggestion.fallbackSymbol), size: .compact)
             } trailing: {
                 if let emoji = suggestion.spaceEmoji {
                     HStack(spacing: tokens.spacing.pillActionGap) {
