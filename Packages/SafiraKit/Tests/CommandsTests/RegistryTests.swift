@@ -14,6 +14,12 @@ import Testing
     #expect(CommandID.selectSpace9.title == "Show Space 9")
 }
 
+/// The menu item names what it will do to the selected Tab; the Shortcuts row reads as the menu does for a plain Tab.
+@Test func thePinCommandHasAStateLabelNotACombinedOne() {
+    #expect(CommandID.togglePin.title == "Pin Tab")
+    #expect(!CommandID.allCases.contains { $0.title.contains("Pin or Unpin") })
+}
+
 @Test func theDefaultsAreTheProductDefaultsDecidedSoFar() {
     #expect(key(nil, .newTab) == "⌘T")
     #expect(key(nil, .newWindow) == "⌘N")

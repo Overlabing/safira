@@ -52,3 +52,20 @@ public enum SpaceRailMenu {
         ]
     }
 }
+
+extension SpaceRailMenu.Action {
+    /// The Profile shown before the action runs, so that its result is visible: the Space's Profile, or the Profile
+    /// itself. Nil for Delete Profile, whose result (the Profile leaving the rail) shows from any Profile, and showing it
+    /// first would load its pages only to erase them; nil too for a Space no Profile of the rail holds.
+    public func profileToShow(in profiles: [SpaceRailProfile]) -> ProfileID? {
+        switch self {
+        case .editSpace(let space), .moveSpaceLeft(let space), .moveSpaceRight(let space), .deleteSpace(let space):
+            let key = space.rawValue.uuidString
+            return profiles.first { $0.spaces.contains { $0.id == key } }.flatMap { ProfileID(uuidString: $0.id) }
+        case .editProfile(let profile), .clearBrowsingData(let profile):
+            return profile
+        case .deleteProfile:
+            return nil
+        }
+    }
+}

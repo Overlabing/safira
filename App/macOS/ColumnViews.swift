@@ -201,12 +201,12 @@ struct SidebarRowContent<Leading: View, Trailing: View>: View {
     }
 }
 
-/// A site's icon on the kit's tile fill, or the site's initial on the kit's letter tile while no icon is cached for it.
+/// A site's icon on the kit's tile fill, or `fallback` (the site's initial, or a symbol) while no icon is cached for it.
 /// Looking the icon up never fetches: only a loaded page does (`ProfileSiteIcons`).
 struct SiteIconTile: View {
     let icons: ProfileSiteIcons?
     let address: URL?
-    let initial: String
+    let fallback: TileContent
     var size: TileSize = .standard
     @Environment(\.designTokens) private var tokens
 
@@ -221,7 +221,7 @@ struct SiteIconTile: View {
                 .tileFill(size)
                 .accessibilityHidden(true)
         } else {
-            Tile(.initial(initial), size: size)
+            Tile(fallback, size: size)
         }
     }
 
@@ -263,7 +263,7 @@ struct TabRowView: View {
         WithColorRoles { roles in
             SidebarRowContent(title: title, details: [subtitle], isSelected: isSelected) {
                 SiteIconTile(icons: icons, address: tab.address,
-                             initial: SiteIconTile.initial(of: tab.address, title: title))
+                             fallback: .initial(SiteIconTile.initial(of: tab.address, title: title)))
             } trailing: {
                 HoverAccessory(id: tab.id) {
                     Button(action: close) {

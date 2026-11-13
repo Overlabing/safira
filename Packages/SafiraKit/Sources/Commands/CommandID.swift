@@ -77,7 +77,8 @@ public enum CommandID: String, CommandIdentifier {
         case .nextSpace: String(localized: "Show Next Space", table: "Commands", bundle: .module, comment: "Command: menu item and Shortcuts row")
         case .moveSpaceLeft: String(localized: "Move Space Left", table: "Commands", bundle: .module, comment: "Command: menu item and Shortcuts row")
         case .moveSpaceRight: String(localized: "Move Space Right", table: "Commands", bundle: .module, comment: "Command: menu item and Shortcuts row")
-        case .togglePin: String(localized: "Pin or Unpin Tab", table: "Commands", bundle: .module, comment: "Command: menu item and Shortcuts row")
+        // The menu item shows the selected Tab's state: "Unpin Tab" replaces this title while it is pinned.
+        case .togglePin: String(localized: "Pin Tab", table: "Commands", bundle: .module, comment: "Command: menu item and Shortcuts row")
         case .newFolder: String(localized: "New Folder…", table: "Commands", bundle: .module, comment: "Command: menu item and Shortcuts row")
         case .newProfile: String(localized: "New Profile…", table: "Commands", bundle: .module, comment: "Command: menu item and Shortcuts row")
         case .renameProfile: String(localized: "Rename Profile…", table: "Commands", bundle: .module, comment: "Command: menu item and Shortcuts row")

@@ -148,3 +148,18 @@ func noKeyIsInFrench(_ catalog: Catalog) {
         }
     }
 }
+
+/// The pin labels name the state, in the menu and the Tab's context menu, and the combined label is gone.
+@Test func thePinLabelsNameTheStateInFrench() throws {
+    let commands = try #require(Catalog.all.first { $0.path.hasSuffix("Commands.xcstrings") })
+    let app = try #require(Catalog.all.first { $0.path == "App/macOS/Localizable.xcstrings" })
+
+    #expect(commands.entries["Pin Tab"]?.french.map(\.french) == ["Épingler l’onglet"])
+    #expect(app.entries["Pin Tab"]?.french.map(\.french) == ["Épingler l’onglet"])
+    #expect(app.entries["Unpin Tab"]?.french.map(\.french) == ["Désépingler l’onglet"])
+    for catalog in Catalog.all {
+        #expect(!catalog.entries.keys.contains { $0.contains("Pin or Unpin") }, "\(catalog.path)")
+        #expect(!catalog.entries.values.contains { $0.french.contains { $0.french.contains("ou désépingler") } },
+                "\(catalog.path)")
+    }
+}

@@ -32,18 +32,46 @@ public struct DefaultBrowser: Sendable {
         return true
     }
 
+    /// What the user answered to the system's confirmation.
+    public enum Answer: Sendable, Equatable {
+        case accepted
+        /// The user kept the current browser. Not a failure: nothing is shown, and Safira does not ask again by itself.
+        case declined
+    }
+
     /// Asks the system to make Safira the default for http, https and HTML files. The system asks the user to confirm.
-    /// Every request is attempted; the first failure is thrown after the others have been tried.
-    public func makeDefault() async throws {
+    /// A decline stops at once, so the user is asked only once. Otherwise every request is attempted, and the first
+    /// failure is thrown after the others have been tried.
+    public func makeDefault() async throws -> Answer {
         var firstError: (any Error)?
-        for scheme in Self.schemes {
-            do { try await check.makeDefault(forScheme: scheme) } catch { firstError = firstError ?? error }
+        let requests: [() async throws -> Void] = Self.schemes.map { scheme in
+            { try await check.makeDefault(forScheme: scheme) }
+        } + Self.contentTypes.compactMap(UTType.init).map { type in
+            { try await check.makeDefault(forContentType: type) }
         }
-        for identifier in Self.contentTypes {
-            guard let type = UTType(identifier) else { continue }
-            do { try await check.makeDefault(forContentType: type) } catch { firstError = firstError ?? error }
+        for request in requests {
+            do {
+                try await request()
+            } catch where Self.isDecline(error) {
+                return .declined
+            } catch {
+                firstError = firstError ?? error
+            }
         }
         if let firstError { throw firstError }
+        return .accepted
+    }
+
+    /// The system's confirmation answered with Keep: `userCanceledErr` (-128), alone or under the Cocoa error that
+    /// LaunchServices wraps it in (`NSCocoaErrorDomain` 256, measured on macOS 27 for an HTML request).
+    static func isDecline(_ error: any Error) -> Bool {
+        var current: NSError? = error as NSError
+        while let error = current {
+            if error.domain == NSOSStatusErrorDomain, error.code == -128 { return true }
+            if error.domain == NSCocoaErrorDomain, error.code == NSUserCancelledError { return true }
+            current = error.userInfo[NSUnderlyingErrorKey] as? NSError
+        }
+        return false
     }
 }
 

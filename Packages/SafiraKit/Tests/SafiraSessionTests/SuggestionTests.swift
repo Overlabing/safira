@@ -148,6 +148,18 @@ private func fixtureWithHistory(id: ProfileID = workID) throws -> SessionFixture
         #expect(described(suggestions) == ["tab: Shared page", "history: Shared page elsewhere"])
     }
 
+    /// With no site icon cached, a suggestion shows its kind: a globe for an open Tab's address, a clock for history.
+    @Test func aSuggestionWithNoSiteIconFallsBackToASymbolOfItsKind() async throws {
+        let fixture = try fixtureWithHistory()
+        fixture.visit("https://open.example/", titled: "Shared page")
+        fixture.session.close(fixture.visit("https://closed.example/", titled: "Shared page elsewhere"))
+
+        let suggestions = await fixture.session.suggestions(for: "shared")
+
+        #expect(suggestions.map { fixture.session.siteIcons.icon(for: $0.address) == nil } == [true, true])
+        #expect(suggestions.map(\.fallbackSymbol) == ["globe", "clock"])
+    }
+
     @Test func historyIsSearchedWithAccentsAndLetterCaseIgnored() async throws {
         let fixture = try fixtureWithHistory()
         let tab = fixture.visit("https://musee.example/", titled: "Musée d’Orsay")
