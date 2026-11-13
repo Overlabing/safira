@@ -126,6 +126,40 @@ private final class TemporaryRoot {
         await cleanUp(ids)
     }
 
+    /// What a click on a Profile in the Space rail does: it lands on that Profile's last used Space, not its first, also
+    /// after a relaunch, since the Profile keeps it in its own database.
+    @Test func showingAProfileLandsOnItsLastUsedSpaceAlsoAfterARelaunch() async throws {
+        let root = TemporaryRoot()
+        var ids: [ProfileID] = []
+        let docs: SpaceID
+        do {
+            let registry = ProfileRegistry(layout: root.layout)
+            let first = registry.activeProfileID
+            let work = registry.createProfile(name: "Work", symbol: "💼", searchEngine: .kagi)
+            docs = registry.active.session.createSpace(name: "Docs", emoji: "📄")
+            registry.active.session.createSpace(name: "Ops", emoji: "🚀")
+            registry.active.session.selectSpace(docs)
+            ids = registry.profiles.map(\.id)
+
+            registry.selectProfile(first)
+            #expect(registry.spaceSummary(of: work).lastSpaceID == docs)
+            registry.selectProfile(work)
+            #expect(registry.active.session.activeSpace.name == "Docs")
+            registry.selectProfile(first)
+            await registry.saveAll()
+        }
+        do {
+            let relaunched = ProfileRegistry(layout: root.layout)
+            let work = try #require(ids.last)
+            #expect(relaunched.spaceSummary(of: work).lastSpaceID == docs, "read from Work's saved Spaces, not loaded")
+
+            relaunched.selectProfile(work)
+            #expect(relaunched.active.session.activeSpaceID == docs)
+            #expect(relaunched.active.session.spaces.map(\.name) == ["Home", "Docs", "Ops"])
+        }
+        await cleanUp(ids)
+    }
+
     @Test func theCommandBarReachesTheActiveProfileOnlyAndAnInactiveProfileLoadsNothingUntilShown() async throws {
         let root = TemporaryRoot()
         var ids: [ProfileID] = []
