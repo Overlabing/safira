@@ -83,7 +83,7 @@ struct TabMenu: View {
 /// The Space rail, ThemeKit's one selector at the bottom of the column: the Active profile's Spaces as glyphs, the
 /// other Profiles folded into dots after a hairline, and a `+` with the commands that add or edit them. A click on a
 /// folded Profile shows it on its last Space. A secondary click on a Space or a Profile opens that item's menu
-/// (`SpaceRailMenu`), whichever is current.
+/// (`SpaceRailMenu`), whichever is current; a command on a Profile that is not shown shows it first.
 private struct SpaceRailBar: View {
     let registry: ProfileRegistry
     let profileActions: ProfileActions
@@ -127,9 +127,9 @@ private struct SpaceRailBar: View {
             selectProfile: { id in ProfileID(uuidString: id).map(profileActions.select) },
             perform: perform)
         .spaceRailContextMenu { space in
-            RailMenu(sections: SpaceRailMenu.space(space.id, in: profiles), run: run)
+            RailMenu(sections: SpaceRailMenu.space(space.id, in: profiles)) { run($0, in: profiles) }
         } profile: { profile in
-            RailMenu(sections: SpaceRailMenu.profile(profile.id, in: profiles), run: run)
+            RailMenu(sections: SpaceRailMenu.profile(profile.id, in: profiles)) { run($0, in: profiles) }
         }
     }
 
@@ -145,9 +145,12 @@ private struct SpaceRailBar: View {
         }
     }
 
-    /// A command of an item's menu, on the Space or Profile it names: one of another Profile reaches that Profile's own
-    /// session, which is not shown for it.
-    private func run(_ action: SpaceRailMenu.Action) {
+    /// A command of an item's menu, on the Space or Profile it names. A Profile that is not shown is shown first, so the
+    /// result is visible (`SpaceRailMenu.Action.profileToShow`).
+    private func run(_ action: SpaceRailMenu.Action, in profiles: [SpaceRailProfile]) {
+        if let profile = action.profileToShow(in: profiles), profile != registry.activeProfileID {
+            profileActions.select(profile)
+        }
         switch action {
         case .editSpace(let id): spaceActions.edit(id)
         case .moveSpaceLeft(let id): registry.context(ofSpace: id)?.session.moveSpace(id, by: -1)
