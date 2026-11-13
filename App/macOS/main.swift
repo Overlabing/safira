@@ -11,11 +11,12 @@ MainActor.assumeIsolated {
     // Before any store reads: the settings saved before AppSupportKit become the JSON its preferences read.
     if let domain = Bundle.main.bundleIdentifier {
         LegacyPreference.migrate(
-            [CompactModeStore.legacy, SidebarSideStore.legacy, DiagnosticsSettingsStore.legacy,
+            [CompactModeStore.legacy, DiagnosticsSettingsStore.legacy,
              LinkChoiceLogSettingsStore.legacy, AskForSpaceSettingsStore.legacy, MatchingTabSettingsStore.legacy]
                 + ShortcutStore.legacy,
             in: .standard, domain: domain)
     }
+    RetiredPreferences.remove(from: .standard)
     let application = NSApplication.shared
     let delegate = AppDelegate(preferenceProblems: PreferenceProblems())
     application.delegate = delegate

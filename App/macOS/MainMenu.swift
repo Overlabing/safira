@@ -94,8 +94,6 @@ enum MainMenu {
             .separator(),
             item(.compactMode, #selector(MainWindowController.toggleCompactMode(_:))),
             item(.showSidebar, #selector(MainWindowController.toggleRevealedSidebar(_:))),
-            NSMenuItem(title: SidebarSide.title, action: #selector(MainWindowController.toggleSidebarSide(_:)),
-                       keyEquivalent: ""),
             item(.focusTabList, #selector(MainWindowController.focusTabList(_:))),
         ]))
         menu.addItem(submenu(title: String(localized: "History", comment: "Menu bar title"), items: [

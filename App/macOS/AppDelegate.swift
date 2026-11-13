@@ -21,7 +21,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let preferenceProblems: PreferenceProblems
     let diagnostics: DiagnosticsController
     let shortcuts: ShortcutController
-    let sidebarSide: SidebarSideSetting
     /// Started behind the frontmost app with the launch argument `-launchedInBackground YES`
     /// (`open -g … --args -launchedInBackground YES`): Safira then never takes the focus. The argument is read from
     /// the launch, never saved.
@@ -47,7 +46,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.preferenceProblems = preferenceProblems
         diagnostics = DiagnosticsController(preferenceProblems: preferenceProblems)
         shortcuts = ShortcutController(unreadable: preferenceProblems.record)
-        sidebarSide = SidebarSideSetting(preferenceProblems: preferenceProblems)
         super.init()
     }
 
@@ -65,7 +63,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         self.registry = registry
         diagnostics.attach(to: registry)
-        let controller = MainWindowController(registry: registry, shortcuts: shortcuts, sideSetting: sidebarSide,
+        let controller = MainWindowController(registry: registry, shortcuts: shortcuts,
                                               preferenceProblems: preferenceProblems)
         controller.showWindow(nil)
         mainWindow = controller
@@ -74,7 +72,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if let problem = preferenceProblems.take() { controller.showBanner(problem) }
         self.links = links
         let defaults = DefaultsController(registry: registry, updates: updates, diagnostics: diagnostics, links: links,
-                                          shortcuts: shortcuts, sidebarSide: sidebarSide)
+                                          shortcuts: shortcuts)
         self.defaults = defaults
         let onboarding = OnboardingController(registry: registry, defaults: defaults)
         self.onboarding = onboarding
@@ -111,7 +109,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let focused = NSApp.keyWindow?.windowController as? PrivateWindowController
         let profile = focused?.context.parent.id ?? registry.activeProfileID
         guard let context = registry.makePrivateContext(attachedTo: profile) else { return }
-        let controller = PrivateWindowController(context: context, shortcuts: shortcuts, sideSetting: sidebarSide)
+        let controller = PrivateWindowController(context: context, shortcuts: shortcuts)
         controller.onClose = { [weak self] closed in self?.privateWindows.removeAll { $0 === closed } }
         privateWindows.append(controller)
         let cascade = SafiraDesign.privateWindowCascade

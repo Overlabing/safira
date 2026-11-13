@@ -243,17 +243,6 @@
         }
       }
     },
-    "Off, on the left" : {
-      "comment" : "Defaults: value of Sidebar on the Right",
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Désactivé, à gauche"
-          }
-        }
-      }
-    },
     "On" : {
       "comment" : "Defaults: the value of a switch that is on",
       "localizations" : {
@@ -375,17 +364,6 @@
         }
       }
     },
-    "Sidebar on the Right" : {
-      "comment" : "Menu item and Defaults title",
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Barre latérale à droite"
-          }
-        }
-      }
-    },
     "Some settings were reset" : {
       "comment" : "Banner title when a saved setting could not be read",
       "localizations" : {
@@ -408,24 +386,13 @@
         }
       }
     },
-    "The sidebar is hidden and the page uses the full width. Move the pointer to the window's edge on the sidebar's side, or use Show Sidebar, to bring it back beside the page; it hides again when the pointer leaves it or you go back to the page." : {
+    "The sidebar is hidden and the page uses the full width. Move the pointer to the window's left edge, or use Show Sidebar, to bring it back beside the page; it hides again when the pointer leaves it or you go back to the page." : {
       "comment" : "Defaults: explanation of Compact mode",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "La barre latérale est masquée et la page occupe toute la largeur. Approchez le pointeur du bord de la fenêtre, du côté de la barre latérale, ou utilisez Afficher la barre latérale, pour la faire revenir par-dessus la page ; elle se masque de nouveau quand le pointeur la quitte ou que vous revenez à la page."
-          }
-        }
-      }
-    },
-    "The sidebar, with the address and the Tabs, sits on the left of the window. Put it on the right instead; in Compact mode it then comes back from the right edge." : {
-      "comment" : "Defaults: explanation of Sidebar on the Right",
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "La barre latérale, avec l’adresse et les onglets, se trouve à gauche de la fenêtre. Placez-la plutôt à droite ; en mode compact, elle revient alors par le bord droit."
+            "value" : "La barre latérale est masquée et la page occupe toute la largeur. Approchez le pointeur du bord gauche de la fenêtre, ou utilisez Afficher la barre latérale, pour la faire revenir par-dessus la page ; elle se masque de nouveau quand le pointeur la quitte ou que vous revenez à la page."
           }
         }
       }
@@ -437,17 +404,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "menu Présentation"
-          }
-        }
-      }
-    },
-    "View menu, or Safira menu, Defaults…" : {
-      "comment" : "Defaults: where to change Sidebar on the Right",
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "menu Présentation, ou menu Safira, Choix par défaut…"
           }
         }
       }

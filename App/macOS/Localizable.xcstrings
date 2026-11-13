@@ -2644,17 +2644,6 @@
         }
       }
     },
-    "Sidebar" : {
-      "comment" : "Toolbar: the button that hides and shows the sidebar on the right",
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Barre latérale"
-          }
-        }
-      }
-    },
     "Sidebar hidden" : {
       "comment" : "Main window",
       "localizations" : {

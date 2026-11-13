@@ -21,9 +21,9 @@ struct PrivateSidebar: View {
 
     var body: some View {
         List {
-            NewTabRow(shortcut: nil, newTab: pageActions.newTab)
+            NewTabRow(shortcut: nil, isSelected: session.sidebarSelection == .newTab, newTab: pageActions.newTab)
             ForEach(Array(session.tabs.enumerated()), id: \.element.id) { index, tab in
-                TabRowView(tab: tab, icons: session.siteIcons, isSelected: session.selectedTabID == tab.id,
+                TabRowView(tab: tab, icons: session.siteIcons, isSelected: session.sidebarSelection == .tab(tab.id),
                            isListFocused: focus.isListFocused, placement: .free,
                            position: index + 1, count: session.tabs.count,
                            select: { session.select(tab.id) }, close: { session.close(tab.id) })

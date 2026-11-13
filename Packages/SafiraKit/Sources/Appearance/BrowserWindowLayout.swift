@@ -8,51 +8,51 @@ import SwiftUI
 
 /// The window shared by the Main window and Private windows: ThemeKit's sidebar in an AppKit window, as the kit's docs
 /// set it up ("Sidebar", "In an AppKit window"). The Theme's gradient (`WindowBackground`) lies under the whole split;
-/// the column is the system's sidebar split item (`NSSplitViewItem.sidebar(hosting:)`), flush with the window's edge,
-/// in the system's sidebar material, dimmed by the system when the window is inactive; the page sits beside it in the
-/// kit's detail card. In Compact mode the sidebar item collapses, and comes back from its edge of the window on demand.
-/// The pointer is watched with AppKit tracking areas: SwiftUI's `onHover` is unreliable over a web view
+/// the column is the system's sidebar split item (`NSSplitViewItem.sidebar(hosting:)`) on the left, flush with the
+/// window's edge, in the system's sidebar material, dimmed by the system when the window is inactive; the page sits
+/// beside it in the kit's detail card. In Compact mode the sidebar item collapses, and comes back from the left edge on
+/// demand. The pointer is watched with AppKit tracking areas: SwiftUI's `onHover` is unreliable over a web view
 /// (docs/architecture-v1.md §1.3).
 @MainActor
-final class BrowserWindowLayout: NSViewController {
-    /// The pointer left the revealed sidebar.
-    var onPointerLeftSidebar: (() -> Void)?
-    /// The pointer touched the window's edge on the sidebar's side while the sidebar is collapsed in Compact mode.
-    var onPointerReachedEdge: (() -> Void)?
-    /// The system's sidebar button, or a divider dragged shut: the window decides what showing or hiding means.
-    var onToggleSidebar: (() -> Void)?
+public final class BrowserWindowLayout: NSViewController {
+    /// The strip at the window's left edge that brings the sidebar back in Compact mode.
+    public static let compactEdgeWidth: CGFloat = 6
 
+    /// The pointer left the revealed sidebar.
+    public var onPointerLeftSidebar: (() -> Void)?
+    /// The pointer touched the window's left edge while the sidebar is collapsed in Compact mode.
+    public var onPointerReachedEdge: (() -> Void)?
+    /// The system's sidebar button, or a divider dragged shut: the window decides what showing or hiding means.
+    public var onToggleSidebar: (() -> Void)?
+
+    private let tokens = DesignTokens.standard
     private let background: NSView
     private let column: NSViewController
     private let canvas: PageCanvasView
     private let split = SidebarSplitController()
-    private var columnItem: NSSplitViewItem
+    private let columnItem: NSSplitViewItem
     private let pageItem: NSSplitViewItem
     private let edge = EdgeView()
     private let pointer = PointerWatch()
-    private var edgeConstraints: [NSLayoutConstraint] = []
     private var collapseObservation: NSKeyValueObservation?
-    private var isCompact = false
     /// What the layout wants the column to be; a change the split makes on its own is reported to the window.
     private var wantsCollapsed = false
-    private(set) var side: SidebarSide
 
     /// `background` draws the Theme's gradient under the whole window; `column` is the sidebar's SwiftUI column, a `List`
     /// with `sidebarColumn(field:header:bottomBar:)`.
-    init(background: NSView, column: some View, canvas: PageCanvasView, side: SidebarSide) {
+    public init(background: NSView, column: some View, canvas: PageCanvasView) {
         self.background = background
-        self.side = side
         self.canvas = canvas
-        let item = NSSplitViewItem.sidebar(hosting: column, tokens: SafiraDesign.tokens)
-        self.column = item.viewController
-        columnItem = side == .left ? item : Self.item(for: side, holding: item.viewController)
+        columnItem = NSSplitViewItem.sidebar(hosting: column, tokens: tokens)
+        self.column = columnItem.viewController
         let page = NSViewController()
         page.view = canvas
         pageItem = NSSplitViewItem(viewController: page)
         super.init(nibName: nil, bundle: nil)
         split.onToggleSidebar = { [weak self] in self?.onToggleSidebar?() }
-        configure(columnItem)
-        arrangeItems()
+        configureColumn()
+        split.addSplitViewItem(columnItem)
+        split.addSplitViewItem(pageItem)
         pointer.onExit = { [weak self] in self?.onPointerLeftSidebar?() }
         self.column.view.addTrackingArea(NSTrackingArea(
             rect: .zero, options: [.mouseEnteredAndExited, .activeInKeyWindow, .inVisibleRect], owner: pointer))
@@ -63,7 +63,7 @@ final class BrowserWindowLayout: NSViewController {
         fatalError("init(coder:) is not used")
     }
 
-    override func loadView() {
+    override public func loadView() {
         view = NSView()
         for subview in [background, split.view] {
             subview.translatesAutoresizingMaskIntoConstraints = false
@@ -83,47 +83,27 @@ final class BrowserWindowLayout: NSViewController {
         NSLayoutConstraint.activate([
             edge.topAnchor.constraint(equalTo: view.topAnchor),
             edge.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            edge.widthAnchor.constraint(equalToConstant: SafiraDesign.compactEdgeWidth),
+            edge.widthAnchor.constraint(equalToConstant: Self.compactEdgeWidth),
+            edge.leadingAnchor.constraint(equalTo: view.leadingAnchor),
         ])
-        pinEdge()
     }
 
     /// True when the keyboard focus is inside the sidebar.
-    var sidebarHasFocus: Bool {
+    public var sidebarHasFocus: Bool {
         (view.window?.firstResponder as? NSView)?.isDescendant(of: column.view) == true
     }
 
-    /// The toolbar items for the side the column is on: the system's sidebar button at the column's edge and the
-    /// separator that follows its width (`NSSplitViewItem.sidebarToolbarItems`), or their inspector equivalents when the
-    /// column is the trailing item.
-    var toolbarItems: [NSToolbarItem.Identifier] {
-        side == .left ? NSSplitViewItem.sidebarToolbarItems
-                      : [.flexibleSpace, .inspectorTrackingSeparator, .flexibleSpace, .toggleInspector]
+    /// The system's sidebar button at the column's edge and the separator that follows its width.
+    public var toolbarItems: [NSToolbarItem.Identifier] {
+        NSSplitViewItem.sidebarToolbarItems
     }
 
-    /// Moves the column to the other side of the window, keeping its width and whether it is collapsed.
-    func setSide(_ side: SidebarSide) {
-        guard side != self.side else { return }
-        self.side = side
-        let width = column.view.frame.width
-        split.removeSplitViewItem(columnItem)
-        split.removeSplitViewItem(pageItem)
-        columnItem = Self.item(for: side, holding: column)
-        configure(columnItem)
-        columnItem.isCollapsed = wantsCollapsed
-        arrangeItems()
-        setColumnWidth(width)
-        if isViewLoaded { pinEdge() }
-        updateCardTop(animated: false)
-    }
-
-    override func viewDidLayout() {
+    override public func viewDidLayout() {
         super.viewDidLayout()
         updateCardTop(animated: false)
     }
 
-    func apply(_ presentation: SidebarPresentation, animated: Bool) {
-        isCompact = presentation.isCompact
+    public func apply(_ presentation: SidebarPresentation, animated: Bool) {
         let collapsed = !presentation.isSidebarShown
         edge.isHidden = !collapsed
         guard collapsed != wantsCollapsed || columnItem.isCollapsed != collapsed else { return }
@@ -142,91 +122,54 @@ final class BrowserWindowLayout: NSViewController {
         }
     }
 
-    /// The window's buttons and the sidebar button sit in the title bar at the leading and trailing top corners. Beside
-    /// a column on the left they sit on the column, and the card starts `Spacing.canvasInset` from the window's top edge,
-    /// as `SidebarDetail` does; with no column on the left (sidebar on the right, or collapsed) they would sit on the
-    /// card, over the page, so the card starts under the title bar and they keep a strip of the gradient to themselves.
+    /// The window's buttons and the sidebar button sit in the title bar at the top left. Beside the column they sit on
+    /// the column, and the card starts `Spacing.canvasInset` from the window's top edge, as `SidebarDetail` does; with
+    /// the column collapsed they would sit on the card, over the page, so the card starts under the title bar and they
+    /// keep a strip of the gradient to themselves.
     private func updateCardTop(animated: Bool) {
         guard let window = view.window else { return }
         let titleBar = window.frame.height - window.contentLayoutRect.height
-        let columnOnLeft = side == .left && !wantsCollapsed
-        canvas.setTopInset(columnOnLeft ? SafiraDesign.tokens.spacing.canvasInset : titleBar, animated: animated)
+        canvas.setTopInset(wantsCollapsed ? titleBar : tokens.spacing.canvasInset, animated: animated)
     }
 
-    /// The system's sidebar item on the left, as the kit makes it. A sidebar item belongs at the split's leading edge
-    /// (its toolbar button and tracking separator follow the first divider), so on the right the column is the split's
-    /// inspector item, the system's trailing column.
-    private static func item(for side: SidebarSide, holding column: NSViewController) -> NSSplitViewItem {
-        side == .left ? NSSplitViewItem(sidebarWithViewController: column)
-                      : NSSplitViewItem(inspectorWithViewController: column)
-    }
-
-    /// The kit's widths for the column, whichever kind of split item holds it; only the window's own actions collapse it.
-    private func configure(_ item: NSSplitViewItem) {
-        let tokens = SafiraDesign.tokens
-        item.minimumThickness = tokens.size.columnMin
-        item.maximumThickness = tokens.size.columnMax
-        item.canCollapse = true
-        item.canCollapseFromWindowResize = false
-        item.holdingPriority = .defaultLow + 10
-        let observed = ObjectIdentifier(item)
-        collapseObservation = item.observe(\.isCollapsed) { [weak self] _, _ in
+    /// The kit's widths for the column; only the window's own actions collapse it.
+    private func configureColumn() {
+        columnItem.minimumThickness = tokens.size.columnMin
+        columnItem.maximumThickness = tokens.size.columnMax
+        columnItem.canCollapse = true
+        columnItem.canCollapseFromWindowResize = false
+        columnItem.holdingPriority = .defaultLow + 10
+        collapseObservation = columnItem.observe(\.isCollapsed) { [weak self] _, _ in
             MainActor.assumeIsolated {
-                guard let self, ObjectIdentifier(self.columnItem) == observed,
-                      self.columnItem.isCollapsed != self.wantsCollapsed else { return }
+                guard let self, self.columnItem.isCollapsed != self.wantsCollapsed else { return }
                 self.onToggleSidebar?()
             }
         }
     }
-
-    private func arrangeItems() {
-        for item in side == .left ? [columnItem, pageItem] : [pageItem, columnItem] {
-            split.addSplitViewItem(item)
-        }
-    }
-
-    private func setColumnWidth(_ width: CGFloat) {
-        guard width >= columnItem.minimumThickness, !columnItem.isCollapsed else { return }
-        view.layoutSubtreeIfNeeded()
-        let position = side == .left ? width : split.splitView.bounds.width - width - split.splitView.dividerThickness
-        split.splitView.setPosition(position, ofDividerAt: 0)
-    }
-
-    private func pinEdge() {
-        NSLayoutConstraint.deactivate(edgeConstraints)
-        edgeConstraints = [side == .left ? edge.leadingAnchor.constraint(equalTo: view.leadingAnchor)
-                                         : edge.trailingAnchor.constraint(equalTo: view.trailingAnchor)]
-        NSLayoutConstraint.activate(edgeConstraints)
-    }
 }
 
-/// The system's sidebar and inspector buttons send `toggleSidebar(_:)` and `toggleInspector(_:)` to the split view
-/// controller, which would collapse the column behind the window's back: the window decides instead, so that the
-/// button and Compact mode stay one state.
+/// The system's sidebar button sends `toggleSidebar(_:)` to the split view controller, which would collapse the column
+/// behind the window's back: the window decides instead, so that the button and Compact mode stay one state.
 private final class SidebarSplitController: NSSplitViewController {
     var onToggleSidebar: (() -> Void)?
 
     override func toggleSidebar(_ sender: Any?) {
         onToggleSidebar?()
     }
-
-    override func toggleInspector(_ sender: Any?) {
-        onToggleSidebar?()
-    }
 }
 
 /// The page in the kit's detail card (`SidebarDetail`), in AppKit: the web view is an AppKit view the card must clip,
 /// which a SwiftUI clip shape does not do for a hosted view. Inset `Spacing.canvasInset` from the detail's edges and from
-/// the window's top edge, under the transparent toolbar (under the title bar when no column is on its left); on the plain background, rounded `Radius.canvas`, with a 1 pt
-/// `.separator` line on its edge.
+/// the window's top edge, under the transparent toolbar (under the title bar when the column is collapsed); on the plain
+/// background, rounded `Radius.canvas`, with a 1 pt `.separator` line on its edge. The page fills the card exactly.
 /// The banner floats over the top of the card, and the Command bar over the whole page.
 @MainActor
-final class PageCanvasView: NSView {
-    private let tokens = SafiraDesign.tokens
+public final class PageCanvasView: NSView {
+    private let tokens = DesignTokens.standard
     private let clip = NSView()
     private var top = NSLayoutConstraint()
 
-    init(page: NSView, banner: NSView, commandBar: NSView) {
+    public init(page: NSView, banner: NSView, commandBar: NSView) {
         super.init(frame: .zero)
         clip.wantsLayer = true
         clip.layer?.cornerRadius = tokens.radius.canvas
@@ -272,13 +215,16 @@ final class PageCanvasView: NSView {
         fatalError("init(coder:) is not used")
     }
 
-    override func viewDidChangeEffectiveAppearance() {
+    /// The card's frame in this view: what the page shows in.
+    public var cardFrame: NSRect { clip.frame }
+
+    override public func viewDidChangeEffectiveAppearance() {
         super.viewDidChangeEffectiveAppearance()
         updateOutline()
     }
 
     /// From the window's top edge to the card's top.
-    func setTopInset(_ inset: CGFloat, animated: Bool) {
+    public func setTopInset(_ inset: CGFloat, animated: Bool) {
         guard top.constant != inset else { return }
         (animated ? top.animator() : top).constant = inset
     }
@@ -299,17 +245,17 @@ final class PageCanvasView: NSView {
     }
 }
 
-/// The toolbar of a window with the kit's sidebar: the items the layout asks for, icons only, no title.
+/// The toolbar of a window with the kit's sidebar: the system's sidebar button and tracking separator, icons only, no
+/// title.
 @MainActor
-final class SidebarToolbar: NSObject, NSToolbarDelegate {
-    private let items: () -> [NSToolbarItem.Identifier]
+public final class SidebarToolbar: NSObject, NSToolbarDelegate {
+    private let items: [NSToolbarItem.Identifier]
 
-    init(items: @escaping () -> [NSToolbarItem.Identifier]) {
+    public init(items: [NSToolbarItem.Identifier]) {
         self.items = items
     }
 
-    /// A new toolbar for the window, with the items in force: they change with the sidebar's side.
-    func install(in window: NSWindow) {
+    public func install(in window: NSWindow) {
         let toolbar = NSToolbar(identifier: "Safira.sidebar")
         toolbar.delegate = self
         toolbar.displayMode = .iconOnly
@@ -317,34 +263,24 @@ final class SidebarToolbar: NSObject, NSToolbarDelegate {
         window.toolbar = toolbar
     }
 
-    func toolbarDefaultItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
-        items()
+    public func toolbarDefaultItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
+        items
     }
 
-    func toolbarAllowedItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
-        items()
+    public func toolbarAllowedItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
+        items
     }
 
-    func toolbar(_ toolbar: NSToolbar, itemForItemIdentifier itemIdentifier: NSToolbarItem.Identifier,
-                 willBeInsertedIntoToolbar flag: Bool) -> NSToolbarItem? {
+    public func toolbar(_ toolbar: NSToolbar, itemForItemIdentifier itemIdentifier: NSToolbarItem.Identifier,
+                        willBeInsertedIntoToolbar flag: Bool) -> NSToolbarItem? {
         nil
-    }
-
-    /// On the right the column is the split's inspector item, but it is still the sidebar: its button says so to
-    /// VoiceOver and in its help tag, as the system's sidebar button does on the left.
-    func toolbarWillAddItem(_ notification: Notification) {
-        guard let item = notification.userInfo?["item"] as? NSToolbarItem, item.itemIdentifier == .toggleInspector
-        else { return }
-        let title = String(localized: "Sidebar", comment: "Toolbar: the button that hides and shows the sidebar on the right")
-        item.label = title
-        item.toolTip = title
     }
 }
 
 /// The full screen shows the toolbar only while the pointer is at the top of the screen, as the kit's
 /// `sidebarWindowChrome()` does in SwiftUI.
-enum SidebarFullScreen {
-    static func options(_ proposed: NSApplication.PresentationOptions) -> NSApplication.PresentationOptions {
+public enum SidebarFullScreen {
+    public static func options(_ proposed: NSApplication.PresentationOptions) -> NSApplication.PresentationOptions {
         proposed.union([.autoHideToolbar, .autoHideMenuBar])
     }
 }
@@ -358,7 +294,7 @@ private final class PointerWatch: NSResponder {
     }
 }
 
-/// A thin strip at the sidebar's edge that reports the pointer entering it.
+/// A thin strip at the window's left edge that reports the pointer entering it.
 private final class EdgeView: NSView {
     var onPointerEntered: (() -> Void)?
 
@@ -376,5 +312,40 @@ private final class EdgeView: NSView {
 
     override func mouseEntered(with event: NSEvent) {
         onPointerEntered?()
+    }
+}
+
+/// Shows one page at a time, filling the card. Swapping only moves views in and out of the window: the pages stay
+/// alive in the Profile's registry, so none reloads.
+@MainActor
+public final class TabHostView: NSView {
+    private let emptyPage: NSView
+    private var shown: NSView?
+
+    /// `emptyPage` is shown while there is no page.
+    public init(emptyPage: NSView) {
+        self.emptyPage = emptyPage
+        super.init(frame: .zero)
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) is not used")
+    }
+
+    public func show(_ page: NSView?) {
+        let next = page ?? emptyPage
+        guard next !== shown else { return }
+        let focusWasInPage = shown.map { previous in
+            (window?.firstResponder as? NSView)?.isDescendant(of: previous) == true
+        } ?? false
+        shown?.removeFromSuperview()
+        next.frame = bounds
+        next.autoresizingMask = [.width, .height]
+        addSubview(next)
+        shown = next
+        if focusWasInPage, page != nil {
+            window?.makeFirstResponder(next)
+        }
     }
 }

@@ -24,10 +24,9 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSMen
     /// Called once, when the window has closed and its data is being erased.
     var onClose: ((PrivateWindowController) -> Void)?
     private var session: ProfileSession { context.session }
-    private let sideSetting: SidebarSideSetting
     private lazy var commandBar = FloatingCommandBar { [unowned self] in session }
     private let columnFocus = ColumnFocus()
-    private let pageArea = TabHostView()
+    private let pageArea = TabHostView.withEmptyPage()
     private var layout: BrowserWindowLayout?
     private var toolbar: SidebarToolbar?
     /// The sidebar button hides and shows this window's column; a Private window has no Compact mode and keeps nothing.
@@ -40,9 +39,8 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSMen
     private lazy var permissionPrompter = PermissionPrompter(
         window: { [weak self] in self?.window }, profileName: { _ in "" }, isPrivate: true)
 
-    init(context: PrivateContext, shortcuts: ShortcutController, sideSetting: SidebarSideSetting) {
+    init(context: PrivateContext, shortcuts: ShortcutController) {
         self.context = context
-        self.sideSetting = sideSetting
         let window = PrivateWindow(
             contentRect: NSRect(origin: .zero, size: SafiraDesign.privateWindowSize),
             styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
@@ -112,10 +110,6 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSMen
         session.selectTab(number: number)
     }
 
-    @objc func toggleSidebarSide(_ sender: Any?) {
-        sideSetting.isRight.toggle()
-    }
-
     @objc func moveTabUp(_ sender: Any?) {
         session.selectedTabID.map { session.move($0, by: -1) }
     }
@@ -156,9 +150,6 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSMen
         case #selector(reload(_:)): return tab?.address != nil
         case #selector(showNextTab(_:)), #selector(showPreviousTab(_:)): return session.tabs.count > 1
         case #selector(showTabNumber(_:)): return menuItem.tag <= session.tabs.count
-        case #selector(toggleSidebarSide(_:)):
-            menuItem.state = sideSetting.isRight ? .on : .off
-            return true
         default: return true
         }
     }
@@ -212,7 +203,6 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSMen
         if commandBar.isShown, shownTabChanged, session.commandBarTarget == .selectedTab {
             commandBar.field.stringValue = tab?.address?.absoluteString ?? ""
         }
-        applySide()
         let title = Self.title(for: tab?.state.title)
         window?.title = title
         window?.setAccessibilityLabel(title)
@@ -224,13 +214,6 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSMen
     private func toggleColumn() {
         presentation.toggleCompact()
         layout?.apply(presentation, animated: true)
-    }
-
-    /// The column follows the side setting, and the toolbar's sidebar button follows the column.
-    private func applySide() {
-        guard let layout, let window, layout.side != sideSetting.side else { return }
-        layout.setSide(sideSetting.side)
-        toolbar?.install(in: window)
     }
 
     func window(_ window: NSWindow, willUseFullScreenPresentationOptions proposedOptions: NSApplication.PresentationOptions)
@@ -302,16 +285,17 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSMen
         let canvas = PageCanvasView(page: pageArea, banner: NSView(), commandBar: commandBar.overlay)
         let pageActions = PageActions(
             editAddress: { [weak self] in self?.focusCommandBar(nil) },
-            newTab: { [weak self] in self?.newTab(nil) },
+            // As in the Main window: the Command bar opens once the click on the New Tab row is over.
+            newTab: { Task { @MainActor [weak self] in self?.newTab(nil) } },
             showPage: { [weak self] in self?.showPage() })
         let column = PrivateSidebar(session: session, parent: context.parent, focus: columnFocus, pageActions: pageActions)
         let theme: () -> Theme = { SidebarComposition.privateTheme }
         let layout = BrowserWindowLayout(background: NSHostingView(rootView: WindowBackdrop(theme: theme)),
-                                         column: column, canvas: canvas, side: sideSetting.side)
+                                         column: column, canvas: canvas)
         layout.onToggleSidebar = { [weak self] in self?.toggleColumn() }
         self.layout = layout
         window.contentViewController = layout
-        let toolbar = SidebarToolbar { [weak layout] in layout?.toolbarItems ?? [] }
+        let toolbar = SidebarToolbar(items: layout.toolbarItems)
         toolbar.install(in: window)
         self.toolbar = toolbar
         window.setContentSize(SafiraDesign.privateWindowSize)

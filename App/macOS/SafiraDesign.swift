@@ -25,8 +25,6 @@ enum SafiraDesign {
 
     // MARK: Window
 
-    /// The strip at the sidebar's edge of the window that brings the sidebar back in Compact mode.
-    static let compactEdgeWidth: CGFloat = 6
     static let mainWindowSize = NSSize(width: 1200, height: 800)
     static let privateWindowSize = NSSize(width: 1100, height: 760)
     /// How far a new Private window sits from the one it was opened from.

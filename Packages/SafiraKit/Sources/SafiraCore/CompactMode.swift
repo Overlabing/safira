@@ -28,7 +28,7 @@ public struct SidebarPresentation: Equatable, Sendable {
         setCompact(!isCompact)
     }
 
-    /// The pointer touched the window's edge on the sidebar's side, or the user used the shortcut. No effect outside Compact mode.
+    /// The pointer touched the window's left edge, or the user used the shortcut. No effect outside Compact mode.
     public mutating func reveal() {
         if isCompact { isRevealed = true }
     }
@@ -46,9 +46,9 @@ public struct SidebarPresentation: Equatable, Sendable {
     public static let compactModeTitle = String(localized: "Compact Mode", table: "SafiraCore", bundle: .module,
                                                 comment: "Defaults title of Compact mode")
     public static let compactModeExplanation = String(localized: """
-        The sidebar is hidden and the page uses the full width. Move the pointer to the window's edge on the \
-        sidebar's side, or use Show Sidebar, to bring it back beside the page; it hides again when the pointer leaves it \
-        or you go back to the page.
+        The sidebar is hidden and the page uses the full width. Move the pointer to the window's left edge, or \
+        use Show Sidebar, to bring it back beside the page; it hides again when the pointer leaves it or you go back to \
+        the page.
         """, table: "SafiraCore", bundle: .module, comment: "Defaults: explanation of Compact mode")
 
     public static var defaultEntries: [DefaultEntry] {

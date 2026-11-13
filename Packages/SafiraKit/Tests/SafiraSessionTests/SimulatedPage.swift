@@ -204,10 +204,10 @@ final class SessionFixture {
     init(searchEngine: SearchEngine? = nil, osBuild: String = "26A434",
          id: ProfileID = ProfileID(rawValue: UUID(uuidString: "6F9619FF-8B86-D011-B42D-00C04FC964FF")!),
          history: ProfileDatabase? = nil, permissions: SitePermissions = SitePermissions(),
-         siteIcons: ProfileSiteIcons? = nil) {
+         siteIcons: ProfileSiteIcons? = nil, hasSpaces: Bool = true) {
         session = ProfileSession(profileID: id, settings: ProfileSettings(searchEngine: searchEngine),
                                  osBuild: osBuild, history: history,
-                                 appLinks: AppLinkGate(profileID: id, permissions: permissions),
+                                 appLinks: AppLinkGate(profileID: id, permissions: permissions), hasSpaces: hasSpaces,
                                  siteIcons: siteIcons) { [unowned self] tabID in
             let page = SimulatedPage()
             preparePage(page)
