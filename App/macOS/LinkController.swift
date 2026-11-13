@@ -272,10 +272,12 @@ final class LinkController: NSObject, NSMenuItemValidation {
         NSWorkspace.shared.activateFileViewerSelecting([rulesFile])
     }
 
+    /// The explicit request (Safira menu, Defaults window, onboarding button): the only way Safira asks. Keep in the
+    /// system's confirmation is a decline, which shows nothing.
     @objc func makeDefaultBrowser(_ sender: Any?) {
         Task { @MainActor in
             do {
-                try await defaultBrowser.makeDefault()
+                _ = try await defaultBrowser.makeDefault()
             } catch {
                 UserFacingAlert.runModal(.defaultBrowserNotSet(error))
             }

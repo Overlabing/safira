@@ -30,7 +30,7 @@ private func defaults(_ system: SimulatedDefaultApplications) async -> [String?]
     @Test func makingSafiraTheDefaultAsksForHTTPHTTPSAndHTMLFiles() async throws {
         let system = SimulatedDefaultApplications(installed: ["com.overlabing.safira": appURL])
 
-        try await browser(system).makeDefault()
+        #expect(try await browser(system).makeDefault() == .accepted)
 
         #expect(await defaults(system) == ["Safira", "Safira", "Safira", "Safira"])
         #expect(await system.defaultApplication(forContentType: .html)?.bundleIdentifier == "com.overlabing.safira")
@@ -41,7 +41,7 @@ private func defaults(_ system: SimulatedDefaultApplications) async -> [String?]
             defaults: ["http": other, "https": other], contentTypes: ["public.html": other, "public.xhtml": other],
             installed: ["com.overlabing.safira": appURL])
 
-        try await browser(system).makeDefault()
+        #expect(try await browser(system).makeDefault() == .accepted)
 
         #expect(await defaults(system) == ["Safira", "Safira", "Safira", "Safira"])
     }
@@ -64,7 +64,7 @@ private func defaults(_ system: SimulatedDefaultApplications) async -> [String?]
         system.setDefault(safira, forScheme: "http")
         #expect(await browser.isDefault() == false)
 
-        try await browser.makeDefault()
+        #expect(try await browser.makeDefault() == .accepted)
         #expect(await browser.isDefault() == true)
     }
 
@@ -85,6 +85,49 @@ private func defaults(_ system: SimulatedDefaultApplications) async -> [String?]
 
         #expect(await defaults(system) == ["Other", "Safira", "Safira", "Safira"])
         #expect(await browser.isDefault() == false)
+    }
+
+    /// Keep in the system's confirmation, as measured on an HTML request: Cocoa error 256 over `userCanceledErr`.
+    @Test func keepingTheCurrentBrowserIsADeclineAndNothingMoreIsAsked() async throws {
+        let system = SimulatedDefaultApplications(defaults: ["http": other, "https": other],
+                                                  contentTypes: ["public.html": other, "public.xhtml": other])
+        let cancelled = NSError(domain: NSOSStatusErrorDomain, code: -128)
+        system.failNext(with: NSError(domain: NSCocoaErrorDomain, code: 256, userInfo: [NSUnderlyingErrorKey: cancelled]))
+
+        #expect(try await browser(system).makeDefault() == .declined)
+
+        #expect(await defaults(system) == ["Other", "Other", "Other", "Other"], "no request after the decline")
+        #expect(await browser(system).isDefault() == false)
+    }
+
+    @Test func userCanceledErrOnItsOwnIsADeclineToo() async throws {
+        let system = SimulatedDefaultApplications(defaults: ["http": other, "https": other])
+        system.failNext(with: NSError(domain: NSOSStatusErrorDomain, code: -128))
+
+        #expect(try await browser(system).makeDefault() == .declined)
+        #expect(await defaults(system) == ["Other", "Other", nil, nil])
+    }
+
+    /// Only the cancellation is a decline: another error under the same Cocoa wrapper is still a failure.
+    @Test func anotherWrappedErrorIsStillAFailure() async {
+        let system = SimulatedDefaultApplications(defaults: ["http": other, "https": other])
+        let denied = NSError(domain: NSOSStatusErrorDomain, code: -54)
+        system.failNext(with: NSError(domain: NSCocoaErrorDomain, code: 256, userInfo: [NSUnderlyingErrorKey: denied]))
+
+        await #expect(throws: NSError.self) { try await browser(system).makeDefault() }
+
+        #expect(await defaults(system) == ["Other", "Safira", "Safira", "Safira"])
+    }
+
+    /// A second request after a decline asks again: Safira itself never repeats it, only the explicit button does.
+    @Test func askingAgainAfterADeclineAsksTheSystemAgain() async throws {
+        let system = SimulatedDefaultApplications(defaults: ["http": other, "https": other])
+        let browser = browser(system)
+        system.failNext(with: NSError(domain: NSOSStatusErrorDomain, code: -128))
+        #expect(try await browser.makeDefault() == .declined)
+
+        #expect(try await browser.makeDefault() == .accepted)
+        #expect(await browser.isDefault() == true)
     }
 }
 
