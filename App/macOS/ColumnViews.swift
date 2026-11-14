@@ -195,8 +195,10 @@ struct SidebarRowContent<Leading: View, Trailing: View>: View {
                     }
                 }
                 Spacer(minLength: 0)
-                trailing
+                // Centred on the whole row, not on the title's line, when the row has detail lines.
+                trailing.frame(maxHeight: .infinity)
             }
+            .fixedSize(horizontal: false, vertical: true)
             .contentShape(WholeCell(horizontal: tokens.spacing.listMargin,
                                     vertical: tokens.spacing.rowGap / 2 + tokens.spacing.rowInsetVertical
                                         + tokens.spacing.textLines))
