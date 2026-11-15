@@ -31,7 +31,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/groue/GRDB.swift", exact: "7.11.1"),
-        .package(url: "https://github.com/Overlabing/ThemeKit", revision: "6563f4f4be0f7684d571c3134b507b4ab58ef140"),
+        .package(url: "https://github.com/Overlabing/ThemeKit", exact: "0.2.13"),
         .package(url: "https://github.com/Overlabing/AppSupportKit", exact: "0.1.2"),
         .package(url: "https://github.com/Overlabing/CommandKit", exact: "0.1.3"),
         .package(url: "https://github.com/Overlabing/DiagnosticsKit", exact: "0.1.2"),
