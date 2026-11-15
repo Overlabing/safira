@@ -35,7 +35,7 @@ import Testing
     #expect(ZoomSite(URL(string: "https://News.Example.com/a?b=1")!)?.host == "news.example.com")
     #expect(ZoomSite(URL(string: "http://news.example.com:8080/")!) == ZoomSite(URL(string: "https://news.example.com/x")!))
     #expect(ZoomSite(URL(string: "https://example.com/")!) != ZoomSite(URL(string: "https://www.example.com/")!))
-    #expect(ZoomSite(URL(string: "file:///Users/me/page.html")!) == nil)
+    #expect(ZoomSite(URL(string: "file:///page.html")!) == nil)
     #expect(ZoomSite(URL(string: "about:blank")!) == nil)
     #expect(ZoomSite(nil) == nil)
 }
