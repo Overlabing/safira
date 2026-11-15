@@ -147,3 +147,28 @@ private func preset(_ json: String) throws -> ShortcutSet<CommandID> {
     #expect(ShortcutPreset.zen.set.own[.newPrivateWindow]?.first?.from == "Open Private Browsing Window (Shift+Ctrl+P)")
     #expect(ShortcutPreset.arc.set.own[.newPrivateWindow]?.first?.from == "New incognito window (Command-Shift-N)")
 }
+
+@Test(arguments: [nil] + ShortcutPreset.allCases.map(Optional.some))
+func commandCommaOpensSettingsInEveryPreset(preset: ShortcutPreset?) {
+    #expect(menuKey(preset, .settings) == "⌘,", "\(String(describing: preset))")
+    #expect(bindings(preset).owner(of: Shortcut(","), other: .settings) == nil)
+}
+
+@Test(arguments: [nil] + ShortcutPreset.allCases.map(Optional.some))
+func plainCommandEqualsAlsoZoomsInInEveryPreset(preset: ShortcutPreset?) {
+    let aliases = SafiraShortcuts.menuAliases(bindings(preset))
+    #expect(aliases.map(\.command) == [.zoomIn], "\(String(describing: preset))")
+    #expect(aliases.map(\.shortcut.symbols) == ["⌘="], "\(String(describing: preset))")
+    #expect(menuKey(preset, .zoomIn) == "⌘+")
+}
+
+@Test func theAliasFollowsItsKeyAndYieldsToACommandThatHasIt() throws {
+    var moved = bindings(nil)
+    try moved.unbind(.zoomIn, rules: SafiraShortcuts.rules)
+    try moved.record(Shortcut("+"), for: .reload, rules: SafiraShortcuts.rules)
+    #expect(SafiraShortcuts.menuAliases(moved).map(\.command) == [.reload])
+
+    var taken = bindings(nil)
+    try taken.record(Shortcut("="), for: .reload, rules: SafiraShortcuts.rules)
+    #expect(SafiraShortcuts.menuAliases(taken).isEmpty)
+}

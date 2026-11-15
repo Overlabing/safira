@@ -2,49 +2,17 @@
 // Copyright (c) 2026 Antonin Carlin
 
 import AppKit
+import AppShellKit
 import CommandKit
 import CommandKitAppKit
 import Commands
 import SwiftUI
 
-/// The window where the user picks a Shortcut preset and changes individual shortcuts. The window is built the first
-/// time it is shown: the menu creates this controller at launch, and a window that exists without ever being shown
-/// still counts among the app's windows.
-@MainActor
-final class ShortcutsWindowController: NSWindowController {
-    private let shortcuts: ShortcutController
-
-    init(shortcuts: ShortcutController) {
-        self.shortcuts = shortcuts
-        super.init(window: nil)
-    }
-
-    @available(*, unavailable)
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) is not used")
-    }
-
-    @objc func show(_ sender: Any?) {
-        if window == nil {
-            let window = NSWindow(contentViewController: NSHostingController(rootView: ShortcutsSettingsView(shortcuts: shortcuts)))
-            window.title = String(localized: "Shortcuts", comment: "Window title")
-            window.styleMask = [.titled, .closable, .resizable]
-            window.isReleasedWhenClosed = false
-            window.isRestorable = false
-            window.setContentSize(NSSize(width: 600, height: 720))
-            self.window = window
-        }
-        window?.center()
-        showWindow(nil)
-        NSApp.activate()
-    }
-}
-
-/// As in Oisillon's Shortcuts pane: the preset, then every command by section with its keys on a recorder button. A key
-/// refused (taken, reserved, one that would type text) is said in red under its row with the reason; so is a key two
-/// commands share, which only changes saved against another version of a preset can cause. Reset gives a command its
-/// preset's keys back, Reset All Changes every command.
-private struct ShortcutsSettingsView: View {
+/// The Shortcuts pane of the Settings window, as in Oisillon's: the preset, then every command by section with its keys
+/// on a recorder button. A key refused (taken, reserved, one that would type text) is said in red under its row with the
+/// reason; so is a key two commands share, which only changes saved against another version of a preset can cause.
+/// Reset gives a command its preset's keys back, Reset All Changes every command.
+struct ShortcutsSettingsView: View {
     let shortcuts: ShortcutController
     @State private var recorder = ShortcutRecorder()
     /// The last key refused, under the row of its command.
@@ -98,8 +66,7 @@ private struct ShortcutsSettingsView: View {
                 .foregroundStyle(.secondary)
             }
         }
-        .formStyle(.grouped)
-        .frame(minWidth: 520, minHeight: 480)
+        .settingsPaneLayout(SettingsWindowController.metrics)
         .onDisappear { recorder.stop() }
         .confirmationDialog(
             String(localized: "Change the Shortcut preset?", comment: "Shortcuts window: confirmation title"),

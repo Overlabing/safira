@@ -16,7 +16,9 @@
     {"catalogs": ["Packages/SafiraKit/Sources/Diagnostics/Resources/Diagnostics.xcstrings"], "targets": ["Diagnostics"],
      "sources": ["Packages/SafiraKit/Sources/Diagnostics"]},
     {"catalogs": ["Packages/SafiraKit/Sources/Onboarding/Resources/Onboarding.xcstrings"], "targets": ["Onboarding"],
-     "sources": ["Packages/SafiraKit/Sources/Onboarding"]}
+     "sources": ["Packages/SafiraKit/Sources/Onboarding"]},
+    {"catalogs": ["Packages/SafiraKit/Sources/SafiraSettings/Resources/SafiraSettings.xcstrings"], "targets": ["SafiraSettings"],
+     "sources": ["Packages/SafiraKit/Sources/SafiraSettings"]}
   ],
   "notExtracted": ["App/macOS/InfoPlist.xcstrings"],
   "locales": "all",

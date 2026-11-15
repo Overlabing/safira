@@ -19,6 +19,7 @@ public enum CommandID: String, CommandIdentifier {
     case newProfile, renameProfile, deleteProfile, previousProfile, nextProfile, sitePermissions
     case clearBrowsingData
     case showDownloads
+    case settings
     case selectTab1, selectTab2, selectTab3, selectTab4, selectTab5, selectTab6, selectTab7, selectTab8, selectTab9
     case selectSpace1, selectSpace2, selectSpace3, selectSpace4, selectSpace5, selectSpace6, selectSpace7, selectSpace8
     case selectSpace9
@@ -97,6 +98,7 @@ public enum CommandID: String, CommandIdentifier {
         case .clearBrowsingData:
             String(localized: "Clear History and Website Data…", table: "Commands", bundle: .module, comment: "Command: menu item and Shortcuts row")
         case .showDownloads: String(localized: "Downloads", table: "Commands", bundle: .module, comment: "Command: menu item and Shortcuts row")
+        case .settings: String(localized: "Settings…", table: "Commands", bundle: .module, comment: "Command: menu item and Shortcuts row; opens the Settings window")
         case .selectTab1, .selectTab2, .selectTab3, .selectTab4, .selectTab5, .selectTab6, .selectTab7, .selectTab8, .selectTab9,
              .selectSpace1, .selectSpace2, .selectSpace3, .selectSpace4, .selectSpace5, .selectSpace6, .selectSpace7,
              .selectSpace8, .selectSpace9:

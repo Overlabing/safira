@@ -8,8 +8,8 @@ import SafiraCore
 import SafiraWeb
 import SwiftUI
 
-/// Connects the registry of defaults to the settings that hold them, for onboarding and for the Defaults window. A
-/// switch of the Defaults window changes its setting at once; onboarding hands all of them over when it finishes.
+/// Connects the registry of defaults to the settings that hold them, for onboarding and for the Settings window. A
+/// switch of the Settings window changes its setting at once; onboarding hands all of them over when it finishes.
 @MainActor
 final class DefaultsController: NSObject {
     private let registry: ProfileRegistry
@@ -17,7 +17,6 @@ final class DefaultsController: NSObject {
     private let diagnostics: DiagnosticsController
     private let links: LinkController
     private let shortcuts: ShortcutController
-    private var window: NSWindow?
 
     init(registry: ProfileRegistry, updates: UpdateController, diagnostics: DiagnosticsController, links: LinkController,
          shortcuts: ShortcutController) {
@@ -55,16 +54,23 @@ final class DefaultsController: NSObject {
         }
     }
 
-    /// The model of the Defaults window: switches at their present positions, applied as they move.
+    /// The model of the Settings window's switches: at their present positions, applied as they move.
     func makeSummaryModel() -> DefaultsSummaryModel {
         let model = DefaultsSummaryModel(current: { [unowned self] in isOn($0) }, apply: { [unowned self] id, isOn in
             set(id, isOn: isOn)
         })
+        refresh(model)
+        return model
+    }
+
+    /// Reads the switches and the shown values again: the Settings window stays open while the menu, or a switch to
+    /// another Profile, changes them.
+    func refresh(_ model: DefaultsSummaryModel) {
+        model.refresh { [unowned self] in isOn($0) }
         model.displayedValues["search.engine"] = registry.active.session.settings.searchEngine?.name
             ?? String(localized: "Not chosen", comment: "Defaults window: the value of Search engine before a choice")
         model.displayedValues["shortcuts.preset"] = shortcuts.preset?.name
             ?? String(localized: "Safira's own shortcuts", comment: "Defaults window: the value of Shortcut preset without a preset")
-        return model
     }
 
     /// The model onboarding fills in: nothing is applied until it finishes, so the switches start at the documented
@@ -92,26 +98,6 @@ final class DefaultsController: NSObject {
         for (id, wanted) in choices.toggles where !id.hasPrefix("web.") && wanted != isOn(id) {
             set(id, isOn: wanted)
         }
-    }
-
-    // MARK: The Defaults window
-
-    @objc func showDefaults(_ sender: Any?) {
-        let view = DefaultsWindowView(model: makeSummaryModel(), controller: self)
-        let window = self.window ?? {
-            let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 600, height: 640),
-                                  styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
-            window.title = String(localized: "Defaults", comment: "Window title")
-            window.isRestorable = false
-            window.isReleasedWhenClosed = false
-            window.center()
-            return window
-        }()
-        window.contentViewController = NSHostingController(rootView: view)
-        window.setContentSize(NSSize(width: 600, height: 640))
-        self.window = window
-        window.makeKeyAndOrderFront(nil)
-        NSApp.activate()
     }
 
     // MARK: Choices that are not switches

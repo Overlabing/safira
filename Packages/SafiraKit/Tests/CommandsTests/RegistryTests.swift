@@ -7,7 +7,7 @@ import Testing
 
 @Test func everyCommandHasItsOwnTitle() {
     #expect(Set(CommandID.allCases.map(\.title)).count == CommandID.allCases.count)
-    #expect(CommandID.allCases.count == 62)
+    #expect(CommandID.allCases.count == 63)
     #expect(CommandID.compactMode.title == "Compact Mode")
     #expect(CommandID.showSidebar.title == "Show Sidebar")
     #expect(CommandID.selectTab1.title == "Show Tab 1")
@@ -52,7 +52,7 @@ import Testing
     for command in [CommandID.commandBarNext, .commandBarPrevious] {
         #expect(!SafiraShortcuts.rules.isRebindable(command))
     }
-    #expect(rebindable.count == 60)
+    #expect(rebindable.count == 61)
 }
 
 @Test func aFixedCommandRefusesARecordedKey() {

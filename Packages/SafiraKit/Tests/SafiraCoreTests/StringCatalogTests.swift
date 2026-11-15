@@ -87,7 +87,7 @@ private func specifiers(_ text: String) -> [String] {
 @Test func everyModuleThatShowsTextHasItsCatalog() {
     let paths = Set(Catalog.all.map(\.path))
     for module in ["SafiraCore", "SafiraSession", "SafiraWeb", "Commands", "LinkRouting", "LinkPickerUI", "Diagnostics",
-                   "Onboarding"] {
+                   "Onboarding", "SafiraSettings"] {
         #expect(paths.contains("Packages/SafiraKit/Sources/\(module)/Resources/\(module).xcstrings"), "\(module)")
     }
     #expect(paths.contains("App/macOS/Localizable.xcstrings"))

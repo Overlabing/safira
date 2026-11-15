@@ -6,12 +6,11 @@ import SafiraSession
 import SwiftUI
 
 /// The sites one Profile remembers a camera, microphone or location decision for, and the kinds of link it remembers
-/// whether to open an app for, with a button to revoke each. It lists the Profile it was opened for and no other:
-/// there is no global permission screen.
+/// whether to open an app for, with a button to revoke each. It lists the Active profile and no other: there is no
+/// global permission screen.
 struct SitePermissionsView: View {
     let profileName: String
     let permissions: SitePermissions
-    let done: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -70,15 +69,11 @@ struct SitePermissionsView: View {
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
             HStack {
+                Spacer()
                 Button("Revoke All", role: .destructive) { permissions.revokeAll() }
                     .disabled(permissions.all.isEmpty && permissions.appLinks.isEmpty)
-                Spacer()
-                Button("Done", action: done)
-                    .keyboardShortcut(.defaultAction)
             }
         }
-        .padding(20)
-        .frame(width: 440)
     }
 
     static func name(of kind: PermissionKind) -> String {

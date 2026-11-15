@@ -28,6 +28,12 @@
         "from": "Close current tab or window (Command-W)"
       }
     ],
+    "settings": [
+      {
+        "shortcut": "⌘,",
+        "from": "macOS convention for an app's Settings; not checked against the cited page when this command was added on 2026-11-15"
+      }
+    ],
     "quit": [
       {
         "shortcut": "⌘Q",

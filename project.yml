@@ -37,6 +37,11 @@ packages:
   CommandKit:
     url: https://github.com/Overlabing/CommandKit
     exactVersion: 0.1.3
+  # The Settings window's shell (#75). Linked through SafiraSettings; the app draws the window with it. Pinned here too,
+  # as AppSupportKit.
+  AppShellKit:
+    url: https://github.com/Overlabing/AppShellKit
+    exactVersion: 0.1.0
 settings:
   base:
     SWIFT_VERSION: "6.0"
@@ -58,7 +63,7 @@ targets:
     scheme: {}
     dependencies:
       - package: SafiraKit
-        products: [SafiraCore, SafiraStore, SafiraSession, SafiraWeb, Commands, LinkRouting, LinkPickerUI, Diagnostics, Onboarding, Appearance]
+        products: [SafiraCore, SafiraStore, SafiraSession, SafiraWeb, Commands, LinkRouting, LinkPickerUI, Diagnostics, Onboarding, Appearance, SafiraSettings]
       - package: ThemeKit
         products: [ColorCore, ColorPlatform, ColorUI, DesignKit]
       - package: AppSupportKit
@@ -67,6 +72,8 @@ targets:
         products: [CommandKit, CommandKitAppKit]
       - package: DiagnosticsKit
         product: DiagnosticsKit
+      - package: AppShellKit
+        product: AppShellKit
       - package: Sparkle
         product: Sparkle
         # Re-signs Sparkle.framework with the app's identity on copy: an ad hoc app refuses a framework that keeps

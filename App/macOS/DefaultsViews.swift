@@ -102,17 +102,15 @@ private extension DefaultEntry {
     }
 }
 
-/// The Defaults window: the same list as the end of the onboarding, with each change applied as it is made.
-struct DefaultsWindowView: View {
+/// The Defaults pane of the Settings window: the same list as the end of the onboarding, with each change applied as it
+/// is made.
+struct DefaultsPaneView: View {
     let model: DefaultsSummaryModel
     let controller: DefaultsController
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Defaults")
-                .font(.title2.bold())
-                .accessibilityAddTraits(.isHeader)
-            Text("Everything Safira decided for you, and where to change it. Nothing is sent without an action of yours. Web content switches apply to \(controller.activeProfileName), and to pages opened from now on.")
+            Text("Nothing is sent without an action of yours. Web content switches apply to \(controller.activeProfileName), and to pages opened from now on.")
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -123,7 +121,5 @@ struct DefaultsWindowView: View {
                 isDefaultBrowser: controller.defaultBrowserActions.isDefault,
                 makeDefaultBrowser: controller.defaultBrowserActions.make))
         }
-        .padding(16)
-        .frame(minWidth: 480, idealWidth: 600, minHeight: 400, idealHeight: 640)
     }
 }

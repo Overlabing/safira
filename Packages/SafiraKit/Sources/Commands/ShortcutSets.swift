@@ -77,6 +77,20 @@ public enum SafiraShortcuts {
         usedWhileTyping: Set(CommandID.allCases),
         beforeFocusedView: [.newTab, .newWindow, .closeTab, .reopenClosedTab, .openCommandBar, .quit, .previousTab, .nextTab])
 
+    /// Keys the menu also accepts for the command that has the first one, as Safari takes ⌘= for ⌘+ (⇧⌘= on most
+    /// layouts). An alias is a hidden menu item, never a binding: it moves with its key when the user rebinds it.
+    public static let menuKeyAliases: [Shortcut: Shortcut] = [Shortcut("+"): Shortcut("=")]
+
+    /// The hidden menu items to add for `bindings`: each alias of a command's menu key, unless a command already has
+    /// the alias.
+    public static func menuAliases(_ bindings: ShortcutBindings<CommandID>) -> [(command: CommandID, shortcut: Shortcut)] {
+        CommandID.allCases.compactMap { command in
+            guard let key = bindings.shortcut(command), let alias = menuKeyAliases[key],
+                  bindings.owner(of: alias) == nil else { return nil }
+            return (command, alias)
+        }
+    }
+
     /// The sections of the Shortcuts window, in the order of the menus. A command with no behaviour yet is left out.
     public static var groups: [ShortcutReference<CommandID>.Group] {
         [
@@ -84,7 +98,7 @@ public enum SafiraShortcuts {
                                             comment: "Shortcuts window: section title"),
                   commands: [.newTab, .newPrivateWindow, .openCommandBar, .closeTab, .reopenClosedTab, .closeWindow,
                              .togglePin, .newFolder, .previousTab, .nextTab, .moveTabUp, .moveTabDown]
-                      + CommandID.selectTabCommands + [.showDownloads, .quit]),
+                      + CommandID.selectTabCommands + [.showDownloads, .settings, .quit]),
             .init(id: "view", title: String(localized: "View and History", table: "Commands", bundle: .module,
                                             comment: "Shortcuts window: section title"),
                   commands: [.reload, .compactMode, .showSidebar, .focusTabList, .goBack, .goForward]),

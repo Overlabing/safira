@@ -8,10 +8,10 @@ import SwiftUI
 import UniformTypeIdentifiers
 import UserFacing
 
-/// The Link rules window: the rules in order with delete and reorder, import and export, and the check "Where would
-/// this link go?".
+/// The Link Rules pane of the Settings window: the rules in order with delete and reorder, import and export, and the
+/// check "Where would this link go?".
 @MainActor
-final class LinkRulesWindowController: NSWindowController, NSWindowDelegate {
+final class LinkRulesPane {
     let model: LinkRulesModel
     private let rulesFile: URL
     private let profiles: @MainActor () -> [Profile]
@@ -20,37 +20,12 @@ final class LinkRulesWindowController: NSWindowController, NSWindowDelegate {
         self.model = model
         self.rulesFile = rulesFile
         self.profiles = profiles
-        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 640, height: 600),
-                              styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
-        window.title = String(localized: "Link Rules", comment: "Link rules window")
-        window.isReleasedWhenClosed = false
-        window.minSize = NSSize(width: 600, height: 540)
-        window.isRestorable = false
-        super.init(window: window)
-        window.delegate = self
-        window.contentViewController = NSHostingController(rootView: LinkRulesView(model: model, actions: LinkRulesActions(
+    }
+
+    var actions: LinkRulesActions {
+        LinkRulesActions(
             importFile: { [weak self] in self?.importFile() }, importZenPicker: { [weak self] in self?.importZenPicker() },
-            export: { [weak self] in self?.export() }, showInFinder: { [weak self] in self?.showInFinder() })))
-        // The hosting controller sizes the window to the view's minimum, which would clip the check's answer.
-        window.setContentSize(NSSize(width: 680, height: 620))
-        window.setFrameAutosaveName("LinkRulesWindow")
-    }
-
-    @available(*, unavailable)
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) is not used")
-    }
-
-    @objc func show(_ sender: Any?) {
-        model.reload()
-        if window?.isVisible == false { window?.center() }
-        showWindow(nil)
-        NSApp.activate()
-    }
-
-    /// The file may have been edited by hand while the window was in the background.
-    func windowDidBecomeKey(_ notification: Notification) {
-        model.reload()
+            export: { [weak self] in self?.export() }, showInFinder: { [weak self] in self?.showInFinder() })
     }
 
     // MARK: - Files
@@ -168,7 +143,7 @@ struct LinkRulesActions {
     let showInFinder: () -> Void
 }
 
-private struct LinkRulesView: View {
+struct LinkRulesView: View {
     @Bindable var model: LinkRulesModel
     let actions: LinkRulesActions
 
@@ -187,8 +162,6 @@ private struct LinkRulesView: View {
             Divider()
             check
         }
-        .padding(16)
-        .frame(minWidth: 600, minHeight: 540)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 
@@ -200,7 +173,7 @@ private struct LinkRulesView: View {
             }
         }
         .listStyle(.bordered)
-        .frame(minHeight: 200)
+        .frame(minHeight: 120)
         .overlay {
             if model.entries.isEmpty {
                 Text("No Link rules yet. Choose “Always” in the Link picker, or import a file.")

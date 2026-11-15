@@ -1,0 +1,138 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Debug" : {
+      "comment" : "Settings: pane title",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Débogage"
+          }
+        }
+      }
+    },
+    "Defaults" : {
+      "comment" : "Settings: pane title; every default Safira chose for the user",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choix par défaut"
+          }
+        }
+      }
+    },
+    "Everything Safira decided for you, and where to change it." : {
+      "comment" : "Settings: subtitle of the Defaults pane",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout ce que Safira a choisi pour vous, et où le modifier."
+          }
+        }
+      }
+    },
+    "General" : {
+      "comment" : "Settings: pane title",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Général"
+          }
+        }
+      }
+    },
+    "Link Rules" : {
+      "comment" : "Settings: pane title",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Règles de lien"
+          }
+        }
+      }
+    },
+    "Local logs to attach to a report." : {
+      "comment" : "Settings: subtitle of the Debug pane",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Des journaux locaux à joindre à un signalement."
+          }
+        }
+      }
+    },
+    "Shortcuts" : {
+      "comment" : "Settings: pane title",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Raccourcis"
+          }
+        }
+      }
+    },
+    "Site Permissions" : {
+      "comment" : "Settings: pane title",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autorisations des sites"
+          }
+        }
+      }
+    },
+    "The preset, and the keys of every command." : {
+      "comment" : "Settings: subtitle of the Shortcuts pane",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le préréglage, et les touches de chaque commande."
+          }
+        }
+      }
+    },
+    "Updates and the default browser." : {
+      "comment" : "Settings: subtitle of the General pane",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les mises à jour et le navigateur par défaut."
+          }
+        }
+      }
+    },
+    "What sites of the current Profile may use." : {
+      "comment" : "Settings: subtitle of the Site Permissions pane",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce que les sites du profil actuel peuvent utiliser."
+          }
+        }
+      }
+    },
+    "Where links from other apps open." : {
+      "comment" : "Settings: subtitle of the Link Rules pane",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Où s’ouvrent les liens venus d’autres apps."
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

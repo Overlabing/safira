@@ -31,6 +31,12 @@
         "from": "Browser-level shortcut: always reaches the menu, never the page"
       }
     ],
+    "settings": [
+      {
+        "shortcut": "⌘,",
+        "from": "The macOS convention for an app's Settings"
+      }
+    ],
     "quit": [
       {
         "shortcut": "⌘Q",
