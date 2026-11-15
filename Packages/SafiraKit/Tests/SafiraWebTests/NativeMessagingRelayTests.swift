@@ -56,7 +56,7 @@ import WebKit
         try relay.connect(port, extensionIdentifier: Self.fixtureID)
         // Posted before the connection is ready: it waits, then goes first.
         port.post(["type": "pair", "name": "Safira — Work"])
-        try await waitUntil("the bridge received the message") { bridge.received(0).count == 1 }
+        try await waitUntil("the bridge received the message", timeout: .seconds(20)) { bridge.received(0).count == 1 }
         #expect(bridge.received(0) == [Data(#"{"name":"Safira — Work","type":"pair"}"#.utf8)])
 
         // Sent in two pieces, the way TCP may deliver it.
@@ -64,7 +64,7 @@ import WebKit
         bridge.send(reply.prefix(6), on: 0)
         try await Task.sleep(for: .milliseconds(50))
         bridge.send(reply.dropFirst(6), on: 0)
-        try await waitUntil("the port received the bridge's frame") { port.received.count == 1 }
+        try await waitUntil("the port received the bridge's frame", timeout: .seconds(20)) { port.received.count == 1 }
         #expect(port.received.first as? NSDictionary == ["type": "pairing", "key": "BASE64", "client": "c1"])
         #expect(!port.isDisconnected)
         #expect(relay.openPortCount == 1)
@@ -77,10 +77,10 @@ import WebKit
         let port = FakePort("app.safira.test")
         try relay.connect(port, extensionIdentifier: Self.fixtureID)
         port.post(["type": "status"])
-        try await waitUntil("the bridge received the message") { bridge.received(0).count == 1 }
+        try await waitUntil("the bridge received the message", timeout: .seconds(20)) { bridge.received(0).count == 1 }
 
         port.disconnectFromExtension()
-        try await waitUntil("the bridge saw the connection end") { bridge.hasEnded(0) }
+        try await waitUntil("the bridge saw the connection end", timeout: .seconds(20)) { bridge.hasEnded(0) }
         #expect(relay.openPortCount == 0)
     }
 
@@ -91,16 +91,16 @@ import WebKit
         let first = FakePort("app.safira.test")
         try relay.connect(first, extensionIdentifier: Self.fixtureID)
         first.post(["n": 1])
-        try await waitUntil("the first connection carried the message") { bridge.received(0).count == 1 }
+        try await waitUntil("the first connection carried the message", timeout: .seconds(20)) { bridge.received(0).count == 1 }
 
         bridge.close(0)
-        try await waitUntil("the port was disconnected") { first.isDisconnected }
+        try await waitUntil("the port was disconnected", timeout: .seconds(20)) { first.isDisconnected }
         #expect(relay.openPortCount == 0)
 
         let second = FakePort("app.safira.test")
         try relay.connect(second, extensionIdentifier: Self.fixtureID)
         second.post(["n": 2])
-        try await waitUntil("a second connection carried the next message") { bridge.received(1).count == 1 }
+        try await waitUntil("a second connection carried the next message", timeout: .seconds(20)) { bridge.received(1).count == 1 }
         #expect(bridge.received(1) == [Data(#"{"n":2}"#.utf8)])
         #expect(!second.isDisconnected)
     }
@@ -115,7 +115,7 @@ import WebKit
         try relay.connect(port, extensionIdentifier: Self.fixtureID)
         port.post(["type": "status"])
 
-        try await waitUntil("the port was disconnected") { port.isDisconnected }
+        try await waitUntil("the port was disconnected", timeout: .seconds(20)) { port.isDisconnected }
         #expect(launched == ["app.safira.test.mac"])
         #expect(port.received.count == 1)
         #expect(port.received.first as? NSDictionary == ["type": "error", "code": "app_unavailable"])
@@ -131,7 +131,7 @@ import WebKit
         let port = FakePort("app.safira.test")
         try relay.connect(port, extensionIdentifier: Self.fixtureID)
         port.post(["type": "status"])
-        try await waitUntil("the app was launched") { launched == 1 }
+        try await waitUntil("the app was launched", timeout: .seconds(20)) { launched == 1 }
 
         port.disconnectFromExtension()
         #expect(relay.openPortCount == 0)
@@ -144,13 +144,15 @@ import WebKit
         let closedPort = try await FakeBridge.unusedPort()
         var bridge: FakeBridge?
         let relay = NativeMessagingRelay(applications: [Self.application(port: closedPort)]) { _ in
-            Task { bridge = try await FakeBridge.start(port: closedPort) }
+            Task {
+                do { bridge = try await FakeBridge.start(port: closedPort) } catch { Issue.record(error) }
+            }
         }
         defer { bridge?.stop() }
         let port = FakePort("app.safira.test")
         try relay.connect(port, extensionIdentifier: Self.fixtureID)
         port.post(["type": "status"])
-        try await waitUntil("the launched bridge received the message") { bridge?.received(0).count == 1 }
+        try await waitUntil("the launched bridge received the message", timeout: .seconds(20)) { bridge?.received(0).count == 1 }
         #expect(!port.isDisconnected)
     }
 
@@ -178,7 +180,7 @@ import WebKit
                                                 extensionIdentifier: Self.fixtureID)
         #expect(reply as? NSDictionary == ["type": "response", "data": "SEALED"])
         #expect(bridge.received(0) == [Data(#"{"type":"request"}"#.utf8)])
-        try await waitUntil("the one-time connection was closed") { bridge.hasEnded(0) }
+        try await waitUntil("the one-time connection was closed", timeout: .seconds(20)) { bridge.hasEnded(0) }
     }
 
     @Test func theRealVerrouEntryNamesItsBridge() {
@@ -201,23 +203,23 @@ import WebKit
         try await host.loadUnpacked(at: folder)
         try await ExtensionHostTests.loadBackgroundContent(of: profile)
 
-        try await waitUntil("the extension's first message reached the bridge") { bridge.received(0).count == 1 }
+        try await waitUntil("the extension's first message reached the bridge", timeout: .seconds(20)) { bridge.received(0).count == 1 }
         #expect(bridge.received(0) == [Data(#"{"hello":"first"}"#.utf8)])
 
         bridge.send(try NativeMessageFrames.encode(["type": "pairing", "key": "é"]), on: 0)
-        try await waitUntil("the extension echoed the bridge's frame") { bridge.received(0).count == 2 }
+        try await waitUntil("the extension echoed the bridge's frame", timeout: .seconds(20)) { bridge.received(0).count == 2 }
         let echo = try JSONSerialization.jsonObject(with: bridge.received(0)[1]) as? NSDictionary
         #expect(echo == ["echo": ["type": "pairing", "key": "é"]])
 
         bridge.close(0)
-        try await waitUntil("the extension connected again") { bridge.received(1).count == 1 }
+        try await waitUntil("the extension connected again", timeout: .seconds(20)) { bridge.received(1).count == 1 }
         #expect(bridge.received(1) == [Data(#"{"hello":"again"}"#.utf8)])
-        try await waitUntil("only the new port is relayed") { host.nativeMessaging.openPortCount == 1 }
+        try await waitUntil("only the new port is relayed", timeout: .seconds(20)) { host.nativeMessaging.openPortCount == 1 }
     }
 
     // MARK: Helpers
 
-    static func application(port: UInt16, wait: Duration = .seconds(3)) -> NativeApplication {
+    static func application(port: UInt16, wait: Duration = .seconds(10)) -> NativeApplication {
         NativeApplication(applicationIdentifier: "app.safira.test", extensionIdentifier: fixtureID,
                           bundleIdentifier: "app.safira.test.mac", port: port, launchWait: wait)
     }
@@ -299,56 +301,97 @@ final class FakeBridge: @unchecked Sendable {
         self.answer = answer
     }
 
-    /// A port nothing listens on: taken from the system, then released.
+    /// A port nothing listens on, below the ephemeral range like Verrou's: a client that retries a closed ephemeral
+    /// port can be given it as its own and connect to itself.
     static func unusedPort() async throws -> UInt16 {
         let bridge = try await start()
         bridge.stop()
         return bridge.port
     }
 
-    /// - Parameter answer: sent back after the first frame of each connection, as a one-time message expects.
-    static func start(port: UInt16 = 0, answer: [String: String]? = nil) async throws -> FakeBridge {
+    /// - Parameters:
+    ///   - port: nil for a free port below the ephemeral range.
+    ///   - answer: sent back after the first frame of each connection, as a one-time message expects.
+    static func start(port: UInt16? = nil, answer: [String: String]? = nil) async throws -> FakeBridge {
+        if let port { return try await start(on: port, reuse: true, answer: answer) }
+        for _ in 0..<50 {
+            if let bridge = try? await start(on: UInt16.random(in: 20_000..<40_000), reuse: false, answer: answer) {
+                return bridge
+            }
+        }
+        throw POSIXError(.EADDRINUSE)
+    }
+
+    private static func start(on port: UInt16, reuse: Bool, answer: [String: String]?) async throws -> FakeBridge {
         signal(SIGPIPE, SIG_IGN)
         let parameters = NWParameters.tcp
-        parameters.allowLocalEndpointReuse = true
-        parameters.requiredLocalEndpoint = .hostPort(host: "127.0.0.1", port: NWEndpoint.Port(rawValue: port) ?? .any)
+        // Only to take over the port a test just released.
+        parameters.allowLocalEndpointReuse = reuse
+        parameters.requiredLocalEndpoint = .hostPort(host: "127.0.0.1", port: NWEndpoint.Port(rawValue: port)!)
         let listener = try NWListener(using: parameters)
         let ready = AsyncThrowingStream<UInt16, any Error> { continuation in
             listener.stateUpdateHandler = { [listener] state in
                 switch state {
                 case .ready: continuation.yield(listener.port?.rawValue ?? 0); continuation.finish()
-                case .failed(let error): continuation.finish(throwing: error)
+                case .failed(let error), .waiting(let error):
+                    listener.cancel()
+                    continuation.finish(throwing: error)
                 default: break
                 }
             }
         }
         let holder = Holder()
-        listener.newConnectionHandler = { holder.bridge?.accept($0) }
+        listener.newConnectionHandler = { holder.accept($0) }
         listener.start(queue: .global())
         var iterator = ready.makeAsyncIterator()
         let bridge = FakeBridge(listener: listener, port: try await iterator.next() ?? 0, answer: answer)
-        holder.bridge = bridge
+        holder.attach(bridge)
         return bridge
     }
 
+    /// Keeps the connections that arrive before the bridge exists, which a client retrying in a loop can open.
     private final class Holder: @unchecked Sendable {
-        weak var bridge: FakeBridge?
+        private let lock = NSLock()
+        private var pending: [NWConnection] = []
+        private weak var bridge: FakeBridge?
+
+        func accept(_ connection: NWConnection) {
+            let bridge = lock.withLock {
+                if self.bridge == nil { pending.append(connection) }
+                return self.bridge
+            }
+            bridge?.accept(connection)
+        }
+
+        func attach(_ bridge: FakeBridge) {
+            let early = lock.withLock {
+                self.bridge = bridge
+                defer { pending = [] }
+                return pending
+            }
+            early.forEach(bridge.accept)
+        }
     }
 
     func received(_ connection: Int) -> [Data] {
         lock.withLock { connection < bodies.count ? bodies[connection] : [] }
     }
 
+
     func hasEnded(_ connection: Int) -> Bool {
         lock.withLock { connection < ended.count && ended[connection] }
     }
 
     func send(_ bytes: Data, on connection: Int) {
-        lock.withLock { connections[connection] }.send(content: bytes, completion: .idempotent)
+        self.connection(connection)?.send(content: bytes, completion: .idempotent)
     }
 
     func close(_ connection: Int) {
-        lock.withLock { connections[connection] }.cancel()
+        self.connection(connection)?.cancel()
+    }
+
+    private func connection(_ index: Int) -> NWConnection? {
+        lock.withLock { index < connections.count ? connections[index] : nil }
     }
 
     func stop() {
@@ -356,31 +399,37 @@ final class FakeBridge: @unchecked Sendable {
         lock.withLock { connections }.forEach { $0.cancel() }
     }
 
-    private func accept(_ connection: NWConnection) {
-        let index = lock.withLock {
-            connections.append(connection)
-            bodies.append([])
-            ended.append(false)
-            return connections.count - 1
-        }
+    fileprivate func accept(_ connection: NWConnection) {
         connection.start(queue: queue)
-        read(connection, index, frames: NativeMessageFrames())
+        read(connection, index: nil, frames: NativeMessageFrames())
     }
 
-    private func read(_ connection: NWConnection, _ index: Int, frames: NativeMessageFrames) {
+    /// A connection gets its index with its first valid frame: other local programs probe new loopback ports, and
+    /// what they send is not Native Messaging framing.
+    private func read(_ connection: NWConnection, index: Int?, frames: NativeMessageFrames) {
         connection.receive(minimumIncompleteLength: 1, maximumLength: 65_536) { [self] data, _, isComplete, error in
             var frames = frames
-            let new = (try? frames.append(data ?? Data())) ?? []
-            let isFirst = lock.withLock {
-                let first = bodies[index].isEmpty && !new.isEmpty
-                bodies[index] += new
-                if isComplete || error != nil { ended[index] = true }
-                return first
+            guard let new = try? frames.append(data ?? Data()) else { return connection.cancel() }
+            let ended = isComplete || error != nil
+            var index = index
+            if index == nil, !new.isEmpty {
+                index = lock.withLock {
+                    connections.append(connection)
+                    bodies.append([])
+                    self.ended.append(false)
+                    return connections.count - 1
+                }
+                if let answer, let frame = try? NativeMessageFrames.encode(answer) {
+                    connection.send(content: frame, completion: .idempotent)
+                }
             }
-            if isFirst, let answer, let frame = try? NativeMessageFrames.encode(answer) {
-                connection.send(content: frame, completion: .idempotent)
+            if let index {
+                lock.withLock {
+                    bodies[index] += new
+                    if ended { self.ended[index] = true }
+                }
             }
-            if !(isComplete || error != nil) { read(connection, index, frames: frames) }
+            if ended { connection.cancel() } else { read(connection, index: index, frames: frames) }
         }
     }
 }

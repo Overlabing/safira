@@ -238,7 +238,12 @@ final class BridgeConnection {
         self.connection = connection
     }
 
-    /// The connection once ready, or nil when nothing answers within a second (refused, or no route).
+    deinit {
+        connection.cancel()
+    }
+
+    /// The connection once ready, or nil when it is refused at once or nothing answers within five seconds: a busy
+    /// main queue can hold a local connection's ready event back for more than a second.
     static func open(host: String, port: UInt16) async -> BridgeConnection? {
         guard let port = NWEndpoint.Port(rawValue: port) else { return nil }
         let connection = NWConnection(host: NWEndpoint.Host(host), port: port, using: .tcp)
@@ -252,10 +257,14 @@ final class BridgeConnection {
                 }
             }
             connection.start(queue: .main)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1) { once.resume(false) }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 5) { once.resume(false) }
         }
         connection.stateUpdateHandler = nil
-        guard opened else {
+        // A client retrying a closed port in the ephemeral range can be given that port as its own and connect to
+        // itself, which reads as ready with no server behind it.
+        let path = connection.currentPath
+        let toItself = path?.localEndpoint != nil && path?.localEndpoint == path?.remoteEndpoint
+        guard opened, !toItself else {
             connection.cancel()
             return nil
         }
