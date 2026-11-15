@@ -19,8 +19,14 @@
 		<string>$(PRODUCT_BUNDLE_IDENTIFIER)-spks</string>
 		<string>$(PRODUCT_BUNDLE_IDENTIFIER)-spki</string>
 	</array>
+	<key>com.apple.security.temporary-exception.files.home-relative-path.read-only</key>
+	<array>
+		<string>/Library/Application Support/Safira/NativeMessagingHosts/</string>
+		<string>/Applications/</string>
+	</array>
 	<key>com.apple.security.temporary-exception.files.absolute-path.read-only</key>
 	<array>
+		<string>/Applications/</string>
 		<string>/private/tmp/safira-bench/</string>
 	</array>
 	<key>com.apple.security.cs.disable-library-validation</key>

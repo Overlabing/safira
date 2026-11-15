@@ -141,6 +141,15 @@ targets:
         com.apple.security.temporary-exception.mach-lookup.global-name:
           - $(PRODUCT_BUNDLE_IDENTIFIER)-spks
           - $(PRODUCT_BUNDLE_IDENTIFIER)-spki
+        # Native messaging hosts that apps register, read only, in this one folder of the user's real home (ADR 0007,
+        # docs/native-messaging.md). The host processes Safira starts inherit its sandbox.
+        # The host programs those manifests name, which apps ship inside their bundle in /Applications or ~/Applications:
+        # read and run them, nothing else.
+        com.apple.security.temporary-exception.files.home-relative-path.read-only:
+          - /Library/Application Support/Safira/NativeMessagingHosts/
+          - /Applications/
+        com.apple.security.temporary-exception.files.absolute-path.read-only:
+          - /Applications/
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.overlabing.safira

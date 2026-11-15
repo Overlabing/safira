@@ -34,8 +34,10 @@ final class ExtensionTab: NSObject, WKWebExtensionTab {
         host.webView(for: id)?.title
     }
 
+    /// The committed address: `WKWebView.url` already shows a navigation that has only started, which an extension
+    /// would take for the page's (a password manager matches its logins against `sender.url`).
     func url(for context: WKWebExtensionContext) -> URL? {
-        host.webView(for: id)?.url
+        host.webView(for: id)?.backForwardList.currentItem?.url
     }
 
     func isPinned(for context: WKWebExtensionContext) -> Bool {

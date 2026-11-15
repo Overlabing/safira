@@ -47,8 +47,9 @@ public final class ProfileWebContext {
                   downloads: downloads, storage: .onDisk)
     }
 
-    /// `.inMemory` gives the Profile a non-persistent data store and extension state, for tests that must write nothing.
-    init(profileID: ProfileID, webContentSettings: WebContentSettings = WebContentSettings(),
+    /// `.inMemory` gives the Profile a non-persistent data store and extension state, for tests and checks that must
+    /// write nothing.
+    public init(profileID: ProfileID, webContentSettings: WebContentSettings = WebContentSettings(),
          permissions: SitePermissions = SitePermissions(), downloads: ProfileDownloads = ProfileDownloads(),
          storage: WebsiteStorage) {
         self.profileID = profileID
