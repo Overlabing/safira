@@ -38,7 +38,7 @@ public struct WebContentSettings: Hashable, Sendable, Codable {
                 title: fraudulentSiteWarningTitle,
                 value: DefaultWording.onOff(defaults.isFraudulentSiteWarningEnabled),
                 explanation: fraudulentSiteWarningExplanation,
-                whereToChange: DefaultWording.viewMenu,
+                whereToChange: DefaultWording.settings(.sitePermissions),
                 control: .toggle(isOn: defaults.isFraudulentSiteWarningEnabled)
             ),
             DefaultEntry(
@@ -48,7 +48,7 @@ public struct WebContentSettings: Hashable, Sendable, Codable {
                     ? String(localized: "Allowed", table: "SafiraCore", bundle: .module, comment: "Defaults: value of autoplaying sound")
                     : String(localized: "Blocked", table: "SafiraCore", bundle: .module, comment: "Defaults: value of autoplaying sound"),
                 explanation: autoplayingSoundExplanation,
-                whereToChange: DefaultWording.viewMenu,
+                whereToChange: DefaultWording.settings(.sitePermissions),
                 control: .toggle(isOn: defaults.isAutoplayingSoundAllowed)
             ),
         ]

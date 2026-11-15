@@ -25,6 +25,7 @@ struct SitePermissionsView: View {
                 Text("No site or link has a remembered choice in this Profile.")
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, minHeight: 80)
+                    .settingsGroup()
             } else {
                 List {
                     if !permissions.all.isEmpty {
@@ -62,7 +63,10 @@ struct SitePermissionsView: View {
                         }
                     }
                 }
+                .listStyle(.plain)
+                .settingsScrollEdges()
                 .frame(minHeight: 160)
+                .settingsGroup()
             }
             Text("A camera, microphone or location a page is already using keeps running until the page stops it.")
                 .font(.caption)

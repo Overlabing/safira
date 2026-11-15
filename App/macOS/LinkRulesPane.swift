@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Antonin Carlin
 
 import AppKit
+import DesignKit
 import LinkRouting
 import SafiraCore
 import SwiftUI
@@ -169,11 +170,15 @@ struct LinkRulesView: View {
         List(selection: $model.selection) {
             ForEach(model.entries) { entry in
                 row(entry)
+                    .settingsListRow(isSelected: model.selection == entry.position, id: entry.position)
                     .tag(entry.position)
             }
         }
-        .listStyle(.bordered)
+        .listSelectionPlatterOff()
+        .listStyle(.plain)
+        .settingsScrollEdges()
         .frame(minHeight: 120)
+        .settingsGroup()
         .overlay {
             if model.entries.isEmpty {
                 Text("No Link rules yet. Choose “Always” in the Link picker, or import a file.")

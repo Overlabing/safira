@@ -60,10 +60,12 @@ signed_and_sandboxed() {
     echo "$signature" | grep -q 'flags=.*runtime' || { echo "hardened runtime missing"; return 1; }
     entitlements=$(codesign -d --entitlements - --xml "$app" 2>/dev/null)
     # The device keys are what camera, microphone and location grants need under the sandbox and hardened runtime
-    # (docs/architecture-v1.md §8.2); nothing else is added.
+    # (docs/architecture-v1.md §8.2); nothing else is added. Without the print key, File > Print only shows macOS's
+    # "This application does not support printing." alert.
     for key in com.apple.security.app-sandbox com.apple.security.network.client com.apple.security.device.camera \
         com.apple.security.device.audio-input com.apple.security.personal-information.location \
-        com.apple.security.files.bookmarks.app-scope com.apple.security.files.downloads.read-write; do
+        com.apple.security.files.bookmarks.app-scope com.apple.security.files.downloads.read-write \
+        com.apple.security.print; do
         echo "$entitlements" | grep -q "<key>$key</key><true/>" || { echo "$key missing"; return 1; }
     done
 }

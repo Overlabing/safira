@@ -87,7 +87,7 @@ extension DefaultBrowser {
                     Links from other apps then come to Safira, and the Link picker asks which Profile receives each \
                     one, unless a Link rule decides. macOS asks you to confirm.
                     """, table: "LinkRouting", bundle: .module, comment: "Defaults: explanation of Make Safira the default browser"),
-                whereToChange: DefaultWording.safiraMenu,
+                whereToChange: DefaultWording.settings(.general),
                 control: .action
             ),
         ]

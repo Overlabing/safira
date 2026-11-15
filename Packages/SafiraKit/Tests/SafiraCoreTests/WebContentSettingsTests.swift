@@ -18,7 +18,7 @@ import Testing
     #expect(entries.map(\.id) == ["web.fraudulentSiteWarning", "web.autoplayingSound"])
     #expect(entries.map(\.title) == ["Warn about fraudulent websites", "Allow autoplaying sound"])
     #expect(entries.map(\.value) == ["On", "Blocked"])
-    #expect(entries.map(\.whereToChange) == ["View menu", "View menu"])
+    #expect(entries.map(\.whereToChange) == ["Settings › Site Permissions", "Settings › Site Permissions"])
 }
 
 @Test func theFraudulentSiteWarningSaysItMayConsultAThirdPartyService() throws {

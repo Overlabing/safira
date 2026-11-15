@@ -497,17 +497,6 @@
         }
       }
     },
-    "Safira menu, Shortcuts…" : {
-      "comment" : "Defaults: where to change it; a menu and its item",
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "menu Safira, Raccourcis…"
-          }
-        }
-      }
-    },
     "Select All" : {
       "comment" : "Menu item",
       "localizations" : {

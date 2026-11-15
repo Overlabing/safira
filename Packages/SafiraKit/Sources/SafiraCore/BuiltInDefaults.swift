@@ -19,7 +19,7 @@ public enum UpdateSettings {
                 title: automaticChecksTitle,
                 value: DefaultWording.onOff(false),
                 explanation: automaticChecksExplanation,
-                whereToChange: DefaultWording.safiraMenu,
+                whereToChange: DefaultWording.settings(.general),
                 control: .toggle(isOn: false)
             ),
         ]
@@ -88,8 +88,7 @@ public enum BuiltInDefaults {
                     When a page opens a link that only another app can take, such as mailto: or slack:, Safira names \
                     the app and asks first. You can remember the answer for a Profile and a scheme, and forget it again.
                     """, table: "SafiraCore", bundle: .module, comment: "Defaults: explanation of Open links to other apps"),
-                whereToChange: String(localized: "Profiles menu, Site Permissions…", table: "SafiraCore", bundle: .module,
-                                      comment: "Defaults: where to change it; a menu and its item")
+                whereToChange: DefaultWording.settings(.sitePermissions)
             ),
             DefaultEntry(
                 id: "downloads.folder",

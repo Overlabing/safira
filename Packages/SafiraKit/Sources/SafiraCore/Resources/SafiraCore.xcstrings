@@ -177,17 +177,6 @@
         }
       }
     },
-    "Help menu" : {
-      "comment" : "Defaults: where to change a default",
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "menu Aide"
-          }
-        }
-      }
-    },
     "None" : {
       "comment" : "Defaults: value of Telemetry",
       "localizations" : {
@@ -276,17 +265,6 @@
         }
       }
     },
-    "Profiles menu, Site Permissions…" : {
-      "comment" : "Defaults: where to change it; a menu and its item",
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "menu Profils, Autorisations des sites…"
-          }
-        }
-      }
-    },
     "Remote search suggestions" : {
       "comment" : "Defaults: entry title",
       "localizations" : {
@@ -342,17 +320,6 @@
         }
       }
     },
-    "Safira menu" : {
-      "comment" : "Defaults: where to change a default, the app menu",
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "menu Safira"
-          }
-        }
-      }
-    },
     "Search engine" : {
       "comment" : "Defaults: entry title",
       "localizations" : {
@@ -364,13 +331,68 @@
         }
       }
     },
-    "Settings, Defaults" : {
-      "comment" : "Defaults: where to change the search engine",
+    "Settings › Debug" : {
+      "comment" : "Defaults: where to change a default; the Settings window and its pane",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Réglages, Choix par défaut"
+            "value" : "Réglages › Débogage"
+          }
+        }
+      }
+    },
+    "Settings › Defaults" : {
+      "comment" : "Defaults: where to change a default; the Settings window and its pane",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglages › Choix par défaut"
+          }
+        }
+      }
+    },
+    "Settings › General" : {
+      "comment" : "Defaults: where to change a default; the Settings window and its pane",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglages › Général"
+          }
+        }
+      }
+    },
+    "Settings › Link Rules" : {
+      "comment" : "Defaults: where to change a default; the Settings window and its pane",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglages › Règles de lien"
+          }
+        }
+      }
+    },
+    "Settings › Shortcuts" : {
+      "comment" : "Defaults: where to change a default; the Settings window and its pane",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglages › Raccourcis"
+          }
+        }
+      }
+    },
+    "Settings › Site Permissions" : {
+      "comment" : "Defaults: where to change a default; the Settings window and its pane",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglages › Autorisations des sites"
           }
         }
       }

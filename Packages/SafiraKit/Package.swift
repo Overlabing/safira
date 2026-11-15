@@ -85,7 +85,7 @@ let package = Package(
         .testTarget(name: "OnboardingTests", dependencies: ["Onboarding", "Commands", "SafiraCore", preferences]),
         .target(name: "SafiraSettings", dependencies: ["SafiraCore", "Commands", appShellKit, preferences],
                 resources: [.process("Resources")]),
-        .testTarget(name: "SafiraSettingsTests", dependencies: ["SafiraSettings", "Commands", "Onboarding", appShellKit,
-                                                             preferences]),
+        .testTarget(name: "SafiraSettingsTests", dependencies: ["SafiraSettings", "Commands", "Onboarding", "SafiraCore",
+                                                             appShellKit, preferences]),
     ]
 )

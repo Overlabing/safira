@@ -212,8 +212,11 @@ private struct GeneralPane: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             PaneSwitches(pane: .general, switches: switches)
-            Button(String(localized: "Check for Updates…", comment: "Menu item")) {
-                content.updates.checkForUpdates(nil)
+            HStack {
+                Spacer()
+                Button(String(localized: "Check for Updates…", comment: "Menu item")) {
+                    content.updates.checkForUpdates(nil)
+                }
             }
             Divider()
             HStack {
@@ -272,8 +275,11 @@ private struct DebugPane: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             PaneSwitches(pane: .debug, switches: switches)
-            Button(String(localized: "Export Diagnostic Logs…", comment: "Menu item")) {
-                diagnostics.exportDiagnosticLogs(nil)
+            HStack {
+                Spacer()
+                Button(String(localized: "Export Diagnostic Logs…", comment: "Menu item")) {
+                    diagnostics.exportDiagnosticLogs(nil)
+                }
             }
         }
         .settingsPaneMargins()

@@ -31,7 +31,7 @@ public struct DiagnosticsSettings: Hashable, Sendable, Codable {
                 title: debugModeTitle,
                 value: DefaultWording.onOff(DiagnosticsSettings().isDebugModeEnabled),
                 explanation: debugModeExplanation,
-                whereToChange: DefaultWording.helpMenu,
+                whereToChange: DefaultWording.settings(.debug),
                 control: .toggle(isOn: DiagnosticsSettings().isDebugModeEnabled)
             ),
         ]

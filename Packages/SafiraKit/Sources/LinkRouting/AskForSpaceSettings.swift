@@ -29,7 +29,7 @@ public struct AskForSpaceSettings: Hashable, Sendable, Codable {
                 title: title,
                 value: DefaultWording.onOff(AskForSpaceSettings().isEnabled),
                 explanation: explanation,
-                whereToChange: DefaultWording.safiraMenu,
+                whereToChange: DefaultWording.settings(.linkRules),
                 control: .toggle(isOn: AskForSpaceSettings().isEnabled)
             ),
         ]
