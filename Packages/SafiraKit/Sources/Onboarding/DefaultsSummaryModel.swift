@@ -42,6 +42,14 @@ public final class DefaultsSummaryModel {
         apply?(id, isOn)
     }
 
+    /// Reads every switch again, without applying anything: the Settings window stays open while a menu item changes a
+    /// setting. A switch `current` knows nothing about keeps its position.
+    public func refresh(_ current: (String) -> Bool?) {
+        for id in toggles.keys {
+            if let isOn = current(id), toggles[id] != isOn { toggles[id] = isOn }
+        }
+    }
+
     /// The value to show next to an entry: the live one when there is one, else the documented default.
     public func displayedValue(of entry: DefaultEntry) -> String {
         displayedValues[entry.id] ?? entry.value

@@ -166,3 +166,16 @@ import Testing
         #expect(model.isOn("web.httpsFirst") == false)
     }
 }
+
+@MainActor
+@Test func refreshReadsTheSwitchesAgainWithoutApplyingThem() {
+    var applied: [String] = []
+    var current: [String: Bool] = ["linkPicker.askForSpace": false]
+    let model = DefaultsSummaryModel(current: { current[$0] }, apply: { applied.append("\($0)=\($1)") })
+
+    current["linkPicker.askForSpace"] = true
+    model.refresh { current[$0] }
+
+    #expect(model.isOn("linkPicker.askForSpace"))
+    #expect(applied == [])
+}

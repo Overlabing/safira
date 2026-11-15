@@ -140,7 +140,7 @@ final class LinkController: NSObject, NSMenuItemValidation {
     private let rulesFile = StoreLayout.application.linkRulesFile
     private lazy var rulesStore = LinkRulesStore(url: rulesFile)
     private let registry: ProfileRegistry
-    private var rulesWindow: LinkRulesWindowController?
+    private var rulesPaneStorage: LinkRulesPane?
     private let defaultBrowser = DefaultBrowser(
         client: WorkspaceDefaultApplications(), applicationURL: Bundle.main.bundleURL, bundleIdentifier: Bundle.main.bundleIdentifier ?? "com.overlabing.safira")
     let defaultBrowserStatus = DefaultBrowserStatus()
@@ -164,7 +164,7 @@ final class LinkController: NSObject, NSMenuItemValidation {
             chooser: LinkPickerPresenter(), router: router, nativeApplications: applications, choiceLog: choiceLog,
             rememberer: StoredLinkRuleRemembering(
                 store: LinkRulesStore(url: rulesFile), didFail: { Self.alertRuleNotSaved($0) },
-                didAdd: { [weak self] in self?.rulesWindow?.model.reload() }),
+                didAdd: { [weak self] in self?.rulesPaneStorage?.model.reload() }),
             asksForSpace: { [weak self] in self?.asksForSpace ?? false })
         refreshDefaultBrowserStatus()
         // The user can change the default browser in System Settings while Safira is in the background.
@@ -244,18 +244,18 @@ final class LinkController: NSObject, NSMenuItemValidation {
         slackGrant.revoke()
     }
 
-    /// The Link rules window, built on first use around the router the real links go through.
-    @objc func showLinkRulesWindow(_ sender: Any?) {
-        if rulesWindow == nil {
-            let registry = registry
-            let coordinator = coordinator!
-            let model = LinkRulesModel(
-                store: rulesStore, profiles: { registry.profiles },
-                spacesOf: { id in registry.spaces(in: id).map { SpaceChoice(id: $0.id, name: $0.name, emoji: $0.emoji) } },
-                route: { coordinator.route(for: $0) })
-            rulesWindow = LinkRulesWindowController(model: model, rulesFile: rulesFile, profiles: { registry.profiles })
-        }
-        rulesWindow?.show(sender)
+    /// The Link Rules pane, built on first use around the router the real links go through.
+    var rulesPane: LinkRulesPane {
+        if let rulesPaneStorage { return rulesPaneStorage }
+        let registry = registry
+        let coordinator = coordinator!
+        let model = LinkRulesModel(
+            store: rulesStore, profiles: { registry.profiles },
+            spacesOf: { id in registry.spaces(in: id).map { SpaceChoice(id: $0.id, name: $0.name, emoji: $0.emoji) } },
+            route: { coordinator.route(for: $0) })
+        let pane = LinkRulesPane(model: model, rulesFile: rulesFile, profiles: { registry.profiles })
+        rulesPaneStorage = pane
+        return pane
     }
 
     private static func alertRuleNotSaved(_ error: LinkRulesEditError) {
@@ -272,7 +272,7 @@ final class LinkController: NSObject, NSMenuItemValidation {
         NSWorkspace.shared.activateFileViewerSelecting([rulesFile])
     }
 
-    /// The explicit request (Safira menu, Defaults window, onboarding button): the only way Safira asks. Keep in the
+    /// The explicit request (Safira menu, Settings window, onboarding button): the only way Safira asks. Keep in the
     /// system's confirmation is a decline, which shows nothing.
     @objc func makeDefaultBrowser(_ sender: Any?) {
         Task { @MainActor in

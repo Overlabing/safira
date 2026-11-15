@@ -7,27 +7,39 @@ import CommandKitAppKit
 import Commands
 import LinkRouting
 import SafiraCore
+import SafiraSettings
 
 @MainActor
 enum MainMenu {
     static func make(updates: UpdateController, diagnostics: DiagnosticsController, links: LinkController,
-                     defaults: DefaultsController, shortcuts: ShortcutBindings<CommandID>, shortcutsWindow: ShortcutsWindowController, app: AppDelegate) -> NSMenu {
-        func item(_ id: CommandID, _ action: Selector?) -> NSMenuItem { commandItem(id, action, shortcuts) }
+                     shortcuts: ShortcutBindings<CommandID>, settings: SettingsWindowController, app: AppDelegate) -> NSMenu {
+        var commandItems: [CommandID: NSMenuItem] = [:]
+        func item(_ id: CommandID, _ action: Selector?) -> NSMenuItem {
+            let made = commandItem(id, action, shortcuts)
+            commandItems[id] = made
+            return made
+        }
+        /// An item that opens the Settings window; a command's item when the opener has a command.
+        func settingsItem(_ opener: SettingsOpener, title: String) -> NSMenuItem {
+            let action = #selector(SettingsWindowController.openSettings(_:))
+            let made = opener.command.map { item($0, action) } ?? NSMenuItem(title: title, action: action, keyEquivalent: "")
+            made.target = settings
+            made.representedObject = opener.rawValue
+            return made
+        }
         let menu = NSMenu()
         menu.addItem(submenu(title: "Safira", items: [
             NSMenuItem(title: String(localized: "About Safira", comment: "Menu item"),
                        action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: ""),
             .separator(),
+            settingsItem(.settings, title: ""),
+            .separator(),
             target(updates, NSMenuItem(title: String(localized: "Check for Updates…", comment: "Menu item"),
                                        action: #selector(UpdateController.checkForUpdates(_:)), keyEquivalent: "")),
             target(updates, NSMenuItem(title: UpdateSettings.automaticChecksTitle, action: #selector(UpdateController.toggleAutomaticChecks(_:)), keyEquivalent: "")),
             .separator(),
-            target(shortcutsWindow, NSMenuItem(title: String(localized: "Shortcuts…", comment: "Menu item"),
-                                               action: #selector(ShortcutsWindowController.show(_:)),
-                                               keyEquivalent: "")),
-            target(defaults, NSMenuItem(title: String(localized: "Defaults…", comment: "Menu item"),
-                                        action: #selector(DefaultsController.showDefaults(_:)),
-                                        keyEquivalent: "")),
+            settingsItem(.shortcuts, title: String(localized: "Shortcuts…", comment: "Menu item")),
+            settingsItem(.defaults, title: String(localized: "Defaults…", comment: "Menu item")),
             .separator(),
             target(links, NSMenuItem(title: String(localized: "Make Safira the Default Browser…", comment: "Menu item"),
                                      action: #selector(LinkController.makeDefaultBrowser(_:)),
@@ -38,9 +50,7 @@ enum MainMenu {
                                      keyEquivalent: "")),
             target(links, NSMenuItem(title: AskForSpaceSettings.title, action: #selector(LinkController.toggleAskForSpace(_:)),
                                      keyEquivalent: "")),
-            target(links, NSMenuItem(title: String(localized: "Link Rules…", comment: "Menu item"),
-                                     action: #selector(LinkController.showLinkRulesWindow(_:)),
-                                     keyEquivalent: "")),
+            settingsItem(.linkRules, title: String(localized: "Link Rules…", comment: "Menu item")),
             target(links, NSMenuItem(title: String(localized: "Show Link Rules in Finder", comment: "Menu item"),
                                      action: #selector(LinkController.showLinkRules(_:)),
                                      keyEquivalent: "")),
@@ -128,7 +138,7 @@ enum MainMenu {
             item(.renameProfile, #selector(MainWindowController.renameProfile(_:))),
             item(.deleteProfile, #selector(MainWindowController.deleteProfile(_:))),
             .separator(),
-            item(.sitePermissions, #selector(MainWindowController.showSitePermissions(_:))),
+            settingsItem(.sitePermissions, title: ""),
             item(.clearBrowsingData, #selector(MainWindowController.clearBrowsingData(_:))),
             .separator(),
             item(.previousProfile, #selector(MainWindowController.showPreviousProfile(_:))),
@@ -162,7 +172,23 @@ enum MainMenu {
         ])
         menu.addItem(help)
         NSApplication.shared.helpMenu = help.submenu
+        for alias in SafiraShortcuts.menuAliases(shortcuts) {
+            if let original = commandItems[alias.command] { addAlias(alias.shortcut, of: original) }
+        }
         return menu
+    }
+
+    /// A second key for a command's item, as Safari takes ⌘= for ⌘+: a hidden copy of the item that only answers its
+    /// key, next to the item so that it validates the same way.
+    private static func addAlias(_ shortcut: Shortcut, of original: NSMenuItem) {
+        guard let menu = original.menu else { return }
+        let alias = NSMenuItem(title: original.title, action: original.action, keyEquivalent: String(shortcut.key))
+        alias.keyEquivalentModifierMask = shortcut.modifierFlags
+        alias.target = original.target
+        alias.tag = original.tag
+        alias.isHidden = true
+        alias.allowsKeyEquivalentWhenHidden = true
+        menu.insertItem(alias, at: menu.index(of: original) + 1)
     }
 
     private static func submenu(title: String, items: [NSMenuItem]) -> NSMenuItem {

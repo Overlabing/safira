@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Antonin Carlin
 
+import Appearance
 import AppKit
 import Commands
 import LinkRouting
@@ -25,13 +26,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// (`open -g … --args -launchedInBackground YES`): Safira then never takes the focus. The argument is read from
     /// the launch, never saved.
     private let launchedInBackground = UserDefaults.standard.bool(forKey: "launchedInBackground")
-    private(set) lazy var shortcutsWindow = ShortcutsWindowController(shortcuts: shortcuts)
     private var mainWindow: MainWindowController?
     /// The open Private windows. Only they hold their contexts: nothing else can list or search them.
     private var privateWindows: [PrivateWindowController] = []
     private var registry: ProfileRegistry?
     private var links: LinkController?
     private var defaults: DefaultsController?
+    private var settings: SettingsWindowController?
     private var onboarding: OnboardingController?
     /// Links that arrived before the Profiles were open, as on a launch started by a link.
     private var earlyLinks: [IncomingLink] = []
@@ -74,6 +75,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let defaults = DefaultsController(registry: registry, updates: updates, diagnostics: diagnostics, links: links,
                                           shortcuts: shortcuts)
         self.defaults = defaults
+        settings = SettingsWindowController(
+            content: SettingsContent(registry: registry, defaults: defaults, links: links, shortcuts: shortcuts,
+                                     updates: updates, diagnostics: diagnostics,
+                                     theme: { [weak controller] in controller?.spaceTheme ?? ThemeCatalog.first }),
+            activates: !launchedInBackground)
         let onboarding = OnboardingController(registry: registry, defaults: defaults)
         self.onboarding = onboarding
         earlyLinks.forEach(links.receive)
@@ -98,9 +104,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func rebuildMenu() {
-        guard let links, let defaults else { return }
-        NSApp.mainMenu = MainMenu.make(updates: updates, diagnostics: diagnostics, links: links, defaults: defaults,
-                                       shortcuts: shortcuts.bindings, shortcutsWindow: shortcutsWindow, app: self)
+        guard let links, let settings else { return }
+        NSApp.mainMenu = MainMenu.make(updates: updates, diagnostics: diagnostics, links: links,
+                                       shortcuts: shortcuts.bindings, settings: settings, app: self)
     }
 
     /// Opens a Private window attached to the Profile of the Private window that has the focus, or else the Active profile.

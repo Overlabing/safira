@@ -733,6 +733,17 @@
         }
       }
     },
+    "Default browser" : {
+      "comment" : "Settings, General pane: label of the default browser button",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Navigateur par défaut"
+          }
+        }
+      }
+    },
     "Default: %@. Change it: %@." : {
       "localizations" : {
         "fr" : {
@@ -882,6 +893,7 @@
       }
     },
     "Done" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -1030,6 +1042,7 @@
       }
     },
     "Everything Safira decided for you, and where to change it. Nothing is sent without an action of yours. Web content switches apply to %@, and to pages opened from now on." : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -1415,6 +1428,7 @@
     },
     "Link Rules" : {
       "comment" : "Link rules window",
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -1841,6 +1855,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rien n’est envoyé nulle part sans une action de votre part : Safira n’a aucune télémétrie, ne recherche pas de mises à jour et n’envoie pas ce que vous tapez pour obtenir des suggestions."
+          }
+        }
+      }
+    },
+    "Nothing is sent without an action of yours. Web content switches apply to %@, and to pages opened from now on." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien n’est envoyé sans une action de votre part. Les réglages du contenu web s’appliquent à %@, et aux pages ouvertes à partir de maintenant."
           }
         }
       }
@@ -2636,6 +2660,7 @@
     },
     "Shortcuts" : {
       "comment" : "Window title",
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -3047,6 +3072,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Il n’y a aucun journal de diagnostic à exporter"
+          }
+        }
+      }
+    },
+    "These switches apply to “%@”, and to pages opened from now on." : {
+      "comment" : "Settings, Site Permissions pane; the argument is a Profile's name",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ces réglages s’appliquent à « %@ », et aux pages ouvertes à partir de maintenant."
           }
         }
       }

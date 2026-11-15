@@ -519,6 +519,17 @@
         }
       }
     },
+    "Settings…" : {
+      "comment" : "Command: menu item and Shortcuts row; opens the Settings window",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglages…"
+          }
+        }
+      }
+    },
     "Shortcut preset" : {
       "comment" : "Defaults: entry title",
       "localizations" : {

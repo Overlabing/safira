@@ -8,8 +8,8 @@ When a dependency is added, its full licence notice goes here. The dependencies 
 (`docs/adr/0003-theme-module-separate-mit-repository.md`), and AppSupportKit (MIT), whose modules find and cache site
 icons, keep preferences and the entries of the registry of defaults, model the errors shown to the user, and read and
 change default apps, DiagnosticsKit (MIT), which keeps, rotates and exports Debug mode's local logs, and
-CommandKit (MIT), which reads the Shortcut presets and keeps the user's shortcuts
-(`docs/adr/0005-shared-code-lives-in-public-kits.md`).
+CommandKit (MIT), which reads the Shortcut presets and keeps the user's shortcuts, and AppShellKit (MIT), which
+draws the Settings window (`docs/adr/0005-shared-code-lives-in-public-kits.md`).
 
 ## Sparkle 2.10.1
 
@@ -263,6 +263,36 @@ SOFTWARE.
 Keyboard shortcuts shared with Oisillon, <https://github.com/Overlabing/CommandKit>. Its CommandKit and CommandKitAppKit
 modules are linked; CommandKit uses AppSupportKit's Localization for its own strings. The text below is the `LICENSE`
 file of the 0.1.3 release, unmodified.
+
+```text
+MIT License
+
+Copyright (c) 2026 Overlabing
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+## AppShellKit 0.1.0
+
+The shells shared with Oisillon, <https://github.com/Overlabing/AppShellKit>. Its AppShellKit module is linked, for the
+Settings window; it uses ThemeKit and AppSupportKit, listed above. The text below is the `LICENSE` file of the 0.1.0
+release, unmodified.
 
 ```text
 MIT License

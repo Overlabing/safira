@@ -39,7 +39,6 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     private var folderSheet: NSWindow?
     private var profileSheet: NSWindow?
     private var clearSheet: NSWindow?
-    private var permissionsSheet: NSWindow?
     private lazy var downloadsWindow = DownloadsWindowController(registry: registry)
     private var popupPanels: [PopupID: PopupPanelController] = [:]
     private var renderedTabID: TabID?
@@ -267,26 +266,9 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         confirmDeletion(ofProfile: registry.activeProfileID)
     }
 
-    /// The sites the Active profile remembers a camera, microphone or location decision for.
-    @objc func showSitePermissions(_ sender: Any?) {
-        guard let window, permissionsSheet == nil else { return }
-        let view = SitePermissionsView(profileName: registry.activeProfile.name, permissions: registry.active.permissions) {
-            [weak self] in self?.endPermissionsSheet()
-        }
-        let sheet = NSWindow.sheet(view)
-        permissionsSheet = sheet
-        window.beginSheet(sheet)
-    }
-
     /// The Active profile's downloads, in a window of their own.
     @objc func showDownloads(_ sender: Any?) {
         downloadsWindow.showWindow(nil)
-    }
-
-    private func endPermissionsSheet() {
-        guard let sheet = permissionsSheet else { return }
-        window?.endSheet(sheet)
-        permissionsSheet = nil
     }
 
     @objc func clearBrowsingData(_ sender: Any?) {
@@ -799,7 +781,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     // MARK: Layout
 
     /// The active Space's Theme, or the Active profile's for a Space with none: the window's gradient and the column.
-    private var spaceTheme: Theme {
+    var spaceTheme: Theme {
         let profile = ThemeCatalog.theme(id: registry.activeProfile.paletteID, fallback: ThemeCatalog.first)
         return ThemeCatalog.theme(id: session.activeSpace.paletteID, fallback: profile)
     }

@@ -9,6 +9,7 @@ let userFacing = Target.Dependency.product(name: "UserFacing", package: "AppSupp
 let commandKit = Target.Dependency.product(name: "CommandKit", package: "CommandKit")
 let defaultApps = Target.Dependency.product(name: "DefaultApps", package: "AppSupportKit")
 let diagnosticsKit = Target.Dependency.product(name: "DiagnosticsKit", package: "DiagnosticsKit")
+let appShellKit = Target.Dependency.product(name: "AppShellKit", package: "AppShellKit")
 
 let package = Package(
     name: "SafiraKit",
@@ -25,6 +26,7 @@ let package = Package(
         .library(name: "Diagnostics", targets: ["Diagnostics"]),
         .library(name: "Onboarding", targets: ["Onboarding"]),
         .library(name: "Appearance", targets: ["Appearance"]),
+        .library(name: "SafiraSettings", targets: ["SafiraSettings"]),
     ],
     dependencies: [
         .package(url: "https://github.com/groue/GRDB.swift", exact: "7.11.1"),
@@ -32,6 +34,7 @@ let package = Package(
         .package(url: "https://github.com/Overlabing/AppSupportKit", exact: "0.1.2"),
         .package(url: "https://github.com/Overlabing/CommandKit", exact: "0.1.3"),
         .package(url: "https://github.com/Overlabing/DiagnosticsKit", exact: "0.1.2"),
+        .package(url: "https://github.com/Overlabing/AppShellKit", exact: "0.1.0"),
     ],
     targets: [
         .target(name: "SafiraCore", dependencies: [preferences, userFacing], resources: [.process("Resources")]),
@@ -76,5 +79,9 @@ let package = Package(
         .target(name: "Onboarding", dependencies: ["SafiraCore", "Commands", "LinkRouting", "Diagnostics", preferences],
                 resources: [.process("Resources")]),
         .testTarget(name: "OnboardingTests", dependencies: ["Onboarding", "Commands", "SafiraCore", preferences]),
+        .target(name: "SafiraSettings", dependencies: ["SafiraCore", "Commands", appShellKit, preferences],
+                resources: [.process("Resources")]),
+        .testTarget(name: "SafiraSettingsTests", dependencies: ["SafiraSettings", "Commands", "Onboarding", appShellKit,
+                                                             preferences]),
     ]
 )
