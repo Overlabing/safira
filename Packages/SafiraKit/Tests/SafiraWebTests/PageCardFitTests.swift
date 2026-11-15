@@ -8,6 +8,7 @@ import SafiraCore
 import SafiraSession
 import SafiraWeb
 import SwiftUI
+import TestSupport
 import Testing
 import WebKit
 
@@ -70,10 +71,8 @@ import WebKit
             context = ProfileWebContext(profileID: profile)
             canvas = PageCanvasView(page: host, banner: Self.banner(), commandBar: Self.commandBar())
             layout = BrowserWindowLayout(background: NSView(), column: List { Text(verbatim: "Tab") }, canvas: canvas)
-            window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1200, height: 800),
-                              styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
-                              backing: .buffered, defer: false)
-            window.isReleasedWhenClosed = false
+            window = TestWindow.make(width: 1200, height: 800,
+                                     style: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView])
             window.titlebarAppearsTransparent = true
             window.titleVisibility = .hidden
             window.contentViewController = layout

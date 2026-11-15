@@ -4,6 +4,7 @@
 import AppKit
 import SafiraCore
 import SafiraWeb
+import TestSupport
 import Testing
 import WebKit
 
@@ -32,9 +33,7 @@ private final class NavigationCounter: NSObject, WKNavigationDelegate {
         let profile = ProfileID(rawValue: UUID())
         do {
             let context = ProfileWebContext(profileID: profile)
-            let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 400, height: 300), styleMask: [.titled],
-                                  backing: .buffered, defer: false)
-            window.isReleasedWhenClosed = false
+            let window = TestWindow.make(width: 400, height: 300)
             defer { window.close() }
             let host = try #require(window.contentView)
 

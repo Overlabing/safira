@@ -79,9 +79,13 @@ fi
 step "xcodegen generate" xcodegen generate
 step "step helper self test (a failing or unset-variable step prints FAILED)" scripts/test-step.sh
 step "singleton guard self test (fixtures)" scripts/test-guard-singletons.sh
+step "test-window guard self test (fixtures)" scripts/test-guard-test-windows.sh
 step "attribution check self test" scripts/test-check-attribution.sh
 step "singleton guard (App, Packages)" "$tools/bin/guard-pattern.sh" --patterns scripts/singleton-patterns.txt \
     --allow "$allowed" --message "Shared singletons are allowed only in $allowed" App Packages
+test_window=Packages/SafiraKit/Tests/TestSupport/TestWindow.swift
+step "test-window guard (SafiraKit tests)" "$tools/bin/guard-pattern.sh" --patterns scripts/test-window-patterns.txt \
+    --allow "$test_window" --message "Tests create windows only through TestWindow ($test_window)" Packages/SafiraKit/Tests
 # AppSupportKit's and CommandKit's own strings follow OVERLABING_TEST_LANGUAGE, as the kits document: the tests that read them get English.
 step "swift test (SafiraKit)" env OVERLABING_TEST_LANGUAGE=en swift test --package-path Packages/SafiraKit
 step "xcodebuild Safira (Debug)" \

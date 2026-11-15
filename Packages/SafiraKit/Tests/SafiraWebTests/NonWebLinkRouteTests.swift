@@ -5,6 +5,7 @@ import AppKit
 import SafiraCore
 import SafiraSession
 import SafiraWeb
+import TestSupport
 import Testing
 import WebKit
 
@@ -220,12 +221,8 @@ import WebKit
         let links = "<a id='mail' href='mailto:team@example.test?subject=hi'>mail</a><a id='web' href='/docs'>docs</a>"
         try await run(scheme: "mailto", ["/page": .html(links), "/docs": .html("docs")]) { harness, server in
             let webView = try await harness.open(server.url("/page"))
-            // A script cannot stand for a ⌘-click: WebKit takes the modifiers of a real event only. The window is
-            // never shown.
-            let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 600, height: 400), styleMask: [.borderless],
-                                  backing: .buffered, defer: false)
-            window.isReleasedWhenClosed = false
-            window.contentView = webView
+            // A script cannot stand for a ⌘-click: WebKit takes the modifiers of a real event only.
+            let window = TestWindow.host(webView, width: 600, height: 400)
             defer { window.contentView = nil; window.close() }
             @MainActor func commandClick(_ id: String) async throws {
                 let box = try #require(try await webView.evaluateJavaScript("""

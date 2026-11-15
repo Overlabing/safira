@@ -5,6 +5,7 @@ import AppKit
 import SafiraCore
 import SafiraSession
 import SafiraWeb
+import TestSupport
 import Testing
 import WebKit
 
@@ -103,12 +104,7 @@ import WebKit
         return Data(wav).base64EncodedString()
     }()
 
-    private let window: NSWindow = {
-        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 400, height: 300), styleMask: [.titled],
-                              backing: .buffered, defer: false)
-        window.isReleasedWhenClosed = false
-        return window
-    }()
+    private let window = TestWindow.make(width: 400, height: 300)
 
     private func close(_ session: ProfileSession) {
         session.tabs.map(\.id).forEach(session.close)
@@ -137,7 +133,6 @@ import WebKit
         let webView = try #require(context.webView(for: opener))
         // A real ⌘-click needs the page in a window; the link fills the page so the click lands on it.
         window.contentView = webView
-        window.orderFrontRegardless()
         let style = "<style>a { display: block; position: fixed; inset: 0; }</style>"
         webView.loadHTMLString("<html><head>\(style)</head><body>\(body)</body></html>", baseURL: URL(string: Self.base))
         try await waitUntil("the page loads") {

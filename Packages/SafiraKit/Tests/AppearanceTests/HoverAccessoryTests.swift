@@ -8,6 +8,7 @@ import ColorUI
 import DesignKit
 import Foundation
 import SwiftUI
+import TestSupport
 import Testing
 
 /// A hover step in the sidebar re-evaluates at most the two rows it touches: rows built as Safira's are (the kit's
@@ -66,9 +67,7 @@ struct HoverAccessoryTests {
         init(_ view: some View) {
             let hosting = NSHostingView(rootView: view.theme(Palette.standard.themes[0]).frame(width: 360, height: 600))
             hosting.frame = CGRect(x: 0, y: 0, width: 360, height: 600)
-            window = NSWindow(contentRect: hosting.frame, styleMask: [.borderless], backing: .buffered, defer: false)
-            window.isReleasedWhenClosed = false
-            window.contentView = hosting
+            window = TestWindow.host(hosting, width: 360, height: 600)
             settle()
         }
 

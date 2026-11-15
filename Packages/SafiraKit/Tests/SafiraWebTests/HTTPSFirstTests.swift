@@ -6,6 +6,7 @@ import Foundation
 import SafiraCore
 import SafiraSession
 @testable import SafiraWeb
+import TestSupport
 import Testing
 import WebKit
 
@@ -35,12 +36,7 @@ import WebKit
         @MainActor private final class WindowBox {
             var windows: [NSWindow] = []
             func show(_ view: WKWebView) {
-                let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 600, height: 400), styleMask: [.titled],
-                                      backing: .buffered, defer: false)
-                window.isReleasedWhenClosed = false
-                window.contentView = view
-                window.orderFrontRegardless()
-                windows.append(window)
+                windows.append(TestWindow.host(view, width: 600, height: 400))
             }
         }
 

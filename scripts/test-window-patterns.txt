@@ -1,0 +1,7 @@
+# Test windows come only from TestWindow (Packages/SafiraKit/Tests/TestSupport/TestWindow.swift), which keeps them off
+# every display and never key. A window made anywhere else in the tests would show on the user's screen. One fixed
+# string per line.
+NSWindow(
+NSWindow.init(
+NSPanel(
+NSPanel.init(
