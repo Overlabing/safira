@@ -37,12 +37,20 @@ final class ColumnFocus {
 }
 
 /// The sidebar's head field, where Oisillon has its sidebar search (`sidebarColumn(field:…)` puts it there): the
-/// address of the shown Tab, then Back, Forward and Reload. The address field shows the host; hovering shows the full
+/// address of the shown Tab, then Back, Forward and Reload, then `trailing` (the Main window's extension buttons; a
+/// Private window has none). The address field shows the host; hovering shows the full
 /// address, VoiceOver reads it, and clicking opens the Command bar with it selected.
-struct BrowserControls: View {
+struct BrowserControls<Trailing: View>: View {
     let session: ProfileSession
     let actions: PageActions
+    @ViewBuilder let trailing: Trailing
     @Environment(\.designTokens) private var tokens
+
+    init(session: ProfileSession, actions: PageActions, @ViewBuilder trailing: () -> Trailing = { EmptyView() }) {
+        self.session = session
+        self.actions = actions
+        self.trailing = trailing()
+    }
 
     var body: some View {
         let tab = session.selectedTab
@@ -65,6 +73,7 @@ struct BrowserControls: View {
                 .disabled(tab?.state.canGoForward != true)
             IconButton(String(localized: "Reload", comment: "Sidebar"), systemImage: "arrow.clockwise") { session.reload() }
                 .disabled(address == nil)
+            trailing
         }
     }
 
@@ -76,8 +85,9 @@ struct BrowserControls: View {
 
     /// Shorter than the Command bar's own placeholder, which the help tag shows in full: the field shares its row with
     /// three buttons and the French text did not fit.
-    static let placeholder = String(localized: "Search or address",
-                                    comment: "Sidebar: placeholder of the address pill with no page; keep it short")
+    static var placeholder: String {
+        String(localized: "Search or address", comment: "Sidebar: placeholder of the address pill with no page; keep it short")
+    }
 
     /// A lock for an encrypted page, a plain globe otherwise; a magnifying glass with no page.
     private func symbol(for address: URL?) -> String {

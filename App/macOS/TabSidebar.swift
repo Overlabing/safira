@@ -12,7 +12,7 @@ import SafiraWeb
 import SwiftUI
 
 /// The Main window's column, ThemeKit's sidebar column (`sidebarColumn(field:header:bottomBar:)`): the address and
-/// Back, Forward and Reload in the head field; a plain list of the active Space's pinned area with its Folders, a
+/// Back, Forward and Reload in the head field, then the Profile's extension buttons; a plain list of the active Space's pinned area with its Folders, a
 /// hairline, the New Tab row and the other Tabs; the Space rail with the Spaces and Profiles in the bottom bar. Arrow
 /// keys in the list move the selection, which shows the Tab; Delete closes it; Return or Escape goes to its page. A Tab
 /// or Folder dragged onto the list lands where the insertion line shows it: a plain Tab dropped in the pinned area or a
@@ -24,6 +24,7 @@ struct TabSidebar: View {
     let profileActions: ProfileActions
     let spaceActions: SpaceActions
     let folderActions: FolderActions
+    let extensionPopups: ExtensionPopups
     /// The shortcut a menu item shows for a command, in the bindings in force ("⌘T", "⌃1").
     let shortcut: (CommandID) -> String?
 
@@ -61,7 +62,11 @@ struct TabSidebar: View {
         }
         .modifier(TabListKeyboard(session: session, focus: focus, showPage: pageActions.showPage))
         .sidebarColumn {
-            BrowserControls(session: session, actions: pageActions)
+            BrowserControls(session: session, actions: pageActions) {
+                if let extensions = registry.active.extensions {
+                    ExtensionActionButtons(host: extensions, popups: extensionPopups)
+                }
+            }
         } header: {
             EmptyView()
         } bottomBar: {

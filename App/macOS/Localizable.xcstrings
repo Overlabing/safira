@@ -1154,6 +1154,17 @@
         }
       }
     },
+    "Extensions" : {
+      "comment" : "Sidebar: VoiceOver label of the button that lists the extensions\nSidebar: help tag of the button that lists the extensions",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Extensions"
+          }
+        }
+      }
+    },
     "Failed, %@ received" : {
       "comment" : "Downloads window",
       "localizations" : {
@@ -2097,6 +2108,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Collez un lien à vérifier"
+          }
+        }
+      }
+    },
+    "Performs the extension's action" : {
+      "comment" : "Sidebar: VoiceOver hint of an extension's button",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effectue l’action de l’extension"
           }
         }
       }
