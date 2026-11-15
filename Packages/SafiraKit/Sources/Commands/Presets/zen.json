@@ -66,6 +66,10 @@
     ],
     "compactMode": [
       {
+        "shortcut": "⌘B",
+        "from": "Safira default (Antonin, 2026-11-15)"
+      },
+      {
         "shortcut": "⌥⌘C",
         "from": "Toggle Compact Mode (Alt+Ctrl+C)"
       }

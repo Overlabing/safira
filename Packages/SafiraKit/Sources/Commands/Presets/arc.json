@@ -60,6 +60,10 @@
     ],
     "compactMode": [
       {
+        "shortcut": "⌘B",
+        "from": "Safira default (Antonin, 2026-11-15)"
+      },
+      {
         "shortcut": "⌘S",
         "from": "Show/Hide the Sidebar (Command-S)"
       }

@@ -51,6 +51,10 @@
     ],
     "compactMode": [
       {
+        "shortcut": "⌘B",
+        "from": "Safira default (Antonin, 2026-11-15)"
+      },
+      {
         "shortcut": "⌃⌘S",
         "from": "The system's sidebar shortcut"
       }
