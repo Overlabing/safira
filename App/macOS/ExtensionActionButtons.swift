@@ -122,7 +122,7 @@ private struct ExtensionOverflowButton: View {
         }
     }
 
-    /// "Verrou (3)": the title with the badge, which the menu has no other place for.
+    /// "Name (3)": the title with the badge, which the menu has no other place for.
     static func title(of item: ExtensionActionItem) -> String {
         item.badgeText.isEmpty ? item.label : "\(item.label) (\(item.badgeText))"
     }

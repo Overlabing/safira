@@ -4,5 +4,6 @@
   "description": "Stores one non-extractable CryptoKey in IndexedDB, then reads it back.",
   "version": "1.0",
   "key": "c2FmaXJhLWtleWNoYWluLWdhdGU=",
+  "permissions": ["nativeMessaging"],
   "background": { "service_worker": "background.js", "type": "module" }
 }

@@ -34,7 +34,21 @@ async function read() {
   return new TextDecoder().decode(opened) === "gate" ? "read back" : "the key read back does not decrypt";
 }
 
+// Connects to the host named in native.json, sends its message, and answers with the host's first message.
+async function native() {
+  const { name, message } = await (await fetch(browser.runtime.getURL("native.json"))).json();
+  return new Promise((resolve) => {
+    const port = browser.runtime.connectNative(name);
+    port.onMessage.addListener((answer) => { resolve(JSON.stringify(answer)); port.disconnect(); });
+    port.onDisconnect.addListener(() => resolve(`disconnected: ${browser.runtime.lastError?.message ?? "no error"}`));
+    port.postMessage(message);
+  });
+}
+
+const operations = { write, read, native };
 browser.runtime.onMessage.addListener((message, _sender, reply) => {
-  (message.op === "write" ? write() : read()).then(reply, (error) => reply(`error: ${error}`));
+  const operation = operations[message.op];
+  if (!operation) return false;
+  operation().then(reply, (error) => reply(`error: ${error}`));
   return true;
 });

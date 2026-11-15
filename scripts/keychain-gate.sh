@@ -22,8 +22,19 @@ cd "$(dirname "$0")/.."
 
 fail() { echo "FAILED: $*"; exit 1; }
 
+# sh scripts/keychain-gate.sh --native-check <host manifest> '<message JSON>' [folder] touches no keychain either: the
+# sandboxed app, signed ad hoc, starts the host that manifest registers (in Safira's hosts folder, for this run only),
+# as the probe
+# extension carrying the manifest key of [folder], and prints the host's first answer to the message.
 load_only=false
+native_manifest=
 if [ "${1:-}" = "--load-only" ]; then load_only=true; shift; fi
+if [ "${1:-}" = "--native-check" ]; then
+    load_only=true
+    native_manifest=${2:?usage: --native-check <host manifest> <message JSON> [folder]}
+    native_message=${3:?usage: --native-check <host manifest> <message JSON> [folder]}
+    shift 3
+fi
 config=${SAFIRA_RELEASE_CONFIG:-Config/Release.local.xcconfig}
 verrou=${1:-/Applications/Verrou.app/Contents/Resources/extension}
 name=SafiraKeychainGate
@@ -58,6 +69,27 @@ cp "$bin/$name" "$app/Contents/MacOS/$name" || fail "copy the executable"
 for resources in "$bin"/*.bundle; do cp -R "$resources" "$app/Contents/Resources/" || fail "copy $resources"; done
 cp -R "$verrou" "$app/Contents/Resources/verrou" || fail "copy Verrou's extension"
 cp -R scripts/keychain-gate/probe "$app/Contents/Resources/probe" || fail "copy the probe extension"
+if [ -n "$native_manifest" ]; then
+    probe="$app/Contents/Resources/probe"
+    host_name=$(plutil -extract name raw -o - "$native_manifest") || fail "no name in $native_manifest"
+    key=$(plutil -extract key raw -o - "$verrou/manifest.json") || fail "no key in $verrou/manifest.json"
+    plutil -replace key -string "$key" "$probe/manifest.json" && plutil -convert json "$probe/manifest.json" \
+        || fail "give the probe the extension's key"
+    printf '{"name":"%s","message":%s}' "$host_name" "$native_message" > "$probe/native.json"
+    plutil -convert xml1 -o /dev/null "$probe/native.json" || fail "the message is not JSON"
+    # Registered where Safira reads hosts, in the real home, for this run only.
+    hosts="$HOME/Library/Application Support/Safira/NativeMessagingHosts"
+    registered="$hosts/$host_name.json"
+    [ -e "$registered" ] && fail "$registered already exists; this check does not replace it"
+    support=$(dirname "$hosts")
+    [ -d "$support" ] || created_support=true
+    [ -d "$hosts" ] || created_hosts=true
+    mkdir -p "$hosts" || fail "create $hosts"
+    cp "$native_manifest" "$registered" || fail "register the host manifest"
+    # Leaves the folders as they were: only what this run created goes.
+    trap 'rm -f "$registered"; [ "${created_hosts:-}" = true ] && rmdir "$hosts"; [ "${created_support:-}" = true ] && rmdir "$support"' EXIT
+    echo "OK: host manifest $host_name registered for this run in $hosts"
+fi
 cat > "$app/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -96,6 +128,14 @@ run() { # <mode> <expected result>
     grep -E "^(OK|RESULT):" "$work/$1.log"
     grep -qx "RESULT: $2" "$work/$1.log"
 }
+if [ -n "$native_manifest" ]; then
+    : > "$work/native.log"
+    open -W -n -g "$app" --stdout "$work/native.log" --stderr "$work/native.log" --args native
+    grep -E "^(OK|RESULT):" "$work/native.log"
+    grep -q "^RESULT: native {" "$work/native.log" || fail "the host gave no answer (log: $work/native.log)"
+    echo "OK: the sandboxed app started the host and relayed its answer (logs and app in $work)"
+    exit 0
+fi
 if $load_only; then
     run load loaded || fail "the gate app did not load Verrou and the probe (log: $work/load.log)"
     echo "OK: Verrou and the probe loaded in the sandboxed gate app; nothing was stored (logs and app in $work)"

@@ -35,7 +35,7 @@ final class ExtensionTab: NSObject, WKWebExtensionTab {
     }
 
     /// The committed address: `WKWebView.url` already shows a navigation that has only started, which an extension
-    /// would take for the page's (`sender.url` decides which logins Verrou offers).
+    /// would take for the page's (a password manager matches its logins against `sender.url`).
     func url(for context: WKWebExtensionContext) -> URL? {
         host.webView(for: id)?.backForwardList.currentItem?.url
     }

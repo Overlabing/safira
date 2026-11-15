@@ -31,8 +31,8 @@ public final class ExtensionHost: NSObject {
     /// The Tab last reported to the controller as active, so that each change is reported once.
     private var activeTabID: TabID?
 
-    /// Relays `runtime.connectNative` and `sendNativeMessage` to the native apps Safira knows, Verrou's bridge only.
-    var nativeMessaging = NativeMessagingRelay()
+    /// `runtime.connectNative` and `sendNativeMessage`, to the native messaging hosts apps register (ADR 0007).
+    public var nativeMessaging = NativeMessaging()
 
     /// The extensions' actions for the active Tab, which the sidebar shows as buttons.
     public let actions = ExtensionActions()
@@ -84,6 +84,12 @@ public final class ExtensionHost: NSObject {
         try controller.load(context)
         refreshActions()
         return Self.summary(context)
+    }
+
+    /// What a web view needs to show one of the extension's own pages: WebKit loads them only in this configuration,
+    /// not in a Tab's.
+    public func webViewConfiguration(forExtension extensionID: String) -> WKWebViewConfiguration? {
+        context(extensionID)?.webViewConfiguration
     }
 
     // MARK: Actions

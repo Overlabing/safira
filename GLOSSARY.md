@@ -90,6 +90,12 @@ _Avoid_: Skin, color scheme
 The named set of preset Themes a user picks from.
 _Avoid_: Color picker, swatches
 
+### Extensions
+
+**Native messaging host**:
+A program an app registers, through a Chrome-format manifest in Safira's `NativeMessagingHosts` folder, so that the extensions it lists can talk to the app. Safira starts it inside its own sandbox.
+_Avoid_: Bridge, helper, native app
+
 ### Privacy
 
 **Browsing data**:
