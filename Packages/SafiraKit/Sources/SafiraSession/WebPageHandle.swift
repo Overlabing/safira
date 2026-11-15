@@ -56,6 +56,9 @@ public protocol WebPageHandle: SiteResourceFetcher {
     var onNonWebLink: (@MainActor (NonWebLink) -> Void)? { get set }
     /// Called when a navigation of the page turned into a download, which the Profile's downloads take over.
     var onDownloadStarted: (@MainActor () -> Void)? { get set }
+    /// Called when the engine's content process behind the page ended, by a crash or under memory pressure; the page
+    /// is blank until it reloads.
+    var onContentProcessEnded: (@MainActor () -> Void)? { get set }
     /// Called when the main frame finished loading a document, with the `<link>` elements it holds.
     var onIconLinks: (@MainActor (PageIconLinks) -> Void)? { get set }
     /// The engine's opaque navigation state (back-forward list, scroll positions, form fields); nil when it has none.

@@ -668,6 +668,11 @@ public final class ProfileSession {
         selectedTab?.reload()
     }
 
+    /// The window shows the selected Tab's page: a page whose process ended reloads now (see `PageCrash`).
+    public func selectedTabIsShown() {
+        selectedTab?.wasShown()
+    }
+
     // MARK: Page zoom
 
     /// ⌘+: the shown page one step larger, remembered for its site in this Profile.

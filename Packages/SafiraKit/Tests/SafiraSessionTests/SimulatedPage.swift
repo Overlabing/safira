@@ -35,6 +35,7 @@ final class SimulatedPage: WebPageHandle {
     var onDidClose: (@MainActor () -> Void)?
     var onDownloadStarted: (@MainActor () -> Void)?
     var onIconLinks: (@MainActor (PageIconLinks) -> Void)?
+    var onContentProcessEnded: (@MainActor () -> Void)?
     /// The text each address shows, which find searches; an address with none shows no text.
     var texts: [URL: String] = [:]
     var pageZoom: Double = 1
@@ -147,6 +148,11 @@ final class SimulatedPage: WebPageHandle {
     func fetchSiteResource(_ url: URL, byteLimit: Int) async -> SiteResourceResponse {
         fetched.append(url)
         return siteResources[url] ?? .unusable
+    }
+
+    /// The engine's content process behind the page crashes, or is killed under memory pressure.
+    func crash() {
+        onContentProcessEnded?()
     }
 
     /// The page calls `window.close()`.

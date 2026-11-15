@@ -22,6 +22,10 @@ public final class Tab: Identifiable {
     public private(set) var pinnedAddress: URL?
     /// How large the page is drawn: its site's remembered zoom, or 100%.
     public private(set) var zoom = PageZoom.actualSize
+    /// Where the Tab stands after its page's content process ended (a crash, or memory pressure).
+    public private(set) var crash = PageCrash.none
+    /// The address the page showed when its process ended; leaving it gives the page a new automatic reload.
+    @ObservationIgnored private var crashedAddress: URL?
     @ObservationIgnored private var page: (any WebPageHandle)?
     @ObservationIgnored private let osBuild: String
     /// The address of the last HTTPS-first navigation: only its failure may lead to a warning.
@@ -106,6 +110,7 @@ public final class Tab: Identifiable {
     func unload() {
         let saved = record
         close()
+        crash = .none
         state = PageState(url: state.url, title: state.title)
         dormantRecord = saved
     }
@@ -129,6 +134,7 @@ public final class Tab: Identifiable {
 
     func load(_ url: URL, httpsFirst: Bool = false) {
         dormantRecord = nil
+        crash = .none
         let page = page ?? attach(makePage(id))
         insecureConnectionWarning = nil
         httpsFirstAddress = httpsFirst ? url : nil
@@ -151,8 +157,23 @@ public final class Tab: Identifiable {
         page?.goForward()
     }
 
+    /// After a crash, the user's reload is the page's last chance: crashing again shows the crashed state at once.
     func reload() {
+        if crash != .none { crash = .reloaded }
         page?.reload()
+    }
+
+    /// The window shows this Tab's page now. A page whose process ended while it was out of sight, or just now,
+    /// reloads here, once.
+    func wasShown() {
+        guard crash == .reloadWhenShown, let page else { return }
+        crash = .reloaded
+        page.reload()
+    }
+
+    private func contentProcessEnded() {
+        crashedAddress = state.url
+        crash = crash.next
     }
 
     /// Whether the Tab has a page to zoom or search; a dormant or blank Tab has none.
@@ -205,6 +226,7 @@ public final class Tab: Identifiable {
         page?.onNonWebLink = nil
         page?.onDownloadStarted = nil
         page?.onIconLinks = nil
+        page?.onContentProcessEnded = nil
         page?.close()
         page = nil
         zoomedSite = nil
@@ -218,6 +240,7 @@ public final class Tab: Identifiable {
         page.onContinueOverHTTP = { [weak self] in self?.continueOverHTTP() }
         page.onNonWebLink = { [weak self] link in self?.onNonWebLink?(link, self?.state.url?.host) }
         page.onDownloadStarted = { [weak self] in self?.pageStartedDownload() }
+        page.onContentProcessEnded = { [weak self] in self?.contentProcessEnded() }
         page.onIconLinks = { [weak self, weak page] links in
             guard let self, let page else { return }
             onIconLinks?(links, page)
@@ -234,11 +257,33 @@ public final class Tab: Identifiable {
 
     private func pageChanged(_ state: PageState) {
         self.state = state
+        if crash != .none, let url = state.url, url != crashedAddress {
+            crash = .none
+        }
         updateZoom(for: state.url)
         // The warning page borrows the address that failed to load; that address was never visited.
         guard insecureConnectionWarning == nil else { return }
         for event in visits.observe(state, sensitiveContent: page?.sensitiveContent ?? []) {
             onVisitEvent?(event)
+        }
+    }
+}
+
+/// What a Tab does after its page's content process ended. The page reloads by itself once, when it is shown; if it
+/// ends again before the user leaves the address, the Tab shows that the page crashed and waits for a reload.
+public enum PageCrash: Hashable, Sendable {
+    case none
+    /// The process ended; the page reloads the next time the window shows it, at once for the shown Tab.
+    case reloadWhenShown
+    /// The page reloaded after a crash.
+    case reloaded
+    /// The page crashed again: the Tab shows "This page crashed" with a Reload button.
+    case crashed
+
+    var next: PageCrash {
+        switch self {
+        case .none, .reloadWhenShown: .reloadWhenShown
+        case .reloaded, .crashed: .crashed
         }
     }
 }

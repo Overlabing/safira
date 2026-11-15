@@ -30,6 +30,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     private let findBarFocus = FindBarFocus()
     private var findBarHost: NSView?
     private let pageArea = TabHostView.withEmptyPage()
+    private let crashedPage = CrashedPageHost()
     private var layout: BrowserWindowLayout?
     private var toolbar: SidebarToolbar?
     private let compactModeStore = CompactModeStore()
@@ -70,6 +71,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         super.init(window: window)
         window.delegate = self
         registry.permissionPrompt = { [unowned self] prompt in await permissionPrompter.ask(prompt) }
+        registry.pagePanels = permissionPrompter.pagePanels
         registry.appLinkHandlers = AppLinkHandlers(
             launcher: externalApps,
             prompt: { [unowned self] prompt in await permissionPrompter.confirmOpen(prompt) },
@@ -681,7 +683,12 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         }
         commandBar.appearance.theme = spaceTheme
         window?.title = tab?.state.title.flatMap { $0.isEmpty ? nil : $0 } ?? "Safira"
-        pageArea.show(tab.flatMap { webContext.webView(for: $0.id) })
+        if let tab, tab.crash == .crashed {
+            pageArea.show(crashedPage.view(site: tab.address?.host) { [weak self] in self?.session.reload() })
+        } else {
+            pageArea.show(tab.flatMap { webContext.webView(for: $0.id) })
+        }
+        session.selectedTabIsShown()
         updateSearchEngineSheet(query: session.searchAwaitingEngine)
         showPopups()
         showMatchBanner()

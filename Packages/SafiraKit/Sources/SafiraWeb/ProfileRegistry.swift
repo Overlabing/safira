@@ -33,6 +33,10 @@ public final class ProfileRegistry {
     @ObservationIgnored public var permissionPrompt: (@MainActor (PermissionPrompt) async -> PermissionAnswer)? {
         didSet { loadedContexts.forEach { $0.web.permissionPrompt = permissionPrompt } }
     }
+    /// The Main window's page dialogs and open panel, for every Profile's pages, the ones loaded later included.
+    @ObservationIgnored public var pagePanels: PagePanels? {
+        didSet { loadedContexts.forEach { $0.web.pagePanels = pagePanels } }
+    }
     /// What every Profile's links to other apps use to ask the user and to open the app. Without it such links are
     /// refused; the owners created later get it too.
     @ObservationIgnored public var appLinkHandlers = AppLinkHandlers() {
@@ -347,6 +351,7 @@ public final class ProfileRegistry {
                 .appending(path: "Downloads", directoryHint: .isDirectory)
         }
         context.web.permissionPrompt = permissionPrompt
+        context.web.pagePanels = pagePanels
         context.session.appLinks.handlers = appLinkHandlers
         return context
     }

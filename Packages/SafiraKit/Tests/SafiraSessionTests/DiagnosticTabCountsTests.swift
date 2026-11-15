@@ -18,6 +18,7 @@ private final class LoadingPage: WebPageHandle {
     var onDidClose: (@MainActor () -> Void)?
     var onDownloadStarted: (@MainActor () -> Void)?
     var onIconLinks: (@MainActor (PageIconLinks) -> Void)?
+    var onContentProcessEnded: (@MainActor () -> Void)?
     let navigationState: Data? = nil
     let sensitiveContent: SensitiveContent = []
 
