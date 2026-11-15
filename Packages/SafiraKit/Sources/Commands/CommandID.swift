@@ -15,7 +15,7 @@ public enum CommandID: String, CommandIdentifier {
     case previousTab, nextTab, moveTabUp, moveTabDown
     case commandBarNext, commandBarPrevious
     case newSpace, renameSpace, deleteSpace, previousSpace, nextSpace, moveSpaceLeft, moveSpaceRight
-    case togglePin, newFolder
+    case togglePin, backToPinnedAddress, newFolder
     case newProfile, renameProfile, deleteProfile, previousProfile, nextProfile, sitePermissions
     case clearBrowsingData
     case showDownloads
@@ -88,6 +88,9 @@ public enum CommandID: String, CommandIdentifier {
         case .moveSpaceRight: String(localized: "Move Space Right", table: "Commands", bundle: .module, comment: "Command: menu item and Shortcuts row")
         // The menu item shows the selected Tab's state: "Unpin Tab" replaces this title while it is pinned.
         case .togglePin: String(localized: "Pin Tab", table: "Commands", bundle: .module, comment: "Command: menu item and Shortcuts row")
+        case .backToPinnedAddress:
+            String(localized: "Back to Pinned Address", table: "Commands", bundle: .module,
+                   comment: "Command: menu item and Shortcuts row; loads the address a Pinned tab was pinned at")
         case .newFolder: String(localized: "New Folder…", table: "Commands", bundle: .module, comment: "Command: menu item and Shortcuts row")
         case .newProfile: String(localized: "New Profile…", table: "Commands", bundle: .module, comment: "Command: menu item and Shortcuts row")
         case .renameProfile: String(localized: "Rename Profile…", table: "Commands", bundle: .module, comment: "Command: menu item and Shortcuts row")

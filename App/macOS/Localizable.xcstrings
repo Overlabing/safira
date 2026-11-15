@@ -282,6 +282,17 @@
         }
       }
     },
+    "Away from its pinned address" : {
+      "comment" : "Sidebar: VoiceOver state of a Pinned tab",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A quitté son adresse épinglée"
+          }
+        }
+      }
+    },
     "Back" : {
       "comment" : "Sidebar",
       "localizations" : {
@@ -289,6 +300,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Précédent"
+          }
+        }
+      }
+    },
+    "Back to Pinned Address" : {
+      "comment" : "Sidebar: tooltip of a Pinned tab's icon\nTab context menu\nVoiceOver action of a Pinned tab",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revenir à l’adresse épinglée"
           }
         }
       }
@@ -2386,6 +2408,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Remplacer mes règles"
+          }
+        }
+      }
+    },
+    "Replace Pinned Address with Current Page" : {
+      "comment" : "Tab context menu",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remplacer l’adresse épinglée par la page actuelle"
           }
         }
       }

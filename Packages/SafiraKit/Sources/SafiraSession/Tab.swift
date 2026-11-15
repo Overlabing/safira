@@ -74,6 +74,17 @@ public final class Tab: Identifiable {
 
     public var address: URL? { state.url }
 
+    /// Whether a Pinned tab shows another page than the one it was pinned at. The two compare as Normalized addresses
+    /// (as a Matching tab does); an address that is not a web address compares as written. A Tab pinned blank never is.
+    public var isAwayFromPinnedAddress: Bool {
+        guard isPinned, let pinnedAddress else { return false }
+        guard let address else { return true }
+        if let pinned = NormalizedAddress(pinnedAddress), let current = NormalizedAddress(address) {
+            return pinned != current
+        }
+        return pinnedAddress != address
+    }
+
     /// What is saved of this Tab. A dormant Tab keeps its record as it was restored.
     var record: TabRecord {
         var record: TabRecord
@@ -98,6 +109,11 @@ public final class Tab: Identifiable {
     func unpin() {
         isPinned = false
         pinnedAddress = nil
+    }
+
+    /// The Pinned tab now belongs at the page it shows.
+    func replacePinnedAddress() {
+        pinnedAddress = address
     }
 
     /// Marks a restored Tab as pinned without changing the address it was pinned at.

@@ -421,8 +421,9 @@ private func plain(_ session: ProfileSession) -> [String?] {
     }
 }
 
+/// A temporary folder for a Profile database, removed with it.
 @MainActor
-private final class Disk {
+final class Disk {
     let folder = FileManager.default.temporaryDirectory.appending(path: "safira-\(UUID().uuidString)",
                                                                  directoryHint: .isDirectory)
     var file: URL { folder.appending(path: "profile.sqlite") }

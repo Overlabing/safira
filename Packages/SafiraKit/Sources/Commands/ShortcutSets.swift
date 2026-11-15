@@ -98,7 +98,7 @@ public enum SafiraShortcuts {
             .init(id: "tabs", title: String(localized: "Tabs and Windows", table: "Commands", bundle: .module,
                                             comment: "Shortcuts window: section title"),
                   commands: [.newTab, .newPrivateWindow, .openCommandBar, .closeTab, .reopenClosedTab, .closeWindow,
-                             .togglePin, .newFolder, .previousTab, .nextTab, .moveTabUp, .moveTabDown]
+                             .togglePin, .backToPinnedAddress, .newFolder, .previousTab, .nextTab, .moveTabUp, .moveTabDown]
                       + CommandID.selectTabCommands + [.showDownloads, .settings, .quit]),
             .init(id: "view", title: String(localized: "View and History", table: "Commands", bundle: .module,
                                             comment: "Shortcuts window: section title"),

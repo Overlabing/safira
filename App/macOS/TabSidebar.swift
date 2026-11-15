@@ -71,6 +71,14 @@ struct TabMenu: View {
     var body: some View {
         Button(tab.isPinned ? String(localized: "Unpin Tab", comment: "Tab context menu")
                             : String(localized: "Pin Tab", comment: "Tab context menu")) { session.togglePin(tab.id) }
+        if tab.isAwayFromPinnedAddress {
+            Button(String(localized: "Back to Pinned Address", comment: "Tab context menu")) {
+                session.returnToPinnedAddress(tab.id)
+            }
+            Button(String(localized: "Replace Pinned Address with Current Page", comment: "Tab context menu")) {
+                session.replacePinnedAddress(tab.id)
+            }
+        }
         Divider()
         Button("Move Up") { session.move(tab.id, by: -1) }
             .disabled(!session.canMove(tab.id, by: -1))

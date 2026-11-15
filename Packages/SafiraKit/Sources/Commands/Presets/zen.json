@@ -216,6 +216,7 @@
     "moveSpaceRight": "The page lists no command to move a workspace.",
     "togglePin": "The page lists no command to pin or unpin a tab; its only pinned-tab entry is Reset Pinned Tab to Pinned URL, which has no default key.",
     "newFolder": "The page lists no command to create a folder.",
+    "backToPinnedAddress": "Reset Pinned Tab to Pinned URL is listed with no default key.",
     "newProfile": "The page lists no Profile command.",
     "renameProfile": "The page lists no Profile command.",
     "deleteProfile": "The page lists no Profile command.",
