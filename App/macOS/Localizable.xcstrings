@@ -981,17 +981,6 @@
         }
       }
     },
-    "Drop Here to Pin" : {
-      "comment" : "Sidebar: the empty pinned area while a Tab is dragged",
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Déposer ici pour épingler"
-          }
-        }
-      }
-    },
     "Edit" : {
       "comment" : "Menu bar title",
       "localizations" : {

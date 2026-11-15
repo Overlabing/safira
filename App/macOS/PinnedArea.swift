@@ -14,42 +14,47 @@ struct FolderActions {
     let rename: (FolderID) -> Void
 }
 
+/// What a drag carries: a Pinned tab or a Folder. Plain Tabs are never offered, and a drop that does not parse is
+/// refused, so text dragged in from elsewhere does nothing.
+enum PinnedDrag {
+    static func text(for item: PinnedItemID) -> String {
+        switch item {
+        case .tab(let id): "safira-tab:\(id.rawValue.uuidString)"
+        case .folder(let id): "safira-folder:\(id.rawValue.uuidString)"
+        }
+    }
+
+    static func item(from text: String) -> PinnedItemID? {
+        if let id = text.removingPrefix("safira-tab:").flatMap(UUID.init(uuidString:)) {
+            return .tab(TabID(rawValue: id))
+        }
+        if let id = text.removingPrefix("safira-folder:").flatMap(UUID.init(uuidString:)) {
+            return .folder(FolderID(rawValue: id))
+        }
+        return nil
+    }
+}
+
+private extension String {
+    func removingPrefix(_ prefix: String) -> String? {
+        hasPrefix(prefix) ? String(dropFirst(prefix.count)) : nil
+    }
+}
+
 /// The active Space's pinned area: its Pinned tabs and its Folders. An open Folder's content sits on one panel, drawn a
 /// cell at a time (`SidebarCellPlacement.panel`); a Folder inside a Folder is indented one level in the same panel.
-/// While a drag proposes a place in it, the insertion line is a cell of its own there; while a Tab is dragged and the
-/// area is empty, `PinDropZone` stands in for it.
 struct PinnedSection: View {
     let session: ProfileSession
     let focus: ColumnFocus
     let actions: FolderActions
-    let drag: SidebarDrag
 
     var body: some View {
-        if session.pinnedItems.isEmpty, drag.isDragging {
-            PinDropZone(isTargeted: drag.hover?.place == .pinned(folder: nil, index: 0))
-                .sidebarDropTarget(.gap(.pinned(folder: nil, index: 0)), row: PinDropZone.rowID, drag: drag,
-                                   session: session)
-        } else {
-            ForEach(PinnedCell.cells(of: session.pinnedItems, line: drag.linePlace)) { cell in
-                switch cell.content {
-                case .item(.tab(let tab), let container, let index):
-                    pinnedTab(tab, placement: cell.placement)
-                        .sidebarDropTarget(.row(above: .pinned(folder: container, index: index),
-                                                below: .pinned(folder: container, index: index + 1)),
-                                           row: cell.id, drag: drag, session: session)
-                case .item(.folder(let folder), let container, let index):
-                    PinnedFolder(folder: folder, session: session, actions: actions, drag: drag,
-                                 placement: cell.placement)
-                        .sidebarDropTarget(
-                            .folder(folder.id, above: .pinned(folder: container, index: index),
-                                    into: .pinned(folder: folder.id, index: folder.items.count),
-                                    below: folder.isExpanded ? .pinned(folder: folder.id, index: 0)
-                                                             : .pinned(folder: container, index: index + 1)),
-                            row: cell.id, drag: drag, session: session)
-                case .line(let place):
-                    InsertionLineRow(placement: cell.placement)
-                        .sidebarDropTarget(.gap(place), row: cell.id, drag: drag, session: session)
-                }
+        ForEach(PinnedCell.cells(of: session.pinnedItems)) { cell in
+            switch cell.item {
+            case .tab(let tab):
+                pinnedTab(tab, placement: cell.placement)
+            case .folder(let folder):
+                PinnedFolder(folder: folder, session: session, actions: actions, placement: cell.placement)
             }
         }
     }
@@ -62,64 +67,37 @@ struct PinnedSection: View {
                           count: session.activeSpace.allTabs.count,
                           select: { session.select(tab.id) }, close: { session.close(tab.id) },
                           clickIcon: { session.clickIcon(of: tab.id) })
-            .sidebarDragSource(.tab(tab.id), drag: drag)
+            .modifier(TabDrag(tab: tab, session: session))
             .contextMenu { TabMenu(tab: tab, session: session) }
     }
 }
 
 /// The pinned area flattened into the `List`'s cells: every Pinned tab and Folder in order, an open Folder's content
-/// right after it in that Folder's panel, the panel's first and last cells marked so its ends are rounded. Each item
-/// keeps the Folder that holds it (nil for the top of the area) and its index there, which name the gaps around it.
-/// `line` puts the insertion line in its gap; a gap inside a closed Folder shows none.
+/// right after it in that Folder's panel, the panel's first and last cells marked so its ends are rounded.
 @MainActor
 struct PinnedCell: @MainActor Identifiable {
-    enum Content {
-        case item(PinnedItem, container: FolderID?, index: Int)
-        case line(SidebarDropPlace)
-    }
-
-    let content: Content
+    let item: PinnedItem
     let placement: SidebarCellPlacement
 
-    var id: AnyHashable {
-        switch content {
-        case .item(let item, _, _): item.id
-        case .line: InsertionLineRow.rowID
+    var id: PinnedItemID { item.id }
+
+    static func cells(of items: [PinnedItem]) -> [PinnedCell] {
+        items.flatMap { item -> [PinnedCell] in
+            let head = PinnedCell(item: item, placement: .free)
+            guard case .folder(let folder) = item, folder.isExpanded else { return [head] }
+            let inside = contents(of: folder, level: 1)
+            return [head] + inside.enumerated().map { index, cell in
+                PinnedCell(item: cell.item, placement: .panel(level: cell.level, isFirst: index == 0,
+                                                              isLast: index == inside.count - 1))
+            }
         }
     }
 
-    static func cells(of items: [PinnedItem], line: SidebarDropPlace? = nil) -> [PinnedCell] {
-        var cells: [PinnedCell] = []
-        for (index, item) in items.enumerated() {
-            if let line, line == .pinned(folder: nil, index: index) {
-                cells.append(PinnedCell(content: .line(line), placement: .free))
-            }
-            cells.append(PinnedCell(content: .item(item, container: nil, index: index), placement: .free))
-            guard case .folder(let folder) = item, folder.isExpanded else { continue }
-            let inside = contents(of: folder, level: 1, line: line)
-            cells += inside.enumerated().map { offset, cell in
-                PinnedCell(content: cell.content, placement: .panel(level: cell.level, isFirst: offset == 0,
-                                                                    isLast: offset == inside.count - 1))
-            }
+    private static func contents(of folder: Folder, level: Int) -> [(item: PinnedItem, level: Int)] {
+        folder.items.flatMap { item -> [(item: PinnedItem, level: Int)] in
+            guard case .folder(let inner) = item, inner.isExpanded else { return [(item, level)] }
+            return [(item, level)] + contents(of: inner, level: level + 1)
         }
-        if let line, line == .pinned(folder: nil, index: items.count) {
-            cells.append(PinnedCell(content: .line(line), placement: .free))
-        }
-        return cells
-    }
-
-    private static func contents(of folder: Folder, level: Int,
-                                 line: SidebarDropPlace?) -> [(content: Content, level: Int)] {
-        var cells: [(content: Content, level: Int)] = []
-        for (index, item) in folder.items.enumerated() {
-            if let line, line == .pinned(folder: folder.id, index: index) { cells.append((.line(line), level)) }
-            cells.append((.item(item, container: folder.id, index: index), level))
-            if case .folder(let inner) = item, inner.isExpanded {
-                cells += contents(of: inner, level: level + 1, line: line)
-            }
-        }
-        if let line, line == .pinned(folder: folder.id, index: folder.items.count) { cells.append((.line(line), level)) }
-        return cells
     }
 }
 
@@ -127,8 +105,8 @@ private struct PinnedFolder: View {
     let folder: Folder
     let session: ProfileSession
     let actions: FolderActions
-    let drag: SidebarDrag
     let placement: SidebarCellPlacement
+    @State private var isDropTarget = false
     @Environment(\.designTokens) private var tokens
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -148,7 +126,11 @@ private struct PinnedFolder: View {
             }
         }
         .onTapGesture { session.setFolderExpanded(folder.id, !folder.isExpanded) }
-        .sidebarDragSource(.folder(folder.id), drag: drag)
+        .draggable(PinnedDrag.text(for: .folder(folder.id)))
+        .dropDestination(for: String.self, action: { texts, _ in
+            guard let item = texts.first.flatMap(PinnedDrag.item(from:)) else { return false }
+            return session.movePinned(item, into: folder.id)
+        }, isTargeted: { isDropTarget = $0 })
         .contextMenu {
             Button("New Folder Inside…") { actions.create(folder.id) }
             Button("Rename Folder…") { actions.rename(folder.id) }
@@ -166,7 +148,7 @@ private struct PinnedFolder: View {
         }
         .accessibilityAction(named: "Rename Folder") { actions.rename(folder.id) }
         .accessibilityAction(named: "Delete Folder") { session.deleteFolder(folder.id) }
-        .sidebarCell(state: RowState(isCurrent: drag.hover?.into == folder.id), placement: placement, hoverID: folder.id)
+        .sidebarCell(state: RowState(isCurrent: isDropTarget), placement: placement, hoverID: folder.id)
     }
 }
 

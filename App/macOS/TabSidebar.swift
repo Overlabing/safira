@@ -14,9 +14,8 @@ import SwiftUI
 /// The Main window's column, ThemeKit's sidebar column (`sidebarColumn(field:header:bottomBar:)`): the address and
 /// Back, Forward and Reload in the head field, then the Profile's extension buttons; a plain list of the active Space's pinned area with its Folders, a
 /// hairline, the New Tab row and the other Tabs; the Space rail with the Spaces and Profiles in the bottom bar. Arrow
-/// keys in the list move the selection, which shows the Tab; Delete closes it; Return or Escape goes to its page. A Tab
-/// or Folder dragged onto the list lands where the insertion line shows it: a plain Tab dropped in the pinned area or a
-/// Folder is pinned there, a Pinned tab dropped among the other Tabs is unpinned there (`ProfileSession.drop`).
+/// keys in the list move the selection, which shows the Tab; Delete closes it; Return or Escape goes to its page. Tabs
+/// can be dragged to reorder, and Pinned tabs and Folders into Folders.
 struct TabSidebar: View {
     let registry: ProfileRegistry
     let focus: ColumnFocus
@@ -30,34 +29,20 @@ struct TabSidebar: View {
 
     private var session: ProfileSession { registry.active.session }
 
-    @State private var drag = SidebarDrag()
-
     var body: some View {
         List {
-            PinnedSection(session: session, focus: focus, actions: folderActions, drag: drag)
-            if !session.pinnedItems.isEmpty || drag.isDragging { SidebarSeparator() }
+            PinnedSection(session: session, focus: focus, actions: folderActions)
+            if !session.pinnedItems.isEmpty { SidebarSeparator() }
             NewTabRow(shortcut: shortcut(.newTab), isSelected: session.sidebarSelection == .newTab,
                       newTab: pageActions.newTab)
-                .sidebarDropTarget(.gap(.tabs(index: 0)), row: "safira.newTabRow", drag: drag, session: session)
-            ForEach(PlainTabCell.cells(of: session.tabs, line: drag.linePlace)) { cell in
-                switch cell {
-                case .tab(let tab, let index):
-                    TabRowView(tab: tab, icons: session.siteIcons,
-                               isSelected: session.sidebarSelection == .tab(tab.id),
-                               isListFocused: focus.isListFocused, placement: .free,
-                               position: session.activeSpace.pinnedTabs.count + index + 1,
-                               count: session.activeSpace.allTabs.count,
-                               select: { session.select(tab.id) }, close: { session.close(tab.id) })
-                        .sidebarDragSource(.tab(tab.id), drag: drag)
-                        .sidebarDropTarget(.row(above: .tabs(index: index), below: .tabs(index: index + 1)),
-                                           row: cell.id, drag: drag, session: session)
-                        .contextMenu { TabMenu(tab: tab, session: session) }
-                case .line:
-                    if let place = drag.linePlace {
-                        InsertionLineRow(placement: .free)
-                            .sidebarDropTarget(.gap(place), row: cell.id, drag: drag, session: session)
-                    }
-                }
+            ForEach(Array(session.tabs.enumerated()), id: \.element.id) { index, tab in
+                TabRowView(tab: tab, icons: session.siteIcons, isSelected: session.sidebarSelection == .tab(tab.id),
+                           isListFocused: focus.isListFocused, placement: .free,
+                           position: session.activeSpace.pinnedTabs.count + index + 1,
+                           count: session.activeSpace.allTabs.count,
+                           select: { session.select(tab.id) }, close: { session.close(tab.id) })
+                    .modifier(TabDrag(tab: tab, session: session))
+                    .contextMenu { TabMenu(tab: tab, session: session) }
             }
         }
         .modifier(TabListKeyboard(session: session, focus: focus, showPage: pageActions.showPage))
@@ -74,9 +59,6 @@ struct TabSidebar: View {
                          shortcut: shortcut)
         }
         .theme(spaceTheme)
-        #if DEBUG
-        .task { await SidebarDragPreview.run(session: session, drag: drag) }
-        #endif
     }
 
     /// The Space's Theme colours the column; a Space with none wears its Profile's.
@@ -233,27 +215,22 @@ private struct RailMenu: View {
     }
 }
 
-#if DEBUG
-/// Captures of the sidebar's drag and drop, which cannot drag in the background: the launch argument
-/// `-SafiraDragPreview zone|line|drop` opens three Tabs, then shows the empty pinned area under a dragged Tab (`zone`),
-/// pins the first Tab by a drop and shows the line where the third would land (`line`), or drops both (`drop`). Debug
-/// builds only.
-@MainActor
-private enum SidebarDragPreview {
-    static func run(session: ProfileSession, drag: SidebarDrag) async {
-        guard let mode = UserDefaults.standard.string(forKey: "SafiraDragPreview") else { return }
-        let ids = ["https://example.com", "https://example.org", "https://example.net"].compactMap(URL.init(string:))
-            .map { session.openExternalLink($0) }
-        try? await Task.sleep(for: .seconds(2))
-        let first = PinnedItemID.tab(ids[0]), third = PinnedItemID.tab(ids[2])
-        if mode != "zone" { session.drop(first, at: .pinned(folder: nil, index: 0)) }
-        let place = SidebarDropPlace.pinned(folder: nil, index: mode == "zone" ? 0 : 1)
-        if mode == "drop" {
-            session.drop(third, at: place)
-        } else {
-            _ = drag.begin(third)
-            drag.propose(SidebarDrag.Hover(place: place, row: "preview"))
-        }
+/// A Tab can be dragged before another one of its kind: a Pinned tab before a Pinned tab or into a Folder, a plain Tab
+/// before a plain Tab. A drop that does not parse is refused, so text dragged in from elsewhere does nothing.
+struct TabDrag: ViewModifier {
+    let tab: SafiraSession.Tab
+    let session: ProfileSession
+
+    func body(content: Content) -> some View {
+        content
+            .draggable(PinnedDrag.text(for: .tab(tab.id)))
+            .dropDestination(for: String.self) { texts, _ in
+                guard let item = texts.first.flatMap(PinnedDrag.item(from:)) else { return false }
+                if tab.isPinned { return session.movePinned(item, before: .tab(tab.id)) }
+                guard case .tab(let dragged) = item, let index = session.tabs.firstIndex(where: { $0.id == tab.id }),
+                      session.tabs.contains(where: { $0.id == dragged }) else { return false }
+                session.move(dragged, to: index)
+                return true
+            }
     }
 }
-#endif
