@@ -29,6 +29,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     private let shortcuts: ShortcutController
     private lazy var commandBar = FloatingCommandBar { [unowned self] in session }
     private let columnFocus = ColumnFocus()
+    private let extensionPopups = ExtensionPopups()
     private let findBarFocus = FindBarFocus()
     private var findBarHost: NSView?
     private let pageArea = TabHostView.withEmptyPage()
@@ -838,7 +839,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         )
         let column = TabSidebar(
             registry: registry, focus: columnFocus, pageActions: pageActions, profileActions: profileActions,
-            spaceActions: spaceActions, folderActions: folderActions,
+            spaceActions: spaceActions, folderActions: folderActions, extensionPopups: extensionPopups,
             shortcut: { [weak self] id in self?.shortcuts.bindings.shortcut(id)?.symbols })
         let theme: () -> Theme = { [weak self] in self?.spaceTheme ?? ThemeCatalog.first }
         let backdrop = WindowBackdrop(theme: theme).spaceDeletionPrompt(spaceDeletion)

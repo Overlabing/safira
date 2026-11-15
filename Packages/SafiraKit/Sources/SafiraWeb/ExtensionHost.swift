@@ -31,6 +31,11 @@ public final class ExtensionHost: NSObject {
     /// The Tab last reported to the controller as active, so that each change is reported once.
     private var activeTabID: TabID?
 
+    /// The extensions' actions for the active Tab, which the sidebar shows as buttons.
+    public let actions = ExtensionActions()
+    /// Shows an action's popup; set by the window that shows the actions' buttons.
+    public var popupPresenter: ExtensionPopupPresenter?
+
     init(web: ProfileWebContext, storage: WebsiteStorage) {
         self.web = web
         let configuration: WKWebExtensionController.Configuration = switch storage {
@@ -70,7 +75,42 @@ public final class ExtensionHost: NSObject {
             context.setPermissionStatus(.grantedExplicitly, for: pattern)
         }
         try controller.load(context)
+        refreshActions()
         return Self.summary(context)
+    }
+
+    // MARK: Actions
+
+    /// Does what a click on the extension's button does, for the active Tab: runs `action.onClicked` in the
+    /// extension, or opens its popup through `popupPresenter`. It also grants `activeTab` for that Tab.
+    public func performAction(extensionID: String) {
+        guard let context = context(extensionID) else { return }
+        context.performAction(for: activeTab)
+    }
+
+    /// Reads every action again for the active Tab: after a load, a change of Tab, or the extension's own change.
+    func refreshActions() {
+        let side = ExtensionActions.iconSide
+        let items = controller.extensionContexts
+            .sorted { ($0.webExtension.displayName ?? "") < ($1.webExtension.displayName ?? "") }
+            .compactMap { context -> ExtensionActionItem? in
+                guard Self.hasAction(context.webExtension), let action = context.action(for: activeTab) else { return nil }
+                let name = context.webExtension.displayName ?? ""
+                return ExtensionActionItem(id: context.uniqueIdentifier, name: name,
+                                           label: action.label.isEmpty ? name : action.label,
+                                           badgeText: action.badgeText, isEnabled: action.isEnabled,
+                                           icon: action.icon(for: CGSize(width: side, height: side)))
+            }
+        actions.update(items)
+    }
+
+    /// WebKit gives every extension a default action; only one whose manifest declares it shows a button.
+    private static func hasAction(_ webExtension: WKWebExtension) -> Bool {
+        ["action", "browser_action", "page_action"].contains { webExtension.manifest[$0] != nil }
+    }
+
+    private func context(_ extensionID: String) -> WKWebExtensionContext? {
+        controller.extensionContexts.first { $0.uniqueIdentifier == extensionID }
     }
 
     // MARK: The Profile's Tabs
@@ -93,6 +133,7 @@ public final class ExtensionHost: NSObject {
         guard let tab = tabs.removeValue(forKey: id) else { return }
         if activeTabID == id { activeTabID = nil }
         controller.didCloseTab(tab, windowIsClosing: false)
+        refreshActions()
     }
 
     private func followSelection() {
@@ -111,6 +152,7 @@ public final class ExtensionHost: NSObject {
         let previous = activeTabID.flatMap { tabs[$0] }
         activeTabID = selected
         controller.didActivateTab(tab, previousActiveTab: previous)
+        refreshActions()
     }
 
     // MARK: What the adapters read
@@ -163,6 +205,25 @@ extension ExtensionHost: WKWebExtensionControllerDelegate {
     public func webExtensionController(_ controller: WKWebExtensionController,
                                        focusedWindowFor extensionContext: WKWebExtensionContext) -> (any WKWebExtensionWindow)? {
         window
+    }
+
+    public func webExtensionController(_ controller: WKWebExtensionController, didUpdate action: WKWebExtension.Action,
+                                       forExtensionContext context: WKWebExtensionContext) {
+        refreshActions()
+    }
+
+    /// Called once the popup's page has loaded, for a click and for `action.openPopup()` alike.
+    public func webExtensionController(_ controller: WKWebExtensionController,
+                                       presentActionPopup action: WKWebExtension.Action,
+                                       for context: WKWebExtensionContext,
+                                       completionHandler: @escaping ((any Error)?) -> Void) {
+        guard let popupPresenter else { return completionHandler(ExtensionPopupUnavailable()) }
+        do {
+            try popupPresenter(context.uniqueIdentifier, action)
+            completionHandler(nil)
+        } catch {
+            completionHandler(error)
+        }
     }
 }
 
