@@ -70,6 +70,30 @@
         "from": "Go forward to next webpage (Command-])"
       }
     ],
+    "findInPage": [
+      {
+        "shortcut": "⌘F",
+        "from": "Search the current webpage (Command-F)"
+      }
+    ],
+    "zoomIn": [
+      {
+        "shortcut": "⌘+",
+        "from": "Zoom website content (Command-Plus Sign)"
+      }
+    ],
+    "zoomOut": [
+      {
+        "shortcut": "⌘-",
+        "from": "Zoom website content (Command-Minus Sign)"
+      }
+    ],
+    "printPage": [
+      {
+        "shortcut": "⌘P",
+        "from": "Print the current webpage (Command-P)"
+      }
+    ],
     "previousTab": [
       {
         "shortcut": "⇧⌘[",
@@ -163,6 +187,9 @@
     "selectSpace6": "The page lists no command to show a tab group by its number.",
     "selectSpace7": "The page lists no command to show a tab group by its number.",
     "selectSpace8": "The page lists no command to show a tab group by its number.",
-    "selectSpace9": "The page lists no command to show a tab group by its number."
+    "selectSpace9": "The page lists no command to show a tab group by its number.",
+    "findNext": "The cited page lists no command for the next match.",
+    "findPrevious": "The cited page lists no command for the previous match.",
+    "actualSize": "The cited page lists no command to reset the zoom."
   }
 }

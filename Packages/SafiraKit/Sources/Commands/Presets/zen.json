@@ -82,6 +82,48 @@
         "from": "Navigate Forward (Alternative) (Ctrl+]); the primary Alt+Right is the macOS word-movement key"
       }
     ],
+    "findInPage": [
+      {
+        "shortcut": "⌘F",
+        "from": "Find on Page (Ctrl+F)"
+      }
+    ],
+    "findNext": [
+      {
+        "shortcut": "⌘G",
+        "from": "Find Again (Jump to Next Result) (Ctrl+G)"
+      }
+    ],
+    "findPrevious": [
+      {
+        "shortcut": "⇧⌘G",
+        "from": "Find Previous (Jump to Previous Result) (⇧+Ctrl+G)"
+      }
+    ],
+    "zoomIn": [
+      {
+        "shortcut": "⌘+",
+        "from": "Zoom In (Ctrl++)"
+      }
+    ],
+    "zoomOut": [
+      {
+        "shortcut": "⌘-",
+        "from": "Zoom Out (Ctrl+-)"
+      }
+    ],
+    "actualSize": [
+      {
+        "shortcut": "⌘0",
+        "from": "Reset Zoom Level (Ctrl+0)"
+      }
+    ],
+    "printPage": [
+      {
+        "shortcut": "⌘P",
+        "from": "Print Page (Ctrl+P)"
+      }
+    ],
     "previousSpace": [
       {
         "shortcut": "⌥⌘Q",
