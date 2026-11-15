@@ -38,6 +38,10 @@ private final class LoadingPage: WebPageHandle {
     func goBack() {}
     func goForward() {}
     func reload() {}
+    var pageZoom: Double = 1
+    func find(_ text: String, backwards: Bool) async -> Bool { false }
+    func countMatches(of text: String) async -> Int { 0 }
+    func endFind() {}
     func close() {}
     func fetchSiteResource(_ url: URL, byteLimit: Int) async -> SiteResourceResponse { .failed }
 }

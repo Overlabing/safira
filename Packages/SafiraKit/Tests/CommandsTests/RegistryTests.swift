@@ -7,7 +7,7 @@ import Testing
 
 @Test func everyCommandHasItsOwnTitle() {
     #expect(Set(CommandID.allCases.map(\.title)).count == CommandID.allCases.count)
-    #expect(CommandID.allCases.count == 55)
+    #expect(CommandID.allCases.count == 62)
     #expect(CommandID.compactMode.title == "Compact Mode")
     #expect(CommandID.showSidebar.title == "Show Sidebar")
     #expect(CommandID.selectTab1.title == "Show Tab 1")
@@ -52,7 +52,7 @@ import Testing
     for command in [CommandID.commandBarNext, .commandBarPrevious] {
         #expect(!SafiraShortcuts.rules.isRebindable(command))
     }
-    #expect(rebindable.count == 53)
+    #expect(rebindable.count == 60)
 }
 
 @Test func aFixedCommandRefusesARecordedKey() {
@@ -159,5 +159,19 @@ import Testing
     #expect(listed.count == Set(listed).count)
     #expect(Set(listed) == Set(CommandID.allCases.filter(\.isImplemented)))
     #expect(!CommandID.newWindow.isImplemented)
-    #expect(SafiraShortcuts.groups.map(\.title) == ["Tabs and Windows", "View and History", "Spaces", "Profiles", "Command Bar"])
+    #expect(SafiraShortcuts.groups.map(\.title) == ["Tabs and Windows", "View and History", "Page", "Spaces", "Profiles", "Command Bar"])
+}
+
+/// #122: Find, Print and page zoom are commands like the others: listed in the Shortcuts window, rebindable, and with
+/// Safari's keys in every set.
+@Test func thePageCommandsHaveSafarisKeysInEverySet() {
+    let page: [CommandID] = [.findInPage, .findNext, .findPrevious, .zoomIn, .zoomOut, .actualSize, .printPage]
+    #expect(page.map(\.title) == ["Find…", "Find Next", "Find Previous", "Zoom In", "Zoom Out", "Actual Size", "Print…"])
+    #expect(SafiraShortcuts.groups.first { $0.id == "page" }?.commands == page)
+    for preset in [nil] + ShortcutPreset.allCases.map(Optional.some) {
+        #expect(page.map { menuKey(preset, $0) } == ["⌘F", "⌘G", "⇧⌘G", "⌘+", "⌘-", "⌘0", "⌘P"])
+        #expect(bindings(preset).conflicts == [])
+    }
+    #expect(page.allSatisfy(SafiraShortcuts.rules.isRebindable))
+    #expect(page.allSatisfy { $0.isImplemented })
 }

@@ -58,6 +58,10 @@ public final class ProfileSession {
     public let hasSpaces: Bool
     /// The icons of the sites this Profile's Tabs loaded, which its Tabs, Pinned tabs and suggestions show.
     public let siteIcons: ProfileSiteIcons
+    /// The page zoom this Profile remembers for each site.
+    public let siteZooms: SiteZooms
+    /// The find bar of the window showing this session, searching the shown Tab.
+    public let find = PageFind()
     /// Nil for a session that keeps no history, as a Private window's does.
     @ObservationIgnored let history: ProfileDatabase?
     @ObservationIgnored private let historyRecorder: HistoryRecorder?
@@ -83,12 +87,15 @@ public final class ProfileSession {
     ///   - appLinks: the Profile's remembered app choices; without it they are kept for this run only.
     ///   - hasSpaces: false for a Private window, which has a single internal Space the user never sees.
     ///   - siteIcons: the Profile's site icons; without it they are kept in memory for this run only.
+    ///   - siteZooms: the Profile's page zooms; without it they are kept in memory for this run only.
     ///   - makePage: builds the page of a Tab, called once per Tab on its first load or its first selection.
     public init(profileID: ProfileID, settings: ProfileSettings = ProfileSettings(), osBuild: String = OSBuild.current,
                 history: ProfileDatabase? = nil, appLinks: AppLinkGate? = nil, hasSpaces: Bool = true,
-                siteIcons: ProfileSiteIcons? = nil, makePage: @escaping @MainActor (TabID) -> any WebPageHandle) {
+                siteIcons: ProfileSiteIcons? = nil, siteZooms: SiteZooms? = nil,
+                makePage: @escaping @MainActor (TabID) -> any WebPageHandle) {
         self.profileID = profileID
         self.siteIcons = siteIcons ?? ProfileSiteIcons(directory: nil)
+        self.siteZooms = siteZooms ?? SiteZooms()
         self.appLinks = appLinks ?? AppLinkGate(profileID: profileID)
         self.settings = settings
         self.osBuild = osBuild
@@ -99,6 +106,7 @@ public final class ProfileSession {
         let space = Space(id: SpaceID(), name: Self.initialSpaceName, emoji: Self.initialSpaceEmoji)
         spaces = [space]
         activeSpaceID = space.id
+        find.shownTab = { [weak self] in self?.selectedTab }
     }
 
     public var activeSpace: Space {
@@ -168,6 +176,7 @@ public final class ProfileSession {
         observeVisits(of: restored)
         observeNonWebLinks(of: restored)
         observeIcons(of: restored)
+        restored.followZoom { [siteZooms] in siteZooms.zoom(for: $0) }
         return restored
     }
 
@@ -659,6 +668,38 @@ public final class ProfileSession {
         selectedTab?.reload()
     }
 
+    // MARK: Page zoom
+
+    /// ⌘+: the shown page one step larger, remembered for its site in this Profile.
+    public func zoomIn() {
+        changeZoom { $0.zoomedIn }
+    }
+
+    /// ⌘−: one step smaller.
+    public func zoomOut() {
+        changeZoom { $0.zoomedOut }
+    }
+
+    /// ⌘0: back to the page's own size, and the site's zoom is forgotten.
+    public func resetZoom() {
+        changeZoom { $0.isActualSize ? nil : .actualSize }
+    }
+
+    public var canZoomIn: Bool { selectedTab.map { $0.hasPage && $0.zoom.zoomedIn != nil } ?? false }
+    public var canZoomOut: Bool { selectedTab.map { $0.hasPage && $0.zoom.zoomedOut != nil } ?? false }
+    public var canResetZoom: Bool { selectedTab.map { $0.hasPage && !$0.zoom.isActualSize } ?? false }
+
+    /// Every open page of the same site follows, in every Space, as in Safari.
+    private func changeZoom(_ step: (PageZoom) -> PageZoom?) {
+        guard let tab = selectedTab, tab.hasPage, let zoom = step(tab.zoom) else { return }
+        siteZooms.remember(zoom, for: tab.address)
+        tab.apply(zoom)
+        guard let site = ZoomSite(tab.address) else { return }
+        for other in spaces.flatMap(\.allTabs) where other !== tab && other.hasPage && ZoomSite(other.address) == site {
+            other.apply(zoom)
+        }
+    }
+
     private func open(_ url: URL, in target: CommandBarTarget, httpsFirst: Bool = false) {
         if target == .newTab || selectedTab == nil {
             openNewTab()
@@ -716,6 +757,7 @@ public final class ProfileSession {
         observeVisits(of: tab)
         observeNonWebLinks(of: tab)
         observeIcons(of: tab)
+        tab.followZoom { [siteZooms] in siteZooms.zoom(for: $0) }
         return tab
     }
 

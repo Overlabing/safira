@@ -121,6 +121,13 @@ enum Migrations {
                 table.add(column: "folder_path", .text)
             }
         }
+        // The page zoom the user chose for a site (#122), by host. A site at 100% has no row.
+        migrator.registerMigration("v10-site-zoom") { db in
+            try db.create(table: "site_zoom") { table in
+                table.primaryKey("host", .text)
+                table.column("factor", .double).notNull()
+            }
+        }
         return migrator
     }
 

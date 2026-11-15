@@ -1,6 +1,17 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Actual Size" : {
+      "comment" : "Command: menu item and Shortcuts row; page zoom back to 100%",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Taille réelle"
+          }
+        }
+      }
+    },
     "Back" : {
       "comment" : "Command: menu item and Shortcuts row",
       "localizations" : {
@@ -151,6 +162,39 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Téléchargements"
+          }
+        }
+      }
+    },
+    "Find Next" : {
+      "comment" : "Command: menu item and Shortcuts row; next match in the page",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher le suivant"
+          }
+        }
+      }
+    },
+    "Find Previous" : {
+      "comment" : "Command: menu item and Shortcuts row; previous match in the page",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher le précédent"
+          }
+        }
+      }
+    },
+    "Find…" : {
+      "comment" : "Command: menu item and Shortcuts row; find in page",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher…"
           }
         }
       }
@@ -331,6 +375,17 @@
         }
       }
     },
+    "Page" : {
+      "comment" : "Shortcuts window: section title; commands on the shown web page",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Page"
+          }
+        }
+      }
+    },
     "Paste" : {
       "comment" : "Menu item",
       "localizations" : {
@@ -349,6 +404,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Épingler l’onglet"
+          }
+        }
+      }
+    },
+    "Print…" : {
+      "comment" : "Command: menu item and Shortcuts row",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Imprimer…"
           }
         }
       }
@@ -638,6 +704,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Les raccourcis de Zen, d’Arc ou de Safari. Une commande sans équivalent dans le préréglage garde le raccourci de Safira. Sans préréglage, les raccourcis de Safira s’appliquent. Vous pouvez modifier n’importe quel raccourci ensuite."
+          }
+        }
+      }
+    },
+    "Zoom In" : {
+      "comment" : "Command: menu item and Shortcuts row; page zoom",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoom avant"
+          }
+        }
+      }
+    },
+    "Zoom Out" : {
+      "comment" : "Command: menu item and Shortcuts row; page zoom",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoom arrière"
           }
         }
       }

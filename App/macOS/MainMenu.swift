@@ -71,6 +71,8 @@ enum MainMenu {
             item(.newFolder, #selector(MainWindowController.newFolder(_:))),
             .separator(),
             item(.closeWindow, #selector(NSWindow.performClose(_:))),
+            .separator(),
+            item(.printPage, #selector(MainWindowController.printPage(_:))),
         ]))
         menu.addItem(submenu(title: String(localized: "Edit", comment: "Menu bar title"), items: [
             NSMenuItem(title: String(localized: "Cut", comment: "Menu item"),
@@ -81,9 +83,17 @@ enum MainMenu {
                        action: #selector(NSText.paste(_:)), keyEquivalent: "v"),
             NSMenuItem(title: String(localized: "Select All", comment: "Menu item"),
                        action: #selector(NSText.selectAll(_:)), keyEquivalent: "a"),
+            .separator(),
+            item(.findInPage, #selector(MainWindowController.findInPage(_:))),
+            item(.findNext, #selector(MainWindowController.findNext(_:))),
+            item(.findPrevious, #selector(MainWindowController.findPrevious(_:))),
         ]))
         menu.addItem(submenu(title: String(localized: "View", comment: "Menu bar title"), items: [
             item(.reload, #selector(MainWindowController.reload(_:))),
+            .separator(),
+            item(.zoomIn, #selector(MainWindowController.zoomIn(_:))),
+            item(.zoomOut, #selector(MainWindowController.zoomOut(_:))),
+            item(.actualSize, #selector(MainWindowController.actualSize(_:))),
             .separator(),
             webContentItem(title: WebContentSettings.fraudulentSiteWarningTitle,
                            explanation: WebContentSettings.fraudulentSiteWarningExplanation,

@@ -20,6 +20,8 @@ public final class Tab: Identifiable {
     public private(set) var isPinned = false
     /// The address the Tab was pinned at; nil while it is not pinned or was pinned blank.
     public private(set) var pinnedAddress: URL?
+    /// How large the page is drawn: its site's remembered zoom, or 100%.
+    public private(set) var zoom = PageZoom.actualSize
     @ObservationIgnored private var page: (any WebPageHandle)?
     @ObservationIgnored private let osBuild: String
     /// The address of the last HTTPS-first navigation: only its failure may lead to a warning.
@@ -36,6 +38,10 @@ public final class Tab: Identifiable {
     @ObservationIgnored var onIconLinks: (@MainActor (PageIconLinks, any SiteResourceFetcher) -> Void)?
     /// Called when a download starts in a Tab that has never shown anything; the session sets it on Tabs a link opened.
     @ObservationIgnored var onEmptyDownload: (@MainActor () -> Void)?
+    /// The zoom remembered for an address's site; the session sets it with `followZoom(_:)`.
+    @ObservationIgnored private var siteZoom: (@MainActor (URL?) -> PageZoom)?
+    /// The site whose zoom the page has; a navigation to another site takes that site's.
+    @ObservationIgnored private var zoomedSite: ZoomSite?
 
     init(id: TabID, page: (any WebPageHandle)? = nil, osBuild: String,
          makePage: @escaping @MainActor (TabID) -> any WebPageHandle,
@@ -149,6 +155,40 @@ public final class Tab: Identifiable {
         page?.reload()
     }
 
+    /// Whether the Tab has a page to zoom or search; a dormant or blank Tab has none.
+    var hasPage: Bool { page != nil && state.url != nil }
+
+    /// From now on the page takes the zoom of each site it shows.
+    func followZoom(_ siteZoom: @escaping @MainActor (URL?) -> PageZoom) {
+        self.siteZoom = siteZoom
+        zoomedSite = nil
+        updateZoom(for: state.url)
+    }
+
+    /// Draws the page at `zoom`, for its current site.
+    func apply(_ zoom: PageZoom) {
+        self.zoom = zoom
+        page?.pageZoom = zoom.factor
+    }
+
+    private func updateZoom(for url: URL?) {
+        guard let siteZoom, page != nil, let site = ZoomSite(url), site != zoomedSite else { return }
+        zoomedSite = site
+        apply(siteZoom(url))
+    }
+
+    func find(_ text: String, backwards: Bool) async -> Bool {
+        await page?.find(text, backwards: backwards) ?? false
+    }
+
+    func countMatches(of text: String) async -> Int {
+        await page?.countMatches(of: text) ?? 0
+    }
+
+    func endFind() {
+        page?.endFind()
+    }
+
     private func pageFailed(_ failure: LoadFailure) {
         guard let attempted = httpsFirstAddress, HTTPSFallback.isSameAddress(failure.url, attempted),
               let warning = HTTPSFallback.warning(after: failure) else { return }
@@ -167,6 +207,7 @@ public final class Tab: Identifiable {
         page?.onIconLinks = nil
         page?.close()
         page = nil
+        zoomedSite = nil
     }
 
     @discardableResult
@@ -193,6 +234,7 @@ public final class Tab: Identifiable {
 
     private func pageChanged(_ state: PageState) {
         self.state = state
+        updateZoom(for: state.url)
         // The warning page borrows the address that failed to load; that address was never visited.
         guard insecureConnectionWarning == nil else { return }
         for event in visits.observe(state, sensitiveContent: page?.sensitiveContent ?? []) {
