@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Antonin Carlin
 
 import Foundation
+import Spaces
 
 /// What is saved of one Tab so that it comes back after a relaunch.
 public struct TabRecord: Hashable, Sendable {
@@ -53,7 +54,7 @@ public enum PinnedItemRecord: Hashable, Sendable {
 public struct SpaceRecord: Hashable, Sendable {
     public let id: SpaceID
     public var name: String
-    public var emoji: String
+    public var icon: SpaceGlyph
     /// The Space's Theme, picked from a Palette; nil until Themes exist.
     public var paletteID: String?
     /// The pinned area: Pinned tabs and Folders, in order.
@@ -62,11 +63,11 @@ public struct SpaceRecord: Hashable, Sendable {
     public var tabs: [TabRecord]
     public var selectedTabID: TabID?
 
-    public init(id: SpaceID, name: String, emoji: String, paletteID: String? = nil, pinned: [PinnedItemRecord] = [],
+    public init(id: SpaceID, name: String, icon: SpaceGlyph, paletteID: String? = nil, pinned: [PinnedItemRecord] = [],
                 tabs: [TabRecord] = [], selectedTabID: TabID? = nil) {
         self.id = id
         self.name = name
-        self.emoji = emoji
+        self.icon = icon
         self.paletteID = paletteID
         self.pinned = pinned
         self.tabs = tabs

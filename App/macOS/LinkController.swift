@@ -105,7 +105,7 @@ private final class RegistryDestination: LinkDestination {
     var profiles: [Profile] { registry.profiles }
 
     func spaces(in profile: ProfileID) -> [SpaceChoice] {
-        registry.spaces(in: profile).map { SpaceChoice(id: $0.id, name: $0.name, emoji: $0.emoji) }
+        registry.spaces(in: profile).map { SpaceChoice(id: $0.id, name: $0.name, mark: SpaceMark($0.icon, name: $0.name)) }
     }
 
     func open(_ url: URL, in target: LinkTarget) -> Bool {
@@ -251,7 +251,7 @@ final class LinkController: NSObject, NSMenuItemValidation {
         let coordinator = coordinator!
         let model = LinkRulesModel(
             store: rulesStore, profiles: { registry.profiles },
-            spacesOf: { id in registry.spaces(in: id).map { SpaceChoice(id: $0.id, name: $0.name, emoji: $0.emoji) } },
+            spacesOf: { id in registry.spaces(in: id).map { SpaceChoice(id: $0.id, name: $0.name, mark: SpaceMark($0.icon, name: $0.name)) } },
             route: { coordinator.route(for: $0) })
         let pane = LinkRulesPane(model: model, rulesFile: rulesFile, profiles: { registry.profiles })
         rulesPaneStorage = pane

@@ -75,10 +75,13 @@ private struct SuggestionRow: View {
                 SiteIconTile(icons: icons, address: suggestion.address,
                              fallback: .tintedSymbol(suggestion.fallbackSymbol), size: .compact)
             } trailing: {
-                if let emoji = suggestion.spaceEmoji {
+                if let mark = suggestion.spaceMark {
                     HStack(spacing: tokens.spacing.pillActionGap) {
                         Text("Switch to Tab").role(tokens.type.count).foregroundStyle(roles.secondaryText)
-                        Text(verbatim: emoji)
+                        switch mark {
+                        case .text(let text): Text(verbatim: text)
+                        case .symbol(let symbol): Image(systemName: symbol).foregroundStyle(roles.secondaryText)
+                        }
                     }
                 }
             }

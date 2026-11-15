@@ -161,7 +161,7 @@ public final class ProfileRegistry {
         guard profiles.contains(where: { $0.id == id }) else { return ProfileSpaces() }
         if loadedIDs.contains(id), let session = contexts[id]?.session {
             return ProfileSpaces(
-                spaces: session.spaces.map { SpaceSummary(id: $0.id, name: $0.name, emoji: $0.emoji, paletteID: $0.paletteID) },
+                spaces: session.spaces.map { SpaceSummary(id: $0.id, name: $0.name, icon: $0.icon, paletteID: $0.paletteID) },
                 lastSpaceID: session.activeSpaceID)
         }
         if let saved = savedSpaces[id] { return saved }

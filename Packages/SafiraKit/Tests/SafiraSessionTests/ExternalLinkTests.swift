@@ -23,7 +23,7 @@ import Testing
 
     @Test func anExternalLinkOpensInTheLastActiveSpaceNotTheFirstOne() throws {
         let fixture = SessionFixture()
-        let second = fixture.session.createSpace(name: "Reading", emoji: "📚")
+        let second = try fixture.session.createSpace(name: "Reading", icon: .emoji("📚"))
         fixture.session.selectSpace(fixture.session.spaces[0].id)
         fixture.session.selectSpace(second)
 

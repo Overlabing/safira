@@ -18,7 +18,7 @@ import Testing
         let docs = URL(string: "http://127.0.0.1:\(server.port)/docs")!
         let first = Profile(id: ProfileID(rawValue: UUID()), name: "Home")
         let second = Profile(id: ProfileID(rawValue: UUID()), name: "Work")
-        let space = SpaceRecord(id: SpaceID(), name: "Dev", emoji: "🛠", tabs: [
+        let space = SpaceRecord(id: SpaceID(), name: "Dev", icon: .emoji("🛠"), tabs: [
             TabRecord(id: TabID(), address: URL(string: "http://127.0.0.1:\(server.port)/other")),
             TabRecord(id: TabID(), address: docs),
         ])
@@ -63,8 +63,8 @@ import Testing
         defer { try? FileManager.default.removeItem(at: layout.root) }
         let first = Profile(id: ProfileID(rawValue: UUID()), name: "Home")
         let second = Profile(id: ProfileID(rawValue: UUID()), name: "Work")
-        let dev = SpaceRecord(id: SpaceID(), name: "Dev", emoji: "🛠", paletteID: "teal-green")
-        let ops = SpaceRecord(id: SpaceID(), name: "Ops", emoji: "🚀")
+        let dev = SpaceRecord(id: SpaceID(), name: "Dev", icon: .emoji("🛠"), paletteID: "teal-green")
+        let ops = SpaceRecord(id: SpaceID(), name: "Ops", icon: .emoji("🚀"))
         do {
             let app = try AppDatabase(file: layout.appDatabaseFile)
             try app.add(first)
@@ -77,8 +77,8 @@ import Testing
             _ = registry.active
 
             #expect(registry.spaceSummary(of: second.id) == ProfileSpaces(
-                spaces: [SpaceSummary(id: dev.id, name: "Dev", emoji: "🛠", paletteID: "teal-green"),
-                         SpaceSummary(id: ops.id, name: "Ops", emoji: "🚀")],
+                spaces: [SpaceSummary(id: dev.id, name: "Dev", icon: .emoji("🛠"), paletteID: "teal-green"),
+                         SpaceSummary(id: ops.id, name: "Ops", icon: .emoji("🚀"))],
                 lastSpaceID: ops.id))
             #expect(registry.loadedContexts.map(\.id) == [first.id])
             #expect(registry.spaceSummary(of: first.id).spaces.map(\.name) == ["Home"])

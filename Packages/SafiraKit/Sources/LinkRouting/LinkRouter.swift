@@ -8,12 +8,12 @@ import SafiraCore
 public struct SpaceChoice: Hashable, Identifiable, Sendable {
     public let id: SpaceID
     public let name: String
-    public let emoji: String
+    public let mark: SpaceMark
 
-    public init(id: SpaceID, name: String, emoji: String) {
+    public init(id: SpaceID, name: String, mark: SpaceMark) {
         self.id = id
         self.name = name
-        self.emoji = emoji
+        self.mark = mark
     }
 }
 

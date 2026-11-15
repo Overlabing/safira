@@ -169,8 +169,13 @@ struct LinkPickerView<ID: Hashable & Sendable>: View {
     private func tile(_ row: LinkPickerRow<ID>, isHighlighted: Bool) -> some View {
         Button { choose(row.id) } label: {
             VStack(spacing: 4) {
-                Text(verbatim: row.symbol)
-                    .font(.system(size: 30))
+                Group {
+                    switch row.mark {
+                    case .text(let text): Text(verbatim: text)
+                    case .symbol(let symbol): Image(systemName: symbol).foregroundStyle(.white)
+                    }
+                }
+                .font(.system(size: 30))
                 Text(verbatim: row.name)
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(.white.opacity(isHighlighted ? 1 : 0.75))

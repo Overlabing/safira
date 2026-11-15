@@ -104,14 +104,14 @@ private func plain(_ session: ProfileSession) -> [String?] {
         #expect(plain(fixture.session) == ["b.com", "a.com"])
     }
 
-    @Test func thereIsNoPinnedAreaSharedAcrossSpaces() {
+    @Test func thereIsNoPinnedAreaSharedAcrossSpaces() throws {
         let fixture = SessionFixture()
         let home = fixture.session.activeSpaceID
         let id = openTabs(fixture, ["a.com"])[0]
         fixture.session.pin(id)
         fixture.session.createFolder(name: "Docs")
 
-        let reading = fixture.session.createSpace(name: "Reading", emoji: "📚")
+        let reading = try fixture.session.createSpace(name: "Reading", icon: .emoji("📚"))
 
         #expect(fixture.session.activeSpaceID == reading)
         #expect(outline(fixture.session.pinnedItems) == "")
@@ -122,11 +122,11 @@ private func plain(_ session: ProfileSession) -> [String?] {
         #expect(outline(fixture.session.pinnedItems) == "a.com [Docs: ]")
     }
 
-    @Test func aPinnedTabCannotBeMovedToAnotherSpacesFolder() {
+    @Test func aPinnedTabCannotBeMovedToAnotherSpacesFolder() throws {
         let fixture = SessionFixture()
         let id = openTabs(fixture, ["a.com"])[0]
         fixture.session.pin(id)
-        fixture.session.createSpace(name: "Reading", emoji: "📚")
+        try fixture.session.createSpace(name: "Reading", icon: .emoji("📚"))
         let foreign = fixture.session.createFolder(name: "Docs")!
 
         #expect(!fixture.session.movePinned(.tab(id), into: foreign))
@@ -407,9 +407,9 @@ private func plain(_ session: ProfileSession) -> [String?] {
         #expect(fixture.session.selectedTabID == ids[0])
     }
 
-    @Test func deletingASpaceClosesItsPinnedTabsToo() {
+    @Test func deletingASpaceClosesItsPinnedTabsToo() throws {
         let fixture = SessionFixture()
-        fixture.session.createSpace(name: "Reading", emoji: "📚")
+        try fixture.session.createSpace(name: "Reading", icon: .emoji("📚"))
         let id = openTabs(fixture, ["a.com"])[0]
         fixture.session.pin(id)
         let page = fixture.pages[id]
@@ -477,7 +477,7 @@ private final class Disk {
         let before = SessionFixture()
         let homeTab = openTabs(before, ["a.com"])[0]
         before.session.pin(homeTab)
-        before.session.createSpace(name: "Reading", emoji: "📚")
+        try before.session.createSpace(name: "Reading", icon: .emoji("📚"))
         let readingTab = openTabs(before, ["b.com"])[0]
         before.session.pin(readingTab)
         before.session.createFolder(name: "Docs")

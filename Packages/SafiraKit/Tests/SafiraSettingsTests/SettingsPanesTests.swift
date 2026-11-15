@@ -13,7 +13,7 @@ import Testing
 @Suite struct SettingsPanesTests {
     @Test func theWindowHasOnePanePerAreaInThisOrder() {
         #expect(SafiraSettings.panes.map(\.id.rawValue)
-            == ["general", "shortcuts", "defaults", "linkRules", "sitePermissions", "debug"])
+            == ["general", "spaces", "shortcuts", "defaults", "linkRules", "sitePermissions", "debug"])
         #expect(SafiraSettings.panes.allSatisfy { !$0.title.isEmpty && $0.subtitle?.isEmpty == false })
     }
 

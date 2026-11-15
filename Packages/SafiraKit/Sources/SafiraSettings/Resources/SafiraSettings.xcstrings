@@ -1,6 +1,47 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "%lld Tabs" : {
+      "comment" : "Settings, Spaces pane: under a Space's name, how many Tabs it holds",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Tab"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Tabs"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld onglet"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld onglets"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "Debug" : {
       "comment" : "Settings: pane title",
       "localizations" : {
@@ -45,6 +86,58 @@
         }
       }
     },
+    "It has no Tab." : {
+      "comment" : "Delete Space confirmation: the Space holds no Tab",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il n’a aucun onglet."
+          }
+        }
+      }
+    },
+    "Its %lld Tabs will close." : {
+      "comment" : "Delete Space confirmation; a count of Tabs, at least 1",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Its %lld Tab will close."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Its %lld Tabs will close."
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Son onglet sera fermé."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Ses %lld onglets seront fermés."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "Link Rules" : {
       "comment" : "Settings: pane title",
       "localizations" : {
@@ -78,6 +171,17 @@
         }
       }
     },
+    "Shown" : {
+      "comment" : "Settings, Spaces pane: note of the Space the Main window shows",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Affiché"
+          }
+        }
+      }
+    },
     "Site Permissions" : {
       "comment" : "Settings: pane title",
       "localizations" : {
@@ -85,6 +189,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Autorisations des sites"
+          }
+        }
+      }
+    },
+    "Space %lld" : {
+      "comment" : "Name proposed for a new Space; the number follows the Profile's Spaces",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Space %lld"
+          }
+        }
+      }
+    },
+    "Spaces" : {
+      "comment" : "Settings: pane title",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spaces"
+          }
+        }
+      }
+    },
+    "The Profile's logins and history are kept." : {
+      "comment" : "Delete Space confirmation",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les connexions et l’historique du profil sont conservés."
+          }
+        }
+      }
+    },
+    "The current Profile’s Spaces, in the order of ⌃1 to ⌃9." : {
+      "comment" : "Settings: subtitle of the Spaces pane",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les Spaces du profil actuel, dans l’ordre de ⌃1 à ⌃9."
           }
         }
       }

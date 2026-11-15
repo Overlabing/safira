@@ -40,11 +40,11 @@ private func address(_ text: String) -> NormalizedAddress {
         #expect(fixture.session.matchingTab(for: address("https://example.com/next"))?.tab == id)
     }
 
-    @Test func aTabOfAnotherSpaceMatchesAndFocusingItSwitchesSpace() {
+    @Test func aTabOfAnotherSpaceMatchesAndFocusingItSwitchesSpace() throws {
         let fixture = SessionFixture()
         let home = fixture.session.activeSpaceID
         let id = fixture.visit("https://example.com/docs")
-        let reading = fixture.session.createSpace(name: "Reading", emoji: "📚")
+        let reading = try fixture.session.createSpace(name: "Reading", icon: .emoji("📚"))
         fixture.visit("https://swift.org")
 
         let match = fixture.session.matchingTab(for: address("https://example.com/docs#intro"))
@@ -58,10 +58,10 @@ private func address(_ text: String) -> NormalizedAddress {
         #expect(fixture.session.spaces.map(\.tabs.count) == [1, 1])
     }
 
-    @Test func theActiveSpaceIsSearchedBeforeTheOthers() {
+    @Test func theActiveSpaceIsSearchedBeforeTheOthers() throws {
         let fixture = SessionFixture()
         fixture.visit("https://example.com/docs")
-        fixture.session.createSpace(name: "Reading", emoji: "📚")
+        try fixture.session.createSpace(name: "Reading", icon: .emoji("📚"))
         let second = fixture.visit("https://example.com/docs")
 
         #expect(fixture.session.matchingTab(for: address("https://example.com/docs"))?.tab == second)
@@ -124,12 +124,12 @@ private func address(_ text: String) -> NormalizedAddress {
         #expect(fixture.session.selectedTab?.address?.absoluteString == "https://example.com/docs")
     }
 
-    @Test func aPinnedTabOfAnotherSpaceMatchesAndFocusingItSwitchesSpace() {
+    @Test func aPinnedTabOfAnotherSpaceMatchesAndFocusingItSwitchesSpace() throws {
         let fixture = SessionFixture()
         let home = fixture.session.activeSpaceID
         let id = fixture.visit("https://example.com/docs")
         fixture.session.pin(id)
-        fixture.session.createSpace(name: "Reading", emoji: "📚")
+        try fixture.session.createSpace(name: "Reading", icon: .emoji("📚"))
         fixture.visit("https://swift.org")
 
         let match = fixture.session.matchingTab(for: address("https://example.com/docs"))
@@ -195,11 +195,11 @@ private func address(_ text: String) -> NormalizedAddress {
         #expect(fixture.session.matchBanner == nil)
     }
 
-    @Test func switchingSpaceOrClosingTheMatchingTabTakesTheBannerDown() {
+    @Test func switchingSpaceOrClosingTheMatchingTabTakesTheBannerDown() throws {
         let fixture = SessionFixture()
         let link = URL(string: "https://example.com/docs")!
         fixture.visit(link.absoluteString)
-        let reading = fixture.session.createSpace(name: "Reading", emoji: "📚")
+        let reading = try fixture.session.createSpace(name: "Reading", icon: .emoji("📚"))
         fixture.visit("https://swift.org")
         fixture.session.focus(fixture.session.matchingTab(for: address(link.absoluteString))!, openedFrom: link)
         #expect(fixture.session.matchBanner != nil)

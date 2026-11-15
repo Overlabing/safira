@@ -245,8 +245,8 @@ private func webKitFolders() -> [URL] {
 
             #expect(privateWindow.session.hasSpaces == false)
             let only = privateWindow.session.activeSpaceID
-            #expect(privateWindow.session.createSpace(name: "Work", emoji: "💼") == only)
-            privateWindow.session.renameSpace(only, name: "Renamed", emoji: "🔥")
+            #expect(try privateWindow.session.createSpace(name: "Work", icon: .emoji("💼")) == only)
+            try privateWindow.session.editSpace(only, name: "Renamed", icon: .emoji("🔥"))
             #expect(privateWindow.session.spaces.map(\.id) == [only])
             #expect(privateWindow.session.spaces.map(\.name) == [ProfileSession.initialSpaceName])
             #expect(privateWindow.session.canDeleteSpace == false)

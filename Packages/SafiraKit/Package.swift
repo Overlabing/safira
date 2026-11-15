@@ -10,6 +10,7 @@ let commandKit = Target.Dependency.product(name: "CommandKit", package: "Command
 let defaultApps = Target.Dependency.product(name: "DefaultApps", package: "AppSupportKit")
 let diagnosticsKit = Target.Dependency.product(name: "DiagnosticsKit", package: "DiagnosticsKit")
 let appShellKit = Target.Dependency.product(name: "AppShellKit", package: "AppShellKit")
+let spaces = Target.Dependency.product(name: "Spaces", package: "AppSupportKit")
 
 let package = Package(
     name: "SafiraKit",
@@ -37,7 +38,7 @@ let package = Package(
         .package(url: "https://github.com/Overlabing/AppShellKit", exact: "0.1.0"),
     ],
     targets: [
-        .target(name: "SafiraCore", dependencies: [preferences, userFacing], resources: [.process("Resources")]),
+        .target(name: "SafiraCore", dependencies: [preferences, userFacing, spaces], resources: [.process("Resources")]),
         .target(name: "Appearance", dependencies: [
             "SafiraCore",
             .product(name: "ColorCore", package: "ThemeKit"),
@@ -53,7 +54,7 @@ let package = Package(
             .product(name: "ColorPlatform", package: "ThemeKit"),
             .product(name: "DesignKit", package: "ThemeKit"),
         ]),
-        .testTarget(name: "SafiraCoreTests", dependencies: ["SafiraCore", preferences, userFacing]),
+        .testTarget(name: "SafiraCoreTests", dependencies: ["SafiraCore", preferences, userFacing, spaces]),
         .target(name: "SafiraStore", dependencies: ["SafiraCore", .product(name: "GRDB", package: "GRDB.swift")]),
         .testTarget(name: "SafiraStoreTests", dependencies: [
             "SafiraStore", "SafiraCore", .product(name: "GRDB", package: "GRDB.swift"),
@@ -83,9 +84,10 @@ let package = Package(
         .target(name: "Onboarding", dependencies: ["SafiraCore", "Commands", "LinkRouting", "Diagnostics", preferences],
                 resources: [.process("Resources")]),
         .testTarget(name: "OnboardingTests", dependencies: ["Onboarding", "Commands", "SafiraCore", preferences]),
-        .target(name: "SafiraSettings", dependencies: ["SafiraCore", "Commands", appShellKit, preferences],
+        .target(name: "SafiraSettings", dependencies: ["SafiraCore", "SafiraSession", "Appearance", "Commands", appShellKit,
+                                                preferences, spaces],
                 resources: [.process("Resources")]),
         .testTarget(name: "SafiraSettingsTests", dependencies: ["SafiraSettings", "Commands", "Onboarding", "SafiraCore",
-                                                             appShellKit, preferences]),
+                                                             "SafiraSession", appShellKit, preferences, spaces]),
     ]
 )

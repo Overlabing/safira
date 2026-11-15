@@ -107,9 +107,9 @@ private func openTabs(_ fixture: SessionFixture, _ addresses: [String]) {
         #expect(fixture.session.popups.map(\.id) == [kept])
     }
 
-    @Test func deletingTheSpaceOfTheOpenerClosesItsPopups() {
+    @Test func deletingTheSpaceOfTheOpenerClosesItsPopups() throws {
         let fixture = SessionFixture()
-        fixture.session.createSpace(name: "Reading", emoji: "📚")
+        try fixture.session.createSpace(name: "Reading", icon: .emoji("📚"))
         let reading = fixture.session.activeSpaceID
         openTabs(fixture, ["app.example"])
         let (_, page) = fixture.openPopup(from: fixture.selectedPage, to: signIn)

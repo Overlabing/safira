@@ -51,7 +51,7 @@ private let home = Profile(id: ProfileID(uuidString: "00000002-0000-4000-8000-00
     }
 
     @Test func theSpaceStepOpensWithAlwaysAsTheProfileStepLeftIt() {
-        let spaces = [SpaceChoice(id: SpaceID(), name: "Dev", emoji: "🛠"), SpaceChoice(id: SpaceID(), name: "Docs", emoji: "📄")]
+        let spaces = [SpaceChoice(id: SpaceID(), name: "Dev", mark: .text("🛠")), SpaceChoice(id: SpaceID(), name: "Docs", mark: .text("📄"))]
         let link = IncomingLink(url: URL(string: "https://shop.example/")!)
 
         #expect(LinkPickerModel(link: link, spaces: spaces, remembers: true).remembers)

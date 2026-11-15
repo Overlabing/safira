@@ -124,6 +124,7 @@
     },
     "Defaults window" : {
       "comment" : "Defaults: where to change the search engine",
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -393,6 +394,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Réglages › Autorisations des sites"
+          }
+        }
+      }
+    },
+    "Settings › Spaces" : {
+      "comment" : "Defaults: where to change a default; the Settings window and its pane",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglages › Spaces"
           }
         }
       }

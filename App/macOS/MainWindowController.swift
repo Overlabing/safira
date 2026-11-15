@@ -3,6 +3,7 @@
 
 import Appearance
 import AppKit
+import AppShellKit
 import ColorCore
 import CommandKit
 import CommandKitAppKit
@@ -10,6 +11,7 @@ import Commands
 import DesignKit
 import SafiraCore
 import SafiraSession
+import SafiraSettings
 import SafiraWeb
 import SwiftUI
 import UserFacing
@@ -49,6 +51,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         profileName: { [weak self] id in self?.registry.profiles.first { $0.id == id }?.name ?? "" })
     private let externalApps = WorkspaceExternalApps()
     private let bannerModel = MatchBannerModel()
+    private let spaceDeletion = SpaceDeletionPrompt()
     private var bannerHost: MatchBannerHostingView?
     private var announcedBannerID: UUID?
 
@@ -387,34 +390,30 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
 
     // MARK: Spaces
 
-    private static let newSpaceEmoji = ["🌿", "📚", "💼", "🎨", "🎵", "✈️", "🧪", "⭐️"]
-
-    /// A new Space of the Active profile when `id` is nil, otherwise that Space, in whichever Profile holds it.
+    /// AppShellKit's Space editor: a new Space of the Active profile when `id` is nil, otherwise that Space, in
+    /// whichever Profile holds it. Its "Delete Space…" asks with the same confirmation as the menus.
     private func editSpace(_ id: SpaceID?) {
         guard let window, spaceSheet == nil else { return }
         let owner = id.map { registry.context(ofSpace: $0)?.session } ?? session
         guard let owner else { return }
-        let space = id.flatMap { id in owner.spaces.first { $0.id == id } }
-        if id != nil, space == nil { return }
-        let count = owner.spaces.count
-        let editor = SpaceEditor(
-            title: space == nil ? String(localized: "New Space", comment: "Main window") : String(localized: "Edit Space", comment: "Main window"),
-            confirmTitle: space == nil ? String(localized: "Create", comment: "Main window") : String(localized: "Save", comment: "Main window"),
-            name: space?.name ?? String(localized: "Space \(count + 1)", comment: "Main window"),
-            emoji: space?.emoji ?? Self.newSpaceEmoji[count % Self.newSpaceEmoji.count],
-            paletteID: space?.paletteID ?? ThemeCatalog.nextID(avoiding: owner.spaces.map(\.paletteID)),
-            save: { [weak self] name, emoji, paletteID in
-                guard let self else { return }
-                if let id {
-                    owner.renameSpace(id, name: name, emoji: emoji, paletteID: paletteID)
-                } else {
-                    session.createSpace(name: name, emoji: emoji, paletteID: paletteID)
-                    focusCommandBar(nil)
-                }
-                endSpaceSheet()
-            },
-            cancel: { [weak self] in self?.endSpaceSheet() }
-        )
+        let model: SpaceEditorModel
+        if let id {
+            guard let editing = SpaceManagement.editor(editing: id, in: owner) else { return }
+            model = editing
+        } else {
+            model = SpaceManagement.editorForNewSpace(in: owner)
+        }
+        let editor = SpaceEditor(model: model) { [weak self] result in
+            guard let self else { return }
+            endSpaceSheet()
+            let saved = SpaceManagement.apply(result, editing: id, in: owner)
+            if id == nil, saved != nil { focusCommandBar(nil) }
+            if result == .deleteRequested, let id {
+                // After the sheet has gone: the confirmation is drawn over the window, not over the editor.
+                Task { @MainActor [weak self] in self?.confirmDeletion(of: id) }
+            }
+        }
+        .theme(spaceTheme)
         let sheet = NSWindow.sheet(editor)
         spaceSheet = sheet
         window.beginSheet(sheet)
@@ -458,23 +457,12 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         folderSheet = nil
     }
 
-    /// Deleting a Space closes its Tabs for good, so it is confirmed first, in whichever Profile holds it. A Profile's
-    /// last Space cannot be deleted.
+    /// Deleting a Space closes its Tabs for good, so it is confirmed first with AppShellKit's confirmation, in whichever
+    /// Profile holds it. A Profile's last Space cannot be deleted.
     private func confirmDeletion(of id: SpaceID) {
-        guard let window, let owner = registry.context(ofSpace: id)?.session, owner.canDeleteSpace,
-              let space = owner.spaces.first(where: { $0.id == id }) else { return }
-        let alert = NSAlert()
-        alert.messageText = String(localized: "Delete the Space “\(space.name)”?", comment: "Main window")
-        let count = space.allTabs.count
-        let tabs = count == 0 ? String(localized: "It has no Tab.", comment: "Main window")
-            : String(localized: "Its \(count) Tabs will close.", comment: "Alert text of Delete Space; a count of Tabs, at least 1")
-        alert.informativeText = tabs + " " + String(localized: "The Profile's logins and history are kept.", comment: "Main window")
-        alert.addButton(withTitle: String(localized: "Delete Space", comment: "Main window")).hasDestructiveAction = true
-        alert.addButton(withTitle: String(localized: "Cancel", comment: "Main window"))
-        alert.beginSheetModal(for: window) { response in
-            guard response == .alertFirstButtonReturn else { return }
-            owner.deleteSpace(id)
-        }
+        guard spaceSheet == nil, let owner = registry.context(ofSpace: id)?.session,
+              let deletion = SpaceManagement.deletion(of: id, in: owner) else { return }
+        spaceDeletion.ask(deletion, in: owner)
     }
 
     // MARK: Profiles
@@ -848,7 +836,8 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
             spaceActions: spaceActions, folderActions: folderActions,
             shortcut: { [weak self] id in self?.shortcuts.bindings.shortcut(id)?.symbols })
         let theme: () -> Theme = { [weak self] in self?.spaceTheme ?? ThemeCatalog.first }
-        let layout = BrowserWindowLayout(background: NSHostingView(rootView: WindowBackdrop(theme: theme)),
+        let backdrop = WindowBackdrop(theme: theme).spaceDeletionPrompt(spaceDeletion)
+        let layout = BrowserWindowLayout(background: NSHostingView(rootView: backdrop),
                                          column: column, canvas: canvas)
         layout.onPointerReachedEdge = { [weak self] in self?.revealSidebarFromEdge() }
         layout.onPointerLeftSidebar = { [weak self] in self?.hideSidebarAfterPointerLeft() }

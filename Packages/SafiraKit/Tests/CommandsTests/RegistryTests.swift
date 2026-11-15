@@ -141,11 +141,11 @@ import Testing
 }
 
 @Test func everyPresetKeepsTheNumberedKeysAndSafariAndZenCiteTheirTabKeys() {
-    for preset in ShortcutPreset.allCases {
-        #expect(key(preset, .selectTab1) == "⌘1")
-        #expect(key(preset, .selectTab9) == "⌘9")
-        #expect(key(preset, .selectSpace1) == "⌃1")
-        #expect(key(preset, .selectSpace9) == "⌃9")
+    for preset in [nil] + ShortcutPreset.allCases.map(Optional.some) {
+        #expect(CommandID.selectTabCommands.map { menuKey(preset, $0) }
+            == ["⌘1", "⌘2", "⌘3", "⌘4", "⌘5", "⌘6", "⌘7", "⌘8", "⌘9"], "\(String(describing: preset))")
+        #expect(CommandID.selectSpaceCommands.map { menuKey(preset, $0) }
+            == ["⌃1", "⌃2", "⌃3", "⌃4", "⌃5", "⌃6", "⌃7", "⌃8", "⌃9"], "\(String(describing: preset))")
     }
     #expect(ShortcutPreset.safari.set.own[.selectTab8]?.first?.from == "Select one of your first eight tabs (Command-1 to Command-8)")
     #expect(ShortcutPreset.safari.set.notFound[.selectTab9] == .some("Safari's Command-9 selects the last tab, not the ninth; Safira's own key applies."))

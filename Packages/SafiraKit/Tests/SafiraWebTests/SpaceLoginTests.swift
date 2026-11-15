@@ -95,7 +95,7 @@ private final class LoginServer: @unchecked Sendable {
             let (other, otherContext) = makeSession(otherProfile)
 
             #expect(try await titleAfterOpening(server.url("/login"), in: session, context) == "Signed in")
-            session.createSpace(name: "Reading", emoji: "📚")
+            try session.createSpace(name: "Reading", icon: .emoji("📚"))
             #expect(try await titleAfterOpening(server.url("/whoami"), in: session, context) == "session=alice")
             #expect(try await titleAfterOpening(server.url("/whoami"), in: other, otherContext) == "anonymous")
 
@@ -113,7 +113,7 @@ private final class LoginServer: @unchecked Sendable {
         do {
             let (session, context) = makeSession(profile)
             let home = session.activeSpaceID
-            let reading = session.createSpace(name: "Reading", emoji: "📚")
+            let reading = try session.createSpace(name: "Reading", icon: .emoji("📚"))
             #expect(try await titleAfterOpening(server.url("/login"), in: session, context) == "Signed in")
             let signInTab = try #require(session.selectedTabID)
 
