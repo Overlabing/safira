@@ -36,17 +36,33 @@ public final class ProfileWebContext {
     private let pageEvents = PageEventHandler()
     private(set) var downloadController: DownloadController!
 
+    /// The Profile's web extensions; nil for a Private window, where none runs.
+    public private(set) var extensions: ExtensionHost?
+
     /// - Parameter downloads: where this Profile's downloads are listed; the default keeps them for this run only.
-    public init(profileID: ProfileID, webContentSettings: WebContentSettings = WebContentSettings(),
-                permissions: SitePermissions = SitePermissions(), downloads: ProfileDownloads = ProfileDownloads()) {
+    public convenience init(profileID: ProfileID, webContentSettings: WebContentSettings = WebContentSettings(),
+                            permissions: SitePermissions = SitePermissions(),
+                            downloads: ProfileDownloads = ProfileDownloads()) {
+        self.init(profileID: profileID, webContentSettings: webContentSettings, permissions: permissions,
+                  downloads: downloads, storage: .onDisk)
+    }
+
+    /// `.inMemory` gives the Profile a non-persistent data store and extension state, for tests that must write nothing.
+    init(profileID: ProfileID, webContentSettings: WebContentSettings = WebContentSettings(),
+         permissions: SitePermissions = SitePermissions(), downloads: ProfileDownloads = ProfileDownloads(),
+         storage: WebsiteStorage) {
         self.profileID = profileID
         self.webContentSettings = webContentSettings
         self.permissions = permissions
         self.downloads = downloads
-        self.dataStore = WKWebsiteDataStore(forIdentifier: profileID.rawValue)
+        dataStore = switch storage {
+        case .onDisk: WKWebsiteDataStore(forIdentifier: profileID.rawValue)
+        case .inMemory: WKWebsiteDataStore.nonPersistent()
+        }
         isPrivate = false
         pageEvents.context = self
         installDownloadController()
+        extensions = ExtensionHost(web: self, storage: storage)
     }
 
     private func installDownloadController() {
@@ -119,6 +135,7 @@ public final class ProfileWebContext {
         // A `target=_blank` page or a popup gets a copy of this configuration from WebKit, so it inherits both.
         configuration.applicationNameForUserAgent = SafariUserAgent.current
         pageEvents.install(in: configuration.userContentController)
+        configuration.webExtensionController = extensions?.controller
         configuration.preferences.isFraudulentWebsiteWarningEnabled = webContentSettings.isFraudulentSiteWarningEnabled
         configuration.mediaTypesRequiringUserActionForPlayback = webContentSettings.isAutoplayingSoundAllowed ? [] : .audio
         return configuration
@@ -176,6 +193,7 @@ public final class ProfileWebContext {
     private func register(_ tabID: TabID, configuration: WKWebViewConfiguration) -> WebKitPage {
         let page = makePage(configuration: configuration) { [weak self] in self?.unregister(tabID) }
         pages[tabID] = page
+        extensions?.pageOpened(tabID)
         return page
     }
 
@@ -210,6 +228,7 @@ public final class ProfileWebContext {
 
     private func unregister(_ tabID: TabID) {
         guard let page = pages.removeValue(forKey: tabID) else { return }
+        extensions?.pageClosed(tabID)
         releaseHandlers(of: page)
     }
 

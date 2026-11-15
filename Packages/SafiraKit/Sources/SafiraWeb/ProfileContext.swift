@@ -20,8 +20,9 @@ public final class ProfileContext: MatchingTabSearchable {
     /// Restores the Profile's Spaces, Tabs and settings from its database; only the selected Tab gets a page.
     /// - Parameter siteIconsDirectory: the folder of the Profile's site icons, inside its own folder; nil keeps them in
     ///   memory only.
+    /// - Parameter storage: `.inMemory` keeps the Profile's website data and extension state off the disk, for tests.
     init(id: ProfileID, database: ProfileDatabase, siteIconsDirectory: URL?, diagnostics: DiagnosticLogger?,
-         onError: @escaping @MainActor (String, any Error) -> Void) {
+         storage: WebsiteStorage = .onDisk, onError: @escaping @MainActor (String, any Error) -> Void) {
         let settings: ProfileSettings
         do {
             settings = try database.settings()
@@ -32,7 +33,7 @@ public final class ProfileContext: MatchingTabSearchable {
         let permissions = SitePermissions(database: database) { onError($0, $1) }
         let downloads = ProfileDownloads(database: database, onError: onError)
         let web = ProfileWebContext(profileID: id, webContentSettings: settings.webContent, permissions: permissions,
-                                    downloads: downloads)
+                                    downloads: downloads, storage: storage)
         web.diagnostics = diagnostics
         let appLinks = AppLinkGate(profileID: id, permissions: permissions)
         let siteIcons = ProfileSiteIcons(directory: siteIconsDirectory)
@@ -41,6 +42,7 @@ public final class ProfileContext: MatchingTabSearchable {
         let session = ProfileSession(profileID: id, settings: settings, history: database, appLinks: appLinks,
                                      siteIcons: siteIcons, siteZooms: siteZooms) { [unowned web] in web.makePage(for: $0) }
         session.onHistoryError = { onError("The history could not be used", $0) }
+        web.extensions?.attach(to: session)
         do {
             session.restore(try database.savedSession())
         } catch {
@@ -58,6 +60,9 @@ public final class ProfileContext: MatchingTabSearchable {
     public func matchingTab(for address: NormalizedAddress) -> MatchingTab? {
         session.matchingTab(for: address)
     }
+
+    /// The Profile's web extensions, which read and write this Profile's data store only.
+    public var extensions: ExtensionHost? { web.extensions }
 
     /// What the Profile remembers about the sites that asked for the camera, the microphone or the location.
     public var permissions: SitePermissions { web.permissions }

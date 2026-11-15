@@ -95,6 +95,20 @@ extension UserFacingError {
                         message: error.localizedDescription, technicalDetail: String(reflecting: error))
     }
 
+    // MARK: Extensions (Debug mode)
+
+    static func extensionNotLoaded(_ error: any Error) -> UserFacingError {
+        UserFacingError(title: String(localized: "The extension could not be loaded", comment: "Alert title"),
+                        message: error.localizedDescription, technicalDetail: String(reflecting: error))
+    }
+
+    /// The extension runs, but WebKit reported problems while reading it.
+    static func extensionLoadedWithErrors(name: String, errors: [String]) -> UserFacingError {
+        UserFacingError(
+            title: String(localized: "“\(name)” was loaded with errors", comment: "Alert title; the argument is an extension's name"),
+            message: errors.joined(separator: "\n"))
+    }
+
     // MARK: Profiles
 
     static func historyNotCleared(profileName: String) -> UserFacingError {

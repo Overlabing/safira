@@ -497,6 +497,17 @@
         }
       }
     },
+    "Choose the folder that holds the extension's manifest.json. It runs in the Active profile until Safira quits, with every permission it asks for." : {
+      "comment" : "Open panel message of Load Unpacked Extension",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisissez le dossier qui contient le manifest.json de l’extension. Elle fonctionne dans le profil actif jusqu’à ce que Safira quitte, avec toutes les autorisations qu’elle demande."
+          }
+        }
+      }
+    },
     "Clear" : {
       "comment" : "Clear history and website data sheet",
       "localizations" : {
@@ -1544,6 +1555,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Liens qui ouvrent une app"
+          }
+        }
+      }
+    },
+    "Load" : {
+      "comment" : "Open panel button of Load Unpacked Extension",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Charger"
+          }
+        }
+      }
+    },
+    "Load Unpacked Extension…" : {
+      "comment" : "Menu item",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Charger une extension non empaquetée…"
           }
         }
       }
@@ -3066,6 +3099,17 @@
         }
       }
     },
+    "The extension could not be loaded" : {
+      "comment" : "Alert title",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’extension n’a pas pu être chargée"
+          }
+        }
+      }
+    },
     "The file could not be read" : {
       "comment" : "Link rules window",
       "localizations" : {
@@ -3576,6 +3620,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "« %@ » veut utiliser votre micro."
+          }
+        }
+      }
+    },
+    "“%@” was loaded with errors" : {
+      "comment" : "Alert title; the argument is an extension's name",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "« %@ » a été chargée avec des erreurs"
           }
         }
       }
