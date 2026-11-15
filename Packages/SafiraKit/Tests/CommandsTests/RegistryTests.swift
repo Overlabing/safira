@@ -27,7 +27,7 @@ import Testing
     #expect(key(nil, .reopenClosedTab) == "⇧⌘T")
     #expect(key(nil, .openCommandBar) == "⌘L")
     #expect(key(nil, .quit) == "⌘Q")
-    #expect(key(nil, .compactMode) == "⌃⌘S")
+    #expect(key(nil, .compactMode) == "⌘B")
     #expect(key(nil, .showSidebar) == "⌥⌘S")
     #expect(key(nil, .previousTab) == "⇧⌘[")
     #expect(key(nil, .nextTab) == "⇧⌘]")

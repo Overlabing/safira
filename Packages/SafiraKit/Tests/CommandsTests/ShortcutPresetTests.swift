@@ -37,7 +37,8 @@ func aPresetBindsOrExplainsEveryRebindableCommand(preset: ShortcutPreset) {
 @Test(arguments: ShortcutPreset.allCases)
 func aPresetSaysWhereEachShortcutComesFrom(preset: ShortcutPreset) {
     for (command, keys) in preset.set.own {
-        #expect(keys.count == 1, "\(preset) \(command)")
+        // Compact mode keeps the browser's own key after Safira's ⌘B; Safari documents none.
+        #expect(keys.count == (command == .compactMode && preset != .safari ? 2 : 1), "\(preset) \(command)")
         for key in keys {
             #expect(!(key.from ?? "").isEmpty, "\(preset) \(command)")
         }
@@ -156,7 +157,7 @@ func commandCommaOpensSettingsInEveryPreset(preset: ShortcutPreset?) {
 
 @Test(arguments: [nil] + ShortcutPreset.allCases.map(Optional.some))
 func plainCommandEqualsAlsoZoomsInInEveryPreset(preset: ShortcutPreset?) {
-    let aliases = SafiraShortcuts.menuAliases(bindings(preset))
+    let aliases = SafiraShortcuts.menuAliases(bindings(preset)).filter { $0.command != .compactMode }
     #expect(aliases.map(\.command) == [.zoomIn], "\(String(describing: preset))")
     #expect(aliases.map(\.shortcut.symbols) == ["⌘="], "\(String(describing: preset))")
     #expect(menuKey(preset, .zoomIn) == "⌘+")
@@ -166,9 +167,9 @@ func plainCommandEqualsAlsoZoomsInInEveryPreset(preset: ShortcutPreset?) {
     var moved = bindings(nil)
     try moved.unbind(.zoomIn, rules: SafiraShortcuts.rules)
     try moved.record(Shortcut("+"), for: .reload, rules: SafiraShortcuts.rules)
-    #expect(SafiraShortcuts.menuAliases(moved).map(\.command) == [.reload])
+    #expect(SafiraShortcuts.menuAliases(moved).map(\.command).filter { $0 != .compactMode } == [.reload])
 
     var taken = bindings(nil)
     try taken.record(Shortcut("="), for: .reload, rules: SafiraShortcuts.rules)
-    #expect(SafiraShortcuts.menuAliases(taken).isEmpty)
+    #expect(SafiraShortcuts.menuAliases(taken).filter { $0.command != .compactMode }.isEmpty)
 }

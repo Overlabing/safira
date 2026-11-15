@@ -82,13 +82,14 @@ public enum SafiraShortcuts {
     /// layouts). An alias is a hidden menu item, never a binding: it moves with its key when the user rebinds it.
     public static let menuKeyAliases: [Shortcut: Shortcut] = [Shortcut("+"): Shortcut("=")]
 
-    /// The hidden menu items to add for `bindings`: each alias of a command's menu key, unless a command already has
-    /// the alias.
+    /// The hidden menu items to add for `bindings`: a command's other keys after its menu key (⌘B and ⌃⌘S both toggle
+    /// Compact mode), and each alias of a command's menu key, unless a command already has the alias.
     public static func menuAliases(_ bindings: ShortcutBindings<CommandID>) -> [(command: CommandID, shortcut: Shortcut)] {
-        CommandID.allCases.compactMap { command in
-            guard let key = bindings.shortcut(command), let alias = menuKeyAliases[key],
-                  bindings.owner(of: alias) == nil else { return nil }
-            return (command, alias)
+        CommandID.allCases.flatMap { command -> [(command: CommandID, shortcut: Shortcut)] in
+            guard let key = bindings.shortcut(command) else { return [] }
+            let others = bindings.keys(command).filter { $0 != key && !$0.editsText }
+            let alias = menuKeyAliases[key].flatMap { bindings.owner(of: $0) == nil ? $0 : nil }
+            return (others + (alias.map { [$0] } ?? [])).map { (command, $0) }
         }
     }
 

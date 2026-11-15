@@ -8,11 +8,11 @@ import SwiftUI
 
 /// The window shared by the Main window and Private windows: ThemeKit's sidebar in an AppKit window, as the kit's docs
 /// set it up ("Sidebar", "In an AppKit window"). The Theme's gradient (`WindowBackground`) lies under the whole split;
-/// the column is the system's sidebar split item (`NSSplitViewItem.sidebar(hosting:)`) on the left, flush with the
-/// window's edge, in the system's sidebar material, dimmed by the system when the window is inactive; the page sits
-/// beside it in the kit's detail card. In Compact mode the sidebar item collapses, and comes back from the left edge on
-/// demand. The pointer is watched with AppKit tracking areas: SwiftUI's `onHover` is unreliable over a web view
-/// (docs/architecture-v1.md §1.3).
+/// the column sits on it with no surface of its own (`SidebarSurface.windowBackground`: no material, no tone, a divider
+/// that draws nothing), as in Zen, so the page's card, beside it in the kit's detail card, is the only boundary. In
+/// Compact mode the column collapses, and comes back from the left edge on demand, still on the gradient. The pointer
+/// is watched with AppKit tracking areas: SwiftUI's `onHover` is unreliable over a web view (docs/architecture-v1.md
+/// §1.3).
 @MainActor
 public final class BrowserWindowLayout: NSViewController {
     /// The strip at the window's left edge that brings the sidebar back in Compact mode.
@@ -45,7 +45,7 @@ public final class BrowserWindowLayout: NSViewController {
     public init(background: NSView, column: some View, canvas: PageCanvasView) {
         self.background = background
         self.canvas = canvas
-        columnItem = NSSplitViewItem.sidebar(hosting: column, tokens: tokens)
+        columnItem = NSSplitViewItem.sidebar(hosting: column, tokens: tokens, surface: .windowBackground)
         self.column = columnItem.viewController
         let page = NSViewController()
         page.view = canvas
@@ -182,8 +182,9 @@ public final class BrowserWindowLayout: NSViewController {
 }
 
 /// The system's sidebar button sends `toggleSidebar(_:)` to the split view controller, which would collapse the column
-/// behind the window's back: the window decides instead, so that the button and Compact mode stay one state.
-private final class SidebarSplitController: NSSplitViewController {
+/// behind the window's back: the window decides instead, so that the button and Compact mode stay one state. The kit's
+/// seamless split keeps the divider's resize zone over the card's margin although it draws nothing.
+private final class SidebarSplitController: SeamlessSplitViewController {
     var onToggleSidebar: (() -> Void)?
 
     override func toggleSidebar(_ sender: Any?) {
