@@ -111,6 +111,10 @@ public final class ProfileWebContext {
         configuration.websiteDataStore = dataStore
         // Explicit, so hidden Tabs do not depend on the default linked to the SDK version (architecture §4.1).
         configuration.preferences.inactiveSchedulingPolicy = .suspend
+        // Off by default: without it, a page's Fullscreen API (YouTube's full screen button) reports no support.
+        configuration.preferences.isElementFullscreenEnabled = true
+        // A `target=_blank` page or a popup gets a copy of this configuration from WebKit, so it inherits both.
+        configuration.applicationNameForUserAgent = SafariUserAgent.current
         pageEvents.install(in: configuration.userContentController)
         configuration.preferences.isFraudulentWebsiteWarningEnabled = webContentSettings.isFraudulentSiteWarningEnabled
         configuration.mediaTypesRequiringUserActionForPlayback = webContentSettings.isAutoplayingSoundAllowed ? [] : .audio

@@ -22,7 +22,7 @@ packages:
     exactVersion: 2.10.1
   ThemeKit:
     url: https://github.com/Overlabing/ThemeKit
-    exactVersion: 0.2.8
+    exactVersion: 0.2.11
   # SiteIcons is linked through SafiraSession; the app links Preferences, UserFacing and DefaultApps itself. Pinned here
   # too so the app resolves the same release as SafiraKit.
   AppSupportKit:
