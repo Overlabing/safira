@@ -78,6 +78,7 @@ enum MainMenu {
             item(.reopenClosedTab, #selector(MainWindowController.reopenClosedTab(_:))),
             .separator(),
             item(.togglePin, #selector(MainWindowController.togglePin(_:))),
+            item(.backToPinnedAddress, #selector(MainWindowController.backToPinnedAddress(_:))),
             item(.newFolder, #selector(MainWindowController.newFolder(_:))),
             .separator(),
             item(.closeWindow, #selector(NSWindow.performClose(_:))),

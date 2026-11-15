@@ -65,7 +65,8 @@ struct PinnedSection: View {
                           isListFocused: focus.isListFocused,
                           placement: placement, position: (pinned.firstIndex { $0.id == tab.id } ?? 0) + 1,
                           count: session.activeSpace.allTabs.count,
-                          select: { session.select(tab.id) }, close: { session.close(tab.id) })
+                          select: { session.select(tab.id) }, close: { session.close(tab.id) },
+                          clickIcon: { session.clickIcon(of: tab.id) })
             .modifier(TabDrag(tab: tab, session: session))
             .contextMenu { TabMenu(tab: tab, session: session) }
     }

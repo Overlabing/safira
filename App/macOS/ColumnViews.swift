@@ -293,6 +293,8 @@ struct TabRowView: View {
     let count: Int
     let select: () -> Void
     let close: () -> Void
+    /// What a click on the icon does, when it does more than select the Tab: a Pinned tab goes back to its pinned address.
+    var clickIcon: (() -> Void)?
     @Environment(\.designTokens) private var tokens
 
     var body: some View {
@@ -300,6 +302,12 @@ struct TabRowView: View {
             SidebarRowContent(title: title, details: [subtitle], isSelected: isSelected) {
                 SiteIconTile(icons: icons, address: tab.address,
                              fallback: .initial(SiteIconTile.initial(of: tab.address, title: title)))
+                    .overlay(alignment: .topTrailing) {
+                        if tab.isAwayFromPinnedAddress { AwayFromPinnedAddressDot() }
+                    }
+                    .contentShape(Rectangle())
+                    .onTapGesture(perform: clickIcon ?? select)
+                    .help(tab.isAwayFromPinnedAddress ? String(localized: "Back to Pinned Address", comment: "Sidebar: tooltip of a Pinned tab's icon") : "")
             } trailing: {
                 HoverAccessory(id: tab.id) {
                     Button(action: close) {
@@ -325,6 +333,7 @@ struct TabRowView: View {
             .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
             .accessibilityAction(.default, select)
             .accessibilityAction(named: "Close Tab", close)
+            .modifier(BackToPinnedAddressAction(isAvailable: tab.isAwayFromPinnedAddress, perform: clickIcon))
         }
         .sidebarCell(state: RowState(isSelected: isSelected, isFocused: isSelected && isListFocused),
                      placement: placement, hoverID: tab.id)
@@ -347,9 +356,43 @@ struct TabRowView: View {
         if tab.state.isLoading { parts.append(String(localized: "Loading", comment: "Sidebar")) }
         if tab.state.isPlayingMedia { parts.append(String(localized: "Playing media", comment: "Sidebar")) }
         if tab.isPinned { parts.append(String(localized: "Pinned", comment: "Sidebar")) }
+        if tab.isAwayFromPinnedAddress {
+            parts.append(String(localized: "Away from its pinned address", comment: "Sidebar: VoiceOver state of a Pinned tab"))
+        }
         if let host = tab.address.map({ AddressDisplay($0).host }) { parts.append(host) }
         parts.append(String(localized: "\(position) of \(count)", comment: "Sidebar"))
         return parts.joined(separator: ", ")
+    }
+}
+
+/// The mark on a Pinned tab's icon while the Tab shows another page than the one it was pinned at: the kit's status
+/// dot in the Theme's text colour, on the icon's top trailing corner.
+private struct AwayFromPinnedAddressDot: View {
+    @Environment(\.designTokens) private var tokens
+
+    var body: some View {
+        WithColorRoles { roles in
+            Circle()
+                .fill(roles.tintText)
+                .frame(width: tokens.size.dot, height: tokens.size.dot)
+                .offset(x: tokens.size.dot / 2, y: -tokens.size.dot / 2)
+                .accessibilityHidden(true)
+        }
+    }
+}
+
+/// VoiceOver's "Back to Pinned Address" action on a Pinned tab away from its pinned address.
+private struct BackToPinnedAddressAction: ViewModifier {
+    let isAvailable: Bool
+    let perform: (() -> Void)?
+
+    func body(content: Content) -> some View {
+        if isAvailable, let perform {
+            content.accessibilityAction(named: Text("Back to Pinned Address", comment: "VoiceOver action of a Pinned tab"),
+                                        perform)
+        } else {
+            content
+        }
     }
 }
 

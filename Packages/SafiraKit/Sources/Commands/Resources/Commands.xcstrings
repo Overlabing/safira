@@ -23,6 +23,17 @@
         }
       }
     },
+    "Back to Pinned Address" : {
+      "comment" : "Command: menu item and Shortcuts row; loads the address a Pinned tab was pinned at",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revenir à l’adresse épinglée"
+          }
+        }
+      }
+    },
     "Chosen by you" : {
       "comment" : "Defaults: value of Shortcut preset",
       "localizations" : {

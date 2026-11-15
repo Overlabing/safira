@@ -122,6 +122,10 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         session.toggleSelectedTabPin()
     }
 
+    @objc func backToPinnedAddress(_ sender: Any?) {
+        session.returnSelectedTabToPinnedAddress()
+    }
+
     /// Opens the naming sheet for a new Folder at the top of the active Space's pinned area.
     @objc func newFolder(_ sender: Any?) {
         editFolder(creatingIn: nil)
@@ -333,6 +337,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         case #selector(togglePin(_:)):
             menuItem.title = tab?.isPinned == true ? String(localized: "Unpin Tab", comment: "Main window") : String(localized: "Pin Tab", comment: "Main window")
             return tab != nil
+        case #selector(backToPinnedAddress(_:)): return tab?.isAwayFromPinnedAddress == true
         case #selector(moveTabUp(_:)): return tab.map { session.canMove($0.id, by: -1) } ?? false
         case #selector(moveTabDown(_:)): return tab.map { session.canMove($0.id, by: 1) } ?? false
         case #selector(goBack(_:)): return tab?.state.canGoBack == true

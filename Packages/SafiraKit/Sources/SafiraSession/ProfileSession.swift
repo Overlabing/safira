@@ -509,6 +509,38 @@ public final class ProfileSession {
         return true
     }
 
+    /// Shows a Pinned tab that moved away from its pinned address and loads that address in it, as a normal navigation:
+    /// Back returns to the page it left. A dormant Tab wakes first, so its Back history is kept. False, and nothing
+    /// changes, when the Tab is not a Pinned tab away from its pinned address.
+    @discardableResult
+    public func returnToPinnedAddress(_ id: TabID) -> Bool {
+        guard let tab = allTabs.first(where: { $0.id == id }), tab.isAwayFromPinnedAddress,
+              let pinnedAddress = tab.pinnedAddress else { return false }
+        select(id)
+        tab.load(pinnedAddress)
+        return true
+    }
+
+    public func returnSelectedTabToPinnedAddress() {
+        if let selectedTabID { returnToPinnedAddress(selectedTabID) }
+    }
+
+    /// A click on a Tab's icon: a Pinned tab away from its pinned address goes back to it; any other Tab is selected.
+    public func clickIcon(of id: TabID) {
+        if !returnToPinnedAddress(id) { select(id) }
+    }
+
+    /// Makes the page a Pinned tab shows its new pinned address, saved with it. False, and nothing changes, when the
+    /// Tab is not a Pinned tab away from its pinned address.
+    @discardableResult
+    public func replacePinnedAddress(_ id: TabID) -> Bool {
+        guard let tab = allTabs.first(where: { $0.id == id }), tab.isAwayFromPinnedAddress, tab.address != nil else {
+            return false
+        }
+        tab.replacePinnedAddress()
+        return true
+    }
+
     /// Pins a plain Tab or unpins a Pinned tab.
     public func togglePin(_ id: TabID) {
         if !unpin(id) { pin(id) }
