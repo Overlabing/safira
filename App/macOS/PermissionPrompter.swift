@@ -5,11 +5,11 @@ import AppKit
 import SafiraCore
 
 /// Asks the user whether a site may use the camera, the microphone or the location, or whether a link may open an
-/// app, one question at a time, as a sheet on the Main window. It names the Profile as well as the site: an inactive
+/// app, one question at a time, as a sheet on the Main window. Page dialogs and the open panel take their turn too. It names the Profile as well as the site: an inactive
 /// Profile's page can ask too.
 @MainActor
 final class PermissionPrompter {
-    private let window: () -> NSWindow?
+    let window: () -> NSWindow?
     private let profileName: (ProfileID) -> String
     /// A Private window's prompter: a choice is remembered only until the window closes.
     private let isPrivate: Bool
@@ -41,7 +41,7 @@ final class PermissionPrompter {
         await inTurn { await $0.show(failureOf: app) }
     }
 
-    private func inTurn<Result: Sendable>(_ work: @escaping @MainActor (PermissionPrompter) async -> Result) async -> Result {
+    func inTurn<Result: Sendable>(_ work: @escaping @MainActor (PermissionPrompter) async -> Result) async -> Result {
         let previous = tail
         let turn = Task { @MainActor in
             await previous?.value
@@ -104,7 +104,7 @@ final class PermissionPrompter {
         await UserFacingAlert.show(.appCouldNotOpenLink(app), on: window())
     }
 
-    private func present(_ alert: NSAlert) async -> NSApplication.ModalResponse {
+    func present(_ alert: NSAlert) async -> NSApplication.ModalResponse {
         if let window = window(), window.isVisible {
             return await alert.beginSheetModal(for: window)
         }

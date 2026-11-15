@@ -26,6 +26,9 @@ public final class ProfileWebContext {
     public let downloads: ProfileDownloads
     /// Asks the user about a request the Profile has no decision for. Without it, such a request is denied.
     public var permissionPrompt: (@MainActor (PermissionPrompt) async -> PermissionAnswer)?
+    /// The window's page dialogs and open panel, read each time a page asks. Without them a dialog is declined and
+    /// no file is chosen.
+    public var pagePanels: PagePanels?
     /// The live pages of this Profile's Tabs. They live here, outside the views, until their Tab closes.
     private var pages: [TabID: WebKitPage] = [:]
     /// The live pages of this Profile's popups, which share their opener's configuration.
@@ -200,6 +203,7 @@ public final class ProfileWebContext {
                 await self?.permissionDecision(requesting: kinds, at: origin) ?? .deny
             },
             startDownload: { [weak self] in self?.downloadController.adopt($0) },
+            panels: { [weak self] in self?.pagePanels },
             onClose: onClose
         )
     }

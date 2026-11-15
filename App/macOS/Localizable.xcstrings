@@ -305,7 +305,7 @@
       }
     },
     "Cancel" : {
-      "comment" : "Link rules window\nMain window",
+      "comment" : "Link rules window\nMain window\nPage dialog sheet",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -1892,7 +1892,7 @@
       }
     },
     "OK" : {
-      "comment" : "Alert button",
+      "comment" : "Alert button\nPage dialog sheet",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -2124,6 +2124,17 @@
         }
       }
     },
+    "Prevent this page from creating additional dialogs" : {
+      "comment" : "Page dialog sheet",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Empêcher cette page d’ouvrir d’autres dialogues"
+          }
+        }
+      }
+    },
     "Previous Match" : {
       "comment" : "Find bar: button",
       "localizations" : {
@@ -2245,7 +2256,7 @@
       }
     },
     "Reload" : {
-      "comment" : "Sidebar",
+      "comment" : "Crashed page\nSidebar",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -3035,6 +3046,28 @@
         }
       }
     },
+    "The page at “%@” says:" : {
+      "comment" : "Page dialog sheet title; the argument is the site",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La page « %@ » indique :"
+          }
+        }
+      }
+    },
+    "The page stopped working twice, so Safira did not reload it again." : {
+      "comment" : "Crashed page",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La page a cessé de fonctionner deux fois, Safira ne l’a donc pas rechargée."
+          }
+        }
+      }
+    },
     "The search engine belongs to this Profile only. Nothing is chosen for you." : {
       "localizations" : {
         "fr" : {
@@ -3147,6 +3180,27 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ce lien était déjà ouvert : Safira a affiché cet onglet. Un bouton propose de l’ouvrir dans un nouvel onglet."
+          }
+        }
+      }
+    },
+    "This page crashed" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette page a planté"
+          }
+        }
+      }
+    },
+    "This page says:" : {
+      "comment" : "Page dialog sheet title, for a page without a site",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette page indique :"
           }
         }
       }
@@ -3381,6 +3435,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "vérifié le %@"
+          }
+        }
+      }
+    },
+    "“%@” stopped working twice, so Safira did not reload it again." : {
+      "comment" : "Crashed page; the argument is the site",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "« %@ » a cessé de fonctionner deux fois, Safira ne l’a donc pas rechargée."
           }
         }
       }

@@ -80,14 +80,16 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     private func makeWindow() -> NSWindow {
         let root = SettingsRootView(model: presenter.model, switches: switches, content: content)
         let hosting = NSHostingController(rootView: root)
-        hosting.sceneBridgingOptions = [.toolbars]
+        // No bridging: the kit's `navigationTitle` would put the pane name back in the title bar, over the header.
+        hosting.sceneBridgingOptions = []
         // The window keeps the shell's size: sized from the panes' ideal size, a list grew to all its rows and pushed the
         // pane past the window.
         hosting.sizingOptions = []
         let window = NSWindow(contentViewController: hosting)
         window.styleMask = [.titled, .closable, .miniaturizable, .fullSizeContentView]
-        window.toolbar = NSToolbar(identifier: "Settings")
-        window.toolbarStyle = .unified
+        // The pane header names the pane; the title bar shows no title of its own and no toolbar band, so the header
+        // sits near the top, as in System Settings. The title stays set for VoiceOver and the Window menu.
+        window.titleVisibility = .hidden
         // The Theme's gradient runs under the title bar, as the kit's shell expects.
         window.titlebarAppearsTransparent = true
         window.isReleasedWhenClosed = false
@@ -100,8 +102,8 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         return window
     }
 
-    /// The window is titled after the open pane, as System Settings is: the kit's `navigationTitle` reaches no title
-    /// bar from a hosting controller.
+    /// The window is titled after the open pane, as System Settings is, for VoiceOver and the Window menu: the kit's
+    /// `navigationTitle` reaches no title bar from a hosting controller.
     private func followPaneTitle() {
         window?.title = withObservationTracking {
             presenter.model.current.title

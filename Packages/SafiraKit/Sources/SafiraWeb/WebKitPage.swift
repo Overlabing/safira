@@ -21,6 +21,7 @@ public final class WebKitPage: NSObject, WebPageHandle {
     public var onDidClose: (@MainActor () -> Void)?
     public var onDownloadStarted: (@MainActor () -> Void)?
     public var onIconLinks: (@MainActor (PageIconLinks) -> Void)?
+    public var onContentProcessEnded: (@MainActor () -> Void)?
     /// Safira's own content world: its scripts run out of the page's reach.
     static let contentWorld = WKContentWorld.world(name: "Safira")
     private var isPlayingMedia = false
@@ -45,6 +46,9 @@ public final class WebKitPage: NSObject, WebPageHandle {
     private let decidePermission: @MainActor (SiteOrigin, [PermissionKind]) async -> PermissionDecision
     private let startDownload: @MainActor (WKDownload) -> Void
     private let onClose: @MainActor () -> Void
+    /// The window's dialogs and open panel, read when the page asks; without them the page is answered as if declined.
+    private let panels: @MainActor () -> PagePanels?
+    private var dialogGate = PageDialogGate()
     private let navigationDiagnostics: NavigationDiagnostics?
 
     init(configuration: WKWebViewConfiguration, diagnostics: DiagnosticLogger? = nil,
@@ -52,12 +56,14 @@ public final class WebKitPage: NSObject, WebPageHandle {
          makePopupPage: @escaping @MainActor (WKWebViewConfiguration) -> (PopupID, WebKitPage)?,
          decidePermission: @escaping @MainActor (SiteOrigin, [PermissionKind]) async -> PermissionDecision,
          startDownload: @escaping @MainActor (WKDownload) -> Void,
+         panels: @escaping @MainActor () -> PagePanels? = { nil },
          onClose: @escaping @MainActor () -> Void) {
         webView = WKWebView(frame: .zero, configuration: configuration)
         self.makeNewTabPage = makeNewTabPage
         self.makePopupPage = makePopupPage
         self.decidePermission = decidePermission
         self.startDownload = startDownload
+        self.panels = panels
         // Public API: the page shows in Safari's Develop menu. Safira has no in-app inspector (ADR 0001).
         webView.isInspectable = true
         // Both off by default in WKWebView: pinching zooms the page, and a two-finger swipe goes back and forward.
@@ -175,6 +181,7 @@ public final class WebKitPage: NSObject, WebPageHandle {
         onDidClose = nil
         onDownloadStarted = nil
         onIconLinks = nil
+        onContentProcessEnded = nil
         webView.stopLoading()
         webView.removeFromSuperview()
         webView.navigationDelegate = nil
@@ -341,6 +348,7 @@ extension WebKitPage: WKNavigationDelegate {
             mainFrameIsPosting = false
             markShownEntry(.postBody)
         }
+        dialogGate.newDocument()
         navigationDiagnostics?.webView(webView, didCommit: navigation)
     }
 
@@ -360,6 +368,13 @@ extension WebKitPage: WKNavigationDelegate {
         let error = error as NSError
         guard let url = error.userInfo[NSURLErrorFailingURLErrorKey] as? URL else { return }
         onLoadFailure?(LoadFailure(url: url, domain: error.domain, code: error.code))
+    }
+
+    /// The page's content process crashed or was killed under memory pressure; the Tab decides when to reload.
+    public func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+        mainFrameIsPosting = false
+        dialogGate.newDocument()
+        onContentProcessEnded?()
     }
 }
 
@@ -406,6 +421,41 @@ extension WebKitPage: WKUIDelegate {
     public func webView(_ webView: WKWebView, requestGeolocationPermissionFor origin: WKSecurityOrigin,
                         initiatedBy frame: WKFrameInfo) async -> WKPermissionDecision {
         await decide([.location], for: origin)
+    }
+
+    public func webView(_ webView: WKWebView, runJavaScriptAlertPanelWithMessage message: String,
+                        initiatedByFrame frame: WKFrameInfo) async {
+        _ = await showDialog(.alert, message: message, from: frame)
+    }
+
+    public func webView(_ webView: WKWebView, runJavaScriptConfirmPanelWithMessage message: String,
+                        initiatedByFrame frame: WKFrameInfo) async -> Bool {
+        await showDialog(.confirm, message: message, from: frame).isAccepted
+    }
+
+    public func webView(_ webView: WKWebView, runJavaScriptTextInputPanelWithPrompt prompt: String,
+                        defaultText: String?, initiatedByFrame frame: WKFrameInfo) async -> String? {
+        let response = await showDialog(.prompt(defaultText: defaultText ?? ""), message: prompt, from: frame)
+        return response.isAccepted ? response.text : nil
+    }
+
+    public func webView(_ webView: WKWebView, runOpenPanelWith parameters: WKOpenPanelParameters,
+                        initiatedByFrame frame: WKFrameInfo) async -> [URL]? {
+        guard !isClosed, let panels = panels() else { return nil }
+        return await panels.chooseFiles(FileChoice(allowsMultipleSelection: parameters.allowsMultipleSelection,
+                                                   allowsDirectories: parameters.allowsDirectories))
+    }
+
+    /// The page waits for the answer, so a page shows one dialog at a time; the window queues those of other pages.
+    private func showDialog(_ kind: PageDialog.Kind, message: String, from frame: WKFrameInfo) async
+        -> PageDialogResponse {
+        let host = frame.securityOrigin.host
+        guard !isClosed, let panels = panels(),
+              let dialog = dialogGate.dialog(kind, message: message, site: host.isEmpty ? nil : host)
+        else { return .declined }
+        let response = await panels.dialog(dialog)
+        dialogGate.answered(response)
+        return response
     }
 
     /// WebKit is never left to ask by itself: the answer is the Profile's remembered decision or the user's.

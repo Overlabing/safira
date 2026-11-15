@@ -29,6 +29,7 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSMen
     private let findBarFocus = FindBarFocus()
     private var findBarHost: NSView?
     private let pageArea = TabHostView.withEmptyPage()
+    private let crashedPage = CrashedPageHost()
     private var layout: BrowserWindowLayout?
     private var toolbar: SidebarToolbar?
     /// The sidebar button hides and shows this window's column; a Private window has no Compact mode and keeps nothing.
@@ -59,6 +60,7 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSMen
         super.init(window: window)
         window.delegate = self
         context.web.permissionPrompt = { [unowned self] prompt in await permissionPrompter.ask(prompt) }
+        context.web.pagePanels = permissionPrompter.pagePanels
         context.session.appLinks.handlers = AppLinkHandlers(
             launcher: externalApps,
             prompt: { [unowned self] prompt in await permissionPrompter.confirmOpen(prompt) },
@@ -254,7 +256,12 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSMen
         let title = Self.title(for: tab?.state.title)
         window?.title = title
         window?.setAccessibilityLabel(title)
-        pageArea.show(tab.flatMap { context.web.webView(for: $0.id) })
+        if let tab, tab.crash == .crashed {
+            pageArea.show(crashedPage.view(site: tab.address?.host) { [weak self] in self?.session.reload() })
+        } else {
+            pageArea.show(tab.flatMap { context.web.webView(for: $0.id) })
+        }
+        session.selectedTabIsShown()
         updateSearchEngineSheet(query: session.searchAwaitingEngine)
         showPopups()
     }
