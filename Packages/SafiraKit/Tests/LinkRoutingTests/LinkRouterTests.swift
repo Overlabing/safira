@@ -159,7 +159,7 @@ private func decide(_ link: IncomingLink, profiles: [Profile] = [workProfile, ho
     @Test func aRuleWhoseSpaceCannotBeToldApartIsNeverGuessed() {
         let reporter = RecordingReporter()
         let router = makeRouter(rules: StubRules([LinkRule(host: "example.com", profile: "Work", space: "Dev")]), reporter: reporter)
-        let twin = SpaceChoice(id: SpaceID(), name: "Dev", emoji: "🧪")
+        let twin = SpaceChoice(id: SpaceID(), name: "Dev", mark: .text("🧪"))
 
         let decision = router.decide(for: exampleLink, among: [workProfile, homeProfile], spacesOf: { _ in [devSpace, twin] })
 

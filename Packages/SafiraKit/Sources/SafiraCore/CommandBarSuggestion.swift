@@ -16,14 +16,14 @@ public struct CommandBarSuggestion: Hashable, Sendable, Identifiable {
     public let kind: Kind
     public let title: String
     public let address: URL
-    /// The emoji of the Space holding an open Tab; nil for a history entry.
-    public let spaceEmoji: String?
+    /// The mark of the Space holding an open Tab; nil for a history entry.
+    public let spaceMark: SpaceMark?
 
-    public init(kind: Kind, title: String, address: URL, spaceEmoji: String? = nil) {
+    public init(kind: Kind, title: String, address: URL, spaceMark: SpaceMark? = nil) {
         self.kind = kind
         self.title = title
         self.address = address
-        self.spaceEmoji = spaceEmoji
+        self.spaceMark = spaceMark
     }
 
     public var id: Kind { kind }

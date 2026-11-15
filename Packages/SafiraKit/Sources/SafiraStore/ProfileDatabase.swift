@@ -4,6 +4,7 @@
 import Foundation
 import GRDB
 import SafiraCore
+import Spaces
 
 /// One Profile's database, `profile.sqlite` in the Profile's own folder. No API reads two Profiles at once.
 public final class ProfileDatabase: Sendable {
@@ -37,12 +38,13 @@ public final class ProfileDatabase: Sendable {
     public func savedSession() throws -> SavedSession {
         try queue.read { db in
             let spaces = try Row.fetchAll(db, sql: """
-                SELECT id, name, emoji, palette_id, selected_tab_id FROM space ORDER BY position
+                SELECT id, name, icon, palette_id, selected_tab_id FROM space ORDER BY position
                 """).compactMap { row -> SpaceRecord? in
                 guard let id = SpaceID(uuidString: row["id"]) else { return nil }
                 let contents = try Self.contents(of: row["id"], db)
                 let selected = (row["selected_tab_id"] as String?).flatMap(UUID.init(uuidString:)).map(TabID.init(rawValue:))
-                var space = SpaceRecord(id: id, name: row["name"], emoji: row["emoji"], paletteID: row["palette_id"],
+                var space = SpaceRecord(id: id, name: row["name"], icon: SpaceGlyph(encoded: row["icon"]),
+                                        paletteID: row["palette_id"],
                                         pinned: contents.pinned, tabs: contents.tabs)
                 space.selectedTabID = space.allTabs.contains { $0.id == selected } ? selected : nil
                 return space
@@ -57,10 +59,11 @@ public final class ProfileDatabase: Sendable {
     /// The Spaces' own fields, in sidebar order, and the active Space, without reading any Tab.
     public func savedSpaces() throws -> ProfileSpaces {
         try queue.read { db in
-            let spaces = try Row.fetchAll(db, sql: "SELECT id, name, emoji, palette_id FROM space ORDER BY position")
+            let spaces = try Row.fetchAll(db, sql: "SELECT id, name, icon, palette_id FROM space ORDER BY position")
                 .compactMap { row -> SpaceSummary? in
                     guard let id = SpaceID(uuidString: row["id"]) else { return nil }
-                    return SpaceSummary(id: id, name: row["name"], emoji: row["emoji"], paletteID: row["palette_id"])
+                    return SpaceSummary(id: id, name: row["name"], icon: SpaceGlyph(encoded: row["icon"]),
+                                        paletteID: row["palette_id"])
                 }
             let active = try String.fetchOne(db, sql: "SELECT value FROM profile_setting WHERE key = ?",
                                              arguments: [Self.activeSpaceKey])
@@ -276,10 +279,10 @@ public final class ProfileDatabase: Sendable {
         for (position, space) in session.spaces.enumerated() {
             let id = space.id.rawValue.uuidString
             try db.execute(sql: """
-                INSERT INTO space (id, position, name, emoji, palette_id, selected_tab_id) VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO space (id, position, name, icon, palette_id, selected_tab_id) VALUES (?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET position = excluded.position, name = excluded.name,
-                    emoji = excluded.emoji, palette_id = excluded.palette_id, selected_tab_id = excluded.selected_tab_id
-                """, arguments: [id, position, space.name, space.emoji, space.paletteID,
+                    icon = excluded.icon, palette_id = excluded.palette_id, selected_tab_id = excluded.selected_tab_id
+                """, arguments: [id, position, space.name, space.icon.encoded, space.paletteID,
                                  space.selectedTabID?.rawValue.uuidString])
             try write(space.pinned, inFolder: nil, of: id, db)
             for (position, tab) in space.tabs.enumerated() {

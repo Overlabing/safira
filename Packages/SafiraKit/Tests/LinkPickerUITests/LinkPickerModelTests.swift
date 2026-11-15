@@ -48,7 +48,7 @@ private func picker(_ profiles: [Profile] = [work, home, school]) -> LinkPickerM
 
         #expect(model.rows.map(\.number) == [1, 2, 3])
         #expect(model.rows.map(\.name) == ["Work", "Home", "School"])
-        #expect(model.rows.map(\.symbol) == ["💼", "🏡", "🎓"])
+        #expect(model.rows.map(\.mark) == [.text("💼"), .text("🏡"), .text("🎓")])
         #expect(model.title == "example.com")
         #expect(model.openerName == "Slack")
     }
@@ -142,8 +142,8 @@ private func picker(_ profiles: [Profile] = [work, home, school]) -> LinkPickerM
 
 @MainActor
 @Suite struct SpacePickerModelTests {
-    private let dev = SpaceChoice(id: SpaceID(uuidString: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")!, name: "Dev", emoji: "🛠")
-    private let docs = SpaceChoice(id: SpaceID(uuidString: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb")!, name: "Docs", emoji: "📄")
+    private let dev = SpaceChoice(id: SpaceID(uuidString: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")!, name: "Dev", mark: .text("🛠"))
+    private let docs = SpaceChoice(id: SpaceID(uuidString: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb")!, name: "Docs", mark: .text("📄"))
 
     private func picker() -> LinkPickerModel<SpaceID> {
         LinkPickerModel(link: IncomingLink(url: URL(string: "https://example.com/a")!), spaces: [dev, docs])
@@ -153,7 +153,7 @@ private func picker(_ profiles: [Profile] = [work, home, school]) -> LinkPickerM
         let model = picker()
         #expect(model.rows.map(\.number) == [1, 2])
         #expect(model.rows.map(\.name) == ["Dev", "Docs"])
-        #expect(model.rows.map(\.symbol) == ["🛠", "📄"])
+        #expect(model.rows.map(\.mark) == [.text("🛠"), .text("📄")])
     }
 
     @Test func nothingIsPreselectedAndANumberKeyChoosesTheSpace() {

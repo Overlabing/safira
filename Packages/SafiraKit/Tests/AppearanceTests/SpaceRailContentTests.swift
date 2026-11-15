@@ -12,10 +12,10 @@ import Testing
 struct SpaceRailContentTests {
     private static func id(_ n: Int) -> UUID { UUID(uuidString: "00000000-0000-0000-0000-00000000000\(n)")! }
 
-    private let home = SpaceSummary(id: SpaceID(rawValue: id(1)), name: "Home", emoji: "🏠", paletteID: "teal-green")
-    private let reading = SpaceSummary(id: SpaceID(rawValue: id(2)), name: "Reading", emoji: " ")
-    private let ops = SpaceSummary(id: SpaceID(rawValue: id(3)), name: "Ops", emoji: "🚀")
-    private let family = SpaceSummary(id: SpaceID(rawValue: id(4)), name: "Family", emoji: "🏡")
+    private let home = SpaceSummary(id: SpaceID(rawValue: id(1)), name: "Home", icon: .emoji("🏠"), paletteID: "teal-green")
+    private let reading = SpaceSummary(id: SpaceID(rawValue: id(2)), name: "Reading", icon: .initial)
+    private let ops = SpaceSummary(id: SpaceID(rawValue: id(3)), name: "Ops", icon: .emoji("🚀"))
+    private let family = SpaceSummary(id: SpaceID(rawValue: id(4)), name: "Family", icon: .emoji("🏡"))
 
     private let work = Profile(id: ProfileID(rawValue: id(5)), name: "Work", symbol: "💼", paletteID: "indigo-blue")
     private let personal = Profile(id: ProfileID(rawValue: id(6)), name: "Personal", symbol: "🏡")

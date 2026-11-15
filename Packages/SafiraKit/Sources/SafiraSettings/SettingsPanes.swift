@@ -10,7 +10,7 @@ import SwiftUI
 /// The panes of the Settings window, in sidebar order. The raw value is stored to reopen the last pane, so it never
 /// changes once shipped.
 public enum SettingsPaneID: String, SettingsPaneIdentifier, CaseIterable {
-    case general, shortcuts, defaults, linkRules, sitePermissions, debug
+    case general, spaces, shortcuts, defaults, linkRules, sitePermissions, debug
 
     /// The switches of the registry of defaults (`DefaultEntry.id`) a pane shows besides its own content. The menu keeps
     /// its items for them, which show the same state.
@@ -20,7 +20,7 @@ public enum SettingsPaneID: String, SettingsPaneIdentifier, CaseIterable {
         case .linkRules: ["linkMatching.focusOpenTab", "linkPicker.askForSpace", "linkPicker.choiceLog"]
         case .sitePermissions: ["web.fraudulentSiteWarning", "web.autoplayingSound"]
         case .debug: ["diagnostics.debugMode"]
-        case .shortcuts, .defaults: []
+        case .spaces, .shortcuts, .defaults: []
         }
     }
 }
@@ -67,6 +67,13 @@ public enum SafiraSettings {
                          subtitle: String(localized: "Updates and the default browser.", table: "SafiraSettings",
                                           bundle: .module, comment: "Settings: subtitle of the General pane"),
                          systemImage: "gearshape", tint: .gray)
+        case .spaces:
+            SettingsPane(id, title: String(localized: "Spaces", table: "SafiraSettings", bundle: .module,
+                                           comment: "Settings: pane title"),
+                         subtitle: String(localized: "The current Profile’s Spaces, in the order of ⌃1 to ⌃9.",
+                                          table: "SafiraSettings", bundle: .module,
+                                          comment: "Settings: subtitle of the Spaces pane"),
+                         systemImage: "square.stack.3d.up", tint: .purple)
         case .shortcuts:
             SettingsPane(id, title: String(localized: "Shortcuts", table: "SafiraSettings", bundle: .module,
                                            comment: "Settings: pane title"),

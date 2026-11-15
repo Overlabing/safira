@@ -6,6 +6,7 @@ import Appearance
 import Observation
 import SafiraCore
 import SafiraStore
+import Spaces
 
 /// Where the Command bar sends what is typed in it.
 public enum CommandBarTarget: Hashable, Sendable {
@@ -79,7 +80,7 @@ public final class ProfileSession {
     /// The Space a Profile starts with, the same one the database creates.
     public static let initialSpaceName = String(localized: "Home", table: "SafiraSession", bundle: .module,
                                                 comment: "Name of the Space a new Profile starts with")
-    public static let initialSpaceEmoji = "🏠"
+    public static let initialSpaceIcon = SpaceGlyph.emoji("🏠")
 
     /// - Parameters:
     ///   - osBuild: the macOS build, which decides whether a saved navigation state can be restored.
@@ -103,7 +104,7 @@ public final class ProfileSession {
         self.history = history
         historyRecorder = history.map(HistoryRecorder.init(database:))
         self.makePage = makePage
-        let space = Space(id: SpaceID(), name: Self.initialSpaceName, emoji: Self.initialSpaceEmoji)
+        let space = Space(id: SpaceID(), name: Self.initialSpaceName, icon: Self.initialSpaceIcon)
         spaces = [space]
         activeSpaceID = space.id
         find.shownTab = { [weak self] in self?.selectedTab }
@@ -153,7 +154,7 @@ public final class ProfileSession {
         popups = []
         allTabs.forEach { $0.close() }
         spaces = saved.spaces.map { record in
-            let space = Space(id: record.id, name: record.name, emoji: record.emoji, paletteID: record.paletteID)
+            let space = Space(id: record.id, name: record.name, icon: record.icon, paletteID: record.paletteID)
             space.pinned = record.pinned.map(restoredItem)
             space.tabs = record.tabs.map { restoredTab($0) }
             space.selectedTabID = record.selectedTabID ?? space.allTabs.first?.id
@@ -196,7 +197,7 @@ public final class ProfileSession {
     func readSavedFields() {
         _ = (activeSpaceID, settings)
         for space in spaces {
-            _ = (space.name, space.emoji, space.paletteID, space.selectedTabID, space.pinned.count)
+            _ = (space.name, space.icon, space.paletteID, space.selectedTabID, space.pinned.count)
             for folder in space.folders {
                 _ = (folder.name, folder.isExpanded, folder.items.count)
             }
@@ -214,26 +215,38 @@ public final class ProfileSession {
     // MARK: Spaces
 
     /// Adds a Space after the others and makes it active. It starts with no Tab. A session without Spaces adds none and
-    /// answers its only one. Its Theme is `paletteID` when the Palette has it, otherwise the first Theme of the Palette
-    /// no other Space of the Profile uses.
+    /// answers its only one. The name follows AppSupportKit's Space rules: trimmed, not empty, and no other Space of the
+    /// Profile has it, case ignored. Its Theme is `paletteID` when the Palette has it, otherwise the first Theme of the
+    /// Palette no other Space of the Profile uses.
     @discardableResult
-    public func createSpace(name: String, emoji: String, paletteID: String? = nil) -> SpaceID {
+    public func createSpace(name: String, icon: SpaceGlyph = .initial,
+                            paletteID: String? = nil) throws(SpaceRuleError) -> SpaceID {
         guard hasSpaces else { return activeSpaceID }
+        let name = try SpaceRules.validateName(name, among: spaces.map { (id: $0.id, name: $0.name) })
         let theme = ThemeCatalog.theme(id: paletteID)?.id ?? ThemeCatalog.nextID(avoiding: spaces.map(\.paletteID))
-        let space = Space(id: SpaceID(), name: Self.cleanName(name) ?? Self.initialSpaceName,
-                          emoji: Self.cleanEmoji(emoji) ?? Self.initialSpaceEmoji, paletteID: theme)
+        let space = Space(id: SpaceID(), name: name, icon: icon, paletteID: theme)
         spaces.append(space)
         activeSpaceID = space.id
         return space.id
     }
 
-    /// Renames a Space and gives it a Theme. A blank name or emoji keeps the current one; an emoji keeps its first
-    /// character only; a `paletteID` the Palette does not have, or none, keeps the current Theme.
-    public func renameSpace(_ id: SpaceID, name: String, emoji: String, paletteID: String? = nil) {
+    /// Gives a Space a new name, icon and Theme. The name follows the same rules as `createSpace`, the Space's own name
+    /// aside; a `paletteID` the Palette does not have, or none, keeps the current Theme.
+    public func editSpace(_ id: SpaceID, name: String, icon: SpaceGlyph,
+                          paletteID: String? = nil) throws(SpaceRuleError) {
         guard hasSpaces, let space = space(id) else { return }
-        if let name = Self.cleanName(name) { space.name = name }
-        if let emoji = Self.cleanEmoji(emoji) { space.emoji = emoji }
+        space.name = try SpaceRules.validateName(name, among: spaces.map { (id: $0.id, name: $0.name) }, excluding: id)
+        space.icon = icon
         if let theme = ThemeCatalog.theme(id: paletteID) { space.paletteID = theme.id }
+    }
+
+    /// Puts the Spaces in `order`, the order of the Space rail and of ⌃1…⌃9. An order that is not exactly the Profile's
+    /// Spaces changes nothing and returns false.
+    @discardableResult
+    public func reorderSpaces(_ order: [SpaceID]) -> Bool {
+        guard order.count == spaces.count, Set(order) == Set(spaces.map(\.id)) else { return false }
+        spaces = order.compactMap(space)
+        return true
     }
 
     /// Moves a Space so that it ends at `index` in the list; an index past either end is clamped to it.
@@ -259,9 +272,7 @@ public final class ProfileSession {
 
     /// Shows the Space `offset` places away from the active one, wrapping around the ends of the list.
     public func selectSpace(offset: Int) {
-        guard let index = spaces.firstIndex(where: { $0.id == activeSpaceID }) else { return }
-        let count = spaces.count
-        selectSpace(spaces[((index + offset) % count + count) % count].id)
+        SpaceRules.neighbor(of: activeSpaceID, in: spaces.map(\.id), step: offset).map(selectSpace)
     }
 
     /// Shows the Space at `number` (1 for the first) in the Space rail's order. A number past the last Space does
@@ -297,10 +308,6 @@ public final class ProfileSession {
     private static func cleanName(_ name: String) -> String? {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed.isEmpty ? nil : trimmed
-    }
-
-    private static func cleanEmoji(_ emoji: String) -> String? {
-        emoji.trimmingCharacters(in: .whitespacesAndNewlines).first.map(String.init)
     }
 
     // MARK: Tabs

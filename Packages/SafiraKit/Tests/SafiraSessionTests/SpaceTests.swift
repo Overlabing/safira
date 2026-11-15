@@ -4,6 +4,7 @@
 import Foundation
 import SafiraCore
 import SafiraSession
+import Spaces
 import Testing
 
 @MainActor
@@ -17,7 +18,7 @@ private func openTabs(_ fixture: SessionFixture, _ addresses: [String]) -> [TabI
 
 @MainActor
 private func names(_ session: ProfileSession) -> [String] {
-    session.spaces.map { "\($0.emoji) \($0.name)" }
+    session.spaces.map { "\($0.icon.emoji ?? "-") \($0.name)" }
 }
 
 @MainActor
@@ -31,11 +32,11 @@ private func names(_ session: ProfileSession) -> [String] {
         #expect(session.tabs.isEmpty)
     }
 
-    @Test func aNewSpaceComesLastIsShownAndStartsWithNoTab() {
+    @Test func aNewSpaceComesLastIsShownAndStartsWithNoTab() throws {
         let fixture = SessionFixture()
         let homeTabs = openTabs(fixture, ["a.com", "b.com"])
 
-        let reading = fixture.session.createSpace(name: "Reading", emoji: "📚")
+        let reading = try fixture.session.createSpace(name: "Reading", icon: .emoji("📚"))
 
         #expect(names(fixture.session) == ["🏠 Home", "📚 Reading"])
         #expect(fixture.session.activeSpaceID == reading)
@@ -44,10 +45,10 @@ private func names(_ session: ProfileSession) -> [String] {
         #expect(fixture.session.spaces[0].tabs.map(\.id) == homeTabs)
     }
 
-    @Test func aTabOpensInTheActiveSpace() {
+    @Test func aTabOpensInTheActiveSpace() throws {
         let fixture = SessionFixture()
         _ = openTabs(fixture, ["a.com"])
-        fixture.session.createSpace(name: "Reading", emoji: "📚")
+        try fixture.session.createSpace(name: "Reading", icon: .emoji("📚"))
 
         let id = openTabs(fixture, ["b.com"])[0]
 
@@ -56,51 +57,66 @@ private func names(_ session: ProfileSession) -> [String] {
         #expect(fixture.session.selectedTabID == id)
     }
 
-    @Test func aBlankNameOrEmojiFallsBackToTheDefaults() {
+    @Test func aBlankNameOrOneAnotherSpaceHasIsRefusedByTheSpaceRules() {
         let sessionFixture = SessionFixture()
         let session: ProfileSession = sessionFixture.session
 
-        session.createSpace(name: "  ", emoji: "")
+        #expect(throws: SpaceRuleError.emptyName) { try session.createSpace(name: "  ", icon: .emoji("📚")) }
+        #expect(throws: SpaceRuleError.duplicateName("home")) { try session.createSpace(name: " home ") }
 
-        #expect(names(session) == ["🏠 Home", "🏠 Home"])
+        #expect(names(session) == ["🏠 Home"])
     }
 
-    @Test func renamingChangesTheNameAndTheEmoji() {
+    @Test func editingChangesTheNameTheIconAndKeepsTheThemeWithoutOne() throws {
         let sessionFixture = SessionFixture()
         let session: ProfileSession = sessionFixture.session
-        let id = session.createSpace(name: "Reading", emoji: "📚")
+        let id = try session.createSpace(name: "Reading", icon: .emoji("📚"), paletteID: "mint-cyan")
 
-        session.renameSpace(id, name: "  Research ", emoji: "🔬")
+        try session.editSpace(id, name: "  Research ", icon: .symbol("book"))
 
-        #expect(names(session) == ["🏠 Home", "🔬 Research"])
+        #expect(session.spaces.map(\.name) == ["Home", "Research"])
+        #expect(session.spaces.map(\.icon) == [.emoji("🏠"), .symbol("book")])
+        #expect(session.spaces[1].paletteID == "mint-cyan")
     }
 
-    @Test func renamingWithABlankFieldKeepsWhatWasThere() {
-        let sessionFixture = SessionFixture()
-        let session: ProfileSession = sessionFixture.session
-        let id = session.spaces[0].id
-
-        session.renameSpace(id, name: "", emoji: "🌿")
-        session.renameSpace(id, name: "Garden", emoji: " ")
-
-        #expect(names(session) == ["🌿 Garden"])
-    }
-
-    @Test func anEmojiKeepsItsFirstCharacterOnly() {
-        let sessionFixture = SessionFixture()
-        let session: ProfileSession = sessionFixture.session
-
-        session.renameSpace(session.spaces[0].id, name: "France", emoji: "🇫🇷🏠x")
-
-        #expect(names(session) == ["🇫🇷 France"])
-    }
-
-    @Test func spacesAreReorderedAndAMoveStopsAtTheEnds() {
+    @Test func anEditKeepsTheSpacesOwnNameButRefusesABlankOneOrAnothersAndChangesNothing() throws {
         let sessionFixture = SessionFixture()
         let session: ProfileSession = sessionFixture.session
         let home = session.spaces[0].id
-        let reading = session.createSpace(name: "Reading", emoji: "📚")
-        session.createSpace(name: "Work", emoji: "💼")
+        try session.createSpace(name: "Reading", icon: .emoji("📚"))
+
+        try session.editSpace(home, name: "HOME", icon: .initial)
+        #expect(throws: SpaceRuleError.emptyName) { try session.editSpace(home, name: " ", icon: .emoji("🌿")) }
+        #expect(throws: SpaceRuleError.duplicateName("reading")) {
+            try session.editSpace(home, name: "reading", icon: .emoji("🌿"))
+        }
+
+        #expect(session.spaces.map(\.name) == ["HOME", "Reading"])
+        #expect(session.spaces.map(\.icon) == [.initial, .emoji("📚")])
+    }
+
+    @Test func aNewOrderOfEveryOneOfTheProfilesSpacesIsKeptAndAnyOtherRefused() throws {
+        let sessionFixture = SessionFixture()
+        let session: ProfileSession = sessionFixture.session
+        let home = session.spaces[0].id
+        let reading = try session.createSpace(name: "Reading", icon: .emoji("📚"))
+        let work = try session.createSpace(name: "Work", icon: .emoji("💼"))
+
+        #expect(session.reorderSpaces([work, home, reading]))
+        #expect(names(session) == ["💼 Work", "🏠 Home", "📚 Reading"])
+        #expect(!session.reorderSpaces([home, reading]))
+        #expect(!session.reorderSpaces([home, home, reading]))
+        #expect(!session.reorderSpaces([home, reading, SpaceID()]))
+        #expect(names(session) == ["💼 Work", "🏠 Home", "📚 Reading"])
+        #expect(session.activeSpaceID == work)
+    }
+
+    @Test func spacesAreReorderedAndAMoveStopsAtTheEnds() throws {
+        let sessionFixture = SessionFixture()
+        let session: ProfileSession = sessionFixture.session
+        let home = session.spaces[0].id
+        let reading = try session.createSpace(name: "Reading", icon: .emoji("📚"))
+        try session.createSpace(name: "Work", icon: .emoji("💼"))
 
         session.moveSpace(home, to: 2)
         #expect(names(session) == ["📚 Reading", "💼 Work", "🏠 Home"])
@@ -115,22 +131,22 @@ private func names(_ session: ProfileSession) -> [String] {
         #expect(names(session) == ["📚 Reading", "💼 Work", "🏠 Home"])
     }
 
-    @Test func reorderingDoesNotChangeTheActiveSpace() {
+    @Test func reorderingDoesNotChangeTheActiveSpace() throws {
         let sessionFixture = SessionFixture()
         let session: ProfileSession = sessionFixture.session
-        let reading = session.createSpace(name: "Reading", emoji: "📚")
+        let reading = try session.createSpace(name: "Reading", icon: .emoji("📚"))
 
         session.moveSpace(reading, to: 0)
 
         #expect(session.activeSpaceID == reading)
     }
 
-    @Test func eachSpaceKeepsItsOwnTabsAndSelection() {
+    @Test func eachSpaceKeepsItsOwnTabsAndSelection() throws {
         let fixture = SessionFixture()
         let home = fixture.session.spaces[0].id
         let homeTabs = openTabs(fixture, ["a.com", "b.com"])
         fixture.session.select(homeTabs[0])
-        let reading = fixture.session.createSpace(name: "Reading", emoji: "📚")
+        let reading = try fixture.session.createSpace(name: "Reading", icon: .emoji("📚"))
         let readingTabs = openTabs(fixture, ["c.com"])
 
         fixture.session.selectSpace(home)
@@ -142,12 +158,12 @@ private func names(_ session: ProfileSession) -> [String] {
         #expect(fixture.session.selectedTabID == readingTabs[0])
     }
 
-    @Test func switchingSpaceByOffsetWrapsAroundTheEnds() {
+    @Test func switchingSpaceByOffsetWrapsAroundTheEnds() throws {
         let sessionFixture = SessionFixture()
         let session: ProfileSession = sessionFixture.session
         let home = session.spaces[0].id
-        let reading = session.createSpace(name: "Reading", emoji: "📚")
-        let work = session.createSpace(name: "Work", emoji: "💼")
+        let reading = try session.createSpace(name: "Reading", icon: .emoji("📚"))
+        let work = try session.createSpace(name: "Work", icon: .emoji("💼"))
 
         session.selectSpace(offset: 1)
         #expect(session.activeSpaceID == home)
@@ -157,11 +173,11 @@ private func names(_ session: ProfileSession) -> [String] {
         #expect(session.activeSpaceID == work)
     }
 
-    @Test func selectingATabOfAnotherSpaceShowsThatSpace() {
+    @Test func selectingATabOfAnotherSpaceShowsThatSpace() throws {
         let fixture = SessionFixture()
         let home = fixture.session.spaces[0].id
         let homeTab = openTabs(fixture, ["a.com"])[0]
-        fixture.session.createSpace(name: "Reading", emoji: "📚")
+        try fixture.session.createSpace(name: "Reading", icon: .emoji("📚"))
 
         fixture.session.select(homeTab)
 
@@ -169,10 +185,10 @@ private func names(_ session: ProfileSession) -> [String] {
         #expect(fixture.session.selectedTabID == homeTab)
     }
 
-    @Test func tabCommandsActOnTheActiveSpaceOnly() {
+    @Test func tabCommandsActOnTheActiveSpaceOnly() throws {
         let fixture = SessionFixture()
         let homeTabs = openTabs(fixture, ["a.com", "b.com"])
-        fixture.session.createSpace(name: "Reading", emoji: "📚")
+        try fixture.session.createSpace(name: "Reading", icon: .emoji("📚"))
         let readingTabs = openTabs(fixture, ["c.com", "d.com"])
 
         fixture.session.move(readingTabs[1], to: 0)
@@ -183,10 +199,10 @@ private func names(_ session: ProfileSession) -> [String] {
         #expect(fixture.session.spaces[0].tabs.map(\.id) == homeTabs)
     }
 
-    @Test func aLinkOpenedFromABackgroundSpaceStaysInThatSpace() {
+    @Test func aLinkOpenedFromABackgroundSpaceStaysInThatSpace() throws {
         let fixture = SessionFixture()
         let homeTab = openTabs(fixture, ["a.com"])[0]
-        fixture.session.createSpace(name: "Reading", emoji: "📚")
+        try fixture.session.createSpace(name: "Reading", icon: .emoji("📚"))
 
         fixture.pages[homeTab]?.onNewTab?(.address(URL(string: "https://b.com")!))
 
@@ -194,12 +210,12 @@ private func names(_ session: ProfileSession) -> [String] {
         #expect(fixture.session.spaces[0].tabs.map { $0.address?.absoluteString } == ["https://a.com", "https://b.com"])
     }
 
-    @Test func aReopenedTabGoesBackToItsSpace() {
+    @Test func aReopenedTabGoesBackToItsSpace() throws {
         let fixture = SessionFixture()
         let home = fixture.session.spaces[0].id
         let homeTabs = openTabs(fixture, ["a.com", "b.com"])
         fixture.session.close(homeTabs[0])
-        fixture.session.createSpace(name: "Reading", emoji: "📚")
+        try fixture.session.createSpace(name: "Reading", icon: .emoji("📚"))
 
         fixture.session.reopenClosedTab()
 
@@ -207,10 +223,10 @@ private func names(_ session: ProfileSession) -> [String] {
         #expect(fixture.session.tabs.map { $0.address?.absoluteString } == ["https://a.com", "https://b.com"])
     }
 
-    @Test func deletingASpaceClosesItsTabsAndLeavesTheOtherSpacesAlone() {
+    @Test func deletingASpaceClosesItsTabsAndLeavesTheOtherSpacesAlone() throws {
         let fixture = SessionFixture()
         let homeTabs = openTabs(fixture, ["a.com"])
-        let reading = fixture.session.createSpace(name: "Reading", emoji: "📚")
+        let reading = try fixture.session.createSpace(name: "Reading", icon: .emoji("📚"))
         let readingTabs = openTabs(fixture, ["b.com", "c.com"])
 
         fixture.session.deleteSpace(reading)
@@ -222,12 +238,12 @@ private func names(_ session: ProfileSession) -> [String] {
         #expect(fixture.session.canReopenClosedTab == false)
     }
 
-    @Test func deletingTheActiveSpaceShowsTheOneBeforeItOrTheNextWhenItWasFirst() {
+    @Test func deletingTheActiveSpaceShowsTheOneBeforeItOrTheNextWhenItWasFirst() throws {
         let sessionFixture = SessionFixture()
         let session: ProfileSession = sessionFixture.session
         let home = session.spaces[0].id
-        let reading = session.createSpace(name: "Reading", emoji: "📚")
-        let work = session.createSpace(name: "Work", emoji: "💼")
+        let reading = try session.createSpace(name: "Reading", icon: .emoji("📚"))
+        let work = try session.createSpace(name: "Work", icon: .emoji("💼"))
 
         session.selectSpace(reading)
         session.deleteSpace(reading)
@@ -237,11 +253,11 @@ private func names(_ session: ProfileSession) -> [String] {
         #expect(session.activeSpaceID == work)
     }
 
-    @Test func deletingAnInactiveSpaceKeepsTheActiveOne() {
+    @Test func deletingAnInactiveSpaceKeepsTheActiveOne() throws {
         let sessionFixture = SessionFixture()
         let session: ProfileSession = sessionFixture.session
         let home = session.spaces[0].id
-        let reading = session.createSpace(name: "Reading", emoji: "📚")
+        let reading = try session.createSpace(name: "Reading", icon: .emoji("📚"))
 
         session.deleteSpace(home)
 
@@ -260,10 +276,10 @@ private func names(_ session: ProfileSession) -> [String] {
         #expect(fixture.session.tabs.map(\.id) == tabs)
     }
 
-    @Test func aDeletedSpaceTabClosedEarlierReopensInTheActiveSpace() {
+    @Test func aDeletedSpaceTabClosedEarlierReopensInTheActiveSpace() throws {
         let fixture = SessionFixture()
         let home = fixture.session.spaces[0].id
-        let reading = fixture.session.createSpace(name: "Reading", emoji: "📚")
+        let reading = try fixture.session.createSpace(name: "Reading", icon: .emoji("📚"))
         let readingTab = openTabs(fixture, ["b.com"])[0]
         fixture.session.close(readingTab)
         fixture.session.deleteSpace(reading)
@@ -274,13 +290,13 @@ private func names(_ session: ProfileSession) -> [String] {
         #expect(fixture.session.tabs.map { $0.address?.absoluteString } == ["https://b.com"])
     }
 
-    @Test func spacesOfTwoProfilesAreIndependent() {
+    @Test func spacesOfTwoProfilesAreIndependent() throws {
         let workFixture = SessionFixture()
         let work: ProfileSession = workFixture.session
         let personalFixture = SessionFixture()
         let personal: ProfileSession = personalFixture.session
 
-        work.createSpace(name: "Clients", emoji: "💼")
+        try work.createSpace(name: "Clients", icon: .emoji("💼"))
 
         #expect(names(work) == ["🏠 Home", "💼 Clients"])
         #expect(names(personal) == ["🏠 Home"])
@@ -299,9 +315,9 @@ private func names(_ session: ProfileSession) -> [String] {
         let database = TemporaryDatabase()
         let before = SessionFixture()
         let homeTabs = openTabs(before, ["a.com", "b.com"])
-        let reading = before.session.createSpace(name: "Reading", emoji: "📚")
+        let reading = try before.session.createSpace(name: "Reading", icon: .emoji("📚"))
         let readingTabs = openTabs(before, ["c.com"])
-        let work = before.session.createSpace(name: "Work", emoji: "💼")
+        let work = try before.session.createSpace(name: "Work", icon: .emoji("💼"))
         before.session.moveSpace(work, to: 0)
         before.session.selectSpace(reading)
         await SessionAutosave(session: before.session, database: try database.open()).saveNow()
@@ -320,7 +336,7 @@ private func names(_ session: ProfileSession) -> [String] {
         let before = SessionFixture()
         let home = before.session.spaces[0].id
         let homeTabs = openTabs(before, ["a.com", "b.com"])
-        before.session.createSpace(name: "Reading", emoji: "📚")
+        try before.session.createSpace(name: "Reading", icon: .emoji("📚"))
         let readingTab = openTabs(before, ["c.com"])[0]
         await SessionAutosave(session: before.session, database: try database.open()).saveNow()
 
@@ -336,7 +352,7 @@ private func names(_ session: ProfileSession) -> [String] {
         let database = TemporaryDatabase()
         let before = SessionFixture()
         _ = openTabs(before, ["a.com"])
-        let reading = before.session.createSpace(name: "Reading", emoji: "📚")
+        let reading = try before.session.createSpace(name: "Reading", icon: .emoji("📚"))
         _ = openTabs(before, ["b.com"])
         await SessionAutosave(session: before.session, database: try database.open()).saveNow()
         before.session.deleteSpace(reading)
@@ -355,14 +371,14 @@ private func names(_ session: ProfileSession) -> [String] {
         let autosave = SessionAutosave(session: fixture.session, database: connection, delay: .milliseconds(10))
         autosave.start()
         await autosave.saveNow()
-        let reading = fixture.session.createSpace(name: "Reading", emoji: "📚")
-        fixture.session.renameSpace(reading, name: "Research", emoji: "🔬")
+        let reading = try fixture.session.createSpace(name: "Reading", icon: .emoji("📚"))
+        try fixture.session.editSpace(reading, name: "Research", icon: .emoji("🔬"))
 
         let latest = try await waitForSave({ try connection.savedSession() }, until: { $0.activeSpace?.name == "Research" })
         autosave.stop()
 
         let saved = try #require(latest)
-        #expect(saved.spaces.map { "\($0.emoji) \($0.name)" } == ["🏠 Home", "🔬 Research"])
+        #expect(saved.spaces.map { "\($0.icon.emoji ?? "-") \($0.name)" } == ["🏠 Home", "🔬 Research"])
         #expect(saved.activeSpaceID == reading)
     }
 }

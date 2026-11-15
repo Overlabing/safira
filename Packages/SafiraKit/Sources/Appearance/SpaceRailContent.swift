@@ -47,10 +47,13 @@ public enum SpaceRailContent {
         }
     }
 
-    /// A Space shows its emoji; a Space with none its initial.
+    /// A Space shows its icon: its emoji, its SF Symbol or its initial.
     public static func glyph(for space: SpaceSummary) -> SpaceRailGlyph {
-        let emoji = space.emoji.trimmingCharacters(in: .whitespacesAndNewlines)
-        return emoji.isEmpty ? .initial : .emoji(emoji)
+        switch space.icon {
+        case .emoji(let emoji): .emoji(emoji)
+        case .symbol(let symbol): .symbol(symbol)
+        case .initial: .initial
+        }
     }
 
     private static func profileShortcut(at index: Int, active: Int, count: Int, _ shortcuts: Shortcuts) -> String? {

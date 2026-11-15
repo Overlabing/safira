@@ -128,6 +128,19 @@ enum Migrations {
                 table.column("factor", .double).notNull()
             }
         }
+        // A Space's icon is the initial of its name, an SF Symbol or an emoji (#77), stored as AppSupportKit's
+        // `SpaceGlyph` text. Every Space saved so far has an emoji, which becomes its icon; a blank one, its initial.
+        migrator.registerMigration("v11-space-icons") { db in
+            try db.alter(table: "space") { table in
+                table.add(column: "icon", .text).notNull().defaults(to: "initial")
+            }
+            try db.execute(sql: """
+                UPDATE space SET icon = CASE WHEN trim(emoji) = '' THEN 'initial' ELSE 'emoji:' || trim(emoji) END
+                """)
+            try db.alter(table: "space") { table in
+                table.drop(column: "emoji")
+            }
+        }
         return migrator
     }
 

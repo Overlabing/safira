@@ -45,10 +45,10 @@ import Testing
         #expect(fixture.session.selectedTabID == ids[1])
     }
 
-    @Test func tabNumbersStayInTheActiveSpace() {
+    @Test func tabNumbersStayInTheActiveSpace() throws {
         let fixture = SessionFixture()
         _ = open(fixture, ["a.com", "b.com"])
-        fixture.session.createSpace(name: "Reading", emoji: "📚")
+        try fixture.session.createSpace(name: "Reading", icon: .emoji("📚"))
         let reading = open(fixture, ["c.com"])
 
         fixture.session.selectTab(number: 2)
@@ -57,11 +57,11 @@ import Testing
         #expect(fixture.session.activeSpace.name == "Reading")
     }
 
-    @Test func aNumberShowsThatSpace() {
+    @Test func aNumberShowsThatSpace() throws {
         let fixture = SessionFixture()
         let home = fixture.session.activeSpaceID
-        let reading = fixture.session.createSpace(name: "Reading", emoji: "📚")
-        fixture.session.createSpace(name: "Work", emoji: "💼")
+        let reading = try fixture.session.createSpace(name: "Reading", icon: .emoji("📚"))
+        try fixture.session.createSpace(name: "Work", icon: .emoji("💼"))
 
         fixture.session.selectSpace(number: 2)
         #expect(fixture.session.activeSpaceID == reading)
@@ -71,9 +71,9 @@ import Testing
         #expect(fixture.session.activeSpace.name == "Home")
     }
 
-    @Test func aNumberPastTheLastSpaceChangesNothing() {
+    @Test func aNumberPastTheLastSpaceChangesNothing() throws {
         let fixture = SessionFixture()
-        let reading = fixture.session.createSpace(name: "Reading", emoji: "📚")
+        let reading = try fixture.session.createSpace(name: "Reading", icon: .emoji("📚"))
 
         fixture.session.selectSpace(number: 3)
         fixture.session.selectSpace(number: 0)

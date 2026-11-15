@@ -37,7 +37,7 @@ private func fixtureWithHistory(id: ProfileID = workID) throws -> SessionFixture
 
         #expect(described(suggestions) == ["tab: Overlabing/safira: a native browser"])
         #expect(suggestions.first?.address.absoluteString == "https://github.com/Overlabing/safira")
-        #expect(suggestions.first?.spaceEmoji == "🏠")
+        #expect(suggestions.first?.spaceMark == .text("🏠"))
     }
 
     @Test func openingTheSuggestionOfATabJumpsToItWithoutLoadingAnything() async throws {
@@ -60,13 +60,13 @@ private func fixtureWithHistory(id: ProfileID = workID) throws -> SessionFixture
         let fixture = try fixtureWithHistory()
         let home = fixture.session.activeSpaceID
         let recipe = fixture.visit("https://cook.example/", titled: "Tarte tatin")
-        let reading = fixture.session.createSpace(name: "Reading", emoji: "📚")
+        let reading = try fixture.session.createSpace(name: "Reading", icon: .emoji("📚"))
         fixture.visit("https://read.example/", titled: "Tarte au citron")
 
         let suggestions = await fixture.session.suggestions(for: "tarte")
 
         #expect(described(suggestions) == ["tab: Tarte au citron", "tab: Tarte tatin"])
-        #expect(suggestions.map(\.spaceEmoji) == ["📚", "🏠"])
+        #expect(suggestions.map(\.spaceMark) == [.text("📚"), .text("🏠")])
         fixture.session.openSuggestion(suggestions[1])
         #expect(fixture.session.selectedTabID == recipe)
         #expect(fixture.session.activeSpaceID == home)
@@ -111,7 +111,7 @@ private func fixtureWithHistory(id: ProfileID = workID) throws -> SessionFixture
         let fixture = try fixtureWithHistory()
         let space = SpaceID()
         fixture.session.restore(SavedSession(spaces: [
-            SpaceRecord(id: space, name: "Home", emoji: "🏠", tabs: [
+            SpaceRecord(id: space, name: "Home", icon: .emoji("🏠"), tabs: [
                 TabRecord(id: TabID(), address: URL(string: "https://a.example/")!, title: "Alpha"),
                 TabRecord(id: TabID(), address: URL(string: "https://b.example/")!, title: "Beta Release Notes"),
             ])
@@ -335,7 +335,7 @@ private func fixtureWithHistory(id: ProfileID = workID) throws -> SessionFixture
         let space = SpaceID()
         let tab = TabID()
         fixture.session.restore(SavedSession(spaces: [
-            SpaceRecord(id: space, name: "Home", emoji: "🏠",
+            SpaceRecord(id: space, name: "Home", icon: .emoji("🏠"),
                         tabs: [TabRecord(id: tab, address: URL(string: "https://back.example/")!, title: "Back")],
                         selectedTabID: tab)
         ], activeSpaceID: space))
@@ -477,7 +477,7 @@ private func fixtureWithHistory(id: ProfileID = workID) throws -> SessionFixture
         let fixture = try fixtureWithHistory()
         let home = fixture.session.activeSpaceID
         fixture.visit("https://a.example/", titled: "Alpha")
-        let reading = fixture.session.createSpace(name: "Reading", emoji: "📚")
+        let reading = try fixture.session.createSpace(name: "Reading", icon: .emoji("📚"))
         let beta = fixture.visit("https://b.example/", titled: "Beta")
         fixture.session.close(beta)
         let engine = fixture.session.settings.searchEngine

@@ -6,9 +6,9 @@ import LinkRouting
 import SafiraCore
 import Synchronization
 
-let devSpace = SpaceChoice(id: SpaceID(uuidString: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")!, name: "Dev", emoji: "🛠")
-let docsSpace = SpaceChoice(id: SpaceID(uuidString: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb")!, name: "Docs", emoji: "📄")
-let readingSpace = SpaceChoice(id: SpaceID(uuidString: "cccccccc-cccc-4ccc-8ccc-cccccccccccc")!, name: "Reading", emoji: "📚")
+let devSpace = SpaceChoice(id: SpaceID(uuidString: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")!, name: "Dev", mark: .text("🛠"))
+let docsSpace = SpaceChoice(id: SpaceID(uuidString: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb")!, name: "Docs", mark: .text("📄"))
+let readingSpace = SpaceChoice(id: SpaceID(uuidString: "cccccccc-cccc-4ccc-8ccc-cccccccccccc")!, name: "Reading", mark: .text("📚"))
 let defaultSpaces: [ProfileID: [SpaceChoice]] = [workProfile.id: [devSpace, docsSpace], homeProfile.id: [readingSpace]]
 
 @MainActor

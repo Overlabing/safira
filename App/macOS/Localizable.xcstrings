@@ -808,6 +808,7 @@
     },
     "Delete Space" : {
       "comment" : "Main window",
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -840,6 +841,7 @@
     },
     "Delete the Space “%@”?" : {
       "comment" : "Main window",
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -991,6 +993,7 @@
     },
     "Edit Space" : {
       "comment" : "Main window",
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -1022,6 +1025,7 @@
       }
     },
     "Emoji" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -1333,6 +1337,7 @@
     },
     "It has no Tab." : {
       "comment" : "Main window",
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -1344,6 +1349,7 @@
     },
     "Its %lld Tabs will close." : {
       "comment" : "Alert text of Delete Space; a count of Tabs, at least 1",
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "variations" : {
@@ -1711,6 +1717,7 @@
     },
     "New Space" : {
       "comment" : "Main window",
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -2822,6 +2829,7 @@
     },
     "Space %lld" : {
       "comment" : "Main window",
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -2971,11 +2979,23 @@
     },
     "The Profile's logins and history are kept." : {
       "comment" : "Main window",
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Les identifiants et l’historique du profil sont conservés."
+          }
+        }
+      }
+    },
+    "The Spaces of “%@”, in the order of the Space rail. Drag one to change which ⌃1 to ⌃9 shows it. Deleting a Space closes its Tabs and Folders; the Profile’s logins and history are kept." : {
+      "comment" : "Settings, Spaces pane; the argument is a Profile's name",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les Spaces de « %@ », dans l’ordre de la barre des Spaces. Faites-en glisser un pour changer celui qu’affiche ⌃1 à ⌃9. Supprimer un Space ferme ses onglets et ses dossiers ; les connexions et l’historique du profil sont conservés."
           }
         }
       }

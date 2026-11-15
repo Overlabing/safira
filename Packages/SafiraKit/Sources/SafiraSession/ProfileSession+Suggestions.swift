@@ -3,6 +3,7 @@
 
 import Foundation
 import SafiraCore
+import Spaces
 
 /// The Command bar's local suggestions. They come from this Profile's Tabs and its own history database, and nothing
 /// here can start a request: no page is created or loaded, and no network type is used.
@@ -37,7 +38,8 @@ extension ProfileSession {
                 guard let address = tab.address,
                       SuggestionText.matches(text, in: [tab.state.title ?? "", address.absoluteString]) else { return nil }
                 let title = tab.state.title.flatMap { $0.isEmpty ? nil : $0 } ?? address.absoluteString
-                return CommandBarSuggestion(kind: .openTab(tab.id), title: title, address: address, spaceEmoji: space.emoji)
+                return CommandBarSuggestion(kind: .openTab(tab.id), title: title, address: address, 
+                                            spaceMark: SpaceMark(space.icon, name: space.name))
             }
         }
     }

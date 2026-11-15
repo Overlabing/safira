@@ -19,12 +19,12 @@ private func open(_ address: String, in fixture: SessionFixture) -> TabID {
 /// What stays inside one Profile at the session level, without WebKit (docs/architecture-v1.md §9.2, point 6).
 @MainActor
 @Suite struct ProfileIsolationTests {
-    @Test func aTabMovesToAnotherSpaceOfItsProfileWithItsPage() {
+    @Test func aTabMovesToAnotherSpaceOfItsProfileWithItsPage() throws {
         let fixture = SessionFixture(id: workID)
         let home = fixture.session.activeSpaceID
         let tab = open("https://a.com", in: fixture)
         let page = fixture.selectedPage
-        let reading = fixture.session.createSpace(name: "Reading", emoji: "📚")
+        let reading = try fixture.session.createSpace(name: "Reading", icon: .emoji("📚"))
 
         #expect(fixture.session.move(tab, toSpace: reading))
 
@@ -88,10 +88,10 @@ private func open(_ address: String, in fixture: SessionFixture) -> TabID {
         #expect(personal.session.settings.webContent == WebContentSettings())
     }
 
-    @Test func closingEveryTabOfADeletedProfileClosesEveryPageForGood() {
+    @Test func closingEveryTabOfADeletedProfileClosesEveryPageForGood() throws {
         let fixture = SessionFixture(id: workID)
         _ = open("https://a.com", in: fixture)
-        fixture.session.createSpace(name: "Reading", emoji: "📚")
+        try fixture.session.createSpace(name: "Reading", icon: .emoji("📚"))
         _ = open("https://b.com", in: fixture)
 
         fixture.session.closeAllTabs()

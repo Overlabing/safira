@@ -136,8 +136,8 @@ private final class TemporaryRoot {
             let registry = ProfileRegistry(layout: root.layout)
             let first = registry.activeProfileID
             let work = registry.createProfile(name: "Work", symbol: "💼", searchEngine: .kagi)
-            docs = registry.active.session.createSpace(name: "Docs", emoji: "📄")
-            registry.active.session.createSpace(name: "Ops", emoji: "🚀")
+            docs = try registry.active.session.createSpace(name: "Docs", icon: .emoji("📄"))
+            try registry.active.session.createSpace(name: "Ops", icon: .emoji("🚀"))
             registry.active.session.selectSpace(docs)
             ids = registry.profiles.map(\.id)
 
@@ -216,7 +216,7 @@ private final class TemporaryRoot {
             let registry = ProfileRegistry(layout: root.layout)
             let first = registry.activeProfileID
             let work = registry.createProfile(name: "Work", symbol: "💼", searchEngine: .kagi)
-            let docs = registry.active.session.createSpace(name: "Docs", emoji: "📄")
+            let docs = try registry.active.session.createSpace(name: "Docs", icon: .emoji("📄"))
             let home = try #require(registry.active.session.spaces.first?.id)
             registry.active.session.selectSpace(home)
             registry.selectProfile(first)
@@ -260,7 +260,7 @@ private final class TemporaryRoot {
             let registry = ProfileRegistry(layout: root.layout)
             let first = registry.activeProfileID
             let work = registry.createProfile(name: "Work", symbol: "💼", searchEngine: .kagi)
-            registry.active.session.createSpace(name: "Docs", emoji: "📄")
+            try registry.active.session.createSpace(name: "Docs", icon: .emoji("📄"))
             registry.selectProfile(first)
             ids = registry.profiles.map(\.id)
 
@@ -281,7 +281,7 @@ private final class TemporaryRoot {
             let registry = ProfileRegistry(layout: root.layout)
             let first = registry.activeProfileID
             registry.createProfile(name: "Work", symbol: "💼", searchEngine: .kagi)
-            registry.active.session.createSpace(name: "Docs", emoji: "📄")
+            try registry.active.session.createSpace(name: "Docs", icon: .emoji("📄"))
             registry.selectProfile(first)
             ids = registry.profiles.map(\.id)
             await registry.saveAll()
@@ -508,7 +508,7 @@ private final class TemporaryRoot {
             let workContext = registry.active
             let home = try await open("/home", in: workContext)
             try await signIn(workContext, through: home)
-            let reading = workContext.session.createSpace(name: "Reading", emoji: "📚")
+            let reading = try workContext.session.createSpace(name: "Reading", icon: .emoji("📚"))
             _ = try await open("/reading", in: workContext)
             let visited = try await open("/visited", in: workContext)
             workContext.session.close(visited)

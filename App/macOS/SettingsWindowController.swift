@@ -2,11 +2,15 @@
 // Copyright (c) 2026 Antonin Carlin
 
 import AppKit
+import Appearance
 import AppShellKit
 import ColorCore
 import Commands
+import DesignKit
 import Onboarding
 import Preferences
+import SafiraCore
+import SafiraSession
 import SafiraSettings
 import SafiraWeb
 import SwiftUI
@@ -161,6 +165,8 @@ private struct SettingsRootView: View {
         switch pane {
         case .general:
             GeneralPane(switches: switches, content: content)
+        case .spaces:
+            SpacesPane(registry: content.registry)
         case .shortcuts:
             ShortcutsSettingsView(shortcuts: content.shortcuts)
         case .defaults:
@@ -231,6 +237,59 @@ private struct GeneralPane: View {
             }
         }
         .settingsPaneMargins()
+    }
+}
+
+/// The Active profile's Spaces in AppShellKit's list: drag to reorder (the Space rail's order, and ⌃1…⌃9's), "+" and
+/// "−", Edit… opening the kit's editor, Delete with the kit's confirmation. It follows a switch to another Profile.
+private struct SpacesPane: View {
+    let registry: ProfileRegistry
+    @State private var selection: SpaceID?
+    @State private var editing: SpaceEditing?
+    @State private var deleting: SpaceDeletion<SpaceID>?
+
+    /// One opening of the editor, on a Space or on a new one.
+    private struct SpaceEditing: Identifiable {
+        let id = UUID()
+        let space: SpaceID?
+        let model: SpaceEditorModel
+    }
+
+    var body: some View {
+        let session = registry.active.session
+        VStack(alignment: .leading, spacing: 12) {
+            Text("The Spaces of “\(registry.activeProfile.name)”, in the order of the Space rail. Drag one to change which ⌃1 to ⌃9 shows it. Deleting a Space closes its Tabs and Folders; the Profile’s logins and history are kept.",
+                 comment: "Settings, Spaces pane; the argument is a Profile's name")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            SpaceList(SpaceManagement.items(of: session), selection: $selection, palette: ThemeCatalog.palette,
+                      deletion: { SpaceManagement.deletion(of: $0, in: session) },
+                      perform: { action in SpaceManagement.perform(action, in: session) { open($0, in: session) } })
+                .scrollContentBackground(.hidden)
+                .padding(.horizontal, DesignTokens.Spacing.s)
+                .settingsGroup()
+        }
+        .settingsPaneMargins()
+        .sheet(item: $editing) { target in
+            SpaceEditor(model: target.model) { result in
+                if let saved = SpaceManagement.apply(result, editing: target.space, in: session) { selection = saved }
+                if result == .deleteRequested, let id = target.space {
+                    deleting = SpaceManagement.deletion(of: id, in: session)
+                }
+            }
+            .theme(ThemeCatalog.theme(id: target.model.draft.themeID, fallback: ThemeCatalog.first))
+        }
+        .spaceDeletionConfirmation($deleting, palette: ThemeCatalog.palette) { id, _ in session.deleteSpace(id) }
+    }
+
+    private func open(_ id: SpaceID?, in session: ProfileSession) {
+        if let id {
+            guard let model = SpaceManagement.editor(editing: id, in: session) else { return }
+            editing = SpaceEditing(space: id, model: model)
+        } else {
+            editing = SpaceEditing(space: nil, model: SpaceManagement.editorForNewSpace(in: session))
+        }
     }
 }
 

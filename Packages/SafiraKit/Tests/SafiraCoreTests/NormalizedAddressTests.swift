@@ -81,10 +81,10 @@ private func normalized(_ address: String) -> String? {
 
     @Test func theSavedTabOfTheActiveSpaceIsFoundBeforeOneOfAnotherSpace() throws {
         let profile = ProfileID(rawValue: UUID())
-        let home = SpaceRecord(id: SpaceID(), name: "Home", emoji: "🏠", tabs: [
+        let home = SpaceRecord(id: SpaceID(), name: "Home", icon: .emoji("🏠"), tabs: [
             TabRecord(id: TabID(), address: URL(string: "https://example.com/a")),
         ])
-        let work = SpaceRecord(id: SpaceID(), name: "Work", emoji: "💼", tabs: [
+        let work = SpaceRecord(id: SpaceID(), name: "Work", icon: .emoji("💼"), tabs: [
             TabRecord(id: TabID(), address: URL(string: "https://example.com/b")),
             TabRecord(id: TabID(), address: URL(string: "https://EXAMPLE.com/a/#x")),
         ])
@@ -102,7 +102,7 @@ private func normalized(_ address: String) -> String? {
         let pinned = TabRecord(id: TabID(), address: URL(string: "https://example.com/pinned"))
         let inFolder = TabRecord(id: TabID(), address: URL(string: "https://example.com/folder"))
         let inSubFolder = TabRecord(id: TabID(), address: URL(string: "https://example.com/sub"))
-        let home = SpaceRecord(id: SpaceID(), name: "Home", emoji: "🏠", pinned: [
+        let home = SpaceRecord(id: SpaceID(), name: "Home", icon: .emoji("🏠"), pinned: [
             .tab(pinned),
             .folder(FolderRecord(id: FolderID(), name: "Docs", isExpanded: false, items: [
                 .tab(inFolder),

@@ -9,7 +9,7 @@ extension SavedSession {
     static let onlySpace = SpaceID(rawValue: UUID(uuidString: "5A5A5A5A-0000-4000-8000-000000000001")!)
 
     init(tabs: [TabRecord], selectedTabID: TabID? = nil) {
-        self.init(spaces: [SpaceRecord(id: Self.onlySpace, name: "Home", emoji: "🏠", tabs: tabs,
+        self.init(spaces: [SpaceRecord(id: Self.onlySpace, name: "Home", icon: .emoji("🏠"), tabs: tabs,
                                        selectedTabID: selectedTabID)],
                   activeSpaceID: Self.onlySpace)
     }

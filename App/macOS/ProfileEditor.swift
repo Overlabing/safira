@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Antonin Carlin
 
+import Appearance
+import ColorUI
+import DesignKit
 import SafiraCore
 import SafiraWeb
 import SwiftUI
@@ -69,5 +72,27 @@ struct ProfileEditor: View {
         }
         .padding(20)
         .frame(width: 360)
+    }
+}
+
+/// The Palette's Themes as swatches, one selected: the picker of the Profile editor.
+struct PalettePicker: View {
+    @Binding var selection: String
+    @Environment(\.designTokens) private var tokens
+
+    var body: some View {
+        HStack(spacing: tokens.spacing.pillActionGap) {
+            ForEach(ThemeCatalog.palette.themes) { theme in
+                Button {
+                    selection = theme.id
+                } label: {
+                    ThemeSwatch(theme, isSelected: selection == theme.id)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.vertical, DesignTokens.Spacing.xs)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Theme")
     }
 }

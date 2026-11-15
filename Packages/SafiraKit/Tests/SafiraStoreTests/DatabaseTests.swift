@@ -5,6 +5,7 @@ import Foundation
 import GRDB
 import SafiraCore
 import SafiraStore
+import Spaces
 import Testing
 
 /// A fresh Application Support folder for one test, removed when the test ends.
@@ -25,7 +26,7 @@ private let readingSpace = SpaceID(rawValue: UUID(uuidString: "BBBBBBBB-BBBB-4BB
 private let thirdTab = TabID(rawValue: UUID(uuidString: "33333333-3333-4333-8333-333333333333")!)
 
 private func oneSpace(_ tabs: [TabRecord], selected: TabID? = nil) -> SavedSession {
-    SavedSession(spaces: [SpaceRecord(id: homeSpace, name: "Home", emoji: "🏠", tabs: tabs, selectedTabID: selected)],
+    SavedSession(spaces: [SpaceRecord(id: homeSpace, name: "Home", icon: .emoji("🏠"), tabs: tabs, selectedTabID: selected)],
                  activeSpaceID: homeSpace)
 }
 
@@ -71,10 +72,10 @@ private func schema(_ file: URL) throws -> [String] {
         #expect(saved.spaces.count == 1)
         #expect(saved.activeSpaceID == space.id)
         #expect(space.name == "Home")
-        #expect(space.emoji == "🏠")
+        #expect(space.icon == .emoji("🏠"))
         #expect(space.paletteID == "indigo-blue")
         #expect(space.tabs == [])
-        #expect(try migrations(file) == ["v1-tabs", "v10-site-zoom", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads", "v8-space-themes", "v9-download-folders"])
+        #expect(try migrations(file) == ["v1-tabs", "v10-site-zoom", "v11-space-icons", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads", "v8-space-themes", "v9-download-folders"])
     }
 
     @Test func aNewDatabaseNamesItsFirstSpaceInTheUsersLanguageAndAnExistingOneKeepsItsName() throws {
@@ -89,12 +90,12 @@ private func schema(_ file: URL) throws -> [String] {
     @Test func savedSpacesComeBackInOrderWithTheirTabsSelectionAndTheActiveSpace() throws {
         let root = TemporaryRoot()
         let saved = SavedSession(spaces: [
-            SpaceRecord(id: readingSpace, name: "Reading", emoji: "📚", paletteID: "ocean", tabs: [
+            SpaceRecord(id: readingSpace, name: "Reading", icon: .emoji("📚"), paletteID: "ocean", tabs: [
                 TabRecord(id: firstTab, address: URL(string: "https://a.com/x?y=1"), title: "A",
                           navigationState: Data([1, 2, 3]), navigationStateOSBuild: "26A434"),
                 TabRecord(id: secondTab, address: URL(string: "https://b.com"), title: nil),
             ], selectedTabID: secondTab),
-            SpaceRecord(id: homeSpace, name: "Home", emoji: "🏠", tabs: [TabRecord(id: thirdTab)]),
+            SpaceRecord(id: homeSpace, name: "Home", icon: .emoji("🏠"), tabs: [TabRecord(id: thirdTab)]),
         ], activeSpaceID: homeSpace)
 
         try ProfileDatabase(file: root.layout.profileDatabaseFile(for: work)).save(saved)
@@ -105,15 +106,15 @@ private func schema(_ file: URL) throws -> [String] {
     @Test func theSpacesAloneComeBackInOrderWithTheActiveOneAndNoTabs() throws {
         let root = TemporaryRoot()
         try ProfileDatabase(file: root.layout.profileDatabaseFile(for: work)).save(SavedSession(spaces: [
-            SpaceRecord(id: readingSpace, name: "Reading", emoji: "📚", paletteID: "teal-green",
+            SpaceRecord(id: readingSpace, name: "Reading", icon: .emoji("📚"), paletteID: "teal-green",
                         tabs: [TabRecord(id: firstTab)]),
-            SpaceRecord(id: homeSpace, name: "Home", emoji: "🏠"),
+            SpaceRecord(id: homeSpace, name: "Home", icon: .emoji("🏠")),
         ], activeSpaceID: homeSpace))
 
         #expect(try ProfileDatabase(file: root.layout.profileDatabaseFile(for: work)).savedSpaces() == ProfileSpaces(
             spaces: [
-                SpaceSummary(id: readingSpace, name: "Reading", emoji: "📚", paletteID: "teal-green"),
-                SpaceSummary(id: homeSpace, name: "Home", emoji: "🏠"),
+                SpaceSummary(id: readingSpace, name: "Reading", icon: .emoji("📚"), paletteID: "teal-green"),
+                SpaceSummary(id: homeSpace, name: "Home", icon: .emoji("🏠")),
             ],
             lastSpaceID: homeSpace))
     }
@@ -133,8 +134,8 @@ private func schema(_ file: URL) throws -> [String] {
         let file = root.layout.profileDatabaseFile(for: work)
         let database = try ProfileDatabase(file: file)
         try database.save(SavedSession(spaces: [
-            SpaceRecord(id: homeSpace, name: "Home", emoji: "🏠", tabs: [TabRecord(id: firstTab)]),
-            SpaceRecord(id: readingSpace, name: "Reading", emoji: "📚",
+            SpaceRecord(id: homeSpace, name: "Home", icon: .emoji("🏠"), tabs: [TabRecord(id: firstTab)]),
+            SpaceRecord(id: readingSpace, name: "Reading", icon: .emoji("📚"),
                         tabs: [TabRecord(id: secondTab), TabRecord(id: thirdTab)]),
         ], activeSpaceID: readingSpace))
 
@@ -371,7 +372,7 @@ private func schema(_ file: URL) throws -> [String] {
         let database = try ProfileDatabase(file: file)
 
         #expect(try database.savedSession() == SavedSession(spaces: [
-            SpaceRecord(id: Self.existingSpace, name: "Home", emoji: "🏠", paletteID: "indigo-blue", tabs: [
+            SpaceRecord(id: Self.existingSpace, name: "Home", icon: .emoji("🏠"), paletteID: "indigo-blue", tabs: [
                 TabRecord(id: firstTab, address: URL(string: "https://a.com/"), title: "A"),
                 TabRecord(id: secondTab, address: URL(string: "https://b.com/"), title: "B"),
             ], selectedTabID: secondTab),
@@ -385,9 +386,9 @@ private func schema(_ file: URL) throws -> [String] {
 
         let database = try ProfileDatabase(file: file)
 
-        #expect(try migrations(file) == ["v1-tabs", "v10-site-zoom", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads", "v8-space-themes", "v9-download-folders"])
+        #expect(try migrations(file) == ["v1-tabs", "v10-site-zoom", "v11-space-icons", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads", "v8-space-themes", "v9-download-folders"])
         #expect(try database.savedSession() == SavedSession(spaces: [
-            SpaceRecord(id: Self.existingSpace, name: "Home", emoji: "🏠", paletteID: "indigo-blue", tabs: [
+            SpaceRecord(id: Self.existingSpace, name: "Home", icon: .emoji("🏠"), paletteID: "indigo-blue", tabs: [
                 TabRecord(id: firstTab, address: URL(string: "https://a.com/"), title: "A",
                           navigationState: Data([1, 2]), navigationStateOSBuild: "26A434"),
                 TabRecord(id: secondTab, address: URL(string: "https://b.com/"), title: "B"),
@@ -413,7 +414,7 @@ private func schema(_ file: URL) throws -> [String] {
 
         let database = try ProfileDatabase(file: file)
 
-        #expect(try migrations(file) == ["v1-tabs", "v10-site-zoom", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads", "v8-space-themes", "v9-download-folders"])
+        #expect(try migrations(file) == ["v1-tabs", "v10-site-zoom", "v11-space-icons", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads", "v8-space-themes", "v9-download-folders"])
         #expect(try database.sitePermissions() == [])
         #expect(try database.settings().searchEngine == .kagi)
         #expect(try database.savedSession().spaces.flatMap(\.tabs).count == 2)
@@ -424,7 +425,7 @@ private func schema(_ file: URL) throws -> [String] {
         let file = root.layout.profileDatabaseFile(for: work)
         try write(Self.version1 + Self.version2, at: file)
         var saved = try ProfileDatabase(file: file).savedSession()
-        saved.spaces.append(SpaceRecord(id: readingSpace, name: "Reading", emoji: "📚", tabs: [TabRecord(id: thirdTab)],
+        saved.spaces.append(SpaceRecord(id: readingSpace, name: "Reading", icon: .emoji("📚"), tabs: [TabRecord(id: thirdTab)],
                                         selectedTabID: thirdTab))
         saved.activeSpaceID = readingSpace
 
@@ -449,11 +450,45 @@ private func schema(_ file: URL) throws -> [String] {
         #expect(saved.spaces.map(\.paletteID) == ["indigo-blue", "orange-pink", "ocean", "teal-green"])
     }
 
+    @Test func theEmojiOfEverySpaceSavedSoFarBecomesItsIconAndABlankOneItsInitial() throws {
+        let root = TemporaryRoot()
+        let file = root.layout.profileDatabaseFile(for: work)
+        try write(Self.version1 + Self.version2 + Self.version3 + """
+            INSERT INTO space (id, position, name, emoji, palette_id) VALUES ('AAAAAAAA-AAAA-4AAA-8AAA-AAAAAAAAAAAA', 1, 'Reading', ' 📚 ', NULL);
+            INSERT INTO space (id, position, name, emoji, palette_id) VALUES ('BBBBBBBB-BBBB-4BBB-8BBB-BBBBBBBBBBBB', 2, 'Music', '  ', NULL);
+            """, at: file)
+
+        let saved = try ProfileDatabase(file: file).savedSession()
+
+        #expect(saved.spaces.map(\.name) == ["Home", "Reading", "Music"])
+        #expect(saved.spaces.map(\.icon) == [.emoji("🏠"), .emoji("📚"), .initial])
+        let columns = try DatabaseQueue(path: file.path(percentEncoded: false)).read { db in
+            try String.fetchAll(db, sql: "SELECT name FROM pragma_table_info('space') ORDER BY name")
+        }
+        #expect(columns == ["icon", "id", "name", "palette_id", "position", "selected_tab_id"])
+    }
+
+    @Test func anIconOfEachKindComesBackAfterAReopen() throws {
+        let root = TemporaryRoot()
+        let file = root.layout.profileDatabaseFile(for: work)
+        var saved = try ProfileDatabase(file: file).savedSession()
+        saved.spaces[0].icon = .symbol("briefcase")
+        saved.spaces.append(SpaceRecord(id: readingSpace, name: "Reading", icon: .initial))
+        saved.spaces.append(SpaceRecord(id: SpaceID(rawValue: UUID(uuidString: "CCCCCCCC-CCCC-4CCC-8CCC-CCCCCCCCCCCC")!),
+                                        name: "Family", icon: .emoji("👨‍👩‍👧")))
+        try ProfileDatabase(file: file).save(saved)
+
+        #expect(try ProfileDatabase(file: file).savedSession().spaces.map(\.icon)
+            == [.symbol("briefcase"), .initial, .emoji("👨‍👩‍👧")])
+        #expect(try ProfileDatabase(file: file).savedSpaces().spaces.map(\.icon)
+            == [.symbol("briefcase"), .initial, .emoji("👨‍👩‍👧")])
+    }
+
     @Test func aThemeChosenForASpaceComesBackAfterAReopen() throws {
         let root = TemporaryRoot()
         let file = root.layout.profileDatabaseFile(for: work)
         var saved = try ProfileDatabase(file: file).savedSession()
-        saved.spaces.append(SpaceRecord(id: readingSpace, name: "Reading", emoji: "📚", paletteID: "mint-cyan"))
+        saved.spaces.append(SpaceRecord(id: readingSpace, name: "Reading", icon: .emoji("📚"), paletteID: "mint-cyan"))
         saved.spaces[0].paletteID = "brown-yellow"
         try ProfileDatabase(file: file).save(saved)
 
@@ -467,7 +502,7 @@ private func schema(_ file: URL) throws -> [String] {
 
         let saved = try ProfileDatabase(file: file).savedSession()
 
-        #expect(try migrations(file) == ["v1-tabs", "v10-site-zoom", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads", "v8-space-themes", "v9-download-folders"])
+        #expect(try migrations(file) == ["v1-tabs", "v10-site-zoom", "v11-space-icons", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads", "v8-space-themes", "v9-download-folders"])
         let space = try #require(saved.spaces.first)
         #expect(space.pinned == [])
         #expect(space.tabs.map(\.id) == [firstTab, secondTab])
@@ -483,7 +518,7 @@ private func schema(_ file: URL) throws -> [String] {
         let database = try ProfileDatabase(file: file)
         let saved = try database.savedSession()
 
-        #expect(try migrations(file) == ["v1-tabs", "v10-site-zoom", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads", "v8-space-themes", "v9-download-folders"])
+        #expect(try migrations(file) == ["v1-tabs", "v10-site-zoom", "v11-space-icons", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads", "v8-space-themes", "v9-download-folders"])
         let space = try #require(saved.spaces.first)
         #expect(space.pinned == [])
         #expect(space.tabs.map(\.id) == [firstTab, secondTab])
@@ -505,7 +540,7 @@ private func schema(_ file: URL) throws -> [String] {
         #expect(try ProfileDatabase(file: file).savedSession() == session)
     }
 
-    private static let latestMigrations = ["v1-tabs", "v10-site-zoom", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions",
+    private static let latestMigrations = ["v1-tabs", "v10-site-zoom", "v11-space-icons", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions",
                                            "v6-pinned-tabs-folders", "v7-downloads", "v8-space-themes", "v9-download-folders"]
 
     /// What every later feature needs from a database that was left by an older schema: the same tables as a fresh one,
@@ -578,7 +613,7 @@ private func schema(_ file: URL) throws -> [String] {
         let database = try ProfileDatabase(file: file)
         let saved = try database.savedSession()
 
-        #expect(try migrations(file) == ["v1-tabs", "v10-site-zoom", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads", "v8-space-themes", "v9-download-folders"])
+        #expect(try migrations(file) == ["v1-tabs", "v10-site-zoom", "v11-space-icons", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads", "v8-space-themes", "v9-download-folders"])
         let space = try #require(saved.spaces.first)
         #expect(space.pinned == [])
         #expect(space.tabs.map(\.id) == [firstTab, secondTab])
@@ -620,7 +655,7 @@ private func schema(_ file: URL) throws -> [String] {
 
         let database = try ProfileDatabase(file: file)
 
-        #expect(try migrations(file) == ["v1-tabs", "v10-site-zoom", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads", "v8-space-themes", "v9-download-folders"])
+        #expect(try migrations(file) == ["v1-tabs", "v10-site-zoom", "v11-space-icons", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads", "v8-space-themes", "v9-download-folders"])
         #expect(try database.downloads() == [])
         let space = try #require(try database.savedSession().spaces.first)
         #expect(space.pinned.count == 1)
@@ -657,7 +692,7 @@ private func schema(_ file: URL) throws -> [String] {
         let file = root.layout.profileDatabaseFile(for: work)
         try write(Self.version1 + Self.version1Tabs, at: file)
         let saved = SavedSession(spaces: [
-            SpaceRecord(id: Self.existingSpace, name: "Home", emoji: "🏠", paletteID: "indigo-blue", tabs: [
+            SpaceRecord(id: Self.existingSpace, name: "Home", icon: .emoji("🏠"), paletteID: "indigo-blue", tabs: [
                 TabRecord(id: firstTab, address: URL(string: "https://a.com/"), navigationState: Data([7]),
                           navigationStateOSBuild: "26A434"),
             ], selectedTabID: firstTab),
@@ -690,7 +725,7 @@ private let notesFolder = FolderID(rawValue: UUID(uuidString: "DDDDDDDD-DDDD-4DD
             ])),
         ]
         let saved = SavedSession(spaces: [
-            SpaceRecord(id: homeSpace, name: "Home", emoji: "🏠", pinned: pinned,
+            SpaceRecord(id: homeSpace, name: "Home", icon: .emoji("🏠"), pinned: pinned,
                         tabs: [TabRecord(id: TabID(), address: URL(string: "https://plain.com/"))],
                         selectedTabID: secondTab),
         ], activeSpaceID: homeSpace)
@@ -702,14 +737,14 @@ private let notesFolder = FolderID(rawValue: UUID(uuidString: "DDDDDDDD-DDDD-4DD
 
     @Test func eachSpaceKeepsItsOwnPinnedAreaAndSavingAgainReplacesIt() throws {
         let database = try ProfileDatabase.inMemory()
-        let home = SpaceRecord(id: homeSpace, name: "Home", emoji: "🏠", pinned: [.tab(tab(firstTab, "https://a.com/"))])
-        let reading = SpaceRecord(id: readingSpace, name: "Reading", emoji: "📚", pinned: [
+        let home = SpaceRecord(id: homeSpace, name: "Home", icon: .emoji("🏠"), pinned: [.tab(tab(firstTab, "https://a.com/"))])
+        let reading = SpaceRecord(id: readingSpace, name: "Reading", icon: .emoji("📚"), pinned: [
             .folder(FolderRecord(id: docsFolder, name: "Docs", items: [.tab(tab(secondTab, "https://b.com/"))])),
         ])
         try database.save(SavedSession(spaces: [home, reading], activeSpaceID: homeSpace))
         #expect(try database.savedSession().spaces == [home, reading])
 
-        let unpinned = SpaceRecord(id: readingSpace, name: "Reading", emoji: "📚", tabs: [tab(secondTab, "https://b.com/")])
+        let unpinned = SpaceRecord(id: readingSpace, name: "Reading", icon: .emoji("📚"), tabs: [tab(secondTab, "https://b.com/")])
         try database.save(SavedSession(spaces: [home, unpinned], activeSpaceID: homeSpace))
         #expect(try database.savedSession().spaces == [home, unpinned])
     }
@@ -718,7 +753,7 @@ private let notesFolder = FolderID(rawValue: UUID(uuidString: "DDDDDDDD-DDDD-4DD
         let root = TemporaryRoot()
         let file = root.layout.profileDatabaseFile(for: work)
         try ProfileDatabase(file: file).save(SavedSession(spaces: [
-            SpaceRecord(id: homeSpace, name: "Home", emoji: "🏠", pinned: [
+            SpaceRecord(id: homeSpace, name: "Home", icon: .emoji("🏠"), pinned: [
                 .folder(FolderRecord(id: docsFolder, name: "Docs")),
             ], tabs: [TabRecord(id: firstTab)]),
         ], activeSpaceID: homeSpace))
@@ -737,12 +772,12 @@ private let notesFolder = FolderID(rawValue: UUID(uuidString: "DDDDDDDD-DDDD-4DD
         let file = root.layout.profileDatabaseFile(for: work)
         let database = try ProfileDatabase(file: file)
         try database.save(SavedSession(spaces: [
-            SpaceRecord(id: homeSpace, name: "Home", emoji: "🏠"),
-            SpaceRecord(id: readingSpace, name: "Reading", emoji: "📚", pinned: [
+            SpaceRecord(id: homeSpace, name: "Home", icon: .emoji("🏠")),
+            SpaceRecord(id: readingSpace, name: "Reading", icon: .emoji("📚"), pinned: [
                 .folder(FolderRecord(id: docsFolder, name: "Docs")),
             ]),
         ], activeSpaceID: homeSpace))
-        try database.save(SavedSession(spaces: [SpaceRecord(id: homeSpace, name: "Home", emoji: "🏠")],
+        try database.save(SavedSession(spaces: [SpaceRecord(id: homeSpace, name: "Home", icon: .emoji("🏠"))],
                                        activeSpaceID: homeSpace))
 
         let count = try DatabaseQueue(path: file.path(percentEncoded: false)).read { db in
