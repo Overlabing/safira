@@ -61,6 +61,27 @@
     "goForward": [
       "⌘]"
     ],
+    "findInPage": [
+      "⌘F"
+    ],
+    "findNext": [
+      "⌘G"
+    ],
+    "findPrevious": [
+      "⇧⌘G"
+    ],
+    "zoomIn": [
+      "⌘+"
+    ],
+    "zoomOut": [
+      "⌘-"
+    ],
+    "actualSize": [
+      "⌘0"
+    ],
+    "printPage": [
+      "⌘P"
+    ],
     "previousTab": [
       {
         "shortcut": "⇧⌘[",

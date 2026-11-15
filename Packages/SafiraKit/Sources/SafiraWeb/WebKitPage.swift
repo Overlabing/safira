@@ -60,6 +60,9 @@ public final class WebKitPage: NSObject, WebPageHandle {
         self.startDownload = startDownload
         // Public API: the page shows in Safari's Develop menu. Safira has no in-app inspector (ADR 0001).
         webView.isInspectable = true
+        // Both off by default in WKWebView: pinching zooms the page, and a two-finger swipe goes back and forward.
+        webView.allowsMagnification = true
+        webView.allowsBackForwardNavigationGestures = true
         self.onClose = onClose
         navigationDiagnostics = diagnostics.map(NavigationDiagnostics.init)
         super.init()
@@ -118,6 +121,45 @@ public final class WebKitPage: NSObject, WebPageHandle {
 
     public func reload() {
         webView.reload()
+    }
+
+    public var pageZoom: Double {
+        get { webView.pageZoom }
+        set { webView.pageZoom = newValue }
+    }
+
+    public func find(_ text: String, backwards: Bool) async -> Bool {
+        let configuration = WKFindConfiguration()
+        configuration.backwards = backwards
+        configuration.caseSensitive = false
+        configuration.wraps = true
+        return await withCheckedContinuation { continuation in
+            webView.find(text, configuration: configuration) { result in
+                continuation.resume(returning: result.matchFound)
+            }
+        }
+    }
+
+    /// WebKit's find gives no count, so the page's rendered text is searched, in Safira's content world.
+    public func countMatches(of text: String) async -> Int {
+        let script = """
+            const needle = text.toLocaleLowerCase();
+            const body = (document.body ? document.body.innerText : "").toLocaleLowerCase();
+            let count = 0;
+            for (let at = body.indexOf(needle); needle.length > 0 && at !== -1; at = body.indexOf(needle, at + needle.length)) {
+                count += 1;
+            }
+            return count;
+            """
+        let value = try? await webView.callAsyncJavaScript(script, arguments: ["text": text], in: nil,
+                                                           contentWorld: Self.contentWorld)
+        return (value as? NSNumber)?.intValue ?? 0
+    }
+
+    /// The match `find` highlighted is the document's selection.
+    public func endFind() {
+        webView.callAsyncJavaScript("window.getSelection()?.removeAllRanges();", arguments: [:], in: nil,
+                                   in: Self.contentWorld)
     }
 
     public func close() {

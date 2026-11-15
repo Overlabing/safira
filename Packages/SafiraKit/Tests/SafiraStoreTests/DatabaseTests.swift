@@ -74,7 +74,7 @@ private func schema(_ file: URL) throws -> [String] {
         #expect(space.emoji == "🏠")
         #expect(space.paletteID == "indigo-blue")
         #expect(space.tabs == [])
-        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads", "v8-space-themes", "v9-download-folders"])
+        #expect(try migrations(file) == ["v1-tabs", "v10-site-zoom", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads", "v8-space-themes", "v9-download-folders"])
     }
 
     @Test func aNewDatabaseNamesItsFirstSpaceInTheUsersLanguageAndAnExistingOneKeepsItsName() throws {
@@ -385,7 +385,7 @@ private func schema(_ file: URL) throws -> [String] {
 
         let database = try ProfileDatabase(file: file)
 
-        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads", "v8-space-themes", "v9-download-folders"])
+        #expect(try migrations(file) == ["v1-tabs", "v10-site-zoom", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads", "v8-space-themes", "v9-download-folders"])
         #expect(try database.savedSession() == SavedSession(spaces: [
             SpaceRecord(id: Self.existingSpace, name: "Home", emoji: "🏠", paletteID: "indigo-blue", tabs: [
                 TabRecord(id: firstTab, address: URL(string: "https://a.com/"), title: "A",
@@ -413,7 +413,7 @@ private func schema(_ file: URL) throws -> [String] {
 
         let database = try ProfileDatabase(file: file)
 
-        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads", "v8-space-themes", "v9-download-folders"])
+        #expect(try migrations(file) == ["v1-tabs", "v10-site-zoom", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads", "v8-space-themes", "v9-download-folders"])
         #expect(try database.sitePermissions() == [])
         #expect(try database.settings().searchEngine == .kagi)
         #expect(try database.savedSession().spaces.flatMap(\.tabs).count == 2)
@@ -467,7 +467,7 @@ private func schema(_ file: URL) throws -> [String] {
 
         let saved = try ProfileDatabase(file: file).savedSession()
 
-        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads", "v8-space-themes", "v9-download-folders"])
+        #expect(try migrations(file) == ["v1-tabs", "v10-site-zoom", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads", "v8-space-themes", "v9-download-folders"])
         let space = try #require(saved.spaces.first)
         #expect(space.pinned == [])
         #expect(space.tabs.map(\.id) == [firstTab, secondTab])
@@ -483,7 +483,7 @@ private func schema(_ file: URL) throws -> [String] {
         let database = try ProfileDatabase(file: file)
         let saved = try database.savedSession()
 
-        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads", "v8-space-themes", "v9-download-folders"])
+        #expect(try migrations(file) == ["v1-tabs", "v10-site-zoom", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads", "v8-space-themes", "v9-download-folders"])
         let space = try #require(saved.spaces.first)
         #expect(space.pinned == [])
         #expect(space.tabs.map(\.id) == [firstTab, secondTab])
@@ -505,7 +505,7 @@ private func schema(_ file: URL) throws -> [String] {
         #expect(try ProfileDatabase(file: file).savedSession() == session)
     }
 
-    private static let latestMigrations = ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions",
+    private static let latestMigrations = ["v1-tabs", "v10-site-zoom", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions",
                                            "v6-pinned-tabs-folders", "v7-downloads", "v8-space-themes", "v9-download-folders"]
 
     /// What every later feature needs from a database that was left by an older schema: the same tables as a fresh one,
@@ -578,7 +578,7 @@ private func schema(_ file: URL) throws -> [String] {
         let database = try ProfileDatabase(file: file)
         let saved = try database.savedSession()
 
-        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads", "v8-space-themes", "v9-download-folders"])
+        #expect(try migrations(file) == ["v1-tabs", "v10-site-zoom", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads", "v8-space-themes", "v9-download-folders"])
         let space = try #require(saved.spaces.first)
         #expect(space.pinned == [])
         #expect(space.tabs.map(\.id) == [firstTab, secondTab])
@@ -620,7 +620,7 @@ private func schema(_ file: URL) throws -> [String] {
 
         let database = try ProfileDatabase(file: file)
 
-        #expect(try migrations(file) == ["v1-tabs", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads", "v8-space-themes", "v9-download-folders"])
+        #expect(try migrations(file) == ["v1-tabs", "v10-site-zoom", "v2-navigation-state", "v3-spaces", "v4-history", "v5-site-permissions", "v6-pinned-tabs-folders", "v7-downloads", "v8-space-themes", "v9-download-folders"])
         #expect(try database.downloads() == [])
         let space = try #require(try database.savedSession().spaces.first)
         #expect(space.pinned.count == 1)
@@ -974,4 +974,21 @@ private let notesFolder = FolderID(rawValue: UUID(uuidString: "DDDDDDDD-DDDD-4DD
 
         #expect(try database.settings().searchEngine == nil)
     }
+}
+
+/// #122: the page zoom of a site, by host, in the Profile's own database; 100% leaves no row.
+@Test func aSiteZoomIsSavedByHostAndActualSizeRemovesIt() throws {
+    let root = TemporaryRoot()
+    let file = root.layout.profileDatabaseFile(for: work)
+    let database = try ProfileDatabase(file: file)
+    let news = try #require(ZoomSite(host: "news.example"))
+    try database.save(PageZoom(factor: 1.5), for: news)
+    try database.save(PageZoom(factor: 0.75), for: try #require(ZoomSite(host: "shop.example")))
+
+    #expect(try ProfileDatabase(file: file).siteZooms() == [news: PageZoom(factor: 1.5),
+                                                             ZoomSite(host: "shop.example")!: PageZoom(factor: 0.75)])
+    #expect(try ProfileDatabase(file: root.layout.profileDatabaseFile(for: personal)).siteZooms() == [:])
+
+    try database.save(.actualSize, for: news)
+    #expect(try database.siteZooms() == [ZoomSite(host: "shop.example")!: PageZoom(factor: 0.75)])
 }

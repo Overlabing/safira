@@ -50,13 +50,14 @@ struct BrowserControls: View {
         HStack(spacing: 0) {
             Button(action: actions.editAddress) {
                 AddressField(symbol: symbol(for: address), host: address.map { AddressDisplay($0).host } ?? "",
-                             placeholder: Self.placeholder)
+                             placeholder: Self.placeholder, zoom: zoom)
             }
             .buttonStyle(PressedOpacityStyle())
             .help(address?.absoluteString ?? FloatingCommandBar.placeholder)
             // On the button itself, so that VoiceOver keeps its press action: the full address, not the host.
             .accessibilityLabel(Text("Address"))
-            .accessibilityValue(Text(verbatim: address?.absoluteString ?? ""))
+            .accessibilityValue(Text(verbatim: [address?.absoluteString, zoom.map { String(localized: "Zoom \($0)", comment: "Sidebar: VoiceOver value after the address; the page zoom, for example 125%") }]
+                .compactMap { $0 }.joined(separator: ", ")))
             .accessibilityHint(Text("Opens the Command bar"))
             IconButton(String(localized: "Back", comment: "Sidebar"), systemImage: "chevron.left") { session.goBack() }
                 .disabled(tab?.state.canGoBack != true)
@@ -65,6 +66,12 @@ struct BrowserControls: View {
             IconButton(String(localized: "Reload", comment: "Sidebar"), systemImage: "arrow.clockwise") { session.reload() }
                 .disabled(address == nil)
         }
+    }
+
+    /// The page zoom when it is not 100%, as the badge shows it.
+    private var zoom: String? {
+        guard let tab = session.selectedTab, tab.address != nil, !tab.zoom.isActualSize else { return nil }
+        return tab.zoom.percentage
     }
 
     /// Shorter than the Command bar's own placeholder, which the help tag shows in full: the field shares its row with
@@ -85,6 +92,8 @@ private struct AddressField: View {
     let symbol: String
     let host: String
     let placeholder: String
+    /// The page zoom's badge, "125%"; nil at 100%.
+    let zoom: String?
     @Environment(\.designTokens) private var tokens
 
     var body: some View {
@@ -99,6 +108,17 @@ private struct AddressField: View {
                     .foregroundStyle(host.isEmpty ? AnyShapeStyle(roles.secondaryText) : AnyShapeStyle(.primary))
                     .lineLimit(1)
                 Spacer(minLength: 0)
+                if let zoom {
+                    Text(verbatim: zoom)
+                        .role(tokens.type.count)
+                        .monospacedDigit()
+                        .foregroundStyle(roles.secondaryText)
+                        .padding(.horizontal, tokens.spacing.rowGap)
+                        .background(roles.secondaryText.opacity(0.15), in: Capsule(style: .continuous))
+                        .fixedSize()
+                        .help(String(localized: "Page zoom. Actual Size (⌘0) shows the page at its own size.", comment: "Sidebar: help tag of the zoom badge in the address field"))
+                        .accessibilityHidden(true)
+                }
             }
             .padding(.horizontal, tokens.spacing.rowInsetHorizontal)
             .frame(height: tokens.size.sidebarField)

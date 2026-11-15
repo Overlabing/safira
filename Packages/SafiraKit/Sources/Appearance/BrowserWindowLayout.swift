@@ -35,6 +35,8 @@ public final class BrowserWindowLayout: NSViewController {
     private let edge = EdgeView()
     private let pointer = PointerWatch()
     private var collapseObservation: NSKeyValueObservation?
+    private var fullScreen = FullScreenToolbar()
+    private var fullScreenObservers: [any NSObjectProtocol] = []
     /// What the layout wants the column to be; a change the split makes on its own is reported to the window.
     private var wantsCollapsed = false
 
@@ -103,6 +105,37 @@ public final class BrowserWindowLayout: NSViewController {
         updateCardTop(animated: false)
     }
 
+    override public func viewWillAppear() {
+        super.viewWillAppear()
+        guard fullScreenObservers.isEmpty, let window = view.window else { return }
+        let center = NotificationCenter.default
+        let enter = center.addObserver(forName: NSWindow.willEnterFullScreenNotification, object: window, queue: .main) {
+            [weak self] _ in MainActor.assumeIsolated { self?.windowWillEnterFullScreen() }
+        }
+        let exit = center.addObserver(forName: NSWindow.willExitFullScreenNotification, object: window, queue: .main) {
+            [weak self] _ in MainActor.assumeIsolated { self?.windowWillExitFullScreen() }
+        }
+        fullScreenObservers = [enter, exit]
+    }
+
+    override public func viewDidDisappear() {
+        super.viewDidDisappear()
+        fullScreenObservers.forEach(NotificationCenter.default.removeObserver)
+        fullScreenObservers = []
+    }
+
+    private func windowWillEnterFullScreen() {
+        guard let toolbar = view.window?.toolbar else { return }
+        toolbar.isVisible = fullScreen.willEnter(toolbarVisible: toolbar.isVisible)
+        view.needsLayout = true
+    }
+
+    private func windowWillExitFullScreen() {
+        guard let visible = fullScreen.willExit() else { return }
+        view.window?.toolbar?.isVisible = visible
+        view.needsLayout = true
+    }
+
     public func apply(_ presentation: SidebarPresentation, animated: Bool) {
         let collapsed = !presentation.isSidebarShown
         edge.isHidden = !collapsed
@@ -162,14 +195,14 @@ private final class SidebarSplitController: NSSplitViewController {
 /// which a SwiftUI clip shape does not do for a hosted view. Inset `Spacing.canvasInset` from the detail's edges and from
 /// the window's top edge, under the transparent toolbar (under the title bar when the column is collapsed); on the plain
 /// background, rounded `Radius.canvas`, with a 1 pt `.separator` line on its edge. The page fills the card exactly.
-/// The banner floats over the top of the card, and the Command bar over the whole page.
+/// The banner floats over the top of the card, the find bar at its top right, and the Command bar over the whole page.
 @MainActor
 public final class PageCanvasView: NSView {
     private let tokens = DesignTokens.standard
     private let clip = NSView()
     private var top = NSLayoutConstraint()
 
-    public init(page: NSView, banner: NSView, commandBar: NSView) {
+    public init(page: NSView, banner: NSView, findBar: NSView? = nil, commandBar: NSView) {
         super.init(frame: .zero)
         clip.wantsLayer = true
         clip.layer?.cornerRadius = tokens.radius.canvas
@@ -204,6 +237,15 @@ public final class PageCanvasView: NSView {
             banner.trailingAnchor.constraint(equalTo: clip.trailingAnchor, constant: -float),
             banner.topAnchor.constraint(equalTo: clip.topAnchor, constant: float),
         ])
+        if let findBar {
+            findBar.translatesAutoresizingMaskIntoConstraints = false
+            clip.addSubview(findBar, positioned: .below, relativeTo: commandBar)
+            NSLayoutConstraint.activate([
+                findBar.trailingAnchor.constraint(equalTo: clip.trailingAnchor, constant: -float),
+                findBar.topAnchor.constraint(equalTo: clip.topAnchor, constant: float),
+                findBar.leadingAnchor.constraint(greaterThanOrEqualTo: clip.leadingAnchor, constant: float),
+            ])
+        }
         updateOutline()
         NSWorkspace.shared.notificationCenter.addObserver(
             self, selector: #selector(accessibilityDisplayOptionsChanged(_:)),
@@ -277,11 +319,36 @@ public final class SidebarToolbar: NSObject, NSToolbarDelegate {
     }
 }
 
-/// The full screen shows the toolbar only while the pointer is at the top of the screen, as the kit's
-/// `sidebarWindowChrome()` does in SwiftUI.
+/// Window full screen has no toolbar band (#123): AppKit draws the full screen toolbar in a system-grey band over the
+/// Theme, and no public API paints that band (ThemeKit 0.2.12's changelog), so the toolbar hides while the window is in
+/// full screen, as in Zen. The menu bar and the window's buttons still show at the top of the screen; the sidebar
+/// stays reachable by its shortcut and, in Compact mode, from the left edge. Leaving full screen gives the toolbar back
+/// as it was.
 public enum SidebarFullScreen {
     public static func options(_ proposed: NSApplication.PresentationOptions) -> NSApplication.PresentationOptions {
         proposed.union([.autoHideToolbar, .autoHideMenuBar])
+    }
+}
+
+/// Whether the window's toolbar shows, across full screen: hidden on the way in, back to what it was on the way out.
+public struct FullScreenToolbar: Equatable, Sendable {
+    /// What the toolbar was before full screen; nil outside full screen.
+    private var visibleBefore: Bool?
+
+    public init() {}
+
+    public var isInFullScreen: Bool { visibleBefore != nil }
+
+    /// The window starts entering full screen with its toolbar `visible`: the visibility to set now.
+    public mutating func willEnter(toolbarVisible visible: Bool) -> Bool {
+        if visibleBefore == nil { visibleBefore = visible }
+        return false
+    }
+
+    /// The window starts leaving full screen: the visibility to set now, or nil to leave it.
+    public mutating func willExit() -> Bool? {
+        defer { visibleBefore = nil }
+        return visibleBefore
     }
 }
 

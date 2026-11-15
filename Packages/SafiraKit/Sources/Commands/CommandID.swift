@@ -11,6 +11,7 @@ public enum CommandID: String, CommandIdentifier {
     case newTab, newWindow, newPrivateWindow, closeTab, closeWindow, reopenClosedTab, quit
     case openCommandBar, focusTabList, compactMode, showSidebar
     case reload, goBack, goForward
+    case findInPage, findNext, findPrevious, zoomIn, zoomOut, actualSize, printPage
     case previousTab, nextTab, moveTabUp, moveTabDown
     case commandBarNext, commandBarPrevious
     case newSpace, renameSpace, deleteSpace, previousSpace, nextSpace, moveSpaceLeft, moveSpaceRight
@@ -60,6 +61,13 @@ public enum CommandID: String, CommandIdentifier {
         case .reload: String(localized: "Reload Page", table: "Commands", bundle: .module, comment: "Command: menu item and Shortcuts row")
         case .goBack: String(localized: "Back", table: "Commands", bundle: .module, comment: "Command: menu item and Shortcuts row")
         case .goForward: String(localized: "Forward", table: "Commands", bundle: .module, comment: "Command: menu item and Shortcuts row")
+        case .findInPage: String(localized: "Find…", table: "Commands", bundle: .module, comment: "Command: menu item and Shortcuts row; find in page")
+        case .findNext: String(localized: "Find Next", table: "Commands", bundle: .module, comment: "Command: menu item and Shortcuts row; next match in the page")
+        case .findPrevious: String(localized: "Find Previous", table: "Commands", bundle: .module, comment: "Command: menu item and Shortcuts row; previous match in the page")
+        case .zoomIn: String(localized: "Zoom In", table: "Commands", bundle: .module, comment: "Command: menu item and Shortcuts row; page zoom")
+        case .zoomOut: String(localized: "Zoom Out", table: "Commands", bundle: .module, comment: "Command: menu item and Shortcuts row; page zoom")
+        case .actualSize: String(localized: "Actual Size", table: "Commands", bundle: .module, comment: "Command: menu item and Shortcuts row; page zoom back to 100%")
+        case .printPage: String(localized: "Print…", table: "Commands", bundle: .module, comment: "Command: menu item and Shortcuts row")
         case .previousTab: String(localized: "Show Previous Tab", table: "Commands", bundle: .module, comment: "Command: menu item and Shortcuts row")
         case .nextTab: String(localized: "Show Next Tab", table: "Commands", bundle: .module, comment: "Command: menu item and Shortcuts row")
         case .moveTabUp: String(localized: "Move Tab Up", table: "Commands", bundle: .module, comment: "Command: menu item and Shortcuts row")

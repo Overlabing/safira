@@ -83,7 +83,7 @@
       }
     },
     "%lld of %lld" : {
-      "comment" : "Sidebar",
+      "comment" : "Find bar: the highlighted match's place among the page's matches\nSidebar",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -567,6 +567,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cliquez, puis appuyez sur le nouveau raccourci ; Supprimer le retire, Échap annule."
+          }
+        }
+      }
+    },
+    "Close Find Bar" : {
+      "comment" : "Find bar: button",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fermer la barre de recherche"
           }
         }
       }
@@ -1110,6 +1121,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Les fichiers sont enregistrés dans votre dossier Téléchargements."
+          }
+        }
+      }
+    },
+    "Find in Page" : {
+      "comment" : "Find bar: placeholder of the field",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher dans la page"
           }
         }
       }
@@ -1706,6 +1728,17 @@
         }
       }
     },
+    "Next Match" : {
+      "comment" : "Find bar: button",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Occurrence suivante"
+          }
+        }
+      }
+    },
     "No Link rule applies until it is fixed: links go to the Link picker." : {
       "comment" : "Link rules, Slack folder and default browser",
       "localizations" : {
@@ -1734,6 +1767,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aucune app ne peut ouvrir les liens « %@: »."
+          }
+        }
+      }
+    },
+    "No matches" : {
+      "comment" : "Find bar: nothing in the page matches the text",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune occurrence"
           }
         }
       }
@@ -1928,6 +1972,17 @@
         }
       }
     },
+    "Page zoom. Actual Size (⌘0) shows the page at its own size." : {
+      "comment" : "Sidebar: help tag of the zoom badge in the address field",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoom de la page. Taille réelle (⌘0) affiche la page à sa taille d’origine."
+          }
+        }
+      }
+    },
     "Paste" : {
       "comment" : "Menu item",
       "localizations" : {
@@ -2041,6 +2096,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Appuyez sur ⌘L pour aller à la barre de commande."
+          }
+        }
+      }
+    },
+    "Previous Match" : {
+      "comment" : "Find bar: button",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Occurrence précédente"
           }
         }
       }
@@ -3258,6 +3324,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zoom"
+          }
+        }
+      }
+    },
+    "Zoom %@" : {
+      "comment" : "Sidebar: VoiceOver value after the address; the page zoom, for example 125%",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoom %@"
           }
         }
       }

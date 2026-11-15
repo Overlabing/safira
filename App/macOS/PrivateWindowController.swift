@@ -26,6 +26,8 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSMen
     private var session: ProfileSession { context.session }
     private lazy var commandBar = FloatingCommandBar { [unowned self] in session }
     private let columnFocus = ColumnFocus()
+    private let findBarFocus = FindBarFocus()
+    private var findBarHost: NSView?
     private let pageArea = TabHostView.withEmptyPage()
     private var layout: BrowserWindowLayout?
     private var toolbar: SidebarToolbar?
@@ -138,6 +140,46 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSMen
         session.selectTab(offset: -1)
     }
 
+    // MARK: Page
+
+    /// ⌘F: the find bar over the page, its field focused with its text selected.
+    @objc func findInPage(_ sender: Any?) {
+        Task { await session.find.show() }
+        findBarFocus.focusField()
+    }
+
+    @objc func findNext(_ sender: Any?) {
+        Task { await session.find.next() }
+    }
+
+    @objc func findPrevious(_ sender: Any?) {
+        Task { await session.find.previous() }
+    }
+
+    private func closeFindBar() {
+        let responder = window?.firstResponder as? NSView
+        let hadFocus = findBarHost.map { responder?.isDescendant(of: $0) == true } ?? false
+        session.find.close()
+        if hadFocus { showPage() }
+    }
+
+    @objc func zoomIn(_ sender: Any?) {
+        session.zoomIn()
+    }
+
+    @objc func zoomOut(_ sender: Any?) {
+        session.zoomOut()
+    }
+
+    @objc func actualSize(_ sender: Any?) {
+        session.resetZoom()
+    }
+
+    @objc func printPage(_ sender: Any?) {
+        guard let window, let tab = session.selectedTab, let webView = context.web.webView(for: tab.id) else { return }
+        PagePrinter.print(webView, in: window)
+    }
+
     func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
         let tab = session.selectedTab
         switch menuItem.action {
@@ -148,6 +190,11 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSMen
         case #selector(goBack(_:)): return tab?.state.canGoBack == true
         case #selector(goForward(_:)): return tab?.state.canGoForward == true
         case #selector(reload(_:)): return tab?.address != nil
+        case #selector(findInPage(_:)), #selector(printPage(_:)): return tab?.address != nil
+        case #selector(findNext(_:)), #selector(findPrevious(_:)): return tab?.address != nil && !session.find.text.isEmpty
+        case #selector(zoomIn(_:)): return session.canZoomIn
+        case #selector(zoomOut(_:)): return session.canZoomOut
+        case #selector(actualSize(_:)): return session.canResetZoom
         case #selector(showNextTab(_:)), #selector(showPreviousTab(_:)): return session.tabs.count > 1
         case #selector(showTabNumber(_:)): return menuItem.tag <= session.tabs.count
         default: return true
@@ -200,6 +247,7 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSMen
         commandBar.follow(session)
         let shownTabChanged = tab?.id != renderedTabID
         renderedTabID = tab?.id
+        if shownTabChanged { closeFindBar() }
         if commandBar.isShown, shownTabChanged, session.commandBarTarget == .selectedTab {
             commandBar.field.stringValue = tab?.address?.absoluteString ?? ""
         }
@@ -282,7 +330,12 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSMen
         }
         commandBar.onTabKey = { [weak self] in self?.focusTabList(nil) }
         commandBar.announce = { [weak self] in self?.announce($0) }
-        let canvas = PageCanvasView(page: pageArea, banner: NSView(), commandBar: commandBar.overlay)
+        let findBar = FindBarHostingView(rootView: FindBar(
+            find: { [unowned self] in session.find },
+            focus: findBarFocus, theme: { SidebarComposition.privateTheme },
+            close: { [weak self] in self?.closeFindBar() }))
+        findBarHost = findBar
+        let canvas = PageCanvasView(page: pageArea, banner: NSView(), findBar: findBar, commandBar: commandBar.overlay)
         let pageActions = PageActions(
             editAddress: { [weak self] in self?.focusCommandBar(nil) },
             // As in the Main window: the Command bar opens once the click on the New Tab row is over.

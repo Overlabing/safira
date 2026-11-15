@@ -35,6 +35,15 @@ final class SimulatedPage: WebPageHandle {
     var onDidClose: (@MainActor () -> Void)?
     var onDownloadStarted: (@MainActor () -> Void)?
     var onIconLinks: (@MainActor (PageIconLinks) -> Void)?
+    /// The text each address shows, which find searches; an address with none shows no text.
+    var texts: [URL: String] = [:]
+    var pageZoom: Double = 1
+    /// Every find the session asked for, in order.
+    private(set) var finds: [(text: String, backwards: Bool)] = []
+    /// Whether a find highlight is on the page.
+    private(set) var isHighlighting = false
+    /// What the page answers to a count, overriding the count of its text: an engine match the visible text lacks.
+    var countOverride: Int?
     /// What the site answers for each address the page fetches; any other address answers 404.
     var siteResources: [URL: SiteResourceResponse] = [:]
     /// Every icon or manifest address the page fetched, in order.
@@ -179,6 +188,25 @@ final class SimulatedPage: WebPageHandle {
         onStateChange?(state)
     }
 
+    private var shownText: String {
+        state.url.flatMap { texts[$0] }?.lowercased() ?? ""
+    }
+
+    func find(_ text: String, backwards: Bool) async -> Bool {
+        finds.append((text, backwards))
+        let found = countOverride.map { _ in true } ?? shownText.contains(text.lowercased())
+        isHighlighting = found
+        return found
+    }
+
+    func countMatches(of text: String) async -> Int {
+        countOverride ?? shownText.components(separatedBy: text.lowercased()).count - 1
+    }
+
+    func endFind() {
+        isHighlighting = false
+    }
+
     func close() {
         isClosed = true
     }
@@ -204,11 +232,11 @@ final class SessionFixture {
     init(searchEngine: SearchEngine? = nil, osBuild: String = "26A434",
          id: ProfileID = ProfileID(rawValue: UUID(uuidString: "6F9619FF-8B86-D011-B42D-00C04FC964FF")!),
          history: ProfileDatabase? = nil, permissions: SitePermissions = SitePermissions(),
-         siteIcons: ProfileSiteIcons? = nil, hasSpaces: Bool = true) {
+         siteIcons: ProfileSiteIcons? = nil, siteZooms: SiteZooms? = nil, hasSpaces: Bool = true) {
         session = ProfileSession(profileID: id, settings: ProfileSettings(searchEngine: searchEngine),
                                  osBuild: osBuild, history: history,
                                  appLinks: AppLinkGate(profileID: id, permissions: permissions), hasSpaces: hasSpaces,
-                                 siteIcons: siteIcons) { [unowned self] tabID in
+                                 siteIcons: siteIcons, siteZooms: siteZooms) { [unowned self] tabID in
             let page = SimulatedPage()
             preparePage(page)
             pages[tabID] = page

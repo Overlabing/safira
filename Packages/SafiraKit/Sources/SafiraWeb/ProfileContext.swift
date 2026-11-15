@@ -37,8 +37,9 @@ public final class ProfileContext: MatchingTabSearchable {
         let appLinks = AppLinkGate(profileID: id, permissions: permissions)
         let siteIcons = ProfileSiteIcons(directory: siteIconsDirectory)
         siteIcons.onError = { onError("A site icon could not be saved", $0) }
+        let siteZooms = SiteZooms(database: database) { onError($0, $1) }
         let session = ProfileSession(profileID: id, settings: settings, history: database, appLinks: appLinks,
-                                     siteIcons: siteIcons) { [unowned web] in web.makePage(for: $0) }
+                                     siteIcons: siteIcons, siteZooms: siteZooms) { [unowned web] in web.makePage(for: $0) }
         session.onHistoryError = { onError("The history could not be used", $0) }
         do {
             session.restore(try database.savedSession())

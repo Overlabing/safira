@@ -71,6 +71,15 @@ public protocol WebPageHandle: SiteResourceFetcher {
     func goBack()
     func goForward()
     func reload()
+    /// How large the page is drawn, 1 being its own size. The page keeps it across its navigations.
+    var pageZoom: Double { get set }
+    /// Highlights and scrolls to the next match of `text`, letter case ignored, wrapping at the end; false when the
+    /// page has none.
+    func find(_ text: String, backwards: Bool) async -> Bool
+    /// How many times `text` appears in the page's visible text, letter case ignored.
+    func countMatches(of text: String) async -> Int
+    /// Takes away the highlight `find` left.
+    func endFind()
     /// Stops the page for good; the handle is not used afterwards.
     func close()
 }
