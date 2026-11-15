@@ -613,60 +613,6 @@ public final class ProfileSession {
         return movePinned(item, into: container, at: index)
     }
 
-    /// Drops a dragged Tab or Folder of the active Space at a place of its sidebar. A plain Tab dropped in the pinned area
-    /// or in a Folder is pinned there, at the address it shows, as `pin(_:)` does; a Pinned tab dropped among the other
-    /// Tabs is unpinned there. The Tab keeps its page, and the selection does not change. False, and nothing moves, when
-    /// the item is not in the active Space, when a Folder is dropped among the plain Tabs, into itself or one of its
-    /// own sub-Folders, or when the place names a Folder the Space does not have.
-    @discardableResult
-    public func drop(_ item: PinnedItemID, at place: SidebarDropPlace) -> Bool {
-        guard canDrop(item, at: place) else { return false }
-        let space = activeSpace
-        let plainIndex: Int? = if case .tab(let id) = item { space.tabs.firstIndex { $0.id == id } } else { nil }
-        switch place {
-        case .tabs(let index):
-            guard case .tab(let id) = item else { return false }
-            if let from = plainIndex {
-                move(id, to: from < index ? index - 1 : index)
-                return true
-            }
-            guard space.holds(item), case .tab(let tab)? = space.remove(item) else { return false }
-            tab.unpin()
-            space.tabs.insert(tab, at: max(0, min(index, space.tabs.count)))
-            return true
-        case .pinned(let folder, let index):
-            guard var items = space.items(in: folder) else { return false }
-            if let from = plainIndex {
-                let tab = space.tabs.remove(at: from)
-                tab.pin()
-                items.insert(.tab(tab), at: max(0, min(index, items.count)))
-                space.setItems(items, in: folder)
-                return true
-            }
-            guard space.holds(item) else { return false }
-            let from = space.container(of: item)?.id == folder ? items.firstIndex { $0.id == item } : nil
-            return movePinned(item, into: folder, at: from.map { $0 < index ? index - 1 : index } ?? index)
-        }
-    }
-
-    /// Whether `drop(_:at:)` would accept the item at that place.
-    public func canDrop(_ item: PinnedItemID, at place: SidebarDropPlace) -> Bool {
-        let space = activeSpace
-        let isPlain = if case .tab(let id) = item { space.tabs.contains { $0.id == id } } else { false }
-        guard isPlain || space.holds(item) else { return false }
-        switch place {
-        case .tabs:
-            if case .tab = item { return true }
-            return false
-        case .pinned(let folder?, _):
-            guard space.folder(folder) != nil else { return false }
-            if case .folder(let moving) = item { return space.folder(moving)?.contains(folder: folder) != true }
-            return true
-        case .pinned(nil, _):
-            return true
-        }
-    }
-
     private func folder(_ id: FolderID) -> Folder? {
         spaces.lazy.compactMap { $0.folder(id) }.first
     }
