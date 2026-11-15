@@ -6,6 +6,7 @@
 // are read from the app's own Resources, which the sandbox lets it read. Prints one `RESULT:` line and exits.
 //   write: loads Verrou and the probe; the probe's service worker stores a non-extractable CryptoKey in IndexedDB.
 //   read:  loads them again; the probe's service worker reads the key back and encrypts and decrypts with it.
+//   load:  only loads them, into a Profile whose data store and extension state stay in memory: nothing is stored.
 
 import AppKit
 import SafiraCore
@@ -16,10 +17,10 @@ let profile = ProfileID(rawValue: UUID(uuidString: "6A7E0000-0000-4000-8000-0000
 
 @MainActor
 func gate() async -> String {
-    guard mode == "write" || mode == "read", let resources = Bundle.main.resourceURL else {
-        return "usage: SafiraKeychainGate write|read"
+    guard ["write", "read", "load"].contains(mode), let resources = Bundle.main.resourceURL else {
+        return "usage: SafiraKeychainGate write|read|load"
     }
-    let web = ProfileWebContext(profileID: profile)
+    let web = ProfileWebContext(profileID: profile, storage: mode == "load" ? .inMemory : .onDisk)
     guard let host = web.extensions else { return "the Profile has no extension host" }
     do {
         let verrou = try await host.loadUnpacked(at: resources.appending(path: "verrou", directoryHint: .isDirectory))
@@ -27,6 +28,8 @@ func gate() async -> String {
         print("OK: Verrou \(verrou.version) loaded, id \(verrou.identifier)")
         let probe = try await host.loadUnpacked(at: resources.appending(path: "probe", directoryHint: .isDirectory))
         guard probe.errors.isEmpty else { return "the probe loaded with errors: \(probe.errors)" }
+        print("OK: the probe loaded, id \(probe.identifier)")
+        if mode == "load" { return "loaded" }
         let page = web.makePage(for: TabID())
         page.load(URL(string: "webkit-extension://\(probe.identifier)/gate.html#\(mode)")!, httpsFirst: false)
         let deadline = ContinuousClock.now + .seconds(30)
@@ -47,6 +50,6 @@ Task { @MainActor in
     let result = await gate()
     print("RESULT: \(result)")
     fflush(stdout)
-    exit(result == "written" || result == "read back" ? 0 : 1)
+    exit(["written", "read back", "loaded"].contains(result) ? 0 : 1)
 }
 NSApplication.shared.run()

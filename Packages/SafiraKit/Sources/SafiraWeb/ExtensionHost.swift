@@ -31,6 +31,9 @@ public final class ExtensionHost: NSObject {
     /// The Tab last reported to the controller as active, so that each change is reported once.
     private var activeTabID: TabID?
 
+    /// Relays `runtime.connectNative` and `sendNativeMessage` to the native apps Safira knows, Verrou's bridge only.
+    var nativeMessaging = NativeMessagingRelay()
+
     /// The extensions' actions for the active Tab, which the sidebar shows as buttons.
     public let actions = ExtensionActions()
     /// Shows an action's popup; set by the window that shows the actions' buttons.
@@ -59,6 +62,10 @@ public final class ExtensionHost: NSObject {
     /// before keep running without it; it reaches the pages created from now on.
     @discardableResult
     public func loadUnpacked(at folder: URL) async throws -> LoadedExtension {
+        // WebKit reads only the relative part of a URL that has a base, such as `Bundle.resourceURL` and anything
+        // appended to it, and kills the app on the invalid address that leaves (a `RELEASE_ASSERT`, not an error).
+        guard folder.isFileURL else { throw ExtensionFolderUnreadable(folder: folder) }
+        let folder = folder.absoluteURL.standardizedFileURL
         let webExtension = try await WKWebExtension(resourceBaseURL: folder)
         let context = WKWebExtensionContext(for: webExtension)
         let identifier = ExtensionIdentity.identifier(forManifest: webExtension.manifest)
@@ -212,6 +219,34 @@ extension ExtensionHost: WKWebExtensionControllerDelegate {
         refreshActions()
     }
 
+    public func webExtensionController(_ controller: WKWebExtensionController,
+                                       connectUsing port: WKWebExtension.MessagePort,
+                                       for extensionContext: WKWebExtensionContext,
+                                       completionHandler: @escaping ((any Error)?) -> Void) {
+        do {
+            try nativeMessaging.connect(WebKitMessagePort(port), extensionIdentifier: extensionContext.uniqueIdentifier)
+            completionHandler(nil)
+        } catch {
+            completionHandler(error)
+        }
+    }
+
+    public func webExtensionController(_ controller: WKWebExtensionController, sendMessage message: Any,
+                                       toApplicationWithIdentifier applicationIdentifier: String?,
+                                       for extensionContext: WKWebExtensionContext,
+                                       replyHandler: @escaping (Any?, (any Error)?) -> Void) {
+        let extensionIdentifier = extensionContext.uniqueIdentifier
+        Task {
+            do {
+                let reply = try await nativeMessaging.sendMessage(message, applicationIdentifier: applicationIdentifier,
+                                                                  extensionIdentifier: extensionIdentifier)
+                replyHandler(reply, nil)
+            } catch {
+                replyHandler(nil, error)
+            }
+        }
+    }
+
     /// Called once the popup's page has loaded, for a click and for `action.openPopup()` alike.
     public func webExtensionController(_ controller: WKWebExtensionController,
                                        presentActionPopup action: WKWebExtension.Action,
@@ -227,8 +262,14 @@ extension ExtensionHost: WKWebExtensionControllerDelegate {
     }
 }
 
+/// `loadUnpacked` takes a folder on disk only.
+struct ExtensionFolderUnreadable: LocalizedError {
+    let folder: URL
+    var errorDescription: String? { "\(folder.absoluteString) is not a folder on this Mac" }
+}
+
 /// Where a Profile keeps its website data and its extensions' state. Tests use `.inMemory`, which writes nothing.
-enum WebsiteStorage {
+public enum WebsiteStorage: Sendable {
     case onDisk
     case inMemory
 }

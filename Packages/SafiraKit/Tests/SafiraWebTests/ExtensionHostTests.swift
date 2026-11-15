@@ -77,6 +77,55 @@ import WebKit
         server.stop()
     }
 
+    /// `Bundle.resourceURL`, and what is appended to it, is relative to the bundle; WebKit used to kill the app on it.
+    @Test func aFolderGivenRelativeToABaseLoads() async throws {
+        let folder = try Self.fixtureExtension()
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let relative = URL(filePath: folder.lastPathComponent, directoryHint: .isDirectory,
+                           relativeTo: folder.deletingLastPathComponent())
+        #expect(relative.baseURL != nil)
+        let profile = try Self.profile()
+
+        let loaded = try await #require(profile.extensions).loadUnpacked(at: relative)
+        #expect(loaded.displayName == "Safira fixture")
+        #expect(loaded.errors == [])
+    }
+
+    @Test func anAddressThatIsNotAFolderOnDiskIsRefused() async throws {
+        let profile = try Self.profile()
+        let host = try #require(profile.extensions)
+        await #expect(throws: ExtensionFolderUnreadable.self) {
+            try await host.loadUnpacked(at: URL(string: "https://example.com/extension/")!)
+        }
+        #expect(host.loadedExtensions == [])
+    }
+
+    /// What `sender.url` and `tabs.query` report is the committed page, not a navigation that has only started.
+    @Test func aTabReportsItsCommittedAddressWhileANavigationIsPending() async throws {
+        let folder = try Self.fixtureExtension()
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let server = try await AnyHostServer.start()
+        let silent = try await SilentServer.start()
+        let profile = try Self.profile()
+        let host = try #require(profile.extensions)
+        try await host.loadUnpacked(at: folder)
+        let context = try #require(host.controller.extensionContexts.first)
+
+        let committed = server.url(host: "127.0.0.1")
+        let id = profile.session.openExternalLink(committed)
+        try await Self.waitUntilLoaded(profile, id)
+        let tab = try #require(host.openTabs.first { $0.id == id })
+        #expect(tab.url(for: context) == committed)
+
+        let pending = URL(string: "http://127.0.0.1:\(silent.port)/never")!
+        let webView = try #require(profile.web.webView(for: id))
+        webView.load(URLRequest(url: pending))
+        try await waitUntil("WebKit shows the pending address") { webView.url == pending }
+        #expect(tab.url(for: context) == committed)
+        server.stop()
+        silent.stop()
+    }
+
     @Test func theControllerHearsTabsOpenCloseAndBecomeActive() async throws {
         let folder = try Self.fixtureExtension()
         defer { try? FileManager.default.removeItem(at: folder) }
@@ -257,5 +306,56 @@ final class AnyHostServer: @unchecked Sendable {
 
     func stop() {
         listener.cancel()
+    }
+}
+
+/// Accepts connections and never answers, so that a navigation to it stays pending.
+final class SilentServer: @unchecked Sendable {
+    private let listener: NWListener
+    private let lock = NSLock()
+    private var connections: [NWConnection] = []
+    let port: UInt16
+
+    private init(listener: NWListener, port: UInt16) {
+        self.listener = listener
+        self.port = port
+    }
+
+    static func start() async throws -> SilentServer {
+        let parameters = NWParameters.tcp
+        parameters.requiredLocalEndpoint = .hostPort(host: "127.0.0.1", port: .any)
+        let listener = try NWListener(using: parameters)
+        let ready = AsyncThrowingStream<UInt16, any Error> { continuation in
+            listener.stateUpdateHandler = { [listener] state in
+                switch state {
+                case .ready: continuation.yield(listener.port?.rawValue ?? 0); continuation.finish()
+                case .failed(let error): continuation.finish(throwing: error)
+                default: break
+                }
+            }
+        }
+        let held = Held()
+        listener.newConnectionHandler = { connection in
+            connection.start(queue: .global())
+            held.server?.keep(connection)
+        }
+        listener.start(queue: .global())
+        var iterator = ready.makeAsyncIterator()
+        let server = SilentServer(listener: listener, port: try await iterator.next() ?? 0)
+        held.server = server
+        return server
+    }
+
+    private final class Held: @unchecked Sendable {
+        weak var server: SilentServer?
+    }
+
+    private func keep(_ connection: NWConnection) {
+        lock.withLock { connections.append(connection) }
+    }
+
+    func stop() {
+        listener.cancel()
+        lock.withLock { connections }.forEach { $0.cancel() }
     }
 }

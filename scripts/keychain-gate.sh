@@ -14,11 +14,16 @@
 # Operator-run only, never in CI or by an agent: it signs with the Developer ID certificate and uses the login
 # keychain. Usage: sh scripts/keychain-gate.sh [Verrou's extension folder]
 # The Team ID is read from Config/Release.local.xcconfig (git-ignored), or the file SAFIRA_RELEASE_CONFIG names.
+#
+# sh scripts/keychain-gate.sh --load-only [folder] touches no keychain and may run anywhere: it signs the same app
+# ad hoc, loads Verrou and the probe into a Profile kept in memory, stores nothing, and expects "RESULT: loaded".
 set -u
 cd "$(dirname "$0")/.."
 
 fail() { echo "FAILED: $*"; exit 1; }
 
+load_only=false
+if [ "${1:-}" = "--load-only" ]; then load_only=true; shift; fi
 config=${SAFIRA_RELEASE_CONFIG:-Config/Release.local.xcconfig}
 verrou=${1:-/Applications/Verrou.app/Contents/Resources/extension}
 name=SafiraKeychainGate
@@ -27,19 +32,23 @@ bundle=com.overlabing.safira.keychaingate.$(date +%s)
 work=$(mktemp -d /tmp/safira-keychain-gate.XXXXXX) || fail "no temporary folder"
 app="$work/$name.app"
 
+if ! $load_only; then
 [ -f "$config" ] || fail "$config is missing (copy Config/Release.local.xcconfig.example and fill in the Team ID)"
 team=$(sed -n "s/^[[:space:]]*DEVELOPER_ID_TEAM_ID[[:space:]]*=[[:space:]]*\([^[:space:]/]*\).*/\1/p" "$config" | head -1)
 [ -n "$team" ] && [ "$team" != "XXXXXXXXXX" ] || fail "DEVELOPER_ID_TEAM_ID is not set in $config"
 identity=$(security find-identity -v -p codesigning | grep "Developer ID Application" | grep "($team)" | awk '{print $2}' | head -1)
 [ -n "$identity" ] || fail "no valid Developer ID Application certificate for the configured Team ID"
 echo "OK: Developer ID Application certificate found"
+fi
 [ -f "$verrou/manifest.json" ] || fail "no manifest.json in $verrou (pass Verrou's extension folder)"
 echo "OK: Verrou's extension folder found"
 
-# A master key left by an earlier run belongs to another signature: start without one.
-security delete-generic-password -l "$label" > /dev/null 2>&1
-security find-generic-password -l "$label" > /dev/null 2>&1 && fail "an old \"$label\" item could not be removed"
-echo "OK: no \"$label\" item before the run"
+if ! $load_only; then
+    # A master key left by an earlier run belongs to another signature: start without one.
+    security delete-generic-password -l "$label" > /dev/null 2>&1
+    security find-generic-password -l "$label" > /dev/null 2>&1 && fail "an old \"$label\" item could not be removed"
+    echo "OK: no \"$label\" item before the run"
+fi
 
 echo "... building the gate app with SafiraKit (one job, a few minutes)"
 swift build --package-path scripts/keychain-gate -j 1 > "$work/build.log" 2>&1 || { tail -30 "$work/build.log"; fail "swift build"; }
@@ -65,27 +74,41 @@ cat > "$app/Contents/Info.plist" <<PLIST
 PLIST
 # Safira's own entitlements, with its bundle id replaced by the throwaway one.
 sed "s/\$(PRODUCT_BUNDLE_IDENTIFIER)/$bundle/g" App/macOS/Safira.entitlements > "$work/gate.entitlements" || fail "entitlements"
-codesign --force --deep --options runtime --timestamp --entitlements "$work/gate.entitlements" --sign "$identity" "$app" \
-    > "$work/sign.log" 2>&1 || { cat "$work/sign.log"; fail "codesign"; }
+if $load_only; then
+    signing="ad hoc"
+    codesign --force --deep --options runtime --entitlements "$work/gate.entitlements" --sign - "$app" \
+        > "$work/sign.log" 2>&1 || { cat "$work/sign.log"; fail "codesign"; }
+else
+    signing="Developer ID"
+    codesign --force --deep --options runtime --timestamp --entitlements "$work/gate.entitlements" --sign "$identity" \
+        "$app" > "$work/sign.log" 2>&1 || { cat "$work/sign.log"; fail "codesign"; }
+fi
 codesign --verify --strict "$app" || fail "the signature does not verify"
 codesign -d --entitlements - --xml "$app" 2>/dev/null | grep -q "<key>com.apple.security.app-sandbox</key><true/>" \
     || fail "the gate app is not sandboxed"
-echo "OK: $name.app signed with Developer ID, hardened runtime, sandboxed, bundle id $bundle"
+echo "OK: $name.app signed $signing, hardened runtime, sandboxed, bundle id $bundle"
 
-run() { # <mode>
-    "$app/Contents/MacOS/$name" "$1" > "$work/$1.log" 2>&1
-    status=$?
+run() { # <mode> <expected result>
+    # A sandboxed app must start through LaunchServices: run directly from a shell, macOS cannot set up its sandbox
+    # and kills it (SIGKILL, "sandbox_extension_issue_file_to_process failed"). -g keeps it in the background.
+    : > "$work/$1.log"
+    open -W -n -g "$app" --stdout "$work/$1.log" --stderr "$work/$1.log" --args "$1"
     grep -E "^(OK|RESULT):" "$work/$1.log"
-    return $status
+    grep -qx "RESULT: $2" "$work/$1.log"
 }
+if $load_only; then
+    run load loaded || fail "the gate app did not load Verrou and the probe (log: $work/load.log)"
+    echo "OK: Verrou and the probe loaded in the sandboxed gate app; nothing was stored (logs and app in $work)"
+    exit 0
+fi
 echo "... first launch: store a CryptoKey (if a keychain prompt appears, click Deny)"
-run write || fail "first launch did not store the key (log: $work/write.log)"
+run write written || fail "first launch did not store the key (log: $work/write.log)"
 echo "OK: first launch stored a non-extractable CryptoKey from the service worker"
 security find-generic-password -l "$label" > /dev/null 2>&1 \
     && echo "OK: WebKit created \"$label\"" \
     || echo "NOTE: no \"$label\" item was found after the first launch"
 echo "... relaunch: read the key back (if a keychain prompt appears, click Deny)"
-run read || fail "relaunch did not read the key back with no prompt (log: $work/read.log)"
+run read "read back" || fail "relaunch did not read the key back with no prompt (log: $work/read.log)"
 echo "OK: no keychain prompt, key read back after a relaunch"
 
 security delete-generic-password -l "$label" > /dev/null 2>&1
