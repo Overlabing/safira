@@ -5,6 +5,7 @@ import AppShellKit
 import Commands
 import Onboarding
 import Preferences
+import SafiraCore
 import SafiraSettings
 import Testing
 
@@ -74,5 +75,36 @@ import Testing
         #expect(SettingsPaneID.linkRules.switches
             == ["linkMatching.focusOpenTab", "linkPicker.askForSpace", "linkPicker.choiceLog"])
         #expect(SettingsPaneID.sitePermissions.switches == ["web.fraudulentSiteWarning", "web.autoplayingSound"])
+    }
+
+    /// “Change it: Settings › …” names a pane the window has, by the title its sidebar shows; no default still points
+    /// at a menu item that now only opens the window.
+    @Test func everyChangeItInSettingsNamesAPaneThatExists() {
+        let titles = Set(SafiraSettings.panes.map(\.title))
+        let places = DefaultsRegistry.entries.userFacing.map(\.whereToChange)
+        for place in places where place.hasPrefix("Settings › ") {
+            #expect(titles.contains(String(place.dropFirst("Settings › ".count))), "\(place)")
+        }
+        #expect(DefaultWording.SettingsPane.allCases.map { DefaultWording.settings($0) }
+            == SafiraSettings.panes.map { "Settings › \($0.title)" })
+        #expect(places.allSatisfy { !$0.contains("Safira menu") && !$0.hasSuffix("…") }, "\(places)")
+    }
+
+    /// A switch a pane shows says that pane is where to change it.
+    @Test(arguments: SettingsPaneID.allCases)
+    func aPaneSwitchNamesItsOwnPane(pane: SettingsPaneID) throws {
+        let title = try #require(SafiraSettings.panes.first { $0.id == pane }).title
+        for id in pane.switches {
+            let entry = try #require(DefaultsRegistry.entries.userFacing.first { $0.id == id })
+            #expect(entry.whereToChange == "Settings › \(title)", "\(id)")
+        }
+    }
+
+    @Test func theEntriesWithAPlaceInTheWindowNameIt() {
+        let places = Dictionary(uniqueKeysWithValues: DefaultsRegistry.entries.userFacing.map { ($0.id, $0.whereToChange) })
+        #expect(places["shortcuts.preset"] == "Settings › Shortcuts")
+        #expect(places["search.engine"] == "Settings › Defaults")
+        #expect(places["linkPicker.defaultBrowser"] == "Settings › General")
+        #expect(places["nonWebLinks.confirmation"] == "Settings › Site Permissions")
     }
 }

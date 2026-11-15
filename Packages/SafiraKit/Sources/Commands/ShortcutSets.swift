@@ -4,6 +4,7 @@
 import CommandKit
 import Foundation
 import Preferences
+import SafiraCore
 
 /// A named set of keyboard shortcuts, chosen at onboarding and editable afterwards. Each is a CommandKit set file,
 /// `Presets/<raw value>.json`, that inherits from Safira's own set: a command the browser does not document keeps
@@ -152,8 +153,7 @@ extension ShortcutPreset {
                     Zen, Arc or Safari shortcuts. A command the preset has no equivalent for keeps Safira's own \
                     shortcut. Without a preset, Safira's own shortcuts apply. You can change any shortcut afterwards.
                     """, table: "Commands", bundle: .module, comment: "Defaults: explanation of Shortcut preset"),
-                whereToChange: String(localized: "Safira menu, Shortcuts…", table: "Commands", bundle: .module,
-                                      comment: "Defaults: where to change it; a menu and its item"),
+                whereToChange: DefaultWording.settings(.shortcuts),
                 control: .choice
             ),
         ]

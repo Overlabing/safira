@@ -135,6 +135,8 @@ targets:
         com.apple.security.personal-information.location: true
         # Keeps the Slack folder the user grants once, across launches (Link rules, #20).
         com.apple.security.files.bookmarks.app-scope: true
+        # Printing a page (File > Print); without it macOS answers "This application does not support printing."
+        com.apple.security.print: true
         # Sparkle's installer launcher and status connections (Sparkle sandboxing guide); the only entitlements added for updates.
         com.apple.security.temporary-exception.mach-lookup.global-name:
           - $(PRODUCT_BUNDLE_IDENTIFIER)-spks

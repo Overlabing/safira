@@ -18,7 +18,7 @@ import Testing
         #expect(entry.id == "linkPicker.askForSpace")
         #expect(entry.title == "Ask for the Space Too")
         #expect(entry.value == "Off")
-        #expect(entry.whereToChange == "Safira menu")
+        #expect(entry.whereToChange == "Settings › Link Rules")
     }
 
     @Test func nativeAppRewritingIsListedInTheRegistryOfDefaults() throws {

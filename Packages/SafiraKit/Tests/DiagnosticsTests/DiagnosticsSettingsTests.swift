@@ -9,7 +9,7 @@ import Testing
     #expect(DiagnosticsSettings().isDebugModeEnabled == false)
 }
 
-@Test func theRegistryListsDebugModeAsOffAndChangedFromTheHelpMenu() throws {
+@Test func theRegistryListsDebugModeAsOffAndChangedInTheDebugPane() throws {
     let entry = try #require(DiagnosticsSettings.defaultEntries.first)
 
     #expect(DiagnosticsSettings.defaultEntries.count == 1)
@@ -21,5 +21,5 @@ import Testing
         values as <private>, so they hold no host, address or page title. The system log always gets the events that \
         name no site, and gets a site's host only while Debug mode is on, masked by macOS.
         """)
-    #expect(entry.whereToChange == "Help menu")
+    #expect(entry.whereToChange == "Settings › Debug")
 }

@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Antonin Carlin
 
 import Commands
+import DesignKit
 import Onboarding
 import Preferences
 import SafiraCore
@@ -27,9 +28,10 @@ struct DefaultsListView: View {
     var body: some View {
         List(model.entries, selection: $selection) { entry in
             row(entry)
+                .settingsListRow(isSelected: selection == entry.id, id: entry.id)
                 .tag(entry.id)
-                .listRowSeparator(.visible)
         }
+        .listSelectionPlatterOff()
         .onKeyPress(.space) {
             guard let id = selection, model.entries.first(where: { $0.id == id })?.isSwitch == true else { return .ignored }
             model.setOn(!model.isOn(id), for: id)
@@ -44,7 +46,9 @@ struct DefaultsListView: View {
         VStack(alignment: .leading, spacing: 4) {
             switch entry.control {
             case .toggle:
+                // A switch on the trailing edge, as in the other panes.
                 Toggle(entry.title, isOn: Binding(get: { model.isOn(entry.id) }, set: { model.setOn($0, for: entry.id) }))
+                    .toggleStyle(.switch)
                     .accessibilityHint(entry.explanation)
             case .choice where entry.id == "search.engine" && actions != nil:
                 if let actions {
@@ -120,6 +124,9 @@ struct DefaultsPaneView: View {
                 preset: Binding(get: { controller.shortcutPreset }, set: { controller.shortcutPreset = $0 }),
                 isDefaultBrowser: controller.defaultBrowserActions.isDefault,
                 makeDefaultBrowser: controller.defaultBrowserActions.make))
+                .listStyle(.plain)
+                .settingsScrollEdges()
+                .settingsGroup()
         }
     }
 }

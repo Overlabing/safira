@@ -67,6 +67,8 @@ struct ShortcutsSettingsView: View {
             }
         }
         .settingsPaneLayout(SettingsWindowController.metrics)
+        // The pane scrolls under its header: the rows fade there instead of being cut.
+        .settingsScrollEdges()
         .onDisappear { recorder.stop() }
         .confirmationDialog(
             String(localized: "Change the Shortcut preset?", comment: "Shortcuts window: confirmation title"),

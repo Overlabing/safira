@@ -10,10 +10,29 @@ public enum DefaultWording {
             : String(localized: "Off", table: "SafiraCore", bundle: .module, comment: "Defaults: the value of a switch that is off")
     }
 
-    public static let safiraMenu = String(localized: "Safira menu", table: "SafiraCore", bundle: .module,
-                                          comment: "Defaults: where to change a default, the app menu")
+    /// A pane of the Settings window, named as its sidebar names it (a test holds the two together).
+    public enum SettingsPane: CaseIterable, Sendable {
+        case general, shortcuts, defaults, linkRules, sitePermissions, debug
+    }
+
+    /// Where to change a default that has a place in the Settings window: “Settings › Link Rules”.
+    public static func settings(_ pane: SettingsPane) -> String {
+        switch pane {
+        case .general: String(localized: "Settings › General", table: "SafiraCore", bundle: .module,
+                               comment: "Defaults: where to change a default; the Settings window and its pane")
+        case .shortcuts: String(localized: "Settings › Shortcuts", table: "SafiraCore", bundle: .module,
+                                 comment: "Defaults: where to change a default; the Settings window and its pane")
+        case .defaults: String(localized: "Settings › Defaults", table: "SafiraCore", bundle: .module,
+                                comment: "Defaults: where to change a default; the Settings window and its pane")
+        case .linkRules: String(localized: "Settings › Link Rules", table: "SafiraCore", bundle: .module,
+                                 comment: "Defaults: where to change a default; the Settings window and its pane")
+        case .sitePermissions: String(localized: "Settings › Site Permissions", table: "SafiraCore", bundle: .module,
+                                       comment: "Defaults: where to change a default; the Settings window and its pane")
+        case .debug: String(localized: "Settings › Debug", table: "SafiraCore", bundle: .module,
+                             comment: "Defaults: where to change a default; the Settings window and its pane")
+        }
+    }
+
     public static let viewMenu = String(localized: "View menu", table: "SafiraCore", bundle: .module,
-                                        comment: "Defaults: where to change a default")
-    public static let helpMenu = String(localized: "Help menu", table: "SafiraCore", bundle: .module,
                                         comment: "Defaults: where to change a default")
 }
