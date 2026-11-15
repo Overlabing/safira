@@ -18,24 +18,37 @@ struct PrivateSidebar: View {
     let focus: ColumnFocus
     let pageActions: PageActions
     @Environment(\.designTokens) private var tokens
+    @State private var drag = SidebarDrag()
 
     var body: some View {
         List {
             NewTabRow(shortcut: nil, isSelected: session.sidebarSelection == .newTab, newTab: pageActions.newTab)
-            ForEach(Array(session.tabs.enumerated()), id: \.element.id) { index, tab in
-                TabRowView(tab: tab, icons: session.siteIcons, isSelected: session.sidebarSelection == .tab(tab.id),
-                           isListFocused: focus.isListFocused, placement: .free,
-                           position: index + 1, count: session.tabs.count,
-                           select: { session.select(tab.id) }, close: { session.close(tab.id) })
-                    .modifier(TabDrag(tab: tab, session: session))
-                    .contextMenu {
-                        Button("Move Up") { session.move(tab.id, by: -1) }
-                            .disabled(index == 0)
-                        Button("Move Down") { session.move(tab.id, by: 1) }
-                            .disabled(index == session.tabs.count - 1)
-                        Divider()
-                        Button("Close Tab") { session.close(tab.id) }
+                .sidebarDropTarget(.gap(.tabs(index: 0)), row: "safira.newTabRow", drag: drag, session: session)
+            ForEach(PlainTabCell.cells(of: session.tabs, line: drag.linePlace)) { cell in
+                switch cell {
+                case .tab(let tab, let index):
+                    TabRowView(tab: tab, icons: session.siteIcons,
+                               isSelected: session.sidebarSelection == .tab(tab.id),
+                               isListFocused: focus.isListFocused, placement: .free,
+                               position: index + 1, count: session.tabs.count,
+                               select: { session.select(tab.id) }, close: { session.close(tab.id) })
+                        .sidebarDragSource(.tab(tab.id), drag: drag)
+                        .sidebarDropTarget(.row(above: .tabs(index: index), below: .tabs(index: index + 1)),
+                                           row: cell.id, drag: drag, session: session)
+                        .contextMenu {
+                            Button("Move Up") { session.move(tab.id, by: -1) }
+                                .disabled(index == 0)
+                            Button("Move Down") { session.move(tab.id, by: 1) }
+                                .disabled(index == session.tabs.count - 1)
+                            Divider()
+                            Button("Close Tab") { session.close(tab.id) }
+                        }
+                case .line:
+                    if let place = drag.linePlace {
+                        InsertionLineRow(placement: .free)
+                            .sidebarDropTarget(.gap(place), row: cell.id, drag: drag, session: session)
                     }
+                }
             }
         }
         .modifier(TabListKeyboard(session: session, focus: focus, showPage: pageActions.showPage))
