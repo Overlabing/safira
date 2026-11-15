@@ -46,14 +46,46 @@ final class DiagnosticsController: NSObject, NSMenuItemValidation {
 
     var isDebugModeEnabled: Bool { log.isEnabled }
 
+    /// Shown in Debug mode only.
+    weak var loadExtensionItem: NSMenuItem? {
+        didSet { loadExtensionItem?.isHidden = !log.isEnabled }
+    }
+
     func setDebugMode(_ enabled: Bool) {
         logger.setDebugMode(enabled)
+        loadExtensionItem?.isHidden = !enabled
         settings.save(DiagnosticsSettings(isDebugModeEnabled: enabled))
         restartSampling()
     }
 
     @objc func toggleDebugMode(_ sender: Any?) {
         setDebugMode(!log.isEnabled)
+    }
+
+    /// Loads an extension folder into the Active profile, for this run only. Shown in Debug mode only: installing and
+    /// remembering extensions comes later.
+    @objc func loadUnpackedExtension(_ sender: Any?) {
+        guard let host = registry?.active.extensions else { return }
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.allowsMultipleSelection = false
+        panel.prompt = String(localized: "Load", comment: "Open panel button of Load Unpacked Extension")
+        panel.message = String(localized: """
+            Choose the folder that holds the extension's manifest.json. It runs in the Active profile until Safira quits, \
+            with every permission it asks for.
+            """, comment: "Open panel message of Load Unpacked Extension")
+        guard panel.runModal() == .OK, let folder = panel.url else { return }
+        Task {
+            do {
+                let loaded = try await host.loadUnpacked(at: folder)
+                if !loaded.errors.isEmpty {
+                    UserFacingAlert.runModal(.extensionLoadedWithErrors(name: loaded.displayName, errors: loaded.errors))
+                }
+            } catch {
+                UserFacingAlert.runModal(.extensionNotLoaded(error))
+            }
+        }
     }
 
     @objc func exportDiagnosticLogs(_ sender: Any?) {
@@ -82,6 +114,9 @@ final class DiagnosticsController: NSObject, NSMenuItemValidation {
     func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
         if menuItem.action == #selector(toggleDebugMode(_:)) {
             menuItem.state = log.isEnabled ? .on : .off
+        }
+        if menuItem.action == #selector(loadUnpackedExtension(_:)) {
+            return log.isEnabled && registry?.active.extensions != nil
         }
         if menuItem.action == #selector(exportDiagnosticLogs(_:)) {
             return hasLogs

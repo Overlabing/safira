@@ -1,0 +1,8 @@
+{
+  "manifest_version": 3,
+  "name": "Safira keychain gate",
+  "description": "Stores one non-extractable CryptoKey in IndexedDB, then reads it back.",
+  "version": "1.0",
+  "key": "c2FmaXJhLWtleWNoYWluLWdhdGU=",
+  "background": { "service_worker": "background.js", "type": "module" }
+}
