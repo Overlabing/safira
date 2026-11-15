@@ -44,8 +44,11 @@ let package = Package(
             .product(name: "ColorPlatform", package: "ThemeKit"),
             .product(name: "DesignKit", package: "ThemeKit"),
         ]),
+        // Every test window comes from here (scripts/test-window-patterns.txt).
+        .target(name: "TestSupport", path: "Tests/TestSupport"),
+        .testTarget(name: "TestSupportTests", dependencies: ["TestSupport"]),
         .testTarget(name: "AppearanceTests", dependencies: [
-            "Appearance", "SafiraCore",
+            "Appearance", "SafiraCore", "TestSupport",
             .product(name: "ColorCore", package: "ThemeKit"),
             .product(name: "ColorPlatform", package: "ThemeKit"),
             .product(name: "DesignKit", package: "ThemeKit"),
@@ -65,6 +68,7 @@ let package = Package(
                 resources: [.process("Resources")]),
         .testTarget(name: "SafiraWebTests", dependencies: [
             "SafiraWeb", "SafiraStore", "SafiraSession", "SafiraCore", "Diagnostics", "Appearance", diagnosticsKit,
+            "TestSupport",
         ]),
         .target(name: "Commands", dependencies: ["SafiraCore", preferences, commandKit],
                 resources: [.copy("Presets"), .process("Resources")]),
