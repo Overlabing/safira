@@ -36,6 +36,24 @@ import Testing
         #expect(!AddressDisplay(URL(string: "file:///tmp/page.html")!).isNotSecure)
     }
 
+    @Test func aLoopbackHostIsASecureContextAndCarriesNoMark() {
+        for address in ["http://localhost:8080/", "http://LOCALHOST/", "http://app.localhost/", "http://127.0.0.1/",
+                        "http://127.1.2.3:3000/x", "http://[::1]:8080/"] {
+            #expect(!AddressDisplay(URL(string: address)!).isNotSecure, "\(address)")
+        }
+        for address in ["http://localhost.example.com/", "http://128.0.0.1/", "http://127.0.0.1.example.com/",
+                        "http://10.0.0.1/", "http://[::2]/"] {
+            #expect(AddressDisplay(URL(string: address)!).isNotSecure, "\(address)")
+        }
+    }
+
+    @Test func onlyAnHTTPOrHTTPSAddressIsAWebAddress() {
+        #expect(AddressDisplay(URL(string: "https://example.com/")!).isWebAddress)
+        #expect(AddressDisplay(URL(string: "http://example.com/")!).isWebAddress)
+        #expect(!AddressDisplay(URL(string: "file:///tmp/page.html")!).isWebAddress)
+        #expect(!AddressDisplay(URL(string: "about:blank")!).isWebAddress)
+    }
+
     @Test func aPathKeepsItsDecodedCharacters() {
         #expect(AddressDisplay(URL(string: "https://appstoreconnect.apple.com/apps")!).hostAndPath
                 == "appstoreconnect.apple.com/apps")

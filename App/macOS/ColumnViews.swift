@@ -157,19 +157,25 @@ private struct LeadingGrown: Shape {
     }
 }
 
-/// Copies the shown page's full address. For a moment after, its symbol is a check mark and its title says the link was
-/// copied; VoiceOver announces it.
+/// Copies the shown page's full address (`AddressPasteboard`). For 1.5 s after the last click, its symbol is a check mark
+/// and its help tag says the link was copied; VoiceOver hears it once, from the announcement, its label staying "Copy
+/// Link".
 private struct CopyLinkButton: View {
     let address: URL
+    /// Clicks so far: each one restarts the confirmation's time.
+    @State private var copies = 0
     @State private var copied = false
 
     var body: some View {
-        IconButton(copied ? String(localized: "Link Copied", comment: "Sidebar: the Copy Link button just after a click")
-                          : String(localized: "Copy Link", comment: "Sidebar: button in the address pill that copies the page's address"),
+        let title = String(localized: "Copy Link", comment: "Sidebar: button in the address pill that copies the page's address")
+        IconButton(copied ? String(localized: "Link Copied", comment: "Sidebar: help tag of the Copy Link button just after a click")
+                          : title,
                    systemImage: copied ? "checkmark" : "link") { copy() }
-            .task(id: copied) {
-                guard copied else { return }
+            .accessibilityLabel(title)
+            .task(id: copies) {
+                guard copies > 0 else { return }
                 try? await Task.sleep(for: Self.confirmation)
+                guard !Task.isCancelled else { return }
                 copied = false
             }
             .onChange(of: address) { copied = false }
@@ -178,11 +184,9 @@ private struct CopyLinkButton: View {
     private static let confirmation = Duration.seconds(1.5)
 
     private func copy() {
-        let pasteboard = NSPasteboard.general
-        pasteboard.clearContents()
-        pasteboard.writeObjects([address as NSURL])
-        pasteboard.setString(address.absoluteString, forType: .string)
+        AddressPasteboard.write(address, to: .general)
         copied = true
+        copies += 1
         AccessibilityNotification.Announcement(String(localized: "Link copied", comment: "VoiceOver announcement after Copy Link")).post()
     }
 }

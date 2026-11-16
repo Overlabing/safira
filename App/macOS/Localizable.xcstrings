@@ -1488,7 +1488,7 @@
       }
     },
     "Link Copied" : {
-      "comment" : "Sidebar: the Copy Link button just after a click",
+      "comment" : "Sidebar: help tag of the Copy Link button just after a click",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
