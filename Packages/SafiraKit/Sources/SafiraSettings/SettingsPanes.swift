@@ -18,7 +18,7 @@ public enum SettingsPaneID: String, SettingsPaneIdentifier, CaseIterable {
         switch self {
         case .general: ["updates.automaticChecks"]
         case .linkRules: ["linkMatching.focusOpenTab", "linkPicker.askForSpace", "linkPicker.choiceLog"]
-        case .sitePermissions: ["web.fraudulentSiteWarning", "web.autoplayingSound"]
+        case .sitePermissions: ["web.fraudulentSiteWarning", "web.autoplayingSound", "web.cookiePrompts"]
         case .debug: ["diagnostics.debugMode"]
         case .spaces, .shortcuts, .defaults: []
         }

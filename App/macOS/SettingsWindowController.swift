@@ -321,6 +321,8 @@ private struct SitePermissionsPane: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
             Divider()
+            CookiePromptExceptionsView(profile: registry.active)
+            Divider()
             SitePermissionsView(profileName: name, permissions: registry.active.permissions)
         }
         .settingsPaneMargins()

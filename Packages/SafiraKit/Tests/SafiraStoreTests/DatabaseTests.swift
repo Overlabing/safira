@@ -979,6 +979,20 @@ private let notesFolder = FolderID(rawValue: UUID(uuidString: "DDDDDDDD-DDDD-4DD
         #expect(try ProfileDatabase(file: file).settings() == saved)
     }
 
+    @Test func theCookiePromptSwitchAndExceptionsAreSavedWithTheProfile() async throws {
+        let root = TemporaryRoot()
+        let file = root.layout.profileDatabaseFile(for: work)
+        #expect(try ProfileDatabase(file: file).settings().webContent.cookiePrompts == CookiePromptSettings(
+            isRejecting: true, exceptions: []))
+        let saved = ProfileSettings(searchEngine: .kagi, webContent: WebContentSettings(
+            cookiePrompts: CookiePromptSettings(isRejecting: false, exceptions: ["shop.example", "news.example"])))
+
+        try await ProfileDatabase(file: file).save(saved)
+
+        #expect(try ProfileDatabase(file: file).settings().webContent.cookiePrompts == CookiePromptSettings(
+            isRejecting: false, exceptions: ["news.example", "shop.example"]))
+    }
+
     @Test func savingTheTabsKeepsTheSettingsAndTheOtherWayRound() throws {
         let root = TemporaryRoot()
         let database = try ProfileDatabase(file: root.layout.profileDatabaseFile(for: work))

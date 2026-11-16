@@ -330,6 +330,10 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         registry.active.webContentSettings.isAutoplayingSoundAllowed.toggle()
     }
 
+    @objc func toggleCookiePrompts(_ sender: Any?) {
+        registry.active.webContentSettings.cookiePrompts.isRejecting.toggle()
+    }
+
     func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
         let tab = session.selectedTab
         switch menuItem.action {
@@ -369,6 +373,9 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
             return true
         case #selector(toggleAutoplayingSound(_:)):
             menuItem.state = registry.active.webContentSettings.isAutoplayingSoundAllowed ? .on : .off
+            return true
+        case #selector(toggleCookiePrompts(_:)):
+            menuItem.state = registry.active.webContentSettings.cookiePrompts.isRejecting ? .on : .off
             return true
         default: return true
         }

@@ -94,7 +94,13 @@ public final class ProfileDatabase: Sendable {
                     isFraudulentSiteWarningEnabled: values[SettingKey.fraudulentSiteWarning].map { $0 == "1" }
                         ?? defaults.isFraudulentSiteWarningEnabled,
                     isAutoplayingSoundAllowed: values[SettingKey.autoplayingSound].map { $0 == "1" }
-                        ?? defaults.isAutoplayingSoundAllowed
+                        ?? defaults.isAutoplayingSoundAllowed,
+                    cookiePrompts: CookiePromptSettings(
+                        isRejecting: values[SettingKey.cookiePrompts].map { $0 == "1" }
+                            ?? defaults.cookiePrompts.isRejecting,
+                        exceptions: Set((values[SettingKey.cookiePromptExceptions] ?? "")
+                            .split(separator: "\n").map(String.init))
+                    )
                 )
             )
         }
@@ -194,6 +200,9 @@ public final class ProfileDatabase: Sendable {
         static let searchEngine = "search_engine"
         static let fraudulentSiteWarning = "web.fraudulent_site_warning"
         static let autoplayingSound = "web.autoplaying_sound"
+        static let cookiePrompts = "web.cookie_prompts"
+        /// The excepted sites, one per line.
+        static let cookiePromptExceptions = "web.cookie_prompt_exceptions"
     }
 
     private static func write(_ settings: ProfileSettings, _ db: Database) throws {
@@ -204,10 +213,14 @@ public final class ProfileDatabase: Sendable {
             try db.execute(sql: "DELETE FROM profile_setting WHERE key = ?", arguments: [SettingKey.searchEngine])
         }
         for (key, value) in [(SettingKey.fraudulentSiteWarning, settings.webContent.isFraudulentSiteWarningEnabled),
-                             (SettingKey.autoplayingSound, settings.webContent.isAutoplayingSoundAllowed)] {
+                             (SettingKey.autoplayingSound, settings.webContent.isAutoplayingSoundAllowed),
+                             (SettingKey.cookiePrompts, settings.webContent.cookiePrompts.isRejecting)] {
             try db.execute(sql: "INSERT OR REPLACE INTO profile_setting (key, value) VALUES (?, ?)",
                            arguments: [key, value ? "1" : "0"])
         }
+        try db.execute(sql: "INSERT OR REPLACE INTO profile_setting (key, value) VALUES (?, ?)",
+                       arguments: [SettingKey.cookiePromptExceptions,
+                                   settings.webContent.cookiePrompts.exceptions.sorted().joined(separator: "\n")])
     }
 
     private struct StoredTab {
