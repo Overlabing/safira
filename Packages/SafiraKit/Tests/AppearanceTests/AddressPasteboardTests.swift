@@ -27,6 +27,8 @@ import Testing
         let pasteboard = Self.written("file:///tmp/page.html")
         defer { pasteboard.releaseGlobally() }
         #expect(pasteboard.string(forType: .string) == "file:///tmp/page.html")
-        #expect(pasteboard.types == [.string])
+        // AppKit adds its legacy plain-text alias beside `.string`: what matters is that no URL type is there.
+        #expect(pasteboard.types?.contains(.URL) == false)
+        #expect(pasteboard.types?.contains(.fileURL) == false)
     }
 }
