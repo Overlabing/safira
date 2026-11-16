@@ -723,6 +723,17 @@
         }
       }
     },
+    "Copy Link" : {
+      "comment" : "Sidebar: button in the address pill that copies the page's address",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copier le lien"
+          }
+        }
+      }
+    },
     "Create" : {
       "comment" : "Main window",
       "localizations" : {
@@ -1476,6 +1487,17 @@
         }
       }
     },
+    "Link Copied" : {
+      "comment" : "Sidebar: the Copy Link button just after a click",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lien copié"
+          }
+        }
+      }
+    },
     "Link Rules" : {
       "comment" : "Link rules window",
       "extractionState" : "stale",
@@ -1515,6 +1537,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Lien déjà ouvert"
+          }
+        }
+      }
+    },
+    "Link copied" : {
+      "comment" : "VoiceOver announcement after Copy Link",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lien copié"
           }
         }
       }
@@ -1885,6 +1918,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aucun (raccourcis de Safira)"
+          }
+        }
+      }
+    },
+    "Not Secure" : {
+      "comment" : "Sidebar: VoiceOver value before the address of a plain HTTP page",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non sécurisé"
           }
         }
       }

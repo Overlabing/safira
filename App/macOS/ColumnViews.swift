@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Antonin Carlin
 
+import AppKit
 import Appearance
 import ColorCore
 import ColorUI
@@ -10,8 +11,8 @@ import SafiraCore
 import SafiraSession
 import SwiftUI
 
-// The pieces both windows build their sidebar column from, all of them ThemeKit kit views: the browser controls in
-// the status line's place, Tab rows, the New Tab row, and the keyboard model of the list.
+// The pieces both windows build their sidebar column from, all of them ThemeKit kit views: the column's head (the
+// navigation buttons and the address pill), Tab rows, the New Tab row, and the keyboard model of the list.
 
 /// What the column's controls ask the window to do: the window owns the Command bar and the page's focus.
 struct PageActions {
@@ -36,45 +37,104 @@ final class ColumnFocus {
     }
 }
 
-/// The sidebar's head field, where Oisillon has its sidebar search (`sidebarColumn(field:…)` puts it there): the
-/// address of the shown Tab, then Back, Forward and Reload, then `trailing` (the Main window's extension buttons; a
-/// Private window has none). The address field shows the host; hovering shows the full
-/// address, VoiceOver reads it, and clicking opens the Command bar with it selected.
-struct BrowserControls<Trailing: View>: View {
-    let session: ProfileSession
-    let actions: PageActions
-    @ViewBuilder let trailing: Trailing
-    @Environment(\.designTokens) private var tokens
-
-    init(session: ProfileSession, actions: PageActions, @ViewBuilder trailing: () -> Trailing = { EmptyView() }) {
-        self.session = session
-        self.actions = actions
-        self.trailing = trailing()
+extension View {
+    /// A browser window's column with ThemeKit's sidebar head, as in Zen
+    /// (`sidebarColumn(sidebarButtonShortcut:titleBar:field:fieldAccessory:header:bottomBar:)`): on the line of the
+    /// window's buttons, the kit's sidebar button then Back, Forward and Reload; under it the address pill the column's
+    /// width, the shown Tab's host on its leading side and, with a page shown, `extensions` (the Main window's extension
+    /// buttons; a Private window has none) and Copy Link inside it on its trailing edge. `sidebarShortcut` is the
+    /// shortcut the sidebar button's help tag names.
+    func browserColumn<Extensions: View, Header: View, BottomBar: View>(
+        session: ProfileSession, actions: PageActions, sidebarShortcut: String?,
+        @ViewBuilder extensions: () -> Extensions, @ViewBuilder header: () -> Header,
+        @ViewBuilder bottomBar: () -> BottomBar
+    ) -> some View {
+        let extensions = extensions()
+        return sidebarColumn(sidebarButtonShortcut: sidebarShortcut) {
+            NavigationButtons(session: session)
+        } field: {
+            AddressField(session: session, editAddress: actions.editAddress)
+        } fieldAccessory: {
+            if let address = session.selectedTab?.address {
+                extensions
+                CopyLinkButton(address: address)
+            }
+        } header: {
+            header()
+        } bottomBar: {
+            bottomBar()
+        }
     }
+}
+
+/// Back, Forward and Reload, at the trailing end of the column's title bar row; disabled when they would do nothing.
+private struct NavigationButtons: View {
+    let session: ProfileSession
 
     var body: some View {
         let tab = session.selectedTab
-        let address = tab?.address
-        HStack(spacing: 0) {
-            Button(action: actions.editAddress) {
-                AddressField(symbol: symbol(for: address), host: address.map { AddressDisplay($0).host } ?? "",
-                             placeholder: Self.placeholder, zoom: zoom)
+        IconButton(String(localized: "Back", comment: "Sidebar"), systemImage: "arrow.left") { session.goBack() }
+            .disabled(tab?.state.canGoBack != true)
+        IconButton(String(localized: "Forward", comment: "Sidebar"), systemImage: "arrow.right") { session.goForward() }
+            .disabled(tab?.state.canGoForward != true)
+        IconButton(String(localized: "Reload", comment: "Sidebar"), systemImage: "arrow.clockwise") { session.reload() }
+            .disabled(tab?.address == nil)
+    }
+}
+
+/// The address in the pill: the shown Tab's host, larger, as in Zen, or the placeholder with no page; a not-secure mark
+/// before it for a plain HTTP page (an encrypted page has none); the page zoom's badge when it is not 100%. Hovering
+/// shows the full address and VoiceOver reads it; a click anywhere in the pill but on its buttons opens the Command
+/// bar with it selected.
+private struct AddressField: View {
+    let session: ProfileSession
+    let editAddress: () -> Void
+    @Environment(\.designTokens) private var tokens
+
+    var body: some View {
+        let address = session.selectedTab?.address
+        let host = address.map { AddressDisplay($0).host }
+        let isNotSecure = address.map { AddressDisplay($0).isNotSecure } ?? false
+        Button(action: editAddress) {
+            WithColorRoles { roles in
+                HStack(spacing: tokens.spacing.pillTileToText) {
+                    if isNotSecure {
+                        Image(systemName: "lock.slash")
+                            .font(tokens.type.accessory.font)
+                            .foregroundStyle(roles.secondaryText)
+                            .accessibilityHidden(true)
+                    }
+                    Text(host ?? Self.placeholder)
+                        .role(tokens.type.sidebarFieldTitle)
+                        .foregroundStyle(host == nil ? AnyShapeStyle(roles.secondaryText) : AnyShapeStyle(.primary))
+                        .lineLimit(1)
+                    Spacer(minLength: 0)
+                    if let zoom {
+                        Text(verbatim: zoom)
+                            .role(tokens.type.count)
+                            .monospacedDigit()
+                            .foregroundStyle(roles.secondaryText)
+                            .padding(.horizontal, tokens.spacing.rowGap)
+                            .background(roles.secondaryText.opacity(0.15), in: Capsule(style: .continuous))
+                            .fixedSize()
+                            .help(String(localized: "Page zoom. Actual Size (⌘0) shows the page at its own size.", comment: "Sidebar: help tag of the zoom badge in the address field"))
+                            .accessibilityHidden(true)
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                .contentShape(LeadingGrown(by: tokens.spacing.sidebarFieldPillLeading))
             }
-            .buttonStyle(PressedOpacityStyle())
-            .help(address?.absoluteString ?? FloatingCommandBar.placeholder)
-            // On the button itself, so that VoiceOver keeps its press action: the full address, not the host.
-            .accessibilityLabel(Text("Address"))
-            .accessibilityValue(Text(verbatim: [address?.absoluteString, zoom.map { String(localized: "Zoom \($0)", comment: "Sidebar: VoiceOver value after the address; the page zoom, for example 125%") }]
-                .compactMap { $0 }.joined(separator: ", ")))
-            .accessibilityHint(Text("Opens the Command bar"))
-            IconButton(String(localized: "Back", comment: "Sidebar"), systemImage: "chevron.left") { session.goBack() }
-                .disabled(tab?.state.canGoBack != true)
-            IconButton(String(localized: "Forward", comment: "Sidebar"), systemImage: "chevron.right") { session.goForward() }
-                .disabled(tab?.state.canGoForward != true)
-            IconButton(String(localized: "Reload", comment: "Sidebar"), systemImage: "arrow.clockwise") { session.reload() }
-                .disabled(address == nil)
-            trailing
         }
+        .buttonStyle(PressedOpacityStyle())
+        .help(address?.absoluteString ?? FloatingCommandBar.placeholder)
+        // On the button itself, so that VoiceOver keeps its press action: the full address, not the host.
+        .accessibilityLabel(Text("Address"))
+        .accessibilityValue(Text(verbatim: [
+            isNotSecure ? String(localized: "Not Secure", comment: "Sidebar: VoiceOver value before the address of a plain HTTP page") : nil,
+            address?.absoluteString,
+            zoom.map { String(localized: "Zoom \($0)", comment: "Sidebar: VoiceOver value after the address; the page zoom, for example 125%") },
+        ].compactMap { $0 }.joined(separator: ", ")))
+        .accessibilityHint(Text("Opens the Command bar"))
     }
 
     /// The page zoom when it is not 100%, as the badge shows it.
@@ -83,58 +143,47 @@ struct BrowserControls<Trailing: View>: View {
         return tab.zoom.percentage
     }
 
-    /// Shorter than the Command bar's own placeholder, which the help tag shows in full: the field shares its row with
-    /// three buttons and the French text did not fit.
     static var placeholder: String {
         String(localized: "Search or address", comment: "Sidebar: placeholder of the address pill with no page; keep it short")
     }
+}
 
-    /// A lock for an encrypted page, a plain globe otherwise; a magnifying glass with no page.
-    private func symbol(for address: URL?) -> String {
-        guard let address else { return "magnifyingglass" }
-        return address.scheme == "https" ? "lock.fill" : "globe"
+/// The field's rectangle grown over the pill's leading inset, so a click there opens the Command bar too.
+private struct LeadingGrown: Shape {
+    let by: CGFloat
+
+    func path(in rect: CGRect) -> Path {
+        Path(CGRect(x: rect.minX - by, y: rect.minY, width: rect.width + by, height: rect.height))
     }
 }
 
-/// The address as a sidebar search field draws its text: a capsule `Size.sidebarField` tall on glass, a symbol in the
-/// secondary ink, the host in the label colour or the placeholder in the secondary ink.
-private struct AddressField: View {
-    let symbol: String
-    let host: String
-    let placeholder: String
-    /// The page zoom's badge, "125%"; nil at 100%.
-    let zoom: String?
-    @Environment(\.designTokens) private var tokens
+/// Copies the shown page's full address. For a moment after, its symbol is a check mark and its title says the link was
+/// copied; VoiceOver announces it.
+private struct CopyLinkButton: View {
+    let address: URL
+    @State private var copied = false
 
     var body: some View {
-        WithColorRoles { roles in
-            HStack(spacing: tokens.spacing.pillTileToText) {
-                Image(systemName: symbol)
-                    .font(tokens.type.accessory.font)
-                    .foregroundStyle(roles.secondaryText)
-                    .accessibilityHidden(true)
-                Text(host.isEmpty ? placeholder : host)
-                    .role(tokens.type.rowTitle)
-                    .foregroundStyle(host.isEmpty ? AnyShapeStyle(roles.secondaryText) : AnyShapeStyle(.primary))
-                    .lineLimit(1)
-                Spacer(minLength: 0)
-                if let zoom {
-                    Text(verbatim: zoom)
-                        .role(tokens.type.count)
-                        .monospacedDigit()
-                        .foregroundStyle(roles.secondaryText)
-                        .padding(.horizontal, tokens.spacing.rowGap)
-                        .background(roles.secondaryText.opacity(0.15), in: Capsule(style: .continuous))
-                        .fixedSize()
-                        .help(String(localized: "Page zoom. Actual Size (⌘0) shows the page at its own size.", comment: "Sidebar: help tag of the zoom badge in the address field"))
-                        .accessibilityHidden(true)
-                }
+        IconButton(copied ? String(localized: "Link Copied", comment: "Sidebar: the Copy Link button just after a click")
+                          : String(localized: "Copy Link", comment: "Sidebar: button in the address pill that copies the page's address"),
+                   systemImage: copied ? "checkmark" : "link") { copy() }
+            .task(id: copied) {
+                guard copied else { return }
+                try? await Task.sleep(for: Self.confirmation)
+                copied = false
             }
-            .padding(.horizontal, tokens.spacing.rowInsetHorizontal)
-            .frame(height: tokens.size.sidebarField)
-            .surface(.glass(tint: 0), in: Capsule(style: .continuous))
-            .contentShape(Capsule(style: .continuous))
-        }
+            .onChange(of: address) { copied = false }
+    }
+
+    private static let confirmation = Duration.seconds(1.5)
+
+    private func copy() {
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.writeObjects([address as NSURL])
+        pasteboard.setString(address.absoluteString, forType: .string)
+        copied = true
+        AccessibilityNotification.Announcement(String(localized: "Link copied", comment: "VoiceOver announcement after Copy Link")).post()
     }
 }
 

@@ -28,6 +28,14 @@ import Testing
         #expect(AddressDisplay(URL(string: "https://youtube.com")!).hostAndPath == "youtube.com")
     }
 
+    @Test func onlyAPlainHTTPPageIsMarkedNotSecure() {
+        #expect(AddressDisplay(URL(string: "http://example.com/")!).isNotSecure)
+        #expect(AddressDisplay(URL(string: "HTTP://example.com/")!).isNotSecure)
+        #expect(!AddressDisplay(URL(string: "https://example.com/")!).isNotSecure)
+        #expect(!AddressDisplay(URL(string: "about:blank")!).isNotSecure)
+        #expect(!AddressDisplay(URL(string: "file:///tmp/page.html")!).isNotSecure)
+    }
+
     @Test func aPathKeepsItsDecodedCharacters() {
         #expect(AddressDisplay(URL(string: "https://appstoreconnect.apple.com/apps")!).hostAndPath
                 == "appstoreconnect.apple.com/apps")

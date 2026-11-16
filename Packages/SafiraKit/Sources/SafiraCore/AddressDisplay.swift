@@ -23,4 +23,10 @@ public struct AddressDisplay: Equatable, Sendable {
         let path = address.path(percentEncoded: false)
         return path == "/" ? host : host + path
     }
+
+    /// A page sent in the clear over plain HTTP: the pill marks it. An encrypted page has no mark, nor has one that is
+    /// not on the network (a file, `about:blank`).
+    public var isNotSecure: Bool {
+        address.scheme?.lowercased() == "http"
+    }
 }
