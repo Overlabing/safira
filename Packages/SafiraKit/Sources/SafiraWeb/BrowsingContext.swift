@@ -12,3 +12,15 @@ public protocol BrowsingContext: AnyObject {
 }
 
 extension ProfileContext: BrowsingContext {}
+
+extension BrowsingContext {
+    /// Leaves the site's cookie prompts for the user to answer, and reloads the shown Tab so its prompt comes back. A
+    /// Profile saves the exception with its settings; a Private window keeps it in memory, for the window's life.
+    public func allowCookiePrompts(onSite site: String) {
+        var settings = web.webContentSettings
+        settings.cookiePrompts.addException(forHost: site)
+        web.webContentSettings = settings
+        session.setWebContentSettings(settings)
+        session.reload()
+    }
+}

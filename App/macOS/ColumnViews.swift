@@ -22,6 +22,8 @@ struct PageActions {
     let newTab: () -> Void
     /// Return or Escape in the Tab list: the keyboard goes to the page.
     let showPage: () -> Void
+    /// "Allow Prompts on This Site" in the cookie indicator: the site is excepted and the shown Tab reloads.
+    let allowCookiePrompts: (String) -> Void
 }
 
 /// The keyboard state of the Tab list. The window asks for the focus through it, since the list is a SwiftUI view
@@ -41,9 +43,10 @@ extension View {
     /// A browser window's column with ThemeKit's sidebar head, as in Zen
     /// (`sidebarColumn(sidebarButtonShortcut:titleBar:field:fieldAccessory:header:bottomBar:)`): on the line of the
     /// window's buttons, the kit's sidebar button then Back, Forward and Reload; under it the address pill the column's
-    /// width, the shown Tab's host on its leading side and, with a page shown, `extensions` (the Main window's extension
-    /// buttons; a Private window has none) and Copy Link inside it on its trailing edge. `sidebarShortcut` is the
-    /// shortcut the sidebar button's help tag names.
+    /// width, the shown Tab's host on its leading side and, with a page shown, the cookie indicator once Safira has
+    /// handled the page's cookie prompt, `extensions` (the Main window's extension buttons; a Private window has none)
+    /// and Copy Link inside it on its trailing edge. `sidebarShortcut` is the shortcut the sidebar button's help tag
+    /// names.
     func browserColumn<Extensions: View, Header: View, BottomBar: View>(
         session: ProfileSession, actions: PageActions, sidebarShortcut: String?,
         @ViewBuilder extensions: () -> Extensions, @ViewBuilder header: () -> Header,
@@ -56,6 +59,9 @@ extension View {
             AddressField(session: session, editAddress: actions.editAddress)
         } fieldAccessory: {
             if let address = session.selectedTab?.address {
+                if let cookiePrompt = session.selectedTab?.state.cookiePrompt, cookiePrompt.isShown {
+                    CookiePromptIndicator(report: cookiePrompt, allow: actions.allowCookiePrompts)
+                }
                 extensions
                 CopyLinkButton(address: address)
             }

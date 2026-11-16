@@ -17,6 +17,7 @@ private let documentedDefaults: [(id: String, value: String, control: DefaultCon
     ("diagnostics.debugMode", "Off", .toggle(isOn: false)),
     ("web.fraudulentSiteWarning", "On", .toggle(isOn: true)),
     ("web.autoplayingSound", "Blocked", .toggle(isOn: false)),
+    ("web.cookiePrompts", "Rejected automatically", .toggle(isOn: true)),
     ("web.inspector", "On", .information),
     ("linkMatching.focusOpenTab", "On", .toggle(isOn: true)),
     ("linkPicker.askForSpace", "Off", .toggle(isOn: false)),

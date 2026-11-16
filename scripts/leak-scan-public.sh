@@ -10,7 +10,9 @@
 # Why each file is listed:
 #   - the test files hold invented identifiers shaped like a Slack workspace id (a letter, a digit, then capitals), the placeholder
 #     home directory /Users/me, and example mail addresses on reserved domains;
-#   - THIRD_PARTY_NOTICES.md carries the copyright line of an upstream author, whose address is public in the upstream.
+#   - THIRD_PARTY_NOTICES.md carries the copyright line of an upstream author, whose address is public in the upstream;
+#   - the vendored autoconsent files are upstream's bytes, checked against scripts/autoconsent.pin; its rules hold CSS
+#     selectors shaped like a team identifier (ten capitals and digits).
 set -u
 cd "$(dirname "$0")/.."
 tools=$(scripts/tools.sh) || exit 1
@@ -24,4 +26,6 @@ exec "$tools/bin/leak-scan" --public \
     --exclude 'Packages/SafiraKit/Tests/SafiraSessionTests/ExternalLinkTests.swift' \
     --exclude 'Packages/SafiraKit/Tests/SafiraStoreTests/HistoryTests.swift' \
     --exclude 'THIRD_PARTY_NOTICES.md' \
+    --exclude 'Packages/SafiraKit/Sources/SafiraWeb/Resources/Autoconsent/autoconsent-rules.json' \
+    --exclude 'Packages/SafiraKit/Sources/SafiraWeb/Resources/Autoconsent/autoconsent.js' \
     "$@"

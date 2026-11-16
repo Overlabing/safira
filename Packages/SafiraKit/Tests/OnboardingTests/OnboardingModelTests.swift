@@ -89,7 +89,7 @@ import Testing
 
         #expect(model.defaults.toggles == [
             "updates.automaticChecks": false, "diagnostics.debugMode": false, "web.fraudulentSiteWarning": true,
-            "web.autoplayingSound": false, "linkMatching.focusOpenTab": true, "linkPicker.askForSpace": false,
+            "web.autoplayingSound": false, "web.cookiePrompts": true, "linkMatching.focusOpenTab": true, "linkPicker.askForSpace": false,
             "linkPicker.choiceLog": false,
         ])
         #expect(Set(model.defaults.toggles.keys) == Set(switches.map(\.id)))

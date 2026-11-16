@@ -357,7 +357,8 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSMen
             editAddress: { [weak self] in self?.focusCommandBar(nil) },
             // As in the Main window: the Command bar opens once the click on the New Tab row is over.
             newTab: { Task { @MainActor [weak self] in self?.newTab(nil) } },
-            showPage: { [weak self] in self?.showPage() })
+            showPage: { [weak self] in self?.showPage() },
+            allowCookiePrompts: { [weak self] site in self?.context.allowCookiePrompts(onSite: site) })
         let column = PrivateSidebar(session: session, parent: context.parent, focus: columnFocus, pageActions: pageActions,
                                     web: context.web, downloads: downloads)
         let theme: () -> Theme = { SidebarComposition.privateTheme }
