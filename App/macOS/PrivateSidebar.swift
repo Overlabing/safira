@@ -8,8 +8,8 @@ import SafiraCore
 import SafiraSession
 import SwiftUI
 
-/// The column of a Private window, ThemeKit's sidebar column like the Main window's: the address and Back, Forward and
-/// Reload in the head field, the list of its Tabs, and in the bottom bar, where the Main window has the Space rail, a
+/// The column of a Private window, ThemeKit's sidebar column with its head like the Main window's (`browserColumn`),
+/// with no extension buttons in the address pill; the list of its Tabs, and in the bottom bar, where the Main window has the Space rail, a
 /// band naming the Profile it is attached to. The Private Theme's purple, always dark, is what tells it from the Main
 /// window.
 struct PrivateSidebar: View {
@@ -39,8 +39,8 @@ struct PrivateSidebar: View {
             }
         }
         .modifier(TabListKeyboard(session: session, focus: focus, showPage: pageActions.showPage))
-        .sidebarColumn {
-            BrowserControls(session: session, actions: pageActions)
+        .browserColumn(session: session, actions: pageActions, sidebarShortcut: nil) {
+            EmptyView()
         } header: {
             EmptyView()
         } bottomBar: {
