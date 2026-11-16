@@ -228,6 +228,26 @@ private func schema(_ file: URL) throws -> [String] {
         #expect(try ProfileDatabase(file: root.layout.profileDatabaseFile(for: personal)).downloads() == [])
     }
 
+    @Test func aPausedDownloadIsKeptAsCancelledAndAnUnknownStateReadsAsFailed() throws {
+        let root = TemporaryRoot()
+        let file = root.layout.profileDatabaseFile(for: work)
+        let paused = DownloadRecord(
+            id: DownloadID(rawValue: UUID(uuidString: "D0000000-0000-4000-8000-000000000003")!),
+            sourceURL: URL(string: "https://files.example/c.zip")!, fileName: "c.zip", state: .paused,
+            receivedBytes: 300, totalBytes: 1000, resumeData: Data([4, 2]),
+            startedAt: Date(timeIntervalSince1970: 1_700_000_000), finishedAt: Date(timeIntervalSince1970: 1_700_000_010))
+        try ProfileDatabase(file: file).save(paused)
+        var expected = paused
+        expected.state = .cancelled
+        #expect(try ProfileDatabase(file: file).downloads() == [expected])
+
+        try DatabaseQueue(path: file.path(percentEncoded: false)).write { db in
+            try db.execute(sql: "UPDATE download SET state = 'aStateFromANewerBuild'")
+        }
+        expected.state = .failed
+        #expect(try ProfileDatabase(file: file).downloads() == [expected])
+    }
+
     @Test func savingADownloadAgainReplacesItAndRemovingDeletesOnlyTheOnesNamed() throws {
         let database = try ProfileDatabase.inMemory()
         var first = DownloadRecord(sourceURL: URL(string: "https://files.example/a.zip")!, fileName: "a.zip",

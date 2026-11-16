@@ -201,7 +201,7 @@ final class DownloadController: NSObject, WKDownloadDelegate, DownloadEngine {
 
     func download(_ download: WKDownload, didFailWithError error: any Error, resumeData: Data?) {
         guard let transfer = transfers.removeValue(forKey: ObjectIdentifier(download)) else { return }
-        downloads.fail(transfer.id, resumeData: resumeData)
+        downloads.fail(transfer.id, resumeData: resumeData, reason: error.localizedDescription)
     }
 }
 

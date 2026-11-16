@@ -58,7 +58,8 @@ public final class WebKitPage: NSObject, WebPageHandle {
          startDownload: @escaping @MainActor (WKDownload) -> Void,
          panels: @escaping @MainActor () -> PagePanels? = { nil },
          onClose: @escaping @MainActor () -> Void) {
-        webView = WKWebView(frame: .zero, configuration: configuration)
+        let webView = SafiraWebView(frame: .zero, configuration: configuration)
+        self.webView = webView
         self.makeNewTabPage = makeNewTabPage
         self.makePopupPage = makePopupPage
         self.decidePermission = decidePermission
@@ -74,6 +75,7 @@ public final class WebKitPage: NSObject, WebPageHandle {
         super.init()
         webView.navigationDelegate = self
         webView.uiDelegate = self
+        webView.onMenuAction = { [weak self] action, url in self?.perform(action, on: url) }
         observations = [
             observe(\.url), observe(\.title), observe(\.canGoBack), observe(\.canGoForward), observe(\.isLoading),
         ]
@@ -325,6 +327,19 @@ extension WebKitPage: WKNavigationDelegate {
 
     public func webView(_ webView: WKWebView, navigationResponse: WKNavigationResponse, didBecome download: WKDownload) {
         began(download)
+    }
+
+    /// A context menu item of the page: Download Image and its kind save the file in the Tab's Profile like any other
+    /// download; Open Link in New Tab and its kind open a Tab next to this one, as a ⌘-click does.
+    func perform(_ action: PageMenuAction, on url: URL) {
+        guard !isClosed else { return }
+        if action.isDownload {
+            webView.startDownload(using: URLRequest(url: url)) { [weak self] download in
+                self?.startDownload(download)
+            }
+        } else {
+            onNewTab?(.address(url))
+        }
     }
 
     /// The Profile's downloads hold the transfer, so the Tab may go away right after, outside WebKit's callback.

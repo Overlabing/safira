@@ -34,6 +34,7 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSMen
     private var toolbar: SidebarToolbar?
     /// The sidebar button hides and shows this window's column; a Private window has no Compact mode and keeps nothing.
     private var presentation = SidebarPresentation()
+    private let downloads = DownloadsPresenter()
     private var searchEngineSheet: NSWindow?
     private var popupPanels: [PopupID: PopupPanelController] = [:]
     private var renderedTabID: TabID?
@@ -85,6 +86,15 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSMen
     }
 
     // MARK: Menu actions
+
+    /// ⌥⌘L: this window's downloads panel. A hidden sidebar is shown first, so the panel has its button to hang from.
+    @objc func showDownloads(_ sender: Any?) {
+        if presentation.isCompact {
+            presentation.toggleCompact()
+            layout?.apply(presentation, animated: true)
+        }
+        downloads.isPresented.toggle()
+    }
 
     @objc func newTab(_ sender: Any?) {
         commandBar.open(for: .newTab, text: "")
@@ -348,7 +358,8 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSMen
             // As in the Main window: the Command bar opens once the click on the New Tab row is over.
             newTab: { Task { @MainActor [weak self] in self?.newTab(nil) } },
             showPage: { [weak self] in self?.showPage() })
-        let column = PrivateSidebar(session: session, parent: context.parent, focus: columnFocus, pageActions: pageActions)
+        let column = PrivateSidebar(session: session, parent: context.parent, focus: columnFocus, pageActions: pageActions,
+                                    web: context.web, downloads: downloads)
         let theme: () -> Theme = { SidebarComposition.privateTheme }
         let layout = BrowserWindowLayout(background: NSHostingView(rootView: WindowBackdrop(theme: theme)),
                                          column: column, canvas: canvas)

@@ -25,6 +25,7 @@ struct TabSidebar: View {
     let spaceActions: SpaceActions
     let folderActions: FolderActions
     let extensionPopups: ExtensionPopups
+    let downloads: DownloadsPresenter
     /// The shortcut a menu item shows for a command, in the bindings in force ("⌘T", "⌃1").
     let shortcut: (CommandID) -> String?
 
@@ -54,8 +55,12 @@ struct TabSidebar: View {
         } header: {
             EmptyView()
         } bottomBar: {
-            SpaceRailBar(registry: registry, profileActions: profileActions, spaceActions: spaceActions,
-                         shortcut: shortcut)
+            HStack(alignment: .top, spacing: 0) {
+                SidebarDownloads(downloads: registry.active.downloads, web: registry.active.web, presenter: downloads)
+                    .padding(.leading, DesignTokens.standard.spacing.listMargin - DesignTokens.standard.spacing.rowInsetHorizontal)
+                SpaceRailBar(registry: registry, profileActions: profileActions, spaceActions: spaceActions,
+                             shortcut: shortcut)
+            }
         }
         .theme(spaceTheme)
     }
