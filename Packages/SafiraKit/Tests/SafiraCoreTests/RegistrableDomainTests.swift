@@ -47,7 +47,7 @@ private func site(_ address: String) -> String? {
         #expect(site("http://10.0.0.1:80/a") == site("https://10.0.0.1/b"))
     }
 
-    @Test(arguments: ["about:blank", "file:///Users/me/index.html", "mailto:me@example.com", "ftp://example.com/",
+    @Test(arguments: ["about:blank", "file:///tmp/page.html", "mailto:someone@example.com", "ftp://example.com/",
                       "https:///path"])
     func anAddressThatIsNotAWebAddressHasNoSite(address: String) {
         #expect(site(address) == nil)
