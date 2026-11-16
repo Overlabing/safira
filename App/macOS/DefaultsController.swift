@@ -34,6 +34,7 @@ final class DefaultsController: NSObject {
         case "diagnostics.debugMode": diagnostics.isDebugModeEnabled
         case "web.fraudulentSiteWarning": registry.active.webContentSettings.isFraudulentSiteWarningEnabled
         case "web.autoplayingSound": registry.active.webContentSettings.isAutoplayingSoundAllowed
+        case "web.cookiePrompts": registry.active.webContentSettings.cookiePrompts.isRejecting
         case "linkMatching.focusOpenTab": links.focusesMatchingTab
         case "linkPicker.askForSpace": links.asksForSpaceToo
         case "linkPicker.choiceLog": links.logsChoices
@@ -47,6 +48,7 @@ final class DefaultsController: NSObject {
         case "diagnostics.debugMode": diagnostics.setDebugMode(isOn)
         case "web.fraudulentSiteWarning": registry.active.webContentSettings.isFraudulentSiteWarningEnabled = isOn
         case "web.autoplayingSound": registry.active.webContentSettings.isAutoplayingSoundAllowed = isOn
+        case "web.cookiePrompts": registry.active.webContentSettings.cookiePrompts.isRejecting = isOn
         case "linkMatching.focusOpenTab": links.focusesMatchingTab = isOn
         case "linkPicker.askForSpace": links.asksForSpaceToo = isOn
         case "linkPicker.choiceLog": links.logsChoices = isOn
@@ -91,7 +93,8 @@ final class DefaultsController: NSObject {
         guard let engine = choices.searchEngine else { return }
         let web = WebContentSettings(
             isFraudulentSiteWarningEnabled: choices.toggles["web.fraudulentSiteWarning"] ?? true,
-            isAutoplayingSoundAllowed: choices.toggles["web.autoplayingSound"] ?? false)
+            isAutoplayingSoundAllowed: choices.toggles["web.autoplayingSound"] ?? false,
+            cookiePrompts: CookiePromptSettings(isRejecting: choices.toggles["web.cookiePrompts"] ?? true))
         registry.completeOnboarding(name: choices.profileName, symbol: choices.profileSymbol, searchEngine: engine,
                                     webContent: web)
         if let preset = choices.shortcutPreset { shortcuts.choose(preset) }

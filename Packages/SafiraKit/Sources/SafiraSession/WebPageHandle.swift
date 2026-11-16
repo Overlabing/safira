@@ -13,15 +13,18 @@ public struct PageState: Hashable, Sendable {
     public var isLoading: Bool
     /// Audio or video is playing in the page. WebKit reports media playback as a whole, not sound alone.
     public var isPlayingMedia: Bool
+    /// What Safira did about the page's cookie consent prompt; nil when it found none.
+    public var cookiePrompt: CookiePromptReport?
 
     public init(url: URL? = nil, title: String? = nil, canGoBack: Bool = false, canGoForward: Bool = false,
-                isLoading: Bool = false, isPlayingMedia: Bool = false) {
+                isLoading: Bool = false, isPlayingMedia: Bool = false, cookiePrompt: CookiePromptReport? = nil) {
         self.url = url
         self.title = title
         self.canGoBack = canGoBack
         self.canGoForward = canGoForward
         self.isLoading = isLoading
         self.isPlayingMedia = isPlayingMedia
+        self.cookiePrompt = cookiePrompt
     }
 }
 

@@ -15,10 +15,11 @@ import Testing
 @Test func theRegistryListsBothDefaultsWithTheirValues() {
     let entries = WebContentSettings.defaultEntries
 
-    #expect(entries.map(\.id) == ["web.fraudulentSiteWarning", "web.autoplayingSound"])
-    #expect(entries.map(\.title) == ["Warn about fraudulent websites", "Allow autoplaying sound"])
-    #expect(entries.map(\.value) == ["On", "Blocked"])
-    #expect(entries.map(\.whereToChange) == ["Settings › Site Permissions", "Settings › Site Permissions"])
+    #expect(entries.map(\.id) == ["web.fraudulentSiteWarning", "web.autoplayingSound", "web.cookiePrompts"])
+    #expect(entries.map(\.title) == ["Warn about fraudulent websites", "Allow autoplaying sound", "Cookie prompts"])
+    #expect(entries.map(\.value) == ["On", "Blocked", "Rejected automatically"])
+    #expect(entries.map(\.whereToChange) == ["Settings › Site Permissions", "Settings › Site Permissions",
+                                             "Settings › Site Permissions"])
 }
 
 @Test func theFraudulentSiteWarningSaysItMayConsultAThirdPartyService() throws {

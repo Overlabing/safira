@@ -25,6 +25,7 @@ public final class WebKitPage: NSObject, WebPageHandle {
     /// Safira's own content world: its scripts run out of the page's reach.
     static let contentWorld = WKContentWorld.world(name: "Safira")
     private var isPlayingMedia = false
+    private var cookiePrompt: CookiePromptReport?
     private var isClosed = false
     /// The icon fetches running; WebKit holds a download's delegate weakly.
     private var resourceFetches: Set<SiteResourceDownload> = []
@@ -83,7 +84,8 @@ public final class WebKitPage: NSObject, WebPageHandle {
 
     public var state: PageState {
         PageState(url: webView.url, title: webView.title, canGoBack: webView.canGoBack,
-                  canGoForward: webView.canGoForward, isLoading: webView.isLoading, isPlayingMedia: isPlayingMedia)
+                  canGoForward: webView.canGoForward, isLoading: webView.isLoading, isPlayingMedia: isPlayingMedia,
+                  cookiePrompt: cookiePrompt)
     }
 
     public var navigationState: Data? {
@@ -248,6 +250,13 @@ public final class WebKitPage: NSObject, WebPageHandle {
         }
     }
 
+    /// The page's cookie prompt was found or answered; a later report of the same document replaces it.
+    func cookiePromptChanged(_ report: CookiePromptReport) {
+        guard cookiePrompt != report else { return }
+        cookiePrompt = report
+        onStateChange?(state)
+    }
+
     func refreshMediaState() {
         webView.requestMediaPlaybackState { [weak self] playback in
             guard let self, isPlayingMedia != (playback == .playing) else { return }
@@ -364,6 +373,10 @@ extension WebKitPage: WKNavigationDelegate {
             markShownEntry(.postBody)
         }
         dialogGate.newDocument()
+        if cookiePrompt != nil {
+            cookiePrompt = nil
+            onStateChange?(state)
+        }
         navigationDiagnostics?.webView(webView, didCommit: navigation)
     }
 

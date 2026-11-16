@@ -66,7 +66,7 @@ import Testing
         #expect(placed.count == Set(placed).count)
         #expect(Set(placed) == [
             "updates.automaticChecks", "linkMatching.focusOpenTab", "linkPicker.askForSpace", "linkPicker.choiceLog",
-            "web.fraudulentSiteWarning", "web.autoplayingSound", "diagnostics.debugMode",
+            "web.fraudulentSiteWarning", "web.autoplayingSound", "web.cookiePrompts", "diagnostics.debugMode",
         ])
         let toggles = Set(DefaultsRegistry.entries.userFacing.compactMap { entry -> String? in
             if case .toggle = entry.control { entry.id } else { nil }
@@ -74,7 +74,8 @@ import Testing
         #expect(Set(placed).isSubset(of: toggles))
         #expect(SettingsPaneID.linkRules.switches
             == ["linkMatching.focusOpenTab", "linkPicker.askForSpace", "linkPicker.choiceLog"])
-        #expect(SettingsPaneID.sitePermissions.switches == ["web.fraudulentSiteWarning", "web.autoplayingSound"])
+        #expect(SettingsPaneID.sitePermissions.switches
+            == ["web.fraudulentSiteWarning", "web.autoplayingSound", "web.cookiePrompts"])
     }
 
     /// “Change it: Settings › …” names a pane the window has, by the title its sidebar shows; no default still points

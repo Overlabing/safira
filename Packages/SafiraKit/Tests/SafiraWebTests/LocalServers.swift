@@ -27,7 +27,8 @@ final class LocalServer: @unchecked Sendable {
     /// TLS client hellos received on a server that does not speak TLS: a client tried HTTPS here.
     var clientHelloCount: Int { lock.withLock { hellos } }
 
-    static func start(_ kind: Kind, title: String = "served") async throws -> LocalServer {
+    /// - Parameter html: the document served for every request; by default a page titled `title`.
+    static func start(_ kind: Kind, title: String = "served", html: String? = nil) async throws -> LocalServer {
         // A client that hangs up mid-write must not take the test process down.
         signal(SIGPIPE, SIG_IGN)
         let parameters: NWParameters
@@ -41,7 +42,8 @@ final class LocalServer: @unchecked Sendable {
         }
         parameters.requiredLocalEndpoint = .hostPort(host: "127.0.0.1", port: .any)
         let listener = try NWListener(using: parameters)
-        let server = LocalServer(listener: listener, kind: kind, title: title)
+        let server = LocalServer(listener: listener, kind: kind,
+                                 html: html ?? "<!DOCTYPE html><title>\(title)</title><body>\(title)</body>")
         return try await server.ready()
     }
 
@@ -54,14 +56,14 @@ final class LocalServer: @unchecked Sendable {
         return port
     }
 
-    private init(listener: NWListener, kind: Kind, title: String) {
+    private init(listener: NWListener, kind: Kind, html: String) {
         self.listener = listener
         self.kind = kind
-        self.title = title
+        self.html = html
     }
 
     private let kind: Kind
-    private let title: String
+    private let html: String
 
     func stop() {
         listener.cancel()
@@ -102,7 +104,7 @@ final class LocalServer: @unchecked Sendable {
                 requests += 1
                 lines.append(text.replacingOccurrences(of: "\r\n", with: " | "))
             }
-            let body = "<!DOCTYPE html><title>\(title)</title><body>\(title)</body>"
+            let body = html
             let response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: \(body.utf8.count)\r\n"
                 + "Connection: close\r\n\r\n\(body)"
             connection.send(content: Data(response.utf8), completion: .contentProcessed { _ in connection.cancel() })

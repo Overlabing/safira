@@ -10,10 +10,14 @@ public struct WebContentSettings: Hashable, Sendable, Codable {
     public var isFraudulentSiteWarningEnabled: Bool
     /// Whether a page may start playing sound without a gesture from the user.
     public var isAutoplayingSoundAllowed: Bool
+    /// The switch reaches new pages only; the site exceptions reach every page at its next load.
+    public var cookiePrompts: CookiePromptSettings
 
-    public init(isFraudulentSiteWarningEnabled: Bool = true, isAutoplayingSoundAllowed: Bool = false) {
+    public init(isFraudulentSiteWarningEnabled: Bool = true, isAutoplayingSoundAllowed: Bool = false,
+                cookiePrompts: CookiePromptSettings = CookiePromptSettings()) {
         self.isFraudulentSiteWarningEnabled = isFraudulentSiteWarningEnabled
         self.isAutoplayingSoundAllowed = isAutoplayingSoundAllowed
+        self.cookiePrompts = cookiePrompts
     }
 
     public static let fraudulentSiteWarningTitle = String(localized: "Warn about fraudulent websites", table: "SafiraCore",
@@ -28,6 +32,13 @@ public struct WebContentSettings: Hashable, Sendable, Codable {
     public static let autoplayingSoundExplanation = String(localized: """
         A page cannot play sound until you click or press a key on it. Silent video can still start by itself.
         """, table: "SafiraCore", bundle: .module, comment: "Defaults: explanation of autoplaying sound")
+
+    public static let cookiePromptsTitle = String(localized: "Cookie prompts", table: "SafiraCore", bundle: .module,
+                                                  comment: "Menu item, Settings switch and Defaults title")
+    public static let cookiePromptsExplanation = String(localized: """
+        Safira answers “reject” to the cookie consent prompts it recognizes, or hides a prompt it cannot reject. Its \
+        rules ship with Safira and are never downloaded. Turning it off applies to pages opened from now on.
+        """, table: "SafiraCore", bundle: .module, comment: "Defaults and Settings: explanation of the cookie prompts switch")
 
     /// The entries this type contributes to the registry of defaults, with the values of a fresh `WebContentSettings`.
     public static var defaultEntries: [DefaultEntry] {
@@ -50,6 +61,17 @@ public struct WebContentSettings: Hashable, Sendable, Codable {
                 explanation: autoplayingSoundExplanation,
                 whereToChange: DefaultWording.settings(.sitePermissions),
                 control: .toggle(isOn: defaults.isAutoplayingSoundAllowed)
+            ),
+            DefaultEntry(
+                id: "web.cookiePrompts",
+                title: cookiePromptsTitle,
+                value: defaults.cookiePrompts.isRejecting
+                    ? String(localized: "Rejected automatically", table: "SafiraCore", bundle: .module,
+                             comment: "Defaults: value of cookie prompts")
+                    : DefaultWording.onOff(false),
+                explanation: cookiePromptsExplanation,
+                whereToChange: DefaultWording.settings(.sitePermissions),
+                control: .toggle(isOn: defaults.cookiePrompts.isRejecting)
             ),
         ]
     }

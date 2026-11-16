@@ -204,6 +204,8 @@ private struct PaneSwitches: View {
                                 .fixedSize(horizontal: false, vertical: true)
                                 .help(entry.explanation)
                         }
+                        // Full width, so every switch of the pane lines up on the trailing edge.
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .toggleStyle(.switch)
                     .accessibilityLabel(entry.title)
@@ -317,16 +319,22 @@ private struct SitePermissionsPane: View {
 
     var body: some View {
         let name = registry.activeProfile.name
-        VStack(alignment: .leading, spacing: 16) {
-            PaneSwitches(pane: .sitePermissions, switches: switches)
-            Text("These switches apply to “\(name)”, and to pages opened from now on.",
-                 comment: "Settings, Site Permissions pane; the argument is a Profile's name")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            Divider()
-            SitePermissionsView(profileName: name, permissions: registry.active.permissions)
+        // Three switches and two lists are taller than the window: the pane scrolls.
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                PaneSwitches(pane: .sitePermissions, switches: switches)
+                Text("These switches apply to “\(name)”, and to pages opened from now on.",
+                     comment: "Settings, Site Permissions pane; the argument is a Profile's name")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Divider()
+                CookiePromptExceptionsView(profile: registry.active)
+                Divider()
+                SitePermissionsView(profileName: name, permissions: registry.active.permissions)
+            }
+            .settingsPaneMargins()
         }
-        .settingsPaneMargins()
+        .settingsScrollEdges()
     }
 }
 

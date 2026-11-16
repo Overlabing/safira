@@ -335,6 +335,10 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         registry.active.webContentSettings.isAutoplayingSoundAllowed.toggle()
     }
 
+    @objc func toggleCookiePrompts(_ sender: Any?) {
+        registry.active.webContentSettings.cookiePrompts.isRejecting.toggle()
+    }
+
     func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
         let tab = session.selectedTab
         switch menuItem.action {
@@ -374,6 +378,9 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
             return true
         case #selector(toggleAutoplayingSound(_:)):
             menuItem.state = registry.active.webContentSettings.isAutoplayingSoundAllowed ? .on : .off
+            return true
+        case #selector(toggleCookiePrompts(_:)):
+            menuItem.state = registry.active.webContentSettings.cookiePrompts.isRejecting ? .on : .off
             return true
         default: return true
         }
@@ -827,7 +834,8 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         let pageActions = PageActions(
             editAddress: { [weak self] in self?.focusCommandBar(nil) },
             newTab: { [weak self] in self?.newTabFromSidebar() },
-            showPage: { [weak self] in self?.leaveSidebar() })
+            showPage: { [weak self] in self?.leaveSidebar() },
+            allowCookiePrompts: { [weak self] site in self?.registry.active.allowCookiePrompts(onSite: site) })
         let spaceActions = SpaceActions(
             edit: { [weak self] id in self?.editSpace(id) },
             delete: { [weak self] id in self?.confirmDeletion(of: id) }
