@@ -129,6 +129,25 @@ private func webKitFolders() -> [URL] {
         await removeDataStoreWhenReleased(profile)
     }
 
+    @Test func aPrivateWindowListsOnlyItsOwnDownloads() async throws {
+        let root = TemporaryRoot()
+        var profile = ProfileID(rawValue: UUID())
+        do {
+            let registry = ProfileRegistry(layout: root.layout)
+            profile = registry.activeProfileID
+            let privateWindow = try #require(registry.makePrivateContext(attachedTo: profile))
+            let other = try #require(registry.makePrivateContext(attachedTo: profile))
+            privateWindow.web.downloads.begin(from: URL(string: "https://files.example/a.zip")!, fileName: "a.zip")
+            #expect(privateWindow.web.downloads.indicator.runningCount == 1)
+            #expect(registry.active.downloads.indicator == .hidden)
+            #expect(registry.active.downloads.all.isEmpty)
+            #expect(other.web.downloads.all.isEmpty)
+            await privateWindow.close()
+            await other.close()
+        }
+        await removeDataStoreWhenReleased(profile)
+    }
+
     @Test func twoPrivateWindowsOfOneProfileDoNotSeeEachOthersWebsiteData() async throws {
         let server = try await StorageServer()
         var profile = ProfileID(rawValue: UUID())
