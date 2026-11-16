@@ -34,9 +34,10 @@ public final class ProfileWebContext {
     /// The live pages of this Profile's popups, which share their opener's configuration.
     private var popupPages: [PopupID: WebKitPage] = [:]
     private let pageEvents = PageEventHandler()
+    /// Weak: WebKit keeps the handler as long as a page's configuration lives, which can outlast this context.
     private lazy var cookiePrompts = CookiePromptScript(
-        settings: { [unowned self] in webContentSettings.cookiePrompts },
-        page: { [unowned self] in page(showing: $0) }
+        settings: { [weak self] in self?.webContentSettings.cookiePrompts ?? CookiePromptSettings(isRejecting: false) },
+        page: { [weak self] in self?.page(showing: $0) }
     )
     private(set) var downloadController: DownloadController!
 
