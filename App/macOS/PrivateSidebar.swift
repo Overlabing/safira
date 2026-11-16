@@ -6,10 +6,11 @@ import ColorUI
 import DesignKit
 import SafiraCore
 import SafiraSession
+import SafiraWeb
 import SwiftUI
 
-/// The column of a Private window, ThemeKit's sidebar column like the Main window's: the address and Back, Forward and
-/// Reload in the head field, the list of its Tabs, and in the bottom bar, where the Main window has the Space rail, a
+/// The column of a Private window, ThemeKit's sidebar column with its head like the Main window's (`browserColumn`),
+/// with no extension buttons in the address pill; the list of its Tabs, and in the bottom bar, where the Main window has the Space rail, a
 /// band naming the Profile it is attached to. The Private Theme's purple, always dark, is what tells it from the Main
 /// window.
 struct PrivateSidebar: View {
@@ -17,6 +18,8 @@ struct PrivateSidebar: View {
     let parent: Profile
     let focus: ColumnFocus
     let pageActions: PageActions
+    let web: ProfileWebContext
+    let downloads: DownloadsPresenter
     @Environment(\.designTokens) private var tokens
 
     var body: some View {
@@ -39,21 +42,28 @@ struct PrivateSidebar: View {
             }
         }
         .modifier(TabListKeyboard(session: session, focus: focus, showPage: pageActions.showPage))
-        .sidebarColumn {
-            BrowserControls(session: session, actions: pageActions)
+        .browserColumn(session: session, actions: pageActions, sidebarShortcut: nil) {
+            EmptyView()
         } header: {
             EmptyView()
         } bottomBar: {
-            ThemeBand {
-                Label(String(localized: "Private · \(parent.symbol) \(parent.name)", comment: "Private window sidebar"), systemImage: "eye.slash.fill")
+            HStack(spacing: tokens.spacing.pillActionGap) {
+                SidebarDownloads(downloads: web.downloads, web: web, presenter: downloads)
+                privateBand
             }
             .padding(.horizontal, tokens.spacing.listMargin)
             .padding(.bottom, tokens.spacing.switcherBottom)
-            .accessibilityElement(children: .ignore)
-            .accessibilityAddTraits(.isStaticText)
-            .accessibilityLabel(String(localized: "Private window, attached to the Profile \(parent.name). Nothing is saved.", comment: "Private window sidebar"))
         }
         .theme(SidebarComposition.privateTheme)
         .environment(\.colorScheme, .dark)
+    }
+
+    private var privateBand: some View {
+        ThemeBand {
+            Label(String(localized: "Private · \(parent.symbol) \(parent.name)", comment: "Private window sidebar"), systemImage: "eye.slash.fill")
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityAddTraits(.isStaticText)
+        .accessibilityLabel(String(localized: "Private window, attached to the Profile \(parent.name). Nothing is saved.", comment: "Private window sidebar"))
     }
 }

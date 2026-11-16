@@ -11,8 +11,9 @@ import SafiraSession
 import SafiraWeb
 import SwiftUI
 
-/// The Main window's column, ThemeKit's sidebar column (`sidebarColumn(field:header:bottomBar:)`): the address and
-/// Back, Forward and Reload in the head field, then the Profile's extension buttons; a plain list of the active Space's pinned area with its Folders, a
+/// The Main window's column, ThemeKit's sidebar column with its head (`browserColumn`): the sidebar button and Back,
+/// Forward and Reload beside the window's buttons, the address pill with the Profile's extension buttons and Copy Link
+/// inside it; a plain list of the active Space's pinned area with its Folders, a
 /// hairline, the New Tab row and the other Tabs; the Space rail with the Spaces and Profiles in the bottom bar. Arrow
 /// keys in the list move the selection, which shows the Tab; Delete closes it; Return or Escape goes to its page. Tabs
 /// can be dragged to reorder, and Pinned tabs and Folders into Folders.
@@ -24,6 +25,7 @@ struct TabSidebar: View {
     let spaceActions: SpaceActions
     let folderActions: FolderActions
     let extensionPopups: ExtensionPopups
+    let downloads: DownloadsPresenter
     /// The shortcut a menu item shows for a command, in the bindings in force ("⌘T", "⌃1").
     let shortcut: (CommandID) -> String?
 
@@ -46,17 +48,19 @@ struct TabSidebar: View {
             }
         }
         .modifier(TabListKeyboard(session: session, focus: focus, showPage: pageActions.showPage))
-        .sidebarColumn {
-            BrowserControls(session: session, actions: pageActions) {
-                if let extensions = registry.active.extensions {
-                    ExtensionActionButtons(host: extensions, library: registry.extensionLibrary, popups: extensionPopups)
-                }
+        .browserColumn(session: session, actions: pageActions, sidebarShortcut: shortcut(.compactMode)) {
+            if let extensions = registry.active.extensions {
+                ExtensionActionButtons(host: extensions, library: registry.extensionLibrary, popups: extensionPopups)
             }
         } header: {
             EmptyView()
         } bottomBar: {
-            SpaceRailBar(registry: registry, profileActions: profileActions, spaceActions: spaceActions,
-                         shortcut: shortcut)
+            HStack(alignment: .top, spacing: 0) {
+                SidebarDownloads(downloads: registry.active.downloads, web: registry.active.web, presenter: downloads)
+                    .padding(.leading, DesignTokens.standard.spacing.listMargin - DesignTokens.standard.spacing.rowInsetHorizontal)
+                SpaceRailBar(registry: registry, profileActions: profileActions, spaceActions: spaceActions,
+                             shortcut: shortcut)
+            }
         }
         .theme(spaceTheme)
     }

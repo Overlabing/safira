@@ -95,9 +95,9 @@ public final class BrowserWindowLayout: NSViewController {
         (view.window?.firstResponder as? NSView)?.isDescendant(of: column.view) == true
     }
 
-    /// The system's sidebar button at the column's edge and the separator that follows its width.
+    /// None: the sidebar button is in the column's head, beside the window's buttons (ThemeKit's sidebar head).
     public var toolbarItems: [NSToolbarItem.Identifier] {
-        NSSplitViewItem.sidebarToolbarItems
+        NSSplitViewItem.sidebarHeadToolbarItems
     }
 
     override public func viewDidLayout() {
@@ -181,9 +181,9 @@ public final class BrowserWindowLayout: NSViewController {
     }
 }
 
-/// The system's sidebar button sends `toggleSidebar(_:)` to the split view controller, which would collapse the column
-/// behind the window's back: the window decides instead, so that the button and Compact mode stay one state. The kit's
-/// seamless split keeps the divider's resize zone over the card's margin although it draws nothing.
+/// The sidebar button of the column's head calls `toggleSidebar(_:)` on the split view controller, which would collapse
+/// the column behind the window's back: the window decides instead, so that the button and Compact mode stay one state.
+/// The kit's seamless split keeps the divider's resize zone over the card's margin although it draws nothing.
 private final class SidebarSplitController: SeamlessSplitViewController {
     var onToggleSidebar: (() -> Void)?
 
@@ -288,8 +288,8 @@ public final class PageCanvasView: NSView {
     }
 }
 
-/// The toolbar of a window with the kit's sidebar: the system's sidebar button and tracking separator, icons only, no
-/// title.
+/// The toolbar of a window with the kit's sidebar head: no items, in the compact style, so that its band is the head's
+/// title bar row and the window's buttons sit on that row's line, as in Zen.
 @MainActor
 public final class SidebarToolbar: NSObject, NSToolbarDelegate {
     private let items: [NSToolbarItem.Identifier]
@@ -303,6 +303,7 @@ public final class SidebarToolbar: NSObject, NSToolbarDelegate {
         toolbar.delegate = self
         toolbar.displayMode = .iconOnly
         toolbar.allowsUserCustomization = false
+        window.toolbarStyle = .unifiedCompact
         window.toolbar = toolbar
     }
 

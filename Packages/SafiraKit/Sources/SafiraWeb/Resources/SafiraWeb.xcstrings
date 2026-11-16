@@ -238,6 +238,50 @@
         }
       }
     },
+    "Open Frame in New Tab" : {
+      "comment" : "Page context menu",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir le cadre dans un nouvel onglet"
+          }
+        }
+      }
+    },
+    "Open Image in New Tab" : {
+      "comment" : "Page context menu",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir l’image dans un nouvel onglet"
+          }
+        }
+      }
+    },
+    "Open Link in New Tab" : {
+      "comment" : "Page context menu",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir le lien dans un nouvel onglet"
+          }
+        }
+      }
+    },
+    "Open Video in New Tab" : {
+      "comment" : "Page context menu",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir la vidéo dans un nouvel onglet"
+          }
+        }
+      }
+    },
     "Safira could not read “%@”." : {
       "comment" : "Extension install error; the argument is a file name",
       "localizations" : {

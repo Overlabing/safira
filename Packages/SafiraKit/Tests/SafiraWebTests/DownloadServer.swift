@@ -114,6 +114,13 @@ final class DownloadServer: @unchecked Sendable {
             let body = #"<!doctype html><title>page</title><a id="link" href="/small.bin" download>get</a>"#
                 + #"<a id="inline" href="/inline.txt" download>text</a>"#
             await send(connection, status: "200 OK", type: "text/html", body: Data(body.utf8))
+        case "/image.html":
+            let body = #"<!doctype html><title>image</title><body style="margin:0">"#
+                + #"<img src="/photo.png" style="position:absolute;left:0;top:0;width:100px;height:100px">"#
+                + #"<a href="/page.html" style="position:absolute;left:200px;top:0;width:100px;height:100px;display:block">notes</a>"#
+            await send(connection, status: "200 OK", type: "text/html", body: Data(body.utf8))
+        case "/photo.png":
+            await send(connection, status: "200 OK", type: "image/png", body: Self.bytes(0..<Self.smallSize))
         case "/slow.bin":
             await sendSlow(connection, range: range)
         case "/broken.bin":
