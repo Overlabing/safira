@@ -10,7 +10,7 @@ import Spaces
 
 /// Where the Command bar sends what is typed in it.
 public enum CommandBarTarget: Hashable, Sendable {
-    /// The selected Tab, or a new Tab when none is selected (⌘L).
+    /// The selected Tab, or a new Tab when none is selected (⌘L). A Pinned tab takes only addresses of its own site.
     case selectedTab
     /// A new Tab, created only when the text is submitted (⌘T).
     case newTab
@@ -744,8 +744,9 @@ public final class ProfileSession {
         }
     }
 
+    /// A Pinned tab keeps to its site: from it, an address or a search on another site opens in a new Tab, as after ⌘T.
     private func open(_ url: URL, in target: CommandBarTarget, httpsFirst: Bool = false) {
-        if target == .newTab || selectedTab == nil {
+        if target == .newTab || selectedTab.map({ !$0.keepsPinnedSite(at: url) }) ?? true {
             openNewTab()
         }
         selectedTab?.load(url, httpsFirst: httpsFirst)
