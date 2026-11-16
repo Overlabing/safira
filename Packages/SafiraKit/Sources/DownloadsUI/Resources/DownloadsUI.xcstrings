@@ -1,6 +1,327 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "%@ of %@" : {
+      "comment" : "Downloads panel: a running download whose time left is not known yet",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ of %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ sur %2$@"
+          }
+        }
+      }
+    },
+    "%@ of %@, %@ left" : {
+      "comment" : "Downloads panel: a running download",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ of %2$@, %3$@ left"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ sur %2$@, encore %3$@"
+          }
+        }
+      }
+    },
+    "%@, %@" : {
+      "comment" : "Downloads panel: a finished download, its size and when it finished (“5 minutes ago”)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, %2$@"
+          }
+        }
+      }
+    },
+    "%lld %%" : {
+      "comment" : "Downloads button, VoiceOver: the combined progress",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld %%"
+          }
+        }
+      }
+    },
+    "%lld in progress" : {
+      "comment" : "Downloads button, VoiceOver: how many downloads run",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld en cours"
+          }
+        }
+      }
+    },
+    "Cancel" : {
+      "comment" : "Downloads panel: row action",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuler"
+          }
+        }
+      }
+    },
+    "Cancelled" : {
+      "comment" : "Downloads panel",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annulé"
+          }
+        }
+      }
+    },
+    "Clear" : {
+      "comment" : "Downloads panel: takes finished downloads off the list, not the files",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effacer"
+          }
+        }
+      }
+    },
+    "Downloads" : {
+      "comment" : "Downloads button\nDownloads panel: its title",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Téléchargements"
+          }
+        }
+      }
+    },
+    "Downloads: %@" : {
+      "comment" : "Downloads button: its help tag",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Téléchargements : %@"
+          }
+        }
+      }
+    },
+    "Failed: %@" : {
+      "comment" : "Downloads panel: the engine's own description of the error",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Échec : %@"
+          }
+        }
+      }
+    },
+    "Failed: Safira quit before the end" : {
+      "comment" : "Downloads panel",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Échec : Safira a quitté avant la fin"
+          }
+        }
+      }
+    },
+    "Failed: the transfer broke off" : {
+      "comment" : "Downloads panel",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Échec : le transfert s’est interrompu"
+          }
+        }
+      }
+    },
+    "No downloads yet. Files you download appear here." : {
+      "comment" : "Downloads panel: an empty list",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun téléchargement pour l’instant. Les fichiers que vous téléchargez apparaissent ici."
+          }
+        }
+      }
+    },
+    "Open" : {
+      "comment" : "Downloads panel: row action",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir"
+          }
+        }
+      }
+    },
+    "Pause" : {
+      "comment" : "Downloads panel: row action",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mettre en pause"
+          }
+        }
+      }
+    },
+    "Paused, %@" : {
+      "comment" : "Downloads panel",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En pause, %@"
+          }
+        }
+      }
+    },
+    "Paused, %@ of %@" : {
+      "comment" : "Downloads panel",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paused, %1$@ of %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En pause, %1$@ sur %2$@"
+          }
+        }
+      }
+    },
+    "Remove from List" : {
+      "comment" : "Downloads panel: row action",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retirer de la liste"
+          }
+        }
+      }
+    },
+    "Resume" : {
+      "comment" : "Downloads panel: row action",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reprendre"
+          }
+        }
+      }
+    },
+    "Retry" : {
+      "comment" : "Downloads panel: row action",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réessayer"
+          }
+        }
+      }
+    },
+    "Show folder %@ in Finder" : {
+      "comment" : "Downloads panel",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher le dossier %@ dans le Finder"
+          }
+        }
+      }
+    },
+    "Show in Finder" : {
+      "comment" : "Downloads panel: row action",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher dans le Finder"
+          }
+        }
+      }
+    },
+    "Show the folder in Finder" : {
+      "comment" : "Downloads panel: the folder button's help tag",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher le dossier dans le Finder"
+          }
+        }
+      }
+    },
+    "You declined access to your Downloads folder, so files are saved in Safira's own folder, which is erased with the Profile. You can allow access in System Settings > Privacy & Security > Files & Folders." : {
+      "comment" : "Downloads panel: the folder in use",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous avez refusé l’accès à votre dossier Téléchargements : les fichiers sont donc enregistrés dans le dossier propre à Safira, effacé avec le Profil. Vous pouvez autoriser l’accès dans Réglages Système > Confidentialité et sécurité > Fichiers et dossiers."
+          }
+        }
+      }
+    },
+    "a download failed" : {
+      "comment" : "Downloads button, VoiceOver",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "un téléchargement a échoué"
+          }
+        }
+      }
+    },
+    "none in progress" : {
+      "comment" : "Downloads button, VoiceOver: nothing runs",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "aucun en cours"
+          }
+        }
+      }
+    }
   },
   "version" : "1.0"
 }

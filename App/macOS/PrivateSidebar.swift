@@ -6,6 +6,7 @@ import ColorUI
 import DesignKit
 import SafiraCore
 import SafiraSession
+import SafiraWeb
 import SwiftUI
 
 /// The column of a Private window, ThemeKit's sidebar column like the Main window's: the address and Back, Forward and
@@ -17,6 +18,8 @@ struct PrivateSidebar: View {
     let parent: Profile
     let focus: ColumnFocus
     let pageActions: PageActions
+    let web: ProfileWebContext
+    let downloads: DownloadsPresenter
     @Environment(\.designTokens) private var tokens
 
     var body: some View {
@@ -44,16 +47,23 @@ struct PrivateSidebar: View {
         } header: {
             EmptyView()
         } bottomBar: {
-            ThemeBand {
-                Label(String(localized: "Private · \(parent.symbol) \(parent.name)", comment: "Private window sidebar"), systemImage: "eye.slash.fill")
+            HStack(spacing: tokens.spacing.pillActionGap) {
+                SidebarDownloads(downloads: web.downloads, web: web, presenter: downloads)
+                privateBand
             }
             .padding(.horizontal, tokens.spacing.listMargin)
             .padding(.bottom, tokens.spacing.switcherBottom)
-            .accessibilityElement(children: .ignore)
-            .accessibilityAddTraits(.isStaticText)
-            .accessibilityLabel(String(localized: "Private window, attached to the Profile \(parent.name). Nothing is saved.", comment: "Private window sidebar"))
         }
         .theme(SidebarComposition.privateTheme)
         .environment(\.colorScheme, .dark)
+    }
+
+    private var privateBand: some View {
+        ThemeBand {
+            Label(String(localized: "Private · \(parent.symbol) \(parent.name)", comment: "Private window sidebar"), systemImage: "eye.slash.fill")
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityAddTraits(.isStaticText)
+        .accessibilityLabel(String(localized: "Private window, attached to the Profile \(parent.name). Nothing is saved.", comment: "Private window sidebar"))
     }
 }

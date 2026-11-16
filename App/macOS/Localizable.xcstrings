@@ -42,6 +42,7 @@
     },
     "%@ of %@" : {
       "comment" : "Downloads window",
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -338,6 +339,7 @@
       }
     },
     "Cancel download of %@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -349,6 +351,7 @@
     },
     "Cancelled, %@ received" : {
       "comment" : "Downloads window",
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -552,6 +555,7 @@
       }
     },
     "Clear List" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -682,6 +686,7 @@
     },
     "Completed, %@" : {
       "comment" : "Downloads window",
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -962,6 +967,7 @@
     },
     "Downloads" : {
       "comment" : "Downloads window",
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -972,6 +978,7 @@
       }
     },
     "Downloads of “%@”" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -1156,6 +1163,7 @@
     },
     "Failed, %@ received" : {
       "comment" : "Downloads window",
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -1177,6 +1185,7 @@
       }
     },
     "Files are saved in your Downloads folder." : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -2330,6 +2339,7 @@
       }
     },
     "Progress of %@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -2395,6 +2405,7 @@
       }
     },
     "Remove %@ from the list" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -2405,6 +2416,7 @@
       }
     },
     "Remove from List" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -2501,6 +2513,7 @@
       }
     },
     "Retry" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -2511,6 +2524,7 @@
       }
     },
     "Retry download of %@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -2521,6 +2535,7 @@
       }
     },
     "Reveal %@ in Finder" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -2531,6 +2546,7 @@
       }
     },
     "Reveal in Finder" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -2799,6 +2815,7 @@
       }
     },
     "Show Folder" : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -3240,6 +3257,7 @@
       }
     },
     "This Profile has no downloads." : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -3463,6 +3481,7 @@
       }
     },
     "You declined access to your Downloads folder, so this Profile's files are saved in a folder inside Safira's own data, which is erased with the Profile. You can allow access in System Settings > Privacy & Security > Files & Folders." : {
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
