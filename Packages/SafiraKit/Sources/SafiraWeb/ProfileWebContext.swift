@@ -34,6 +34,10 @@ public final class ProfileWebContext {
     /// The live pages of this Profile's popups, which share their opener's configuration.
     private var popupPages: [PopupID: WebKitPage] = [:]
     private let pageEvents = PageEventHandler()
+    private lazy var cookiePrompts = CookiePromptScript(
+        settings: { [unowned self] in webContentSettings.cookiePrompts },
+        page: { [unowned self] in page(showing: $0) }
+    )
     private(set) var downloadController: DownloadController!
 
     /// The Profile's web extensions; nil for a Private window, where none runs.
@@ -136,6 +140,9 @@ public final class ProfileWebContext {
         // A `target=_blank` page or a popup gets a copy of this configuration from WebKit, so it inherits both.
         configuration.applicationNameForUserAgent = SafariUserAgent.current
         pageEvents.install(in: configuration.userContentController)
+        if webContentSettings.cookiePrompts.isRejecting {
+            cookiePrompts.install(in: configuration.userContentController)
+        }
         configuration.webExtensionController = extensions?.controller
         configuration.preferences.isFraudulentWebsiteWarningEnabled = webContentSettings.isFraudulentSiteWarningEnabled
         configuration.mediaTypesRequiringUserActionForPlayback = webContentSettings.isAutoplayingSoundAllowed ? [] : .audio
@@ -249,7 +256,7 @@ public final class ProfileWebContext {
         }
     }
 
-    fileprivate func page(showing webView: WKWebView?) -> WebKitPage? {
+    func page(showing webView: WKWebView?) -> WebKitPage? {
         (Array(pages.values) + Array(popupPages.values)).first { $0.webView === webView }
     }
 }

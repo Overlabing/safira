@@ -10,10 +10,14 @@ public struct WebContentSettings: Hashable, Sendable, Codable {
     public var isFraudulentSiteWarningEnabled: Bool
     /// Whether a page may start playing sound without a gesture from the user.
     public var isAutoplayingSoundAllowed: Bool
+    /// The switch reaches new pages only; the site exceptions reach every page at its next load.
+    public var cookiePrompts: CookiePromptSettings
 
-    public init(isFraudulentSiteWarningEnabled: Bool = true, isAutoplayingSoundAllowed: Bool = false) {
+    public init(isFraudulentSiteWarningEnabled: Bool = true, isAutoplayingSoundAllowed: Bool = false,
+                cookiePrompts: CookiePromptSettings = CookiePromptSettings()) {
         self.isFraudulentSiteWarningEnabled = isFraudulentSiteWarningEnabled
         self.isAutoplayingSoundAllowed = isAutoplayingSoundAllowed
+        self.cookiePrompts = cookiePrompts
     }
 
     public static let fraudulentSiteWarningTitle = String(localized: "Warn about fraudulent websites", table: "SafiraCore",
