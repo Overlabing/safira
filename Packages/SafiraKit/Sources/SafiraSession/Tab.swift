@@ -85,6 +85,14 @@ public final class Tab: Identifiable {
         return pinnedAddress != address
     }
 
+    /// Whether the Command bar may load `url` in this Tab. A Pinned tab takes only addresses on the site (registrable
+    /// domain) of the address it was pinned at, wherever it has drifted since; a Tab pinned blank and a plain Tab take
+    /// any address.
+    func keepsPinnedSite(at url: URL) -> Bool {
+        guard isPinned, let pinnedSite = RegistrableDomain(pinnedAddress) else { return true }
+        return RegistrableDomain(url) == pinnedSite
+    }
+
     /// What is saved of this Tab. A dormant Tab keeps its record as it was restored.
     var record: TabRecord {
         var record: TabRecord
