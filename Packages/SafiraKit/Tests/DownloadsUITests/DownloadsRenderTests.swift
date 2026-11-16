@@ -61,12 +61,12 @@ import Testing
     }
 
     @Test func everyPanelStateRenders() async throws {
-        let folder = DownloadsFolder(url: URL(fileURLWithPath: "/Users/someone/Downloads"), isAppFolder: false)
+        let folder = DownloadsFolder(url: FileManager.default.temporaryDirectory.appending(path: "Downloads"), isAppFolder: false)
         for (name, downloads, folder) in [("empty", ProfileDownloads(), folder),
                                           ("running", try running(), folder),
                                           ("mixed", try await mixed(), folder),
                                           ("app-folder", try await mixed(),
-                                           DownloadsFolder(url: URL(fileURLWithPath: "/tmp/Downloads"), isAppFolder: true))] {
+                                           DownloadsFolder(url: FileManager.default.temporaryDirectory.appending(path: "Downloads"), isAppFolder: true))] {
             for look in Look.allCases {
                 let panel = DownloadsPanel(downloads: downloads, folder: folder, now: { Self.start.addingTimeInterval(400) })
                     .surface(.glass(tint: 0), in: RoundedRectangle(cornerRadius: DesignTokens.standard.radius.layer))
