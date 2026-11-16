@@ -44,6 +44,36 @@ import WebKit
         }
     }
 
+    @Test func onlyAnHTTPOrHTTPSAddressStartsADownload() {
+        for address in ["data:image/png;base64,AAAA", "blob:https://a.example/1234", "file:///tmp/i.png"] {
+            let hit = PageHit(link: URL(string: address)!, image: URL(string: address)!, media: URL(string: address)!)
+            #expect(PageMenuAction.downloadImage.url(in: hit) == nil, "\(address)")
+            #expect(PageMenuAction.downloadLinkedFile.url(in: hit) == nil, "\(address)")
+            #expect(PageMenuAction.downloadMedia.url(in: hit) == nil, "\(address)")
+            #expect(PageMenuAction.openImageInNewTab.url(in: hit)?.absoluteString == address)
+        }
+        let web = PageHit(image: URL(string: "http://a.example/i.png")!)
+        #expect(PageMenuAction.downloadImage.url(in: web)?.absoluteString == "http://a.example/i.png")
+    }
+
+    @MainActor @Test func aMenuWithNoKnownWebKitItemIsNoticed() {
+        let known = NSMenu()
+        let copy = NSMenuItem(title: "Copy", action: nil, keyEquivalent: "")
+        copy.identifier = NSUserInterfaceItemIdentifier("WKMenuItemIdentifierCopy")
+        let submenu = NSMenu()
+        submenu.addItem(copy)
+        let parent = NSMenuItem(title: "More", action: nil, keyEquivalent: "")
+        parent.submenu = submenu
+        known.addItem(parent)
+        #expect(!PageMenuAction.hasNoKnownItem(known))
+
+        let renamed = NSMenu()
+        let item = NSMenuItem(title: "Download Image", action: nil, keyEquivalent: "")
+        item.identifier = NSUserInterfaceItemIdentifier("WKMenuItemIdentifierSaveImageV2")
+        renamed.addItem(item)
+        #expect(PageMenuAction.hasNoKnownItem(renamed))
+    }
+
     @Test func aHitReadsOnlyWebAddresses() {
         let read = PageHit(["link": "javascript:alert(1)", "image": "https://a.example/i.png", "frame": "about:blank"])
         #expect(read == PageHit(image: URL(string: "https://a.example/i.png")!))
@@ -70,6 +100,52 @@ import WebKit
         webView.retarget(menu)
         if !menu.items.isEmpty { menu.performActionForItem(at: 0) }
         return menu
+    }
+
+    /// The menu opens before the page answers, and that first answer finds nothing (the page was busy): the item is
+    /// kept, and choosing it reads the point again and downloads.
+    @Test func anItemChosenBeforeThePageAnswersStillDownloads() async throws {
+        let server = try await DownloadServer.start()
+        defer { server.stop() }
+        let root = FileManager.default.temporaryDirectory.appending(path: "safira-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: root) }
+        var ids: [ProfileID] = []
+        do {
+            let registry = ProfileRegistry(layout: StoreLayout(root: root))
+            defer { ids = registry.profiles.map(\.id) }
+            let profile = registry.active
+            profile.web.downloadsDirectory = root.appending(path: "Downloads", directoryHint: .isDirectory)
+            profile.session.submitCommandBar(server.url("/image.html").absoluteString)
+            let tab = try #require(profile.session.selectedTabID)
+            let webView = try #require(profile.web.webView(for: tab) as? SafiraWebView)
+            let window = TestWindow.host(webView, width: 600, height: 400)
+            defer { window.close() }
+            try await waitUntil("the page loads") { webView.url == server.url("/image.html") && !webView.isLoading }
+
+            let gate = Gate()
+            let real = webView.readPage
+            var reads = 0
+            webView.readPage = { view, script, arguments in
+                reads += 1
+                if reads == 1 {
+                    await gate.wait()
+                    return nil
+                }
+                return await real(view, script, arguments)
+            }
+            let point = NSPoint(x: 50, y: webView.isFlipped ? 50 : webView.bounds.height - 50)
+            webView.startHitTest(at: point)
+            let menu = menu(.downloadImage)
+            webView.retarget(menu)
+            #expect(!webView.hasFinishedHitTest)
+            #expect(menu.items.count == 1)
+            menu.performActionForItem(at: 0)
+            gate.open()
+            try await waitUntil("the image is saved") { profile.downloads.all.first?.state == .completed }
+            #expect(profile.downloads.all.first?.sourceURL == server.url("/photo.png"))
+            #expect(reads == 2)
+        }
+        for id in ids { await removeDataStoreWhenReleased(id) }
     }
 
     @Test func downloadImageSavesTheImageInTheTabsProfile() async throws {
@@ -113,3 +189,22 @@ import WebKit
         for id in ids { await removeDataStoreWhenReleased(id) }
     }
 }
+
+/// Holds a reading back until the test lets it go.
+@MainActor
+private final class Gate {
+    private var waiters: [CheckedContinuation<Void, Never>] = []
+    private var isOpen = false
+
+    func wait() async {
+        if isOpen { return }
+        await withCheckedContinuation { waiters.append($0) }
+    }
+
+    func open() {
+        isOpen = true
+        waiters.forEach { $0.resume() }
+        waiters = []
+    }
+}
+

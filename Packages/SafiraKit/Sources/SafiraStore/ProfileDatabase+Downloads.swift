@@ -6,8 +6,9 @@ import GRDB
 import SafiraCore
 
 extension ProfileDatabase {
-    /// This Profile's downloads, newest first. A row this build cannot read (an unknown state, a broken address) is
-    /// left out of the list.
+    /// This Profile's downloads, newest first. A row with a broken identifier or address is left out of the list; a
+    /// state this build does not know (written by a newer one) reads as failed, so the row stays and can be retried.
+    /// A paused download is written as cancelled: a build that predates pausing reads it, and Retry continues it.
     public func downloads() throws -> [DownloadRecord] {
         try queue.read { db in
             try Row.fetchAll(db, sql: """
@@ -15,8 +16,8 @@ extension ProfileDatabase {
                        finished_at, folder_path
                 FROM download ORDER BY started_at DESC, rowid DESC
                 """).compactMap { row in
-                guard let id = UUID(uuidString: row["id"]), let source = URL(string: row["source_url"]),
-                      let state = DownloadState(rawValue: row["state"]) else { return nil }
+                guard let id = UUID(uuidString: row["id"]), let source = URL(string: row["source_url"]) else { return nil }
+                let state = DownloadState(rawValue: row["state"] as String? ?? "") ?? .failed
                 return DownloadRecord(
                     id: DownloadID(rawValue: id), sourceURL: source, fileName: row["file_name"],
                     fileBookmark: row["file_bookmark"], state: state, receivedBytes: row["bytes"],
@@ -37,11 +38,15 @@ extension ProfileDatabase {
                      finished_at, folder_path)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, arguments: [download.id.rawValue.uuidString, download.sourceURL.absoluteString, download.fileName,
-                                 download.fileBookmark, download.state.rawValue, download.receivedBytes,
+                                 download.fileBookmark, Self.storedState(download.state).rawValue, download.receivedBytes,
                                  download.totalBytes, download.resumeData, download.startedAt.timeIntervalSince1970,
                                  download.finishedAt?.timeIntervalSince1970,
                                  download.folder?.path(percentEncoded: false)])
         }
+    }
+
+    static func storedState(_ state: DownloadState) -> DownloadState {
+        state == .paused ? .cancelled : state
     }
 
     public func removeDownloads(_ ids: [DownloadID]) throws {
