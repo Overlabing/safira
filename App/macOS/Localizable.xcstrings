@@ -271,6 +271,16 @@
         }
       }
     },
+    "Allow Prompts on This Site" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autoriser les bandeaux sur ce site"
+          }
+        }
+      }
+    },
     "Allowed" : {
       "comment" : "Site permissions sheet",
       "localizations" : {
@@ -701,6 +711,16 @@
         }
       }
     },
+    "Cookie prompt" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bandeau de cookies"
+          }
+        }
+      }
+    },
     "Copy" : {
       "comment" : "Menu item",
       "localizations" : {
@@ -719,6 +739,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copier les détails"
+          }
+        }
+      }
+    },
+    "Could not reject the cookie prompt on %@" : {
+      "comment" : "Cookie indicator; the argument is a site",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de refuser le bandeau de cookies sur %@"
           }
         }
       }
@@ -1268,6 +1299,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aide"
+          }
+        }
+      }
+    },
+    "Hid the cookie prompt on %@" : {
+      "comment" : "Cookie indicator: no reject button existed; the argument is a site",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bandeau de cookies masqué sur %@"
           }
         }
       }
@@ -1869,6 +1911,16 @@
         }
       }
     },
+    "No site keeps its cookie prompts in this Profile." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun site ne garde ses bandeaux de cookies dans ce Profil."
+          }
+        }
+      }
+    },
     "No site or link has a remembered choice in this Profile." : {
       "localizations" : {
         "fr" : {
@@ -2339,6 +2391,48 @@
         }
       }
     },
+    "Reject Again" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Refuser à nouveau"
+          }
+        }
+      }
+    },
+    "Reject Cookie Prompts" : {
+      "comment" : "View menu: the cookie prompts switch",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Refuser les bandeaux de cookies"
+          }
+        }
+      }
+    },
+    "Reject cookie prompts again on %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Refuser à nouveau les bandeaux de cookies sur %@"
+          }
+        }
+      }
+    },
+    "Rejected cookies on %@" : {
+      "comment" : "Cookie indicator; the argument is a site, for example example.com",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cookies refusés sur %@"
+          }
+        }
+      }
+    },
     "Reload" : {
       "comment" : "Crashed page\nSidebar",
       "localizations" : {
@@ -2602,6 +2696,17 @@
         }
       }
     },
+    "Safira answered “reject” to the site’s prompt (%@)." : {
+      "comment" : "Cookie popover; the argument is the name of the site's consent platform",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safira a répondu « refuser » au bandeau du site (%@)."
+          }
+        }
+      }
+    },
     "Safira could not be made the default browser" : {
       "comment" : "Link rules, Slack folder and default browser",
       "localizations" : {
@@ -2624,12 +2729,33 @@
         }
       }
     },
+    "Safira found the prompt (%@) but could not answer it." : {
+      "comment" : "Cookie popover; the argument is the name of the site's consent platform",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safira a trouvé le bandeau (%@) mais n’a pas pu y répondre."
+          }
+        }
+      }
+    },
     "Safira keeps your Profiles apart: each has its own logins, history and settings. In a few steps you create the first one, choose a search engine and a set of shortcuts, and see every default Safira picked, each of which you can change." : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Safira sépare vos profils : chacun a ses propres identifiants, son historique et ses réglages. En quelques étapes, vous créez le premier, choisissez un moteur de recherche et un ensemble de raccourcis, et voyez tous les choix faits par défaut par Safira, que vous pouvez chacun modifier."
+          }
+        }
+      }
+    },
+    "Safira leaves these sites’ prompts for you to answer. Add a site from the cookie icon in the address field." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safira vous laisse répondre aux bandeaux de ces sites. Ajoutez un site depuis l’icône de cookies du champ d’adresse."
           }
         }
       }
@@ -2890,6 +3016,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sites"
+          }
+        }
+      }
+    },
+    "Sites that keep their cookie prompts" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sites qui gardent leurs bandeaux de cookies"
           }
         }
       }
@@ -3183,6 +3319,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "La page a cessé de fonctionner deux fois, Safira ne l’a donc pas rechargée."
+          }
+        }
+      }
+    },
+    "The prompt had no way to reject, so Safira hid it. The site received no answer." : {
+      "comment" : "Cookie popover",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le bandeau ne permettait pas de refuser : Safira l’a masqué. Le site n’a reçu aucune réponse."
           }
         }
       }

@@ -3,6 +3,7 @@
 
 import AppKit
 import SafiraCore
+import SafiraSession
 import SafiraWeb
 import TestSupport
 import Testing
@@ -155,5 +156,30 @@ import WebKit
         page.close()
         window.close()
         _ = context
+    }
+}
+
+/// A window's context with an in-memory data store, to drive `allowCookiePrompts` as both windows do.
+@MainActor
+private final class InMemoryBrowsing: BrowsingContext {
+    let web = ProfileWebContext(profileID: ProfileID(rawValue: UUID()), storage: .inMemory)
+    lazy var session = ProfileSession(profileID: web.profileID) { [unowned self] in web.makePage(for: $0) }
+}
+
+@MainActor
+@Suite struct AllowCookiePromptsTests {
+    @Test func allowingASiteExceptsItForTheSessionAndTheNextPagesAndReloads() async throws {
+        let server = try await LocalServer.start(.http, title: "shop")
+        defer { server.stop() }
+        let browsing = InMemoryBrowsing()
+        browsing.session.submitCommandBar("http://127.0.0.1:\(server.port)/")
+        try await waitUntil("the page loads") { server.requestCount == 1 && browsing.session.selectedTab?.state.isLoading == false }
+
+        browsing.allowCookiePrompts(onSite: "www.Shop.example")
+
+        #expect(browsing.web.webContentSettings.cookiePrompts.exceptions == ["shop.example"])
+        #expect(browsing.session.settings.webContent.cookiePrompts.exceptions == ["shop.example"])
+        try await waitUntil("the page reloads") { server.requestCount == 2 }
+        browsing.session.tabs.map(\.id).forEach(browsing.session.close)
     }
 }

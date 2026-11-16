@@ -21,6 +21,8 @@ struct PageActions {
     let newTab: () -> Void
     /// Return or Escape in the Tab list: the keyboard goes to the page.
     let showPage: () -> Void
+    /// "Allow Prompts on This Site" in the cookie indicator: the site is excepted and the shown Tab reloads.
+    let allowCookiePrompts: (String) -> Void
 }
 
 /// The keyboard state of the Tab list. The window asks for the focus through it, since the list is a SwiftUI view
@@ -55,12 +57,20 @@ struct BrowserControls<Trailing: View>: View {
     var body: some View {
         let tab = session.selectedTab
         let address = tab?.address
+        let cookiePrompt = tab?.state.cookiePrompt.flatMap { $0.isShown ? $0 : nil }
         HStack(spacing: 0) {
             Button(action: actions.editAddress) {
                 AddressField(symbol: symbol(for: address), host: address.map { AddressDisplay($0).host } ?? "",
-                             placeholder: Self.placeholder, zoom: zoom)
+                             placeholder: Self.placeholder, zoom: zoom, reservesIndicator: cookiePrompt != nil)
             }
             .buttonStyle(PressedOpacityStyle())
+            // Over the field, not inside its button: a button in a button's label gets no click of its own.
+            .overlay(alignment: .trailing) {
+                if let cookiePrompt {
+                    CookiePromptIndicator(report: cookiePrompt, allow: actions.allowCookiePrompts)
+                        .padding(.trailing, tokens.spacing.rowInsetHorizontal / 2)
+                }
+            }
             .help(address?.absoluteString ?? FloatingCommandBar.placeholder)
             // On the button itself, so that VoiceOver keeps its press action: the full address, not the host.
             .accessibilityLabel(Text("Address"))
@@ -104,6 +114,8 @@ private struct AddressField: View {
     let placeholder: String
     /// The page zoom's badge, "125%"; nil at 100%.
     let zoom: String?
+    /// Leaves room at the trailing end for the cookie indicator drawn over the field.
+    let reservesIndicator: Bool
     @Environment(\.designTokens) private var tokens
 
     var body: some View {
@@ -128,6 +140,9 @@ private struct AddressField: View {
                         .fixedSize()
                         .help(String(localized: "Page zoom. Actual Size (⌘0) shows the page at its own size.", comment: "Sidebar: help tag of the zoom badge in the address field"))
                         .accessibilityHidden(true)
+                }
+                if reservesIndicator {
+                    Color.clear.frame(width: CookiePromptIndicator.width)
                 }
             }
             .padding(.horizontal, tokens.spacing.rowInsetHorizontal)

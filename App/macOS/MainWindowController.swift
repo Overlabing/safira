@@ -829,7 +829,8 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         let pageActions = PageActions(
             editAddress: { [weak self] in self?.focusCommandBar(nil) },
             newTab: { [weak self] in self?.newTabFromSidebar() },
-            showPage: { [weak self] in self?.leaveSidebar() })
+            showPage: { [weak self] in self?.leaveSidebar() },
+            allowCookiePrompts: { [weak self] site in self?.registry.active.allowCookiePrompts(onSite: site) })
         let spaceActions = SpaceActions(
             edit: { [weak self] id in self?.editSpace(id) },
             delete: { [weak self] id in self?.confirmDeletion(of: id) }
