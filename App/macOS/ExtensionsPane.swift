@@ -53,7 +53,12 @@ struct ExtensionsPane: View {
                 .settingsScrollEdges()
             }
         }
-        .task { await library.checkForUpdates() }
+        .task {
+            await library.checkForUpdates()
+            #if DEBUG
+            await ExtensionInstallPreview.run { install(from: $0) }
+            #endif
+        }
         .confirmationDialog(removalTitle, isPresented: Binding(get: { removing != nil }, set: { if !$0 { removing = nil } }),
                             presenting: removing) { item in
             Button(String(localized: "Remove", comment: "Settings, Extensions pane: confirmation button"), role: .destructive) {
@@ -124,6 +129,23 @@ struct ExtensionsPane: View {
     }
 }
 
+#if DEBUG
+/// A capture of the permission sheet needs an install: the launch argument `-SafiraExtensionPreviewAsk <folder>` installs
+/// that folder once, through the sheet, when the Extensions pane first appears. Debug builds only, for a copy under a
+/// throwaway bundle id.
+@MainActor
+private enum ExtensionInstallPreview {
+    private static var didRun = false
+
+    static func run(install: (URL) -> Void) async {
+        guard !didRun, let path = UserDefaults.standard.string(forKey: "SafiraExtensionPreviewAsk") else { return }
+        didRun = true
+        try? await Task.sleep(for: .seconds(1))
+        install(URL(filePath: path, directoryHint: .isDirectory))
+    }
+}
+#endif
+
 /// One installed extension: its icon, name and version, what it may do, a switch per Profile, and Remove. A folder
 /// that cannot be found is said so, with Locate….
 private struct ExtensionRow: View {
@@ -156,15 +178,20 @@ private struct ExtensionRow: View {
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
-                VStack(alignment: .leading, spacing: 6) {
+                Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 6) {
                     ForEach(profiles) { profile in
-                        Toggle(isOn: Binding(get: { item.isEnabled(in: profile.id) }, set: { setEnabled($0, profile.id) })) {
+                        GridRow {
                             Text(verbatim: "\(profile.symbol)  \(profile.name)")
+                                .accessibilityHidden(true)
+                            Toggle(isOn: Binding(get: { item.isEnabled(in: profile.id) },
+                                                 set: { setEnabled($0, profile.id) })) {
+                                Text("\(item.displayName) in “\(profile.name)”",
+                                     comment: "Settings, Extensions pane: VoiceOver label of a Profile's switch; the arguments are an extension's and a Profile's names")
+                            }
+                            .labelsHidden()
+                            .toggleStyle(.switch)
+                            .controlSize(.small)
                         }
-                        .toggleStyle(.switch)
-                        .controlSize(.small)
-                        .accessibilityLabel(Text("\(item.displayName) in “\(profile.name)”",
-                                                 comment: "Settings, Extensions pane: VoiceOver label of a Profile's switch; the arguments are an extension's and a Profile's names"))
                     }
                 }
             }

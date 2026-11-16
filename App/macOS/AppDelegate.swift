@@ -8,6 +8,7 @@ import LinkRouting
 import os
 import SafiraCore
 import SafiraSession
+import SafiraSettings
 import SafiraStore
 import SafiraWeb
 
@@ -80,8 +81,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                                      updates: updates, diagnostics: diagnostics,
                                      theme: { [weak controller] in controller?.spaceTheme ?? ThemeCatalog.first }),
             activates: !launchedInBackground)
-        // Install asks from the Settings window, run-time requests from the Main window: the window the user is in.
-        let extensionPrompts = ExtensionPermissionPrompter { [weak controller] in NSApp.keyWindow ?? controller?.window }
+        // The window the user is in; else the open Settings window, where installs start; else the Main window.
+        let extensionPrompts = ExtensionPermissionPrompter { [weak controller, weak settings = self.settings] in
+            NSApp.keyWindow ?? settings?.window.flatMap { $0.isVisible ? $0 : nil } ?? controller?.window
+        }
         registry.extensionLibrary.permissionPrompt = { await extensionPrompts.ask($0) }
         // An app that ships an extension folder may have updated it while Safira was in the background.
         NotificationCenter.default.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil,
@@ -91,6 +94,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 Task { await library.checkForUpdates() }
             }
         }
+        #if DEBUG
+        // Captures of a Settings pane without a menu click, which would bring a copy launched behind other apps forward:
+        // `-SafiraOpenSettingsPane <pane id>`. Debug builds only.
+        if let pane = UserDefaults.standard.string(forKey: "SafiraOpenSettingsPane").flatMap(SettingsPaneID.init(rawValue:)) {
+            settings?.presenter.open(pane: pane)
+        }
+        #endif
         let onboarding = OnboardingController(registry: registry, defaults: defaults)
         self.onboarding = onboarding
         earlyLinks.forEach(links.receive)
