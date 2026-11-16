@@ -6,7 +6,7 @@ import DesignKit
 import SafiraCore
 import SwiftUI
 
-/// The small shield at the end of the address field once Safira has handled the page's cookie prompt. Clicking it
+/// The small shield in the address pill once Safira has handled the page's cookie prompt. Clicking it
 /// says what happened and offers to leave the site's prompts alone.
 struct CookiePromptIndicator: View {
     static let width: CGFloat = 20

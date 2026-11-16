@@ -35,6 +35,17 @@ public final class ProfileDownloads {
     @ObservationIgnored private let database: ProfileDatabase?
     @ObservationIgnored private let now: @MainActor () -> Date
     @ObservationIgnored private let onError: @MainActor (String, any Error) -> Void
+    /// The downloads started, retried or resumed since launch: they keep the sidebar's button shown until cleared.
+    private var startedThisRun: Set<DownloadID> = []
+    /// The downloads that failed since the list was last opened.
+    private var unseenFailures: Set<DownloadID> = []
+    private var finishedCount = 0
+    /// Why a download of this run failed, in the engine's words; kept for this run only.
+    private var failureReasons: [DownloadID: String] = [:]
+    /// The downloads a previous run left running: they stopped because Safira quit.
+    @ObservationIgnored private var interruptedByQuit: Set<DownloadID> = []
+    /// Where each running transfer was first measured in this run, for its time left.
+    @ObservationIgnored private var rates: [DownloadID: TransferRate] = [:]
 
     /// - Parameter database: where downloads are kept; nil keeps them for this run only.
     public init(database: ProfileDatabase? = nil, now: @escaping @MainActor () -> Date = { Date() },
@@ -52,6 +63,7 @@ public final class ProfileDownloads {
         for index in all.indices where all[index].state == .active {
             all[index].state = .failed
             all[index].finishedAt = now()
+            interruptedByQuit.insert(all[index].id)
             persist(all[index])
         }
     }
@@ -67,6 +79,30 @@ public final class ProfileDownloads {
         all.contains { $0.state == .active }
     }
 
+    /// What the sidebar's downloads button shows.
+    public var indicator: DownloadsIndicator {
+        DownloadsIndicator(downloads: all, startedThisRun: startedThisRun, unseenFailures: unseenFailures,
+                           finishedCount: finishedCount)
+    }
+
+    /// Why a download failed, when it is known.
+    public func failure(_ id: DownloadID) -> DownloadFailure? {
+        guard download(id)?.state == .failed else { return nil }
+        if let reason = failureReasons[id] { return .error(reason) }
+        return interruptedByQuit.contains(id) ? .quit : .unknown
+    }
+
+    /// The list was opened: the failures it shows no longer call for attention.
+    public func markFailuresSeen() {
+        if !unseenFailures.isEmpty { unseenFailures = [] }
+    }
+
+    /// The time a running download has left at its current rate, nil while it cannot be told.
+    public func timeRemaining(_ id: DownloadID) -> TimeInterval? {
+        guard let record = download(id), record.state == .active, let rate = rates[id] else { return nil }
+        return rate.timeRemaining(received: record.receivedBytes, total: record.totalBytes, at: now())
+    }
+
     public func download(_ id: DownloadID) -> DownloadRecord? {
         all.first { $0.id == id }
     }
@@ -78,6 +114,7 @@ public final class ProfileDownloads {
     public func begin(from url: URL, fileName: String) -> DownloadID {
         let record = DownloadRecord(sourceURL: url, fileName: fileName, startedAt: now())
         all.insert(record, at: 0)
+        startedThisRun.insert(record.id)
         persist(record)
         return record.id
     }
@@ -98,6 +135,7 @@ public final class ProfileDownloads {
     /// Progress is kept for this run only; the database learns the byte count when the transfer ends.
     public func progress(_ id: DownloadID, received: Int64, total: Int64?) {
         guard let index = all.firstIndex(where: { $0.id == id && $0.state == .active }) else { return }
+        if rates[id] == nil { rates[id] = TransferRate(startBytes: received, startTime: now()) }
         all[index].receivedBytes = received
         all[index].totalBytes = total
     }
@@ -106,6 +144,8 @@ public final class ProfileDownloads {
     public func complete(_ id: DownloadID, fileName: String, fileBookmark: Data?, size: Int64? = nil) {
         guard download(id)?.state == .active else { return }
         transfers[id] = nil
+        rates[id] = nil
+        finishedCount += 1
         update(id) { record in
             record.state = .completed
             record.fileName = fileName
@@ -122,9 +162,13 @@ public final class ProfileDownloads {
     }
 
     /// The transfer broke off; `resumeData` lets the user continue it where it stopped.
-    public func fail(_ id: DownloadID, resumeData: Data?) {
+    /// - Parameter reason: the engine's description of the error, shown in the list.
+    public func fail(_ id: DownloadID, resumeData: Data?, reason: String? = nil) {
         guard download(id)?.state == .active else { return }
+        failureReasons[id] = reason
         transfers[id] = nil
+        rates[id] = nil
+        unseenFailures.insert(id)
         update(id) { record in
             record.state = .failed
             record.resumeData = resumeData
@@ -137,21 +181,41 @@ public final class ProfileDownloads {
     /// Stops a running download. It is listed as cancelled at once; the data to continue it arrives when the engine
     /// has stopped the transfer.
     public func cancel(_ id: DownloadID) async {
-        guard download(id)?.state == .active else { return }
-        let transfer = transfers.removeValue(forKey: id)
-        update(id) { record in
-            record.state = .cancelled
-            record.finishedAt = now()
+        if download(id)?.state == .paused {
+            update(id) { $0.state = .cancelled }
+            return
         }
-        guard let resumeData = await transfer?.cancel(), download(id)?.state == .cancelled else { return }
-        update(id) { $0.resumeData = resumeData }
+        await stop(id, as: .cancelled)
+    }
+
+    /// Stops a running download to continue it later with `resume`. Unlike a cancelled one it stays in the list on
+    /// Clear, and keeps the sidebar's button shown.
+    public func pause(_ id: DownloadID) async {
+        await stop(id, as: .paused)
     }
 
     /// Starts a cancelled or failed download again, where it stopped when the engine kept the data for it. False when
     /// the download cannot be retried, or no engine is there to do it.
     @discardableResult
     public func retry(_ id: DownloadID) -> Bool {
-        guard let engine, let record = download(id), record.canRetry else { return false }
+        guard let record = download(id), record.canRetry else { return false }
+        return restart(record)
+    }
+
+    /// Continues a paused download. False when it is not paused, or no engine is there to do it.
+    @discardableResult
+    public func resume(_ id: DownloadID) -> Bool {
+        guard let record = download(id), record.canResume else { return false }
+        return restart(record)
+    }
+
+    private func restart(_ record: DownloadRecord) -> Bool {
+        guard let engine else { return false }
+        let id = record.id
+        startedThisRun.insert(id)
+        unseenFailures.remove(id)
+        failureReasons[id] = nil
+        interruptedByQuit.remove(id)
         var restarted = record
         if record.resumeData == nil { restarted.receivedBytes = 0 }
         update(id) { stored in
@@ -170,9 +234,15 @@ public final class ProfileDownloads {
         removeRecords([id])
     }
 
-    /// Takes everything that is not running off the list.
+    /// Clear: takes the finished, failed and cancelled downloads off the list; the running and paused ones stay. The
+    /// files saved stay where they are.
     public func removeFinished() {
-        removeRecords(all.filter { $0.state != .active }.map(\.id))
+        removeRecords(all.filter { $0.state != .active && $0.state != .paused }.map(\.id))
+    }
+
+    /// Whether Clear would take anything off the list.
+    public var canClear: Bool {
+        all.contains { $0.state != .active && $0.state != .paused }
     }
 
     /// Stops every running download, keeping what is needed to continue them, for the app to quit.
@@ -192,6 +262,18 @@ public final class ProfileDownloads {
 
     // MARK: Private
 
+    private func stop(_ id: DownloadID, as state: DownloadState) async {
+        guard download(id)?.state == .active else { return }
+        let transfer = transfers.removeValue(forKey: id)
+        rates[id] = nil
+        update(id) { record in
+            record.state = state
+            record.finishedAt = now()
+        }
+        guard let resumeData = await transfer?.cancel(), download(id)?.state == state else { return }
+        update(id) { $0.resumeData = resumeData }
+    }
+
     private func update(_ id: DownloadID, _ change: (inout DownloadRecord) -> Void) {
         guard let index = all.firstIndex(where: { $0.id == id }) else { return }
         change(&all[index])
@@ -210,6 +292,8 @@ public final class ProfileDownloads {
             engine?.discardPartialFile(of: record)
         }
         all.removeAll { ids.contains($0.id) }
+        startedThisRun.subtract(ids)
+        unseenFailures.subtract(ids)
     }
 
     private func persist(_ record: DownloadRecord) {
@@ -220,3 +304,13 @@ public final class ProfileDownloads {
         }
     }
 }
+
+/// Why a download failed.
+public enum DownloadFailure: Hashable, Sendable {
+    /// The engine reported this error.
+    case error(String)
+    /// It was running when Safira quit.
+    case quit
+    case unknown
+}
+

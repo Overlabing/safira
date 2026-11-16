@@ -43,7 +43,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     private var folderSheet: NSWindow?
     private var profileSheet: NSWindow?
     private var clearSheet: NSWindow?
-    private lazy var downloadsWindow = DownloadsWindowController(registry: registry)
+    private let downloads = DownloadsPresenter()
     private var popupPanels: [PopupID: PopupPanelController] = [:]
     private var renderedTabID: TabID?
     private var dockIconThemeID: String?
@@ -276,9 +276,14 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         confirmDeletion(ofProfile: registry.activeProfileID)
     }
 
-    /// The Active profile's downloads, in a window of their own.
+    /// ⌥⌘L: the Active profile's downloads panel, from the sidebar's button. In Compact mode it shows the sidebar
+    /// first, so that the panel has its button to hang from.
     @objc func showDownloads(_ sender: Any?) {
-        downloadsWindow.showWindow(nil)
+        if presentation.isCompact, !presentation.isRevealed {
+            presentation.reveal()
+            layout?.apply(presentation, animated: true)
+        }
+        downloads.isPresented.toggle()
     }
 
     @objc func clearBrowsingData(_ sender: Any?) {
@@ -848,7 +853,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         let column = TabSidebar(
             registry: registry, focus: columnFocus, pageActions: pageActions, profileActions: profileActions,
             spaceActions: spaceActions, folderActions: folderActions, extensionPopups: extensionPopups,
-            shortcut: { [weak self] id in self?.shortcuts.bindings.shortcut(id)?.symbols })
+            downloads: downloads, shortcut: { [weak self] id in self?.shortcuts.bindings.shortcut(id)?.symbols })
         let theme: () -> Theme = { [weak self] in self?.spaceTheme ?? ThemeCatalog.first }
         let backdrop = WindowBackdrop(theme: theme).spaceDeletionPrompt(spaceDeletion)
         let layout = BrowserWindowLayout(background: NSHostingView(rootView: backdrop),

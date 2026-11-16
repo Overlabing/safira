@@ -13,6 +13,8 @@
      "sources": ["Packages/SafiraKit/Sources/LinkRouting"]},
     {"catalogs": ["Packages/SafiraKit/Sources/LinkPickerUI/Resources/LinkPickerUI.xcstrings"], "targets": ["LinkPickerUI"],
      "sources": ["Packages/SafiraKit/Sources/LinkPickerUI"]},
+    {"catalogs": ["Packages/SafiraKit/Sources/DownloadsUI/Resources/DownloadsUI.xcstrings"], "targets": ["DownloadsUI"],
+     "sources": ["Packages/SafiraKit/Sources/DownloadsUI"]},
     {"catalogs": ["Packages/SafiraKit/Sources/Diagnostics/Resources/Diagnostics.xcstrings"], "targets": ["Diagnostics"],
      "sources": ["Packages/SafiraKit/Sources/Diagnostics"]},
     {"catalogs": ["Packages/SafiraKit/Sources/Onboarding/Resources/Onboarding.xcstrings"], "targets": ["Onboarding"],

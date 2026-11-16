@@ -14,6 +14,8 @@ public struct DownloadID: Hashable, Sendable, Codable {
 
 public enum DownloadState: String, Hashable, Sendable {
     case active
+    /// Stopped by the user to be continued later, from where it stopped when the engine kept the data for it.
+    case paused
     case completed
     /// The transfer broke off: a network error, or Safira quit while it ran.
     case failed
@@ -67,6 +69,11 @@ public struct DownloadRecord: Hashable, Sendable, Identifiable {
     /// `resumeData`, from the beginning otherwise.
     public var canRetry: Bool {
         state == .cancelled || state == .failed
+    }
+
+    /// A paused transfer carries on when the user resumes it.
+    public var canResume: Bool {
+        state == .paused
     }
 
     /// The saved file, unless the bookmark is missing or the file is gone.
