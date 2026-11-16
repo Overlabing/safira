@@ -234,6 +234,93 @@ import WebKit
         #expect(try AppDatabase(file: place.databaseFile).installedExtensions().first?.version == "1.2.4")
     }
 
+    @Test func aCancelledUpdateRunsWithWhatWasAllowedAndIsAskedAgainOnlyFromThePane() async throws {
+        let place = try Place()
+        defer { place.clean() }
+        let folder = try place.extensionFolder(key: nil)
+        let profile = try ExtensionHostTests.profile()
+        let library = place.library()
+        await library.attach(try #require(profile.extensions), profile: profile.id)
+        let installed = try #require(try await library.install(from: folder) { _ in true })
+        let host = try #require(profile.extensions)
+
+        try place.writeManifest(in: folder, version: "1.2.4", permissions: ["storage", "activeTab", "alarms", "tabs"], key: nil)
+        var asked = 0
+        library.permissionPrompt = { _ in asked += 1; return false }
+        await library.checkForUpdates()
+
+        #expect(asked == 1)
+        #expect(library.installed.first?.version == "1.2.4")
+        #expect(library.installed.first?.grantedPermissions == ["activeTab", "alarms", "storage"])
+        #expect(library.statuses[installed.id]?.pendingRequest?.permissions == ["tabs"])
+        #expect(host.loadedExtensions.map(\.version) == ["1.2.4"])
+        let context = try #require(host.controller.extensionContexts.first)
+        #expect(!context.currentPermissions.contains(.tabs))
+
+        // The next activation does not ask again.
+        await library.checkForUpdates()
+        #expect(asked == 1)
+
+        // After a relaunch the pane still shows what is not allowed.
+        let relaunched = place.library()
+        try await waitUntil("the relaunched library read what is not allowed") {
+            relaunched.statuses[installed.id]?.pendingRequest != nil
+        }
+        #expect(relaunched.statuses[installed.id]?.pendingRequest?.permissions == ["tabs"])
+
+        library.permissionPrompt = { _ in asked += 1; return true }
+        await library.allowPending(installed.id)
+
+        #expect(asked == 2)
+        #expect(library.statuses[installed.id]?.pendingRequest == nil)
+        #expect(library.installed.first?.grantedPermissions == ["activeTab", "alarms", "storage", "tabs"])
+        #expect(try AppDatabase(file: place.databaseFile).installedExtensions().first?.grantedPermissions
+            == ["activeTab", "alarms", "storage", "tabs"])
+        #expect(context.currentPermissions.contains(.tabs))
+    }
+
+    @Test func aFolderThatNowHoldsAnotherExtensionStopsItUntilItIsRightAgain() async throws {
+        let place = try Place()
+        defer { place.clean() }
+        let folder = try place.extensionFolder()
+        let profile = try ExtensionHostTests.profile()
+        let library = place.library()
+        await library.attach(try #require(profile.extensions), profile: profile.id)
+        try await library.install(from: folder) { _ in true }
+        let host = try #require(profile.extensions)
+        library.permissionPrompt = { _ in Issue.record("another extension is never asked about"); return false }
+
+        try place.writeManifest(in: folder, version: "9.0.0", permissions: ["storage", "cookies"], key: "b3RoZXIta2V5",
+                                name: "Stranger")
+        await library.checkForUpdates()
+
+        #expect(library.statuses[Self.fixtureID]?.availability == .differentExtension)
+        #expect(host.loadedExtensions.isEmpty)
+        #expect(library.installed.first?.displayName == "Safira fixture")
+        #expect(library.installed.first?.version == "1.2.3")
+        #expect(library.installed.first?.grantedPermissions == ["activeTab", "alarms", "storage"])
+        #expect(try AppDatabase(file: place.databaseFile).installedExtensions().first?.version == "1.2.3")
+
+        // A relaunch does not load it either.
+        let later = try ExtensionHostTests.profile()
+        let relaunched = place.library()
+        await relaunched.attach(try #require(later.extensions), profile: later.id)
+        #expect(relaunched.statuses[Self.fixtureID]?.availability == .differentExtension)
+        #expect(try #require(later.extensions).loadedExtensions.isEmpty)
+        // The row still words what was allowed: the stored grants reach every website.
+        try await waitUntil("the relaunched library read its details") {
+            relaunched.statuses[Self.fixtureID]?.hasAccessToAllHosts == true
+        }
+
+        // The extension is back in its folder, at the same version: it runs again under its identifier.
+        try place.writeManifest(in: folder, version: "1.2.3", permissions: ["storage", "activeTab", "alarms"],
+                                key: "c2FmaXJhLXRlc3Qta2V5")
+        await library.checkForUpdates()
+
+        #expect(library.statuses[Self.fixtureID]?.availability == .available)
+        #expect(host.loadedExtensions.map(\.identifier) == [Self.fixtureID])
+    }
+
     @Test func aStaleBookmarkIsMadeAgainAndAFolderThatIsGoneCanBeLocated() async throws {
         let place = try Place()
         defer { place.clean() }
@@ -294,7 +381,7 @@ import WebKit
     /// website data store. What the service worker stores is `storage.local`, never a `CryptoKey`, so the keychain is
     /// not reached. WebKit lists a record for every extension it knows, empty or not: what counts is its size.
     @Test(arguments: [true, false])
-    func removeDeletesWhatTheExtensionStored(whileLoaded: Bool) async throws {
+    func removeDeletesWhatTheExtensionStored(throughItsOwnController: Bool) async throws {
         let place = try Place()
         defer { place.clean() }
         let folder = try place.extensionFolder()
@@ -312,11 +399,13 @@ import WebKit
             await Self.storedBytes(Self.fixtureID, in: controller) > 0
         }
 
-        if whileLoaded {
+        // Remove unloads first, then deletes: from the Profile's own controller when the Profile is loaded, else
+        // through a new controller of the same identifier.
+        if throughItsOwnController {
             await ExtensionHost.removeData(of: "another-extension", from: controller)
             #expect(await Self.storedBytes(Self.fixtureID, in: controller) > 0)
-            await ExtensionHost.removeData(of: Self.fixtureID, from: controller)
             try controller.unload(context)
+            await ExtensionHost.removeData(of: Self.fixtureID, from: controller)
         } else {
             try controller.unload(context)
             await ExtensionHost.removeData(of: Self.fixtureID, inProfile: profile)

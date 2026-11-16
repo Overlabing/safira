@@ -46,6 +46,7 @@ struct ExtensionsPane: View {
                                              Task { await library.setEnabled(on, extension: item.id, in: profile) }
                                          },
                                          locate: { locate(item) },
+                                         review: { Task { await library.allowPending(item.id) } },
                                          remove: { removing = item })
                         }
                     }
@@ -147,13 +148,15 @@ private enum ExtensionInstallPreview {
 #endif
 
 /// One installed extension: its icon, name and version, what it may do, a switch per Profile, and Remove. A folder
-/// that cannot be found is said so, with Locate….
+/// that cannot be found, or that now holds another extension, is said so, with Locate…; what an update asked for and
+/// the user did not allow is said so, with Review….
 private struct ExtensionRow: View {
     let item: InstalledExtension
     let status: ExtensionStatus
     let profiles: [Profile]
     let setEnabled: (Bool, ProfileID) -> Void
     let locate: () -> Void
+    let review: () -> Void
     let remove: () -> Void
 
     var body: some View {
@@ -170,6 +173,18 @@ private struct ExtensionRow: View {
                         .accessibilityLabel(Text("Remove \(item.displayName)", comment: "Settings, Extensions pane: VoiceOver label; the argument is an extension's name"))
                 }
                 availability
+                if status.pendingRequest != nil {
+                    HStack {
+                        Label(String(localized: "This version asks for more than you allowed. It runs with what you allowed before.",
+                                     comment: "Settings, Extensions pane: an update whose permission sheet was cancelled"),
+                              systemImage: "exclamationmark.shield")
+                            .foregroundStyle(.orange)
+                        Spacer()
+                        Button(String(localized: "Review…", comment: "Settings, Extensions pane: button that shows the permission sheet again"),
+                               action: review)
+                    }
+                    .font(.callout)
+                }
                 VStack(alignment: .leading, spacing: 2) {
                     ForEach(summary, id: \.self) { line in
                         Text(verbatim: line)
@@ -238,6 +253,16 @@ private struct ExtensionRow: View {
                 }
             }
             .font(.callout)
+        case .differentExtension:
+            HStack {
+                Label(String(localized: "Its folder now holds another extension, so it does not run.",
+                             comment: "Settings, Extensions pane: an extension whose folder was replaced by another extension"),
+                      systemImage: "exclamationmark.triangle")
+                    .foregroundStyle(.orange)
+                Spacer()
+                Button(String(localized: "Locate…", comment: "Settings, Extensions pane: button"), action: locate)
+            }
+            .font(.callout)
         case .failed(let message):
             Label(message, systemImage: "exclamationmark.triangle")
                 .font(.callout)
@@ -288,7 +313,7 @@ final class ExtensionPermissionPrompter {
                                            comment: "Extension permission sheet")
         case .update:
             alert.messageText = String(localized: "“\(name)” was updated and asks for more", comment: "Extension permission sheet title; the argument is an extension's name")
-            alert.informativeText = String(localized: "If you don’t allow it, the extension keeps only what you allowed before.",
+            alert.informativeText = String(localized: "If you don’t allow it, the extension keeps only what you allowed before. You can allow it later in Settings › Extensions.",
                                            comment: "Extension permission sheet")
         case .runtime:
             alert.messageText = String(localized: "“\(name)” asks for more", comment: "Extension permission sheet title; the argument is an extension's name")

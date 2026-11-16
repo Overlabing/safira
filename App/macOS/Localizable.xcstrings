@@ -1432,13 +1432,13 @@
         }
       }
     },
-    "If you don’t allow it, the extension keeps only what you allowed before." : {
+    "If you don’t allow it, the extension keeps only what you allowed before. You can allow it later in Settings › Extensions." : {
       "comment" : "Extension permission sheet",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Si vous refusez, l’extension garde seulement ce que vous aviez autorisé."
+            "value" : "Si vous refusez, l’extension garde seulement ce que vous aviez autorisé. Vous pourrez l’autoriser plus tard dans Réglages › Extensions."
           }
         }
       }
@@ -1600,6 +1600,17 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "Its folder now holds another extension, so it does not run." : {
+      "comment" : "Settings, Extensions pane: an extension whose folder was replaced by another extension",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Son dossier contient maintenant une autre extension : elle ne tourne donc pas."
           }
         }
       }
@@ -2755,6 +2766,17 @@
         }
       }
     },
+    "Review…" : {
+      "comment" : "Settings, Extensions pane: button that shows the permission sheet again",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Examiner…"
+          }
+        }
+      }
+    },
     "Revoke" : {
       "localizations" : {
         "fr" : {
@@ -3557,6 +3579,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cette page indique :"
+          }
+        }
+      }
+    },
+    "This version asks for more than you allowed. It runs with what you allowed before." : {
+      "comment" : "Settings, Extensions pane: an update whose permission sheet was cancelled",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette version demande plus que ce que vous avez autorisé. Elle tourne avec ce que vous aviez autorisé."
           }
         }
       }

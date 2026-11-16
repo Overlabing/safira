@@ -16,6 +16,9 @@ public struct ExtensionStatus: Sendable {
         case missing
         /// It was found but WebKit refused to read it.
         case failed(String)
+        /// Its folder now holds an extension with another manifest `key`, which never runs under this one's
+        /// identifier, storage and permissions.
+        case differentExtension
     }
 
     public var availability: Availability
@@ -23,13 +26,17 @@ public struct ExtensionStatus: Sendable {
     /// What WebKit reported while loading it; empty when it had nothing to say.
     public var errors: [String]
     public var hasAccessToAllHosts: Bool
+    /// What its current version asks for that the user has not allowed (the update's sheet was cancelled). It runs
+    /// without it until the user allows it from the Extensions pane.
+    public var pendingRequest: ExtensionPermissionRequest?
 
     public init(availability: Availability = .available, icon: NSImage? = nil, errors: [String] = [],
-                hasAccessToAllHosts: Bool = false) {
+                hasAccessToAllHosts: Bool = false, pendingRequest: ExtensionPermissionRequest? = nil) {
         self.availability = availability
         self.icon = icon
         self.errors = errors
         self.hasAccessToAllHosts = hasAccessToAllHosts
+        self.pendingRequest = pendingRequest
     }
 }
 
@@ -178,8 +185,8 @@ public final class ExtensionLibrary {
     public func remove(_ id: String) async {
         guard let item = installed.first(where: { $0.id == id }) else { return }
         for host in hosts.values {
-            await host.removeData(of: id)
             host.unload(id)
+            await host.removeData(of: id)
         }
         if storage == .onDisk {
             for profile in allProfiles() where hosts[profile] == nil {
@@ -230,7 +237,9 @@ public final class ExtensionLibrary {
 
     /// Reads the manifest of every extension installed from a folder again, and reloads in every Profile those whose
     /// version changed, under the same identifier. An update that asks for more is asked about once; what the user does
-    /// not allow stays off. A folder replaced in place (an app update) is found again through its bookmark.
+    /// not allow stays off and shows in the Extensions pane (`allowPending`). A folder replaced in place (an app update)
+    /// is found again through its bookmark. A folder that now holds another extension (another manifest `key`) is not
+    /// loaded: the extension stops until the user locates its folder.
     public func checkForUpdates() async {
         for item in installed {
             guard case .folder = item.source else { continue }
@@ -242,6 +251,14 @@ public final class ExtensionLibrary {
         }
     }
 
+    /// Asks again about what the extension's current version asks for and the user has not allowed yet. Allowed, it
+    /// applies in every Profile at once.
+    public func allowPending(_ id: String) async {
+        guard let request = statuses[id]?.pendingRequest, let permissionPrompt, await permissionPrompt(request),
+              grant(request) else { return }
+        statuses[id]?.pendingRequest = nil
+    }
+
     // MARK: Private
 
     private func reload(_ id: String, force: Bool) async throws {
@@ -250,7 +267,15 @@ public final class ExtensionLibrary {
             statuses[id, default: ExtensionStatus()].availability = .missing
             return
         }
-        if !force {
+        if holdsAnotherExtension(item, at: resource) {
+            statuses[id, default: ExtensionStatus()].availability = .differentExtension
+            for host in hosts.values { host.unload(id) }
+            return
+        }
+        // A folder that was gone or held another extension and is right again loads even at the same version.
+        let availability = statuses[id]?.availability
+        let wasStopped = availability == .missing || availability == .differentExtension
+        if !force, !wasStopped {
             guard let version = Self.manifestVersion(in: resource), version != item.version else { return }
         }
         let webExtension = try await WKWebExtension(resourceBaseURL: resource)
@@ -259,15 +284,21 @@ public final class ExtensionLibrary {
         updated.version = webExtension.version ?? item.version
         let granted = InstalledGrants(permissions: Set(item.grantedPermissions), matchPatterns: Set(item.grantedMatchPatterns))
         let request = ExtensionPermissionRequest(webExtension, id: id, moment: .update, alreadyGranted: granted)
-        if !request.isEmpty, let ask = permissionPrompt, await ask(request) {
-            updated.grantedPermissions = (item.grantedPermissions + request.permissions).sorted()
-            updated.grantedMatchPatterns = (item.grantedMatchPatterns + request.matchPatterns).sorted()
+        var pending: ExtensionPermissionRequest?
+        if !request.isEmpty {
+            if let ask = permissionPrompt, await ask(request) {
+                updated.grantedPermissions = (item.grantedPermissions + request.permissions).sorted()
+                updated.grantedMatchPatterns = (item.grantedMatchPatterns + request.matchPatterns).sorted()
+            } else {
+                // The new version is what runs, so it is saved; asking again at every activation would nag.
+                pending = request
+            }
         }
         guard let index = installed.firstIndex(where: { $0.id == id }) else { return }
         installed[index] = updated
         save(updated)
         statuses[id] = ExtensionStatus(icon: webExtension.icon(for: CGSize(width: 64, height: 64)),
-                                       hasAccessToAllHosts: Self.reachesAllHosts(updated))
+                                       hasAccessToAllHosts: Self.reachesAllHosts(updated), pendingRequest: pending)
         for (profile, host) in hosts where updated.isEnabled(in: profile) {
             host.unload(id)
             await load(updated, into: host)
@@ -277,6 +308,10 @@ public final class ExtensionLibrary {
     private func load(_ item: InstalledExtension, into host: ExtensionHost) async {
         guard let resource = resource(of: item) else {
             statuses[item.id, default: ExtensionStatus()].availability = .missing
+            return
+        }
+        if holdsAnotherExtension(item, at: resource) {
+            statuses[item.id, default: ExtensionStatus()].availability = .differentExtension
             return
         }
         do {
@@ -318,19 +353,42 @@ public final class ExtensionLibrary {
         }
     }
 
-    /// Reads the icons and what WebKit says of each extension once, for the Extensions pane.
+    /// Reads the icons and what WebKit says of each extension once, for the Extensions pane, and what its version
+    /// asks for that was not allowed (an update whose sheet was cancelled before a relaunch).
     private func readDetails() async {
         for item in installed {
-            guard let resource = resource(of: item),
-                  let webExtension = try? await WKWebExtension(resourceBaseURL: resource) else { continue }
-            statuses[item.id, default: ExtensionStatus()].icon = webExtension.icon(for: CGSize(width: 64, height: 64))
             statuses[item.id, default: ExtensionStatus()].hasAccessToAllHosts = Self.reachesAllHosts(item)
+            guard let resource = resource(of: item) else { continue }
+            if holdsAnotherExtension(item, at: resource) {
+                statuses[item.id, default: ExtensionStatus()].availability = .differentExtension
+                continue
+            }
+            guard let webExtension = try? await WKWebExtension(resourceBaseURL: resource) else { continue }
+            let granted = InstalledGrants(permissions: Set(item.grantedPermissions),
+                                          matchPatterns: Set(item.grantedMatchPatterns))
+            let pending = ExtensionPermissionRequest(webExtension, id: item.id, moment: .update, alreadyGranted: granted)
+            statuses[item.id, default: ExtensionStatus()].icon = webExtension.icon(for: CGSize(width: 64, height: 64))
+            statuses[item.id, default: ExtensionStatus()].pendingRequest = pending.isEmpty ? nil : pending
         }
     }
 
+    /// Whether an extension's folder now holds another extension: its manifest names another `key`. A folder without
+    /// a `key` cannot tell, so it is taken as the same extension.
+    private func holdsAnotherExtension(_ item: InstalledExtension, at resource: URL) -> Bool {
+        guard case .folder = item.source,
+              let keyed = ExtensionIdentity.identifier(forManifestKey: Self.manifest(in: resource)?["key"] as? String)
+        else { return false }
+        return keyed != item.id
+    }
+
     private func allowAtRuntime(_ request: ExtensionPermissionRequest) async -> Bool {
-        guard let permissionPrompt, await permissionPrompt(request),
-              let index = installed.firstIndex(where: { $0.id == request.extensionID }) else { return false }
+        guard let permissionPrompt, await permissionPrompt(request) else { return false }
+        return grant(request)
+    }
+
+    /// Remembers what the user allowed and gives it to the extension in every Profile where it is loaded.
+    private func grant(_ request: ExtensionPermissionRequest) -> Bool {
+        guard let index = installed.firstIndex(where: { $0.id == request.extensionID }) else { return false }
         var item = installed[index]
         item.grantedPermissions = Array(Set(item.grantedPermissions).union(request.permissions)).sorted()
         item.grantedMatchPatterns = Array(Set(item.grantedMatchPatterns).union(request.matchPatterns)).sorted()
@@ -359,9 +417,12 @@ public final class ExtensionLibrary {
 
     /// The `version` of a folder's manifest, read without WebKit, so that checking for updates parses nothing else.
     static func manifestVersion(in folder: URL) -> String? {
+        manifest(in: folder)?["version"] as? String
+    }
+
+    private static func manifest(in folder: URL) -> [String: Any]? {
         let file = folder.appending(path: "manifest.json", directoryHint: .notDirectory)
-        guard let data = try? Data(contentsOf: file),
-              let manifest = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
-        return manifest["version"] as? String
+        guard let data = try? Data(contentsOf: file) else { return nil }
+        return try? JSONSerialization.jsonObject(with: data) as? [String: Any]
     }
 }
