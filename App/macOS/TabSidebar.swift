@@ -49,7 +49,7 @@ struct TabSidebar: View {
         .sidebarColumn {
             BrowserControls(session: session, actions: pageActions) {
                 if let extensions = registry.active.extensions {
-                    ExtensionActionButtons(host: extensions, popups: extensionPopups)
+                    ExtensionActionButtons(host: extensions, library: registry.extensionLibrary, popups: extensionPopups)
                 }
             }
         } header: {

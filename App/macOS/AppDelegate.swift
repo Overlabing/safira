@@ -80,6 +80,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                                      updates: updates, diagnostics: diagnostics,
                                      theme: { [weak controller] in controller?.spaceTheme ?? ThemeCatalog.first }),
             activates: !launchedInBackground)
+        // Install asks from the Settings window, run-time requests from the Main window: the window the user is in.
+        let extensionPrompts = ExtensionPermissionPrompter { [weak controller] in NSApp.keyWindow ?? controller?.window }
+        registry.extensionLibrary.permissionPrompt = { await extensionPrompts.ask($0) }
+        // An app that ships an extension folder may have updated it while Safira was in the background.
+        NotificationCenter.default.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil,
+                                               queue: .main) { [weak registry] _ in
+            MainActor.assumeIsolated {
+                guard let library = registry?.extensionLibrary else { return }
+                Task { await library.checkForUpdates() }
+            }
+        }
         let onboarding = OnboardingController(registry: registry, defaults: defaults)
         self.onboarding = onboarding
         earlyLinks.forEach(links.receive)

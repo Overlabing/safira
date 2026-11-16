@@ -1,6 +1,199 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Can add items to shortcut menus" : {
+      "comment" : "Extension permission: contextMenus",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peut ajouter des éléments aux menus contextuels"
+          }
+        }
+      }
+    },
+    "Can block and change content in webpages" : {
+      "comment" : "Extension permission: declarativeNetRequest",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peut bloquer et modifier le contenu des pages web"
+          }
+        }
+      }
+    },
+    "Can exchange messages with apps on this Mac" : {
+      "comment" : "Extension permission: nativeMessaging",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peut échanger des messages avec des apps de ce Mac"
+          }
+        }
+      }
+    },
+    "Can read and change cookies" : {
+      "comment" : "Extension permission: cookies",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peut lire et modifier les cookies"
+          }
+        }
+      }
+    },
+    "Can read and modify the page you’re on when you use the extension" : {
+      "comment" : "Extension permission: activeTab",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peut lire et modifier la page affichée quand vous utilisez l’extension"
+          }
+        }
+      }
+    },
+    "Can read and modify webpages on %@" : {
+      "comment" : "Extension permission; the argument is a list of websites",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peut lire et modifier les pages web de %@"
+          }
+        }
+      }
+    },
+    "Can read and modify webpages on %@ and %lld more websites" : {
+      "comment" : "Extension permission; the arguments are a list of websites and a count",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Can read and modify webpages on %1$@ and %2$lld more websites"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peut lire et modifier les pages web de %1$@ et de %2$lld autres sites"
+          }
+        }
+      }
+    },
+    "Can read and modify webpages on all websites" : {
+      "comment" : "Extension permission, as Safari words it",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peut lire et modifier les pages web de tous les sites"
+          }
+        }
+      }
+    },
+    "Can run scripts in webpages it can access" : {
+      "comment" : "Extension permission: scripting",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peut exécuter des scripts dans les pages web auxquelles elle a accès"
+          }
+        }
+      }
+    },
+    "Can run tasks on a schedule" : {
+      "comment" : "Extension permission: alarms",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peut exécuter des tâches programmées"
+          }
+        }
+      }
+    },
+    "Can see the address and title of your Tabs" : {
+      "comment" : "Extension permission: tabs",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peut voir l’adresse et le titre de vos onglets"
+          }
+        }
+      }
+    },
+    "Can see the pages you open" : {
+      "comment" : "Extension permission: webNavigation",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peut voir les pages que vous ouvrez"
+          }
+        }
+      }
+    },
+    "Can see the requests webpages make" : {
+      "comment" : "Extension permission: webRequest",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peut voir les requêtes des pages web"
+          }
+        }
+      }
+    },
+    "Can show notifications" : {
+      "comment" : "Extension permission: notifications",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peut afficher des notifications"
+          }
+        }
+      }
+    },
+    "Can store data on this Mac" : {
+      "comment" : "Extension permission: storage",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peut enregistrer des données sur ce Mac"
+          }
+        }
+      }
+    },
+    "Can use “%@”" : {
+      "comment" : "Extension permission Safira has no words for; the argument is its name in the manifest",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peut utiliser « %@ »"
+          }
+        }
+      }
+    },
+    "Can write to the clipboard" : {
+      "comment" : "Extension permission: clipboardWrite",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peut écrire dans le presse-papiers"
+          }
+        }
+      }
+    },
     "Continue over HTTP" : {
       "comment" : "HTTPS warning page: the link that loads the site without encryption",
       "localizations" : {
@@ -45,6 +238,17 @@
         }
       }
     },
+    "Safira could not read “%@”." : {
+      "comment" : "Extension install error; the argument is a file name",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safira n’a pas pu lire « %@ »."
+          }
+        }
+      }
+    },
     "Safira tried %@ over HTTPS and %@." : {
       "comment" : "HTTPS warning page: the first argument is a host, the second says what failed",
       "localizations" : {
@@ -52,6 +256,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Safira a essayé %@ en HTTPS et %@."
+          }
+        }
+      }
+    },
+    "The folder “%@” has no manifest.json file. Choose the folder that holds the extension’s manifest." : {
+      "comment" : "Extension install error; the argument is a folder name",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le dossier « %@ » n’a pas de fichier manifest.json. Choisissez le dossier qui contient le manifeste de l’extension."
+          }
+        }
+      }
+    },
+    "This folder holds another extension than “%@”." : {
+      "comment" : "Extension locate error; the argument is an extension's name",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce dossier contient une autre extension que « %@ »."
           }
         }
       }
@@ -85,6 +311,56 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "n’a pas pu vérifier son certificat"
+          }
+        }
+      }
+    },
+    "“%@” is a CRX%lld file. Safira reads CRX3 files only." : {
+      "comment" : "Extension install error; the arguments are a file name and a format version",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%1$@” is a CRX%2$lld file. Safira reads CRX3 files only."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "« %1$@ » est un fichier CRX%2$lld. Safira ne lit que les fichiers CRX3."
+          }
+        }
+      }
+    },
+    "“%@” is already installed. Remove it in Settings › Extensions to install it again." : {
+      "comment" : "Extension install error; the argument is an extension's name",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "« %@ » est déjà installée. Supprimez-la dans Réglages › Extensions pour l’installer à nouveau."
+          }
+        }
+      }
+    },
+    "“%@” is not a valid CRX file." : {
+      "comment" : "Extension install error; the argument is a file name",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "« %@ » n’est pas un fichier CRX valide."
+          }
+        }
+      }
+    },
+    "“%@” is not an extension. Choose a folder that holds a manifest.json file, or a .zip or .crx file." : {
+      "comment" : "Extension install error; the argument is a file name",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "« %@ » n’est pas une extension. Choisissez un dossier qui contient un fichier manifest.json, ou un fichier .zip ou .crx."
           }
         }
       }

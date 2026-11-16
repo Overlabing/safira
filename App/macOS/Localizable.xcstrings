@@ -23,6 +23,23 @@
         }
       }
     },
+    "%@ in “%@”" : {
+      "comment" : "Settings, Extensions pane: VoiceOver label of a Profile's switch; the arguments are an extension's and a Profile's names",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ in “%2$@”"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ dans « %2$@ »"
+          }
+        }
+      }
+    },
     "%@ is also on “%@”." : {
       "comment" : "Shortcuts window: two commands share a key; a key, then a command name",
       "localizations" : {
@@ -187,6 +204,39 @@
         }
       }
     },
+    "Add" : {
+      "comment" : "Open panel button of Add from File\nOpen panel button of Add from Folder",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter"
+          }
+        }
+      }
+    },
+    "Add from File…" : {
+      "comment" : "Settings, Extensions pane: button",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter depuis un fichier…"
+          }
+        }
+      }
+    },
+    "Add from Folder…" : {
+      "comment" : "Settings, Extensions pane: button",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter depuis un dossier…"
+          }
+        }
+      }
+    },
     "Add them after your %lld rules, which keep winning, or replace your rules with the imported ones." : {
       "comment" : "Link rules window",
       "localizations" : {
@@ -261,7 +311,7 @@
       }
     },
     "Allow" : {
-      "comment" : "Permission sheet of a site or a link to another app",
+      "comment" : "Extension permission sheet button\nPermission sheet of a site or a link to another app",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -278,6 +328,39 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Autorisé"
+          }
+        }
+      }
+    },
+    "An extension is installed once for Safira and runs in every Profile whose switch is on. A Profile created later starts with it on. Extensions never run in Private windows." : {
+      "comment" : "Settings, Extensions pane",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une extension s’installe une fois pour Safira et tourne dans chaque profil dont l’interrupteur est activé. Un profil créé plus tard la reçoit activée. Les extensions ne tournent jamais dans les fenêtres privées."
+          }
+        }
+      }
+    },
+    "Asks for no permission" : {
+      "comment" : "Settings, Extensions pane: an extension with no permission",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ne demande aucune permission"
+          }
+        }
+      }
+    },
+    "Asks for: %@" : {
+      "comment" : "Extension permission sheet; the argument lists permission names and websites as the manifest writes them",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Demande : %@"
           }
         }
       }
@@ -327,7 +410,7 @@
       }
     },
     "Cancel" : {
-      "comment" : "Link rules window\nMain window\nPage dialog sheet",
+      "comment" : "Extension permission sheet button\nLink rules window\nMain window\nPage dialog sheet",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -423,6 +506,17 @@
         }
       }
     },
+    "Choose" : {
+      "comment" : "Open panel button of Locate",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisir"
+          }
+        }
+      }
+    },
     "Choose Slack's folder (Application Support/Slack) so Slack links can open in the Slack app. Safira reads only the list of your workspaces from it." : {
       "comment" : "Link rules, Slack folder and default browser",
       "localizations" : {
@@ -486,6 +580,17 @@
         }
       }
     },
+    "Choose the extension’s .zip or .crx file. Safira keeps a copy of it." : {
+      "comment" : "Open panel message of Add from File",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisissez le fichier .zip ou .crx de l’extension. Safira en garde une copie."
+          }
+        }
+      }
+    },
     "Choose the folder named Slack inside Application Support. It holds a folder named storage." : {
       "comment" : "Link rules, Slack folder and default browser",
       "localizations" : {
@@ -497,13 +602,24 @@
         }
       }
     },
-    "Choose the folder that holds the extension's manifest.json. It runs in the Active profile until Safira quits, with every permission it asks for." : {
-      "comment" : "Open panel message of Load Unpacked Extension",
+    "Choose the folder that holds the extension’s manifest.json. Safira reads it where it is, so updates to the folder reach Safira." : {
+      "comment" : "Open panel message of Add from Folder",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Choisissez le dossier qui contient le manifest.json de l’extension. Elle fonctionne dans le profil actif jusqu’à ce que Safira quitte, avec toutes les autorisations qu’elle demande."
+            "value" : "Choisissez le dossier qui contient le manifest.json de l’extension. Safira le lit sur place : les mises à jour du dossier arrivent dans Safira."
+          }
+        }
+      }
+    },
+    "Choose the folder that now holds “%@”." : {
+      "comment" : "Open panel message of Locate; the argument is an extension's name",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisissez le dossier qui contient maintenant « %@ »."
           }
         }
       }
@@ -1316,6 +1432,17 @@
         }
       }
     },
+    "If you don’t allow it, the extension keeps only what you allowed before." : {
+      "comment" : "Extension permission sheet",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si vous refusez, l’extension garde seulement ce que vous aviez autorisé."
+          }
+        }
+      }
+    },
     "Import" : {
       "comment" : "Link rules window",
       "localizations" : {
@@ -1379,6 +1506,28 @@
         }
       }
     },
+    "Install “%@”?" : {
+      "comment" : "Extension permission sheet title; the argument is an extension's name",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installer « %@ » ?"
+          }
+        }
+      }
+    },
+    "It asks for no permission." : {
+      "comment" : "Extension permission sheet",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elle ne demande aucune permission."
+          }
+        }
+      }
+    },
     "It has no Tab." : {
       "comment" : "Main window",
       "extractionState" : "stale",
@@ -1387,6 +1536,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Il ne contient aucun onglet."
+          }
+        }
+      }
+    },
+    "It stops in every Profile, and what it stored in each Profile is deleted. Its folder or file is not touched." : {
+      "comment" : "Settings, Extensions pane: removal confirmation",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elle s’arrête dans chaque profil, et ce qu’elle a enregistré dans chaque profil est supprimé. Son dossier ou son fichier n’est pas touché."
+          }
+        }
+      }
+    },
+    "It will run in every Profile, never in Private windows. You can turn it off for a Profile in Settings › Extensions." : {
+      "comment" : "Extension permission sheet",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elle tournera dans chaque profil, jamais dans les fenêtres privées. Vous pouvez la désactiver pour un profil dans Réglages › Extensions."
           }
         }
       }
@@ -1559,28 +1730,6 @@
         }
       }
     },
-    "Load" : {
-      "comment" : "Open panel button of Load Unpacked Extension",
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Charger"
-          }
-        }
-      }
-    },
-    "Load Unpacked Extension…" : {
-      "comment" : "Menu item",
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Charger une extension non empaquetée…"
-          }
-        }
-      }
-    },
     "Loading" : {
       "comment" : "Sidebar",
       "localizations" : {
@@ -1599,6 +1748,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Chargement…"
+          }
+        }
+      }
+    },
+    "Locate…" : {
+      "comment" : "Settings, Extensions pane: button",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Localiser…"
           }
         }
       }
@@ -1854,6 +2014,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aucune app ne peut ouvrir les liens « %@: »."
+          }
+        }
+      }
+    },
+    "No extension is installed. Add one from a folder that holds its manifest.json, or from a .zip or .crx file." : {
+      "comment" : "Settings, Extensions pane: empty list",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune extension n’est installée. Ajoutez-en une depuis un dossier qui contient son manifest.json, ou depuis un fichier .zip ou .crx."
           }
         }
       }
@@ -2394,6 +2565,28 @@
         }
       }
     },
+    "Remove" : {
+      "comment" : "Settings, Extensions pane: confirmation button",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer"
+          }
+        }
+      }
+    },
+    "Remove %@" : {
+      "comment" : "Settings, Extensions pane: VoiceOver label; the argument is an extension's name",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer %@"
+          }
+        }
+      }
+    },
     "Remove %@ from the list" : {
       "localizations" : {
         "fr" : {
@@ -2414,12 +2607,34 @@
         }
       }
     },
+    "Remove “%@”?" : {
+      "comment" : "Settings, Extensions pane: removal confirmation; the argument is an extension's name",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer « %@ » ?"
+          }
+        }
+      }
+    },
     "Removes the history and the website data (logins, cookies and site storage) of “%@” for the range you choose. Other Profiles are not touched, and neither are this Profile’s Spaces, Tabs and settings. Open pages stay open and are not reloaded, but they lose what they stored, so they may ask you to sign in again. This cannot be undone." : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Supprime l’historique et les données de sites (identifiants, cookies et stockage des sites) de « %@ » pour la période choisie. Les autres profils ne sont pas touchés, pas plus que les espaces, les onglets et les réglages de ce profil. Les pages ouvertes restent ouvertes et ne sont pas rechargées, mais elles perdent ce qu’elles avaient stocké : elles peuvent donc vous demander de vous reconnecter. Cette action est irréversible."
+          }
+        }
+      }
+    },
+    "Remove…" : {
+      "comment" : "Settings, Extensions pane: button",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer…"
           }
         }
       }
@@ -2598,6 +2813,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Safira est le navigateur par défaut"
+          }
+        }
+      }
+    },
+    "Safira can’t find this extension’s files, so it does not run." : {
+      "comment" : "Settings, Extensions pane: an extension whose folder or copy is gone",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safira ne trouve pas les fichiers de cette extension : elle ne tourne pas."
           }
         }
       }
@@ -3110,13 +3336,24 @@
         }
       }
     },
-    "The extension could not be loaded" : {
+    "The extension was not installed" : {
       "comment" : "Alert title",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "L’extension n’a pas pu être chargée"
+            "value" : "L’extension n’a pas été installée"
+          }
+        }
+      }
+    },
+    "The extension’s folder was not changed" : {
+      "comment" : "Alert title",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le dossier de l’extension n’a pas changé"
           }
         }
       }
@@ -3420,6 +3657,17 @@
         }
       }
     },
+    "What you allow applies in every Profile." : {
+      "comment" : "Extension permission sheet",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce que vous autorisez vaut pour chaque profil."
+          }
+        }
+      }
+    },
     "When Safira is your default browser, links from other apps come to it, and the Link picker asks which Profile receives each one, unless a Link rule decides. macOS asks you to confirm, and you can skip this and do it later from the Safira menu." : {
       "localizations" : {
         "fr" : {
@@ -3558,6 +3806,17 @@
         }
       }
     },
+    "“%@” asks for more" : {
+      "comment" : "Extension permission sheet title; the argument is an extension's name",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "« %@ » demande davantage"
+          }
+        }
+      }
+    },
     "“%@” stopped working twice, so Safira did not reload it again." : {
       "comment" : "Crashed page; the argument is the site",
       "localizations" : {
@@ -3635,13 +3894,13 @@
         }
       }
     },
-    "“%@” was loaded with errors" : {
-      "comment" : "Alert title; the argument is an extension's name",
+    "“%@” was updated and asks for more" : {
+      "comment" : "Extension permission sheet title; the argument is an extension's name",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "« %@ » a été chargée avec des erreurs"
+            "value" : "« %@ » a été mise à jour et demande davantage"
           }
         }
       }

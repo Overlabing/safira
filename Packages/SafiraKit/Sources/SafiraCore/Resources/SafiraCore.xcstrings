@@ -354,6 +354,17 @@
         }
       }
     },
+    "Settings › Extensions" : {
+      "comment" : "Defaults: where to change a default; the Settings window and its pane",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglages › Extensions"
+          }
+        }
+      }
+    },
     "Settings › General" : {
       "comment" : "Defaults: where to change a default; the Settings window and its pane",
       "localizations" : {

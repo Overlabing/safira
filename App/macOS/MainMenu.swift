@@ -163,10 +163,6 @@ enum MainMenu {
         })
         menu.addItem(window)
         NSApplication.shared.windowsMenu = window.submenu
-        let loadExtension = target(diagnostics, NSMenuItem(title: String(localized: "Load Unpacked Extension…", comment: "Menu item"),
-                                                           action: #selector(DiagnosticsController.loadUnpackedExtension(_:)),
-                                                           keyEquivalent: ""))
-        diagnostics.loadExtensionItem = loadExtension
         let help = submenu(title: String(localized: "Help", comment: "Menu bar title"), items: [
             target(diagnostics, NSMenuItem(title: String(localized: "Debug Mode", comment: "Menu item"),
                                            action: #selector(DiagnosticsController.toggleDebugMode(_:)),
@@ -174,7 +170,6 @@ enum MainMenu {
             target(diagnostics, NSMenuItem(title: String(localized: "Export Diagnostic Logs…", comment: "Menu item"),
                                            action: #selector(DiagnosticsController.exportDiagnosticLogs(_:)),
                                            keyEquivalent: "")),
-            loadExtension,
         ])
         menu.addItem(help)
         NSApplication.shared.helpMenu = help.submenu

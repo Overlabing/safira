@@ -189,6 +189,26 @@ enum Migrations {
         migrator.registerMigration("v4-profile-palettes") { db in
             try db.execute(sql: "UPDATE profile SET palette_id = \(Self.paletteByPosition) WHERE palette_id IS NULL")
         }
+        // Web extensions are installed once for the app (#148). A Profile has a row only where the user turned an
+        // extension off, so every Profile, including one created later, starts with it on.
+        migrator.registerMigration("v5-extensions") { db in
+            try db.create(table: "installed_extension") { table in
+                table.primaryKey("id", .text)
+                table.column("source_kind", .text).notNull()
+                table.column("bookmark", .blob)
+                table.column("archive_file", .text)
+                table.column("display_name", .text).notNull()
+                table.column("version", .text).notNull()
+                table.column("granted_permissions", .text).notNull()
+                table.column("granted_match_patterns", .text).notNull()
+                table.column("installed_at", .double).notNull()
+            }
+            try db.create(table: "extension_disabled_profile") { table in
+                table.column("extension_id", .text).notNull().references("installed_extension", onDelete: .cascade)
+                table.column("profile_id", .text).notNull().indexed()
+                table.primaryKey(["extension_id", "profile_id"])
+            }
+        }
         return migrator
     }
 }
