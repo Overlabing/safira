@@ -259,6 +259,27 @@ import WebKit
     }
 }
 
+extension ExtensionHost {
+    /// Loads an unpacked extension as the extension library does once the user allowed everything it asks for, under
+    /// the identifier its manifest `key` gives (a new one without a key).
+    @discardableResult
+    func loadUnpacked(at folder: URL) async throws -> LoadedExtension {
+        guard folder.isFileURL else {
+            let nothing = InstalledExtension(id: "none", source: .folder(bookmark: Data()), displayName: "", version: "",
+                                             grantedPermissions: [], grantedMatchPatterns: [], installedAt: Date())
+            return try await load(nothing, from: folder)
+        }
+        let webExtension = try await WKWebExtension(resourceBaseURL: folder.absoluteURL.standardizedFileURL)
+        let installed = InstalledExtension(id: ExtensionIdentity.identifier(forManifest: webExtension.manifest),
+                                           source: .folder(bookmark: Data()), displayName: webExtension.displayName ?? "",
+                                           version: webExtension.version ?? "",
+                                           grantedPermissions: webExtension.requestedPermissions.map(\.rawValue),
+                                           grantedMatchPatterns: webExtension.allRequestedMatchPatterns.map(\.string),
+                                           installedAt: Date())
+        return try await load(installed, from: folder)
+    }
+}
+
 /// A loopback HTTP server that answers every GET with a blank page, whatever the Host header: Verrou's MAIN-world
 /// script matches `http://localhost/*`, which the other test servers, bound to the `127.0.0.1` host, refuse.
 final class AnyHostServer: @unchecked Sendable {

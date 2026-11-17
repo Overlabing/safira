@@ -8,10 +8,20 @@ import SafiraCore
 /// App-level data, `app.sqlite` at the root of Safira's folder: the list of Profiles and which one was active. A
 /// Profile's own data never lives here.
 public final class AppDatabase: Sendable {
-    private let queue: DatabaseQueue
+    let queue: DatabaseQueue
 
     public init(file: URL) throws {
         queue = try .opened(at: file, migrator: Migrations.app)
+    }
+
+    /// A database that lives in memory only, for a run whose files cannot be written and for tests.
+    public static func inMemory() throws -> AppDatabase {
+        try AppDatabase(queue: DatabaseQueue())
+    }
+
+    private init(queue: DatabaseQueue) throws {
+        try Migrations.app.migrate(queue)
+        self.queue = queue
     }
 
     /// The Profiles in their order, without those being deleted.
@@ -69,6 +79,8 @@ public final class AppDatabase: Sendable {
     public func delete(_ id: ProfileID) throws {
         try queue.write { db in
             try db.execute(sql: "DELETE FROM profile WHERE id = ?", arguments: [id.rawValue.uuidString])
+            try db.execute(sql: "DELETE FROM extension_disabled_profile WHERE profile_id = ?",
+                           arguments: [id.rawValue.uuidString])
             try db.execute(sql: "UPDATE app_state SET last_profile_id = NULL WHERE last_profile_id = ?",
                            arguments: [id.rawValue.uuidString])
         }

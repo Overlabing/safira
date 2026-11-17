@@ -50,7 +50,7 @@ struct TabSidebar: View {
         .modifier(TabListKeyboard(session: session, focus: focus, showPage: pageActions.showPage))
         .browserColumn(session: session, actions: pageActions, sidebarShortcut: shortcut(.compactMode)) {
             if let extensions = registry.active.extensions {
-                ExtensionActionButtons(host: extensions, popups: extensionPopups)
+                ExtensionActionButtons(host: extensions, library: registry.extensionLibrary, popups: extensionPopups)
             }
         } header: {
             EmptyView()
