@@ -32,7 +32,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/groue/GRDB.swift", exact: "7.11.1"),
-        .package(url: "https://github.com/Overlabing/ThemeKit", exact: "0.2.14"),
+        .package(url: "https://github.com/Overlabing/ThemeKit", exact: "0.2.15"),
         .package(url: "https://github.com/Overlabing/AppSupportKit", exact: "0.1.2"),
         .package(url: "https://github.com/Overlabing/CommandKit", exact: "0.1.3"),
         .package(url: "https://github.com/Overlabing/DiagnosticsKit", exact: "0.1.2"),
@@ -97,9 +97,10 @@ let package = Package(
                 resources: [.process("Resources")]),
         .testTarget(name: "OnboardingTests", dependencies: ["Onboarding", "Commands", "SafiraCore", preferences]),
         .target(name: "SafiraSettings", dependencies: ["SafiraCore", "SafiraSession", "Appearance", "Commands", appShellKit,
-                                                preferences, spaces],
+                                                preferences, spaces, .product(name: "DesignKit", package: "ThemeKit")],
                 resources: [.process("Resources")]),
         .testTarget(name: "SafiraSettingsTests", dependencies: ["SafiraSettings", "Commands", "Onboarding", "SafiraCore",
-                                                             "SafiraSession", appShellKit, preferences, spaces]),
+                                                             "SafiraSession", appShellKit, preferences, spaces,
+                                                             .product(name: "DesignKit", package: "ThemeKit")]),
     ]
 )

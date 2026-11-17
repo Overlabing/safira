@@ -19,7 +19,7 @@ import Testing
     #expect(entries.map(\.title) == ["Warn about fraudulent websites", "Allow autoplaying sound", "Cookie prompts"])
     #expect(entries.map(\.value) == ["On", "Blocked", "Rejected automatically"])
     #expect(entries.map(\.whereToChange) == ["Settings › Site Permissions", "Settings › Site Permissions",
-                                             "Settings › Site Permissions"])
+                                             "Settings › Cookie Prompts"])
 }
 
 @Test func theFraudulentSiteWarningSaysItMayConsultAThirdPartyService() throws {

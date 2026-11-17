@@ -8,7 +8,7 @@ import CommandKitAppKit
 import Commands
 import SwiftUI
 
-/// The Shortcuts pane of the Settings window, as in Oisillon's: the preset, then every command by section with its keys
+/// The Shortcuts pane of Settings, as in Oisillon's: the preset, then every command by section with its keys
 /// on a recorder button. A key refused (taken, reserved, one that would type text) is said in red under its row with the
 /// reason; so is a key two commands share, which only changes saved against another version of a preset can cause.
 /// Reset gives a command its preset's keys back, Reset All Changes every command.
@@ -66,7 +66,7 @@ struct ShortcutsSettingsView: View {
                 .foregroundStyle(.secondary)
             }
         }
-        .settingsPaneLayout(SettingsWindowController.metrics)
+        .settingsFormLayout()
         // The pane scrolls under its header: the rows fade there instead of being cut.
         .settingsScrollEdges()
         .onDisappear { recorder.stop() }

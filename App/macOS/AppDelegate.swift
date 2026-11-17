@@ -33,7 +33,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var registry: ProfileRegistry?
     private var links: LinkController?
     private var defaults: DefaultsController?
-    private var settings: SettingsWindowController?
+    /// What every window's Settings draws.
+    private var settingsContent: SettingsContent?
     private var onboarding: OnboardingController?
     /// Links that arrived before the Profiles were open, as on a launch started by a link.
     private var earlyLinks: [IncomingLink] = []
@@ -76,14 +77,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let defaults = DefaultsController(registry: registry, updates: updates, diagnostics: diagnostics, links: links,
                                           shortcuts: shortcuts)
         self.defaults = defaults
-        settings = SettingsWindowController(
-            content: SettingsContent(registry: registry, defaults: defaults, links: links, shortcuts: shortcuts,
-                                     updates: updates, diagnostics: diagnostics,
-                                     theme: { [weak controller] in controller?.spaceTheme ?? ThemeCatalog.first }),
-            activates: !launchedInBackground)
-        // The window the user is in; else the open Settings window, where installs start; else the Main window.
-        let extensionPrompts = ExtensionPermissionPrompter { [weak controller, weak settings = self.settings] in
-            NSApp.keyWindow ?? settings?.window.flatMap { $0.isVisible ? $0 : nil } ?? controller?.window
+        let settingsContent = SettingsContent(registry: registry, defaults: defaults, links: links, shortcuts: shortcuts,
+                                              updates: updates, diagnostics: diagnostics)
+        self.settingsContent = settingsContent
+        controller.attachSettings(settingsContent)
+        // The window the user is in, where installs start in Settings; else the Main window.
+        let extensionPrompts = ExtensionPermissionPrompter { [weak controller] in
+            NSApp.keyWindow ?? controller?.window
         }
         registry.extensionLibrary.permissionPrompt = { await extensionPrompts.ask($0) }
         // An app that ships an extension folder may have updated it while Safira was in the background.
@@ -98,7 +98,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Captures of a Settings pane without a menu click, which would bring a copy launched behind other apps forward:
         // `-SafiraOpenSettingsPane <pane id>`. Debug builds only.
         if let pane = UserDefaults.standard.string(forKey: "SafiraOpenSettingsPane").flatMap(SettingsPaneID.init(rawValue:)) {
-            settings?.presenter.open(pane: pane)
+            controller.openSettings(pane: pane)
+        }
+        // `-SafiraOpenPrivateSettings YES`: a Private window on Settings, for a capture, the app left in the background.
+        if UserDefaults.standard.bool(forKey: "SafiraOpenPrivateSettings") {
+            openPrivateWindow()?.openSettings(nil)
         }
         #endif
         let onboarding = OnboardingController(registry: registry, defaults: defaults)
@@ -125,24 +129,39 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func rebuildMenu() {
-        guard let links, let settings else { return }
+        guard let links else { return }
         NSApp.mainMenu = MainMenu.make(updates: updates, diagnostics: diagnostics, links: links,
-                                       shortcuts: shortcuts.bindings, settings: settings, app: self)
+                                       shortcuts: shortcuts.bindings, app: self)
     }
 
     /// Opens a Private window attached to the Profile of the Private window that has the focus, or else the Active profile.
     @objc func newPrivateWindow(_ sender: Any?) {
-        guard let registry else { return }
+        openPrivateWindow()
+        NSApp.activate()
+    }
+
+    @discardableResult
+    private func openPrivateWindow() -> PrivateWindowController? {
+        guard let registry else { return nil }
         let focused = NSApp.keyWindow?.windowController as? PrivateWindowController
         let profile = focused?.context.parent.id ?? registry.activeProfileID
-        guard let context = registry.makePrivateContext(attachedTo: profile) else { return }
+        guard let context = registry.makePrivateContext(attachedTo: profile) else { return nil }
         let controller = PrivateWindowController(context: context, shortcuts: shortcuts)
+        if let settingsContent { controller.attachSettings(settingsContent) }
         controller.onClose = { [weak self] closed in self?.privateWindows.removeAll { $0 === closed } }
         privateWindows.append(controller)
         let cascade = SafiraDesign.privateWindowCascade
         let origin = focused?.window.map { NSPoint(x: $0.frame.minX + cascade, y: $0.frame.maxY - cascade) }
         controller.open(cascadedFrom: origin)
-        NSApp.activate()
+        return controller
+    }
+
+    /// Reached when no window took a Settings item (no window is key): Settings opens in the Main window, shown first.
+    /// A key Main window or Private window answers the item itself, in that window.
+    @objc func openSettings(_ sender: Any?) {
+        guard let mainWindow else { return }
+        mainWindow.showWindow(nil)
+        mainWindow.openSettings(sender)
     }
 
     /// The menu carries the key equivalents, so a change of preset or override rebuilds it.

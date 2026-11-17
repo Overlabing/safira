@@ -55,6 +55,11 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     private let spaceDeletion = SpaceDeletionPrompt()
     private var bannerHost: MatchBannerHostingView?
     private var announcedBannerID: UUID?
+    private var canvas: PageCanvasView?
+    /// Settings in this window, in place of the column and the page.
+    private lazy var settings = SettingsHost(isPrivate: false, registry: registry) { [weak self] in
+        self?.spaceTheme ?? ThemeCatalog.first
+    }
 
     init(registry: ProfileRegistry, shortcuts: ShortcutController, preferenceProblems: PreferenceProblems) {
         self.registry = registry
@@ -92,11 +97,55 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         fatalError("init(coder:) is not used")
     }
 
+    // MARK: Settings
+
+    /// The controllers Settings draws, once the app has made them.
+    func attachSettings(_ content: SettingsContent) {
+        guard let canvas else { return }
+        settings.willShow = { [weak self] in self?.settingsWillShow() }
+        settings.didHide = { [weak self] in self?.settingsDidHide() }
+        settings.attach(content, to: canvas)
+    }
+
+    /// ⌘, and the menu's other Settings items: Settings in this window, or back to the page when it is the pane shown.
+    @objc func openSettings(_ sender: Any?) {
+        settings.open(from: sender)
+    }
+
+    func openSettings(pane: SettingsPaneID) {
+        settings.open(pane: pane)
+    }
+
+    /// Escape that no view in Settings took: back to the page.
+    override func cancelOperation(_ sender: Any?) {
+        if settings.isPresented { settings.close() }
+    }
+
+    /// A command about the page or the Tabs is about what Settings covers: Settings goes first.
+    private func leaveSettings() {
+        if settings.isPresented { settings.close() }
+    }
+
+    private func settingsWillShow() {
+        if commandBar.isShown { commandBar.dismiss(returningFocus: false) }
+        closeFindBar()
+        downloads.isPresented = false
+        if !presentation.isSidebarShown {
+            presentation.reveal()
+            layout?.apply(presentation, animated: true)
+        }
+    }
+
+    private func settingsDidHide() {
+        if !showPage() { focusCommandBar(nil) }
+    }
+
     // MARK: Menu actions
 
     /// Opens the Command bar for a new Tab; the Tab is created only when the user presses Enter. Meanwhile the page
     /// stays and the sidebar shows the New Tab row as selected.
     @objc func newTab(_ sender: Any?) {
+        leaveSettings()
         commandBar.open(for: .newTab, text: "")
     }
 
@@ -106,7 +155,12 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         Task { @MainActor [weak self] in self?.newTab(nil) }
     }
 
+    /// ⌘W in Settings closes Settings, not the Tab hidden under it.
     @objc func closeTab(_ sender: Any?) {
+        if settings.isPresented {
+            settings.close()
+            return
+        }
         session.closeSelectedTab()
         render()
         if session.selectedTab?.address == nil {
@@ -115,6 +169,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     }
 
     @objc func reopenClosedTab(_ sender: Any?) {
+        leaveSettings()
         session.reopenClosedTab()
         render()
     }
@@ -135,6 +190,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     /// Opens the floating Command bar on the shown Tab, its whole address selected: the way to see and change the
     /// address in Compact mode too.
     @objc func focusCommandBar(_ sender: Any?) {
+        leaveSettings()
         commandBar.open(for: .selectedTab, text: session.selectedTab?.address?.absoluteString ?? "")
     }
 
@@ -147,6 +203,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     /// Moves the keyboard focus to the list of Tabs, where the arrow keys select a Tab. In Compact mode it shows the
     /// sidebar first.
     @objc func focusTabList(_ sender: Any?) {
+        leaveSettings()
         if presentation.isCompact, !presentation.isRevealed {
             presentation.reveal()
             layout?.apply(presentation, animated: true)
@@ -157,6 +214,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     /// ⌘1…⌘9: the menu item's tag is the Tab's place in the sidebar.
     @objc func showTabNumber(_ sender: Any?) {
         guard let number = (sender as? NSMenuItem)?.tag else { return }
+        leaveSettings()
         session.selectTab(number: number)
     }
 
@@ -194,6 +252,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
 
     /// ⌘F: the find bar over the page, its field focused with its text selected.
     @objc func findInPage(_ sender: Any?) {
+        leaveSettings()
         Task { await session.find.show() }
         findBarFocus.focusField()
     }
@@ -279,6 +338,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     /// ⌥⌘L: the Active profile's downloads panel, from the sidebar's button. In Compact mode it shows the sidebar
     /// first, so that the panel has its button to hang from.
     @objc func showDownloads(_ sender: Any?) {
+        leaveSettings()
         if presentation.isCompact, !presentation.isRevealed {
             presentation.reveal()
             layout?.apply(presentation, animated: true)
@@ -319,10 +379,12 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     }
 
     @objc func showNextTab(_ sender: Any?) {
+        leaveSettings()
         session.selectTab(offset: 1)
     }
 
     @objc func showPreviousTab(_ sender: Any?) {
+        leaveSettings()
         session.selectTab(offset: -1)
     }
 
@@ -392,6 +454,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         if window?.isMiniaturized == true { window?.deminiaturize(nil) }
         showWindow(nil)
         NSApp.activate()
+        leaveSettings()
         commandBar.dismiss(returningFocus: false)
         render()
         announce(String(localized: "Profile: \(registry.activeProfile.name)", comment: "Main window"))
@@ -642,7 +705,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     }
 
     private func hideSidebarAfterPointerLeft() {
-        guard presentation.isRevealed else { return }
+        guard presentation.isRevealed, !settings.isPresented else { return }
         presentation.hide()
         layout?.apply(presentation, animated: true)
         returnFocusToPage()
@@ -830,6 +893,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
             close: { [weak self] in self?.closeFindBar() }))
         findBarHost = findBar
         let canvas = PageCanvasView(page: pageArea, banner: banner, findBar: findBar, commandBar: commandBar.overlay)
+        self.canvas = canvas
 
         let pageActions = PageActions(
             editAddress: { [weak self] in self?.focusCommandBar(nil) },
@@ -854,6 +918,10 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
             registry: registry, focus: columnFocus, pageActions: pageActions, profileActions: profileActions,
             spaceActions: spaceActions, folderActions: folderActions, extensionPopups: extensionPopups,
             downloads: downloads, shortcut: { [weak self] id in self?.shortcuts.bindings.shortcut(id)?.symbols })
+            .sidebarSwap(settings.swap.model) {
+                settings.column(sidebarShortcut: { [weak self] in self?.shortcuts.bindings.shortcut(.compactMode)?.symbols },
+                                selectProfile: { [weak self] id in self?.switchProfile { $0.selectProfile(id) } })
+            }
         let theme: () -> Theme = { [weak self] in self?.spaceTheme ?? ThemeCatalog.first }
         let backdrop = WindowBackdrop(theme: theme).spaceDeletionPrompt(spaceDeletion)
         let layout = BrowserWindowLayout(background: NSHostingView(rootView: backdrop),

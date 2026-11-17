@@ -9,7 +9,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 import UserFacing
 
-/// The Link Rules pane of the Settings window: the rules in order with delete and reorder, import and export, and the
+/// The Link Rules pane of Settings: the rules in order with delete and reorder, import and export, and the
 /// check "Where would this link go?".
 @MainActor
 final class LinkRulesPane {

@@ -197,10 +197,15 @@ private final class SidebarSplitController: SeamlessSplitViewController {
 /// the window's top edge, under the transparent toolbar (under the title bar when the column is collapsed); on the plain
 /// background, rounded `Radius.canvas`, with a 1 pt `.separator` line on its edge. The page fills the card exactly.
 /// The banner floats over the top of the card, the find bar at its top right, and the Command bar over the whole page.
+/// A pane (Settings, say) can take the card's place: the page and what floats over it are hidden under it, never
+/// removed, so the page comes back as it was, without a reload.
 @MainActor
 public final class PageCanvasView: NSView {
     private let tokens = DesignTokens.standard
     private let clip = NSView()
+    /// The page and what floats over it: hidden as one while a pane is shown, each keeping its own hidden state.
+    private let content = NSView()
+    private var pane: NSView?
     private var top = NSLayoutConstraint()
 
     public init(page: NSView, banner: NSView, findBar: NSView? = nil, commandBar: NSView) {
@@ -220,31 +225,25 @@ public final class PageCanvasView: NSView {
             top,
             clip.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -inset),
         ])
+        Self.fill(clip, with: content)
         for view in [page, commandBar] {
-            view.translatesAutoresizingMaskIntoConstraints = false
-            clip.addSubview(view)
-            NSLayoutConstraint.activate([
-                view.leadingAnchor.constraint(equalTo: clip.leadingAnchor),
-                view.trailingAnchor.constraint(equalTo: clip.trailingAnchor),
-                view.topAnchor.constraint(equalTo: clip.topAnchor),
-                view.bottomAnchor.constraint(equalTo: clip.bottomAnchor),
-            ])
+            Self.fill(content, with: view)
         }
         banner.translatesAutoresizingMaskIntoConstraints = false
-        clip.addSubview(banner, positioned: .below, relativeTo: commandBar)
+        content.addSubview(banner, positioned: .below, relativeTo: commandBar)
         let float = tokens.spacing.pillFloat
         NSLayoutConstraint.activate([
-            banner.leadingAnchor.constraint(equalTo: clip.leadingAnchor, constant: float),
-            banner.trailingAnchor.constraint(equalTo: clip.trailingAnchor, constant: -float),
-            banner.topAnchor.constraint(equalTo: clip.topAnchor, constant: float),
+            banner.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: float),
+            banner.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -float),
+            banner.topAnchor.constraint(equalTo: content.topAnchor, constant: float),
         ])
         if let findBar {
             findBar.translatesAutoresizingMaskIntoConstraints = false
-            clip.addSubview(findBar, positioned: .below, relativeTo: commandBar)
+            content.addSubview(findBar, positioned: .below, relativeTo: commandBar)
             NSLayoutConstraint.activate([
-                findBar.trailingAnchor.constraint(equalTo: clip.trailingAnchor, constant: -float),
-                findBar.topAnchor.constraint(equalTo: clip.topAnchor, constant: float),
-                findBar.leadingAnchor.constraint(greaterThanOrEqualTo: clip.leadingAnchor, constant: float),
+                findBar.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -float),
+                findBar.topAnchor.constraint(equalTo: content.topAnchor, constant: float),
+                findBar.leadingAnchor.constraint(greaterThanOrEqualTo: content.leadingAnchor, constant: float),
             ])
         }
         updateOutline()
@@ -260,6 +259,30 @@ public final class PageCanvasView: NSView {
 
     /// The card's frame in this view: what the page shows in.
     public var cardFrame: NSRect { clip.frame }
+
+    /// The pane shown in the card instead of the page, if any.
+    public var shownPane: NSView? { pane }
+
+    /// Shows `newPane` filling the card, the page and what floats over it hidden under it; nil gives the card back to
+    /// the page. The page stays in the window all along.
+    public func showPane(_ newPane: NSView?) {
+        guard newPane !== pane else { return }
+        pane?.removeFromSuperview()
+        pane = newPane
+        if let newPane { Self.fill(clip, with: newPane) }
+        content.isHidden = newPane != nil
+    }
+
+    private static func fill(_ container: NSView, with view: NSView) {
+        view.translatesAutoresizingMaskIntoConstraints = false
+        container.addSubview(view)
+        NSLayoutConstraint.activate([
+            view.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            view.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            view.topAnchor.constraint(equalTo: container.topAnchor),
+            view.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+        ])
+    }
 
     override public func viewDidChangeEffectiveAppearance() {
         super.viewDidChangeEffectiveAppearance()

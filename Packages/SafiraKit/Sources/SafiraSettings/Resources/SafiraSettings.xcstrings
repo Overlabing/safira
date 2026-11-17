@@ -42,6 +42,17 @@
         }
       }
     },
+    "Cookie Prompts" : {
+      "comment" : "Settings: pane title",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bandeaux de cookies"
+          }
+        }
+      }
+    },
     "Debug" : {
       "comment" : "Settings: pane title",
       "localizations" : {
@@ -97,13 +108,13 @@
         }
       }
     },
-    "Installed once, switched on per Profile." : {
-      "comment" : "Settings: subtitle of the Extensions pane",
+    "Installed once for Safira: add, update and remove them." : {
+      "comment" : "Settings: subtitle of the Extensions pane of Safira",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Installées une fois, activées par profil."
+            "value" : "Installées une fois pour Safira : ajoutez-les, mettez-les à jour et supprimez-les."
           }
         }
       }
@@ -182,6 +193,39 @@
         }
       }
     },
+    "Rejected for you in this Profile, except on the sites you allow." : {
+      "comment" : "Settings: subtitle of the Cookie Prompts pane",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Refusés pour vous dans ce profil, sauf sur les sites que vous autorisez."
+          }
+        }
+      }
+    },
+    "Safira" : {
+      "comment" : "Settings: heading of the panes that apply to the app, in every Profile",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safira"
+          }
+        }
+      }
+    },
+    "Search Engine" : {
+      "comment" : "Settings: pane title",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moteur de recherche"
+          }
+        }
+      }
+    },
     "Shortcuts" : {
       "comment" : "Settings: pane title",
       "localizations" : {
@@ -248,17 +292,6 @@
         }
       }
     },
-    "The current Profile’s Spaces, in the order of ⌃1 to ⌃9." : {
-      "comment" : "Settings: subtitle of the Spaces pane",
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Les Spaces du profil actuel, dans l’ordre de ⌃1 à ⌃9."
-          }
-        }
-      }
-    },
     "The preset, and the keys of every command." : {
       "comment" : "Settings: subtitle of the Shortcuts pane",
       "localizations" : {
@@ -266,6 +299,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Le préréglage, et les touches de chaque commande."
+          }
+        }
+      }
+    },
+    "This Profile" : {
+      "comment" : "Settings: heading of the panes that apply to the window's Profile",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce profil"
+          }
+        }
+      }
+    },
+    "This Profile’s Spaces, in the order of ⌃1 to ⌃9." : {
+      "comment" : "Settings: subtitle of the Spaces pane",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les Spaces de ce profil, dans l’ordre de ⌃1 à ⌃9."
           }
         }
       }
@@ -281,13 +336,24 @@
         }
       }
     },
-    "What sites of the current Profile may use." : {
+    "What sites may use in this Profile." : {
       "comment" : "Settings: subtitle of the Site Permissions pane",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ce que les sites du profil actuel peuvent utiliser."
+            "value" : "Ce que les sites peuvent utiliser dans ce profil."
+          }
+        }
+      }
+    },
+    "What the Command bar searches with in this Profile." : {
+      "comment" : "Settings: subtitle of the Search Engine pane",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le moteur avec lequel la barre de commande cherche dans ce profil."
           }
         }
       }
@@ -299,6 +365,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Où s’ouvrent les liens venus d’autres apps."
+          }
+        }
+      }
+    },
+    "Which installed extensions run in this Profile." : {
+      "comment" : "Settings: subtitle of the Extensions pane of This Profile",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les extensions installées qui tournent dans ce profil."
           }
         }
       }

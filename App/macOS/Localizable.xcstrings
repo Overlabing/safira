@@ -1568,6 +1568,17 @@
         }
       }
     },
+    "Install Extensions…" : {
+      "comment" : "Settings, This Profile's Extensions pane: button that shows Safira's Extensions pane",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installer des extensions…"
+          }
+        }
+      }
+    },
     "Install “%@”?" : {
       "comment" : "Extension permission sheet title; the argument is an extension's name",
       "localizations" : {
@@ -2113,6 +2124,17 @@
         }
       }
     },
+    "No extension is installed." : {
+      "comment" : "Settings, This Profile's Extensions pane: empty list",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune extension n’est installée."
+          }
+        }
+      }
+    },
     "No extension is installed. Add one from a folder that holds its manifest.json, or from a .zip or .crx file." : {
       "comment" : "Settings, Extensions pane: empty list",
       "localizations" : {
@@ -2258,6 +2280,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
+          }
+        }
+      }
+    },
+    "Off in every Profile" : {
+      "comment" : "Settings, Extensions pane: an extension switched off everywhere",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désactivée dans tous les profils"
           }
         }
       }
@@ -2568,6 +2601,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Privée · %@ %@"
+          }
+        }
+      }
+    },
+    "Profile" : {
+      "comment" : "Settings: label of the menu of the window's Profile",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profil"
           }
         }
       }
@@ -2971,6 +3015,17 @@
         }
       }
     },
+    "Runs in %@" : {
+      "comment" : "Settings, Extensions pane; the argument lists Profile names",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Active dans %@"
+          }
+        }
+      }
+    },
     "Safira Diagnostics %@.zip" : {
       "comment" : "File name of the diagnostics export; the argument is a date such as 2026-11-05",
       "localizations" : {
@@ -3124,6 +3179,7 @@
       }
     },
     "Search engine" : {
+      "comment" : "Settings, Search Engine pane: label of the choice",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -3166,6 +3222,17 @@
         }
       }
     },
+    "Searches typed in the Command bar of “%@” go to this engine. Each Profile has its own." : {
+      "comment" : "Settings, Search Engine pane; the argument is a Profile's name",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les recherches tapées dans la barre de commande de « %@ » passent par ce moteur. Chaque profil a le sien."
+          }
+        }
+      }
+    },
     "Select All" : {
       "comment" : "Menu item",
       "localizations" : {
@@ -3173,6 +3240,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tout sélectionner"
+          }
+        }
+      }
+    },
+    "Settings" : {
+      "comment" : "Settings: the title of the column",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglages"
           }
         }
       }
@@ -3566,6 +3644,17 @@
         }
       }
     },
+    "The extensions that run in “%@”. Extensions never run in Private windows." : {
+      "comment" : "Settings, This Profile's Extensions pane; the argument is a Profile's name",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les extensions qui tournent dans « %@ ». Les extensions ne tournent jamais dans les fenêtres privées."
+          }
+        }
+      }
+    },
     "The extension’s folder was not changed" : {
       "comment" : "Alert title",
       "localizations" : {
@@ -3639,6 +3728,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "La page a cessé de fonctionner deux fois, Safira ne l’a donc pas rechargée."
+          }
+        }
+      }
+    },
+    "The panes under This Profile change this Profile's settings." : {
+      "comment" : "Settings: VoiceOver hint of the menu of the window's Profile",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les panneaux sous Ce profil modifient les réglages de ce profil."
           }
         }
       }
@@ -3788,6 +3888,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cette page indique :"
+          }
+        }
+      }
+    },
+    "This switch applies to “%@”, and to pages opened from now on." : {
+      "comment" : "Settings, Cookie Prompts pane; the argument is a Profile's name",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce réglage s’applique à « %@ », et aux pages ouvertes à partir de maintenant."
           }
         }
       }

@@ -106,7 +106,7 @@ private extension DefaultEntry {
     }
 }
 
-/// The Defaults pane of the Settings window: the same list as the end of the onboarding, with each change applied as it
+/// The Defaults pane of Settings: the same list as the end of the onboarding, with each change applied as it
 /// is made.
 struct DefaultsPaneView: View {
     let model: DefaultsSummaryModel
