@@ -49,6 +49,8 @@ import WebKit
             let webView = try #require(context.webView(for: newTab.id))
             #expect(webView.configuration.websiteDataStore === context.dataStore)
             #expect(webView.configuration.websiteDataStore.identifier == profile.rawValue)
+            // The session adds the Tab before WebKit reports the address it loads.
+            try await waitUntil("the new Tab shows the link's address") { newTab.address != nil }
             #expect(newTab.address?.absoluteString == "\(Self.base)other")
             #expect(session.selectedTabID == opener)
             try await Task.sleep(for: .milliseconds(200))
