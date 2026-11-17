@@ -12,7 +12,7 @@ import Testing
 /// side (WebKit calling the delegate) needs an app bundle that declares the usage descriptions and entitlements: the
 /// test host has none, and WebKit then never asks, so that side is checked in the app itself.
 @MainActor
-@Suite(.serialized) struct SitePermissionDecisionTests {
+@Suite(.serialized, .oneWebKitTestAtATime) struct SitePermissionDecisionTests {
     @MainActor final class Asked { var prompts: [PermissionPrompt] = [] }
 
     private let meet = SiteOrigin(identifier: "https://meet.example")!

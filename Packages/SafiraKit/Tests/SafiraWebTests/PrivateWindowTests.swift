@@ -6,6 +6,7 @@ import SafiraCore
 import SafiraSession
 import SafiraStore
 import SafiraWeb
+import TestSupport
 import Testing
 import WebKit
 
@@ -81,7 +82,7 @@ private func webKitFolders() -> [URL] {
 
 /// A Private window beside its Profile: its data store, its session and what it leaves behind. Real WebKit.
 @MainActor
-@Suite(.serialized) struct PrivateWindowTests {
+@Suite(.serialized, .oneWebKitTestAtATime) struct PrivateWindowTests {
     @Test func aPrivateWindowAndItsProfileCannotSeeEachOthersWebsiteData() async throws {
         let server = try await StorageServer()
         let root = TemporaryRoot()
@@ -245,8 +246,10 @@ private func webKitFolders() -> [URL] {
             await registry.saveAll()
             writer?.close()
             writer = nil
+            // Each look reads every WebKit file of the process, so look every 100 ms, not at waitUntil's pace.
             var found: [String] = []
-            for _ in 0..<150 where found.isEmpty {
+            let deadline = ContinuousClock.now + TestDeadline.external
+            while found.isEmpty, ContinuousClock.now < deadline {
                 found = filesContaining(token, in: webKitFolders())
                 if found.isEmpty { try await Task.sleep(for: .milliseconds(100)) }
             }

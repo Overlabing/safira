@@ -11,7 +11,7 @@ import WebKit
 /// #121: a real page's `alert()`, `confirm()`, `prompt()` and file input reach the window's panels and get the user's
 /// answer, and the end of its content process reaches the Tab.
 @MainActor
-@Suite(.serialized) struct PageDialogTests {
+@Suite(.serialized, .oneWebKitTestAtATime) struct PageDialogTests {
     /// Port 9 refuses connections at once, so the page never reaches the network.
     private static let base = "https://127.0.0.1:9/"
 

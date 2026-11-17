@@ -110,7 +110,7 @@ let readEverything = """
 /// Profile's data store and reading the same origin from another's (docs/architecture-v1.md §9.2). Real WebKit: the
 /// suite needs a graphical session, and fails without one instead of skipping.
 @MainActor
-@Suite(.serialized) struct IsolationTests {
+@Suite(.serialized, .oneWebKitTestAtATime) struct IsolationTests {
     @Test func aGraphicalSessionIsAvailable() {
         let session = CGSessionCopyCurrentDictionary() as? [String: Any]
         #expect(session != nil, "the isolation suite needs a logged-in graphical session; it does not skip without one")

@@ -24,7 +24,7 @@ private final class TemporaryRoot {
 
 /// Downloads through the real WebKit, from a loopback server, into a folder of the test.
 @MainActor
-@Suite(.serialized) struct DownloadTests {
+@Suite(.serialized, .oneWebKitTestAtATime) struct DownloadTests {
     /// Runs a test body with the registry of a fresh store, then releases it and removes the data stores it made.
     private func run(_ root: TemporaryRoot, _ body: (ProfileRegistry) async throws -> Void) async throws {
         var ids: [ProfileID] = []
@@ -168,7 +168,7 @@ private final class TemporaryRoot {
             #expect(root.files() == ["slow.bin.part"])
 
             #expect(context.downloads.retry(id))
-            try await waitUntil("the download is saved", timeout: .seconds(20)) { isFinished(context) }
+            try await waitUntil("the download is saved") { isFinished(context) }
 
             let saved = try #require(context.downloads.download(id))
             #expect(context.downloads.all.count == 1)
@@ -276,7 +276,7 @@ private final class TemporaryRoot {
             try await waitUntil("more bytes arrive after the Tab is gone") {
                 (context.downloads.all.first?.receivedBytes ?? 0) > before
             }
-            try await waitUntil("the download is saved", timeout: .seconds(20)) { isFinished(context) }
+            try await waitUntil("the download is saved") { isFinished(context) }
             #expect(context.downloads.all.first?.state == .completed)
             #expect(try Data(contentsOf: root.downloads.appending(path: "slow.bin")) == DownloadServer.bytes(0..<100_000))
         }

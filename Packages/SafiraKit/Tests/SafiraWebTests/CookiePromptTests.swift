@@ -12,7 +12,7 @@ import WebKit
 /// A real page served from loopback with a fake consent platform that autoconsent's bundled rules know ("WP Cookie
 /// Notice for GDPR", found by its element ids), answered by the real script and handler.
 @MainActor
-@Suite struct CookiePromptTests {
+@Suite(.oneWebKitTestAtATime) struct CookiePromptTests {
     private static let page = """
         <!DOCTYPE html><title>shop</title><body>
         <div id="gdpr-cookie-consent-bar" style="position: fixed; left: 0; right: 0; bottom: 0; height: 80px">
@@ -167,7 +167,7 @@ private final class InMemoryBrowsing: BrowsingContext {
 }
 
 @MainActor
-@Suite struct AllowCookiePromptsTests {
+@Suite(.oneWebKitTestAtATime) struct AllowCookiePromptsTests {
     @Test func allowingASiteExceptsItForTheSessionAndTheNextPagesAndReloads() async throws {
         let server = try await LocalServer.start(.http, title: "shop")
         defer { server.stop() }

@@ -9,6 +9,7 @@ import OSLog
 import SafiraCore
 import SafiraWeb
 import Synchronization
+import TestSupport
 import Testing
 
 /// Answers every request on a loopback port with one page whose title and body are recognisable.
@@ -81,7 +82,7 @@ private final class RecordingSystemLog: DiagnosticSystemLog {
 }
 
 @MainActor
-@Suite struct DiagnosticsMaskingTests {
+@Suite(.oneWebKitTestAtATime) struct DiagnosticsMaskingTests {
     /// The end-to-end proof of the masking: a real page with a path, a query and a title is loaded in real WebKit,
     /// and the log written for it keeps the host out of the file and names nothing else of the address anywhere.
     @Test func aRealPageLoadAndAFailedOneAreLoggedWithoutTheirAddress() async throws {
@@ -122,14 +123,15 @@ private final class RecordingSystemLog: DiagnosticSystemLog {
     }
 
     private func waitForLine(containing marker: String, in context: ProfileWebContext, logs: URL) async throws -> String {
-        for _ in 0..<150 {
+        let deadline = ContinuousClock.now + TestDeadline.external
+        while ContinuousClock.now < deadline {
             await context.diagnostics?.sink.flush()
             if let line = try allLogText(in: logs).split(separator: "\n").last(where: { $0.contains(marker) }) {
                 return String(line)
             }
             try await Task.sleep(for: .milliseconds(100))
         }
-        Issue.record("no \(marker) line was logged within 15 seconds")
+        Issue.record("no \(marker) line was logged within the shared deadline")
         return ""
     }
 

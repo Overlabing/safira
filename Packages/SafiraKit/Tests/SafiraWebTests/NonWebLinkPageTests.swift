@@ -11,7 +11,7 @@ import WebKit
 /// A real page that follows a link only another app can take must reach the Profile's decision and open nothing by
 /// itself: no Tab, no navigation, no app.
 @MainActor
-@Suite(.serialized) struct NonWebLinkPageTests {
+@Suite(.serialized, .oneWebKitTestAtATime) struct NonWebLinkPageTests {
     private static let base = "https://127.0.0.1:9/"
 
     @MainActor private final class Recorder {

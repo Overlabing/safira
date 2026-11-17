@@ -66,7 +66,7 @@ private final class PageServer: @unchecked Sendable {
 /// Decision D1 and lazy restoration with real WebKit pages: what the session would write to disk, and how a saved
 /// Tab comes back.
 @MainActor
-@Suite(.serialized) struct NavigationStateTests {
+@Suite(.serialized, .oneWebKitTestAtATime) struct NavigationStateTests {
     private func makeSession(_ profile: ProfileID) -> (ProfileSession, ProfileWebContext) {
         let context = ProfileWebContext(profileID: profile)
         let session = ProfileSession(profileID: profile) { context.makePage(for: $0) }

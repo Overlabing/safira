@@ -11,7 +11,7 @@ import WebKit
 /// Native messaging through host manifests, as Chrome does it, with an echo host written for these tests in a
 /// temporary manifests folder.
 @MainActor
-@Suite(.serialized) struct NativeMessagingTests {
+@Suite(.serialized, .oneWebKitTestAtATime) struct NativeMessagingTests {
     nonisolated static let fixtureID = "pfikphmpnbnmihdgfbljkjgfnamcpjme"
 
     // MARK: Framing
@@ -213,7 +213,7 @@ import WebKit
         try await host.loadUnpacked(at: folder)
         try await ExtensionHostTests.loadBackgroundContent(of: profile)
 
-        try await waitUntil("the second host heard from the extension", timeout: .seconds(20)) { hosts.received().count == 4 }
+        try await waitUntil("the second host heard from the extension") { hosts.received().count == 4 }
         let received = hosts.received()
         #expect(received.first == #"{"hello":"first"}"#)
         #expect(received[1] == #"{"args":["chrome-extension://pfikphmpnbnmihdgfbljkjgfnamcpjme/"],"got":{"hello":"first"}}"#)
@@ -273,7 +273,7 @@ import WebKit
         }
         try await Self.capture(webView, as: "popup-not-linked.png")
         _ = await ExtensionActionTests.evaluate("(document.querySelector('#main button')?.click(), '')", in: webView)
-        try await waitUntilAsync("the popup shows the pairing code", timeout: .seconds(20)) {
+        try await waitUntilAsync("the popup shows the pairing code") {
             let code = await ExtensionActionTests.evaluate("document.querySelector('.code')?.textContent ?? ''", in: webView)
             return code?.contains(/^\d{3} ?\d{3}$/) == true
         }

@@ -63,7 +63,7 @@ private final class LoginServer: @unchecked Sendable {
 /// The Spaces of a Profile share its website data store, so a sign-in in one Space is seen in the others, and
 /// deleting a Space keeps it (ADR 0002). Real WebKit pages.
 @MainActor
-@Suite(.serialized) struct SpaceLoginTests {
+@Suite(.serialized, .oneWebKitTestAtATime) struct SpaceLoginTests {
     private func makeSession(_ profile: ProfileID) -> (ProfileSession, ProfileWebContext) {
         let context = ProfileWebContext(profileID: profile)
         let session = ProfileSession(profileID: profile) { context.makePage(for: $0) }

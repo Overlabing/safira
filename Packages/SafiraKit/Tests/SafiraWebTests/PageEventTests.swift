@@ -12,7 +12,7 @@ import WebKit
 /// What a real page reports through the real session: links opened in new Tabs, which must stay in the Profile's data
 /// store, and media playback.
 @MainActor
-@Suite struct PageEventTests {
+@Suite(.oneWebKitTestAtATime) struct PageEventTests {
     /// Port 9 refuses connections at once, so the page never reaches the network.
     private static let base = "https://127.0.0.1:9/"
 

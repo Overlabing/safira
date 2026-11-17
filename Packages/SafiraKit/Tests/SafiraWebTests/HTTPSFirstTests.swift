@@ -25,7 +25,7 @@ import WebKit
 /// (`.keepAsRequested`) it gets the failure and nothing is shown, which is when Safira's own page takes over.
 /// An `http://` request with the preference loads a blank page on loopback, so Safira never asks WebKit to upgrade.
 @MainActor
-@Suite(.serialized) struct HTTPSFirstTests {
+@Suite(.serialized, .oneWebKitTestAtATime) struct HTTPSFirstTests {
     private let profileID = ProfileID(rawValue: UUID())
 
     /// A session whose Tabs are real web views. `policy` is what Safira asks WebKit for; `trustingCertificates`
@@ -77,8 +77,8 @@ import WebKit
         try? await Task.sleep(for: .seconds(seconds))
     }
 
-    private func until(timeout: Double = 10, _ condition: () async -> Bool) async -> Bool {
-        let deadline = ContinuousClock.now + .seconds(timeout)
+    private func until(_ condition: () async -> Bool) async -> Bool {
+        let deadline = ContinuousClock.now + TestDeadline.external
         while ContinuousClock.now < deadline {
             if await condition() { return true }
             try? await Task.sleep(for: .milliseconds(50))

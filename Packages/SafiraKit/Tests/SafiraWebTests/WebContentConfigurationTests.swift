@@ -8,7 +8,7 @@ import Testing
 import WebKit
 
 @MainActor
-@Suite struct WebContentConfigurationTests {
+@Suite(.oneWebKitTestAtATime) struct WebContentConfigurationTests {
     @Test func aPageOfADefaultProfileIsInspectableWarnsAboutFraudAndBlocksAutoplayingSound() async throws {
         let profile = ProfileID(rawValue: UUID())
         do {
