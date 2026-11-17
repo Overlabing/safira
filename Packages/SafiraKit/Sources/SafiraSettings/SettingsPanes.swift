@@ -10,7 +10,7 @@ import SwiftUI
 /// The panes of the Settings window, in sidebar order. The raw value is stored to reopen the last pane, so it never
 /// changes once shipped.
 public enum SettingsPaneID: String, SettingsPaneIdentifier, CaseIterable {
-    case general, spaces, shortcuts, defaults, linkRules, sitePermissions, debug
+    case general, spaces, shortcuts, defaults, linkRules, sitePermissions, extensions, debug
 
     /// The switches of the registry of defaults (`DefaultEntry.id`) a pane shows besides its own content. The menu keeps
     /// its items for them, which show the same state.
@@ -20,7 +20,7 @@ public enum SettingsPaneID: String, SettingsPaneIdentifier, CaseIterable {
         case .linkRules: ["linkMatching.focusOpenTab", "linkPicker.askForSpace", "linkPicker.choiceLog"]
         case .sitePermissions: ["web.fraudulentSiteWarning", "web.autoplayingSound", "web.cookiePrompts"]
         case .debug: ["diagnostics.debugMode"]
-        case .spaces, .shortcuts, .defaults: []
+        case .spaces, .shortcuts, .defaults, .extensions: []
         }
     }
 }
@@ -99,6 +99,12 @@ public enum SafiraSettings {
                          subtitle: String(localized: "What sites of the current Profile may use.", table: "SafiraSettings",
                                           bundle: .module, comment: "Settings: subtitle of the Site Permissions pane"),
                          systemImage: "hand.raised.fill", tint: .green)
+        case .extensions:
+            SettingsPane(id, title: String(localized: "Extensions", table: "SafiraSettings", bundle: .module,
+                                           comment: "Settings: pane title"),
+                         subtitle: String(localized: "Installed once, switched on per Profile.", table: "SafiraSettings",
+                                          bundle: .module, comment: "Settings: subtitle of the Extensions pane"),
+                         systemImage: "puzzlepiece.extension", tint: .orange)
         case .debug:
             SettingsPane(id, title: String(localized: "Debug", table: "SafiraSettings", bundle: .module,
                                            comment: "Settings: pane title"),

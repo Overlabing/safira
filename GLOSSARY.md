@@ -92,6 +92,10 @@ _Avoid_: Color picker, swatches
 
 ### Extensions
 
+**Extension**:
+A web extension installed once for the app, from a folder, a ZIP or a CRX file, and switched on per Profile: on in every Profile, including one created later, until the user turns it off there; never in a Private window. Its identifier is fixed at install.
+_Avoid_: Add-on, plugin
+
 **Native messaging host**:
 A program an app registers, through a Chrome-format manifest in Safira's `NativeMessagingHosts` folder, so that the extensions it lists can talk to the app. Safira starts it inside its own sandbox.
 _Avoid_: Bridge, helper, native app

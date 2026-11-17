@@ -32,6 +32,12 @@ public struct StoreLayout: Sendable {
         root.appending(path: "link-rules.json", directoryHint: .notDirectory)
     }
 
+    /// The copies of the extensions installed from a ZIP or CRX file. An extension installed from a folder is read
+    /// where it is.
+    public var extensionsDirectory: URL {
+        root.appending(path: "Extensions", directoryHint: .isDirectory)
+    }
+
     public func profileDirectory(for profile: ProfileID) -> URL {
         root
             .appending(path: "Profiles", directoryHint: .isDirectory)

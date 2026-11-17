@@ -12,7 +12,7 @@ public enum DefaultWording {
 
     /// A pane of the Settings window, named as its sidebar names it (a test holds the two together).
     public enum SettingsPane: CaseIterable, Sendable {
-        case general, spaces, shortcuts, defaults, linkRules, sitePermissions, debug
+        case general, spaces, shortcuts, defaults, linkRules, sitePermissions, extensions, debug
     }
 
     /// Where to change a default that has a place in the Settings window: “Settings › Link Rules”.
@@ -30,6 +30,8 @@ public enum DefaultWording {
                                  comment: "Defaults: where to change a default; the Settings window and its pane")
         case .sitePermissions: String(localized: "Settings › Site Permissions", table: "SafiraCore", bundle: .module,
                                        comment: "Defaults: where to change a default; the Settings window and its pane")
+        case .extensions: String(localized: "Settings › Extensions", table: "SafiraCore", bundle: .module,
+                                  comment: "Defaults: where to change a default; the Settings window and its pane")
         case .debug: String(localized: "Settings › Debug", table: "SafiraCore", bundle: .module,
                              comment: "Defaults: where to change a default; the Settings window and its pane")
         }

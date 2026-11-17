@@ -176,6 +176,9 @@ private struct SettingsRootView: View {
             LinkRulesSettingsPane(switches: switches, pane: content.links.rulesPane)
         case .sitePermissions:
             SitePermissionsPane(switches: switches, registry: content.registry)
+        case .extensions:
+            ExtensionsPane(registry: content.registry)
+                .settingsPaneMargins()
         case .debug:
             DebugPane(switches: switches, diagnostics: content.diagnostics)
         }

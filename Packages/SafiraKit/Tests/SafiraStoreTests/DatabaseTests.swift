@@ -829,7 +829,7 @@ private let notesFolder = FolderID(rawValue: UUID(uuidString: "DDDDDDDD-DDDD-4DD
         let tables = try DatabaseQueue(path: root.layout.appDatabaseFile.path(percentEncoded: false)).read { db in
             try String.fetchAll(db, sql: "SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name")
         }
-        #expect(tables == ["app_state", "grdb_migrations", "profile"])
+        #expect(tables == ["app_state", "extension_disabled_profile", "grdb_migrations", "installed_extension", "profile"])
     }
 
     @Test func aProfileListedBeforeProfilesExistedKeepsItsIdentifierAndBecomesActive() throws {
@@ -851,7 +851,8 @@ private let notesFolder = FolderID(rawValue: UUID(uuidString: "DDDDDDDD-DDDD-4DD
 
         #expect(try database.profiles() == [Profile(id: work, name: "Default", symbol: "👤", paletteID: "indigo-blue")])
         #expect(try database.lastActiveProfileID() == work)
-        #expect(try migrations(file) == ["v1-profiles", "v2-profile-details", "v3-onboarding", "v4-profile-palettes"])
+        #expect(try migrations(file) == ["v1-profiles", "v2-profile-details", "v3-onboarding", "v4-profile-palettes",
+                                         "v5-extensions"])
     }
 
     @Test func aRenamedProfileKeepsItsPlaceAndItsNewNameAfterAReopen() throws {
@@ -951,7 +952,7 @@ private let notesFolder = FolderID(rawValue: UUID(uuidString: "DDDDDDDD-DDDD-4DD
         let database = try AppDatabase(file: file)
 
         #expect(try database.profiles().map(\.paletteID) == ["indigo-blue", "orange-pink", "ocean"])
-        #expect(try migrations(file).last == "v4-profile-palettes")
+        #expect(try migrations(file).last == "v5-extensions")
     }
 
     @Test func aProfilesPaletteComesBackAfterAReopen() throws {

@@ -19,7 +19,7 @@ public struct LoadedExtension: Hashable, Sendable {
 
 /// The web extensions of one Profile: one `WKWebExtensionController` whose extensions read and write only that
 /// Profile's website data store, and the Tabs and window they see, which are that Profile's own. A Private window has
-/// no host, so no extension runs in it. Nothing loaded here is remembered after a relaunch.
+/// no host, so no extension runs in it. What it loads comes from the app's extension library, which remembers it.
 @MainActor
 public final class ExtensionHost: NSObject {
     let controller: WKWebExtensionController
@@ -57,33 +57,81 @@ public final class ExtensionHost: NSObject {
         controller.extensionContexts.map(Self.summary).sorted { $0.displayName < $1.displayName }
     }
 
-    /// Loads an unpacked extension (a folder holding its `manifest.json`) into this Profile, granting everything its
-    /// manifest asks for: only the Debug mode command loads one, and asking first is a later unit. The pages opened
-    /// before keep running without it; it reaches the pages created from now on.
+    /// Asks the user about what an extension asks for at run time, and remembers the answer for every Profile; set by
+    /// the app's extension library. Without it such requests are refused.
+    var permissionRequests: (@MainActor (ExtensionPermissionRequest) async -> Bool)?
+
+    /// Loads an installed extension from `resource`, its folder or its ZIP copy, under the identifier fixed at install,
+    /// with what the user allowed. The pages opened before keep running without it; it reaches the pages created from
+    /// now on. An extension already loaded here is left as it is.
     @discardableResult
-    public func loadUnpacked(at folder: URL) async throws -> LoadedExtension {
+    func load(_ installed: InstalledExtension, from resource: URL) async throws -> LoadedExtension {
         // WebKit reads only the relative part of a URL that has a base, such as `Bundle.resourceURL` and anything
         // appended to it, and kills the app on the invalid address that leaves (a `RELEASE_ASSERT`, not an error).
-        guard folder.isFileURL else { throw ExtensionFolderUnreadable(folder: folder) }
-        let folder = folder.absoluteURL.standardizedFileURL
-        let webExtension = try await WKWebExtension(resourceBaseURL: folder)
+        guard resource.isFileURL else { throw ExtensionFolderUnreadable(folder: resource) }
+        let resource = resource.absoluteURL.standardizedFileURL
+        let webExtension = try await WKWebExtension(resourceBaseURL: resource)
+        if let loaded = context(installed.id) { return Self.summary(loaded) }
         let context = WKWebExtensionContext(for: webExtension)
-        let identifier = ExtensionIdentity.identifier(forManifest: webExtension.manifest)
-        context.uniqueIdentifier = identifier
-        if let base = URL(string: "webkit-extension://\(identifier)/") {
+        context.uniqueIdentifier = installed.id
+        if let base = URL(string: "webkit-extension://\(installed.id)/") {
             context.baseURL = base
         }
         // Public API: the extension's pages and service worker show in Safari's Develop menu (ADR 0001).
         context.isInspectable = true
-        for permission in webExtension.requestedPermissions {
-            context.setPermissionStatus(.grantedExplicitly, for: permission)
-        }
-        for pattern in webExtension.allRequestedMatchPatterns {
-            context.setPermissionStatus(.grantedExplicitly, for: pattern)
-        }
+        grant(InstalledGrants(permissions: Set(installed.grantedPermissions),
+                              matchPatterns: Set(installed.grantedMatchPatterns)), to: context)
         try controller.load(context)
         refreshActions()
         return Self.summary(context)
+    }
+
+    /// Stops an extension in this Profile: its content scripts no longer reach new pages and its service worker
+    /// stops. What it stored stays.
+    func unload(_ extensionID: String) {
+        guard let context = context(extensionID) else { return }
+        try? controller.unload(context)
+        refreshActions()
+    }
+
+    /// Gives a loaded extension what the user allowed since it was loaded.
+    func grant(_ grants: InstalledGrants, to extensionID: String) {
+        guard let context = context(extensionID) else { return }
+        grant(grants, to: context)
+    }
+
+    private func grant(_ grants: InstalledGrants, to context: WKWebExtensionContext) {
+        for permission in grants.permissions {
+            context.setPermissionStatus(.grantedExplicitly, for: WKWebExtension.Permission(rawValue: permission))
+        }
+        for pattern in grants.matchPatterns {
+            if let matchPattern = try? WKWebExtension.MatchPattern(string: pattern) {
+                context.setPermissionStatus(.grantedExplicitly, for: matchPattern)
+            }
+        }
+    }
+
+    /// Deletes what the extension stored in this Profile (`storage.local`, `storage.session`, `storage.sync`).
+    func removeData(of extensionID: String) async {
+        await Self.removeData(of: extensionID, from: controller)
+    }
+
+    /// Deletes what an extension stored in a Profile whose host does not exist in this run, through a controller of
+    /// the same identifier that loads nothing.
+    static func removeData(of extensionID: String, inProfile profileID: ProfileID) async {
+        let configuration = WKWebExtensionController.Configuration(identifier: profileID.rawValue)
+        // Never the app's default data store, which every Profile would share; nothing is loaded into this one.
+        configuration.defaultWebsiteDataStore = .nonPersistent()
+        await removeData(of: extensionID, from: WKWebExtensionController(configuration: configuration))
+    }
+
+    static func removeData(of extensionID: String, from controller: WKWebExtensionController) async {
+        let types: Set<WKWebExtension.DataType> = [.local, .session, .synchronized]
+        let records = await controller.dataRecords(ofTypes: types).filter { $0.uniqueIdentifier == extensionID }
+        guard !records.isEmpty else { return }
+        await withCheckedContinuation { done in
+            controller.removeData(ofTypes: types, from: records) { done.resume() }
+        }
     }
 
     /// What a web view needs to show one of the extension's own pages: WebKit loads them only in this configuration,
@@ -253,6 +301,55 @@ extension ExtensionHost: WKWebExtensionControllerDelegate {
         }
     }
 
+    public func webExtensionController(_ controller: WKWebExtensionController,
+                                       promptForPermissions permissions: Set<WKWebExtension.Permission>,
+                                       in tab: (any WKWebExtensionTab)?, for extensionContext: WKWebExtensionContext,
+                                       completionHandler: @escaping (Set<WKWebExtension.Permission>, Date?) -> Void) {
+        let request = runtimeRequest(extensionContext, permissions: permissions.map(\.rawValue), matchPatterns: [])
+        Task {
+            completionHandler(await ask(request) ? permissions : [], nil)
+        }
+    }
+
+    public func webExtensionController(_ controller: WKWebExtensionController,
+                                       promptForPermissionMatchPatterns matchPatterns: Set<WKWebExtension.MatchPattern>,
+                                       in tab: (any WKWebExtensionTab)?, for extensionContext: WKWebExtensionContext,
+                                       completionHandler: @escaping (Set<WKWebExtension.MatchPattern>, Date?) -> Void) {
+        let request = runtimeRequest(extensionContext, permissions: [], matchPatterns: matchPatterns.map(\.string),
+                                     allHosts: matchPatterns.contains { $0.matchesAllHosts || $0.matchesAllURLs })
+        Task {
+            completionHandler(await ask(request) ? matchPatterns : [], nil)
+        }
+    }
+
+    public func webExtensionController(_ controller: WKWebExtensionController,
+                                       promptForPermissionToAccess urls: Set<URL>, in tab: (any WKWebExtensionTab)?,
+                                       for extensionContext: WKWebExtensionContext,
+                                       completionHandler: @escaping (Set<URL>, Date?) -> Void) {
+        let patterns = Set(urls.compactMap { url -> String? in
+            guard let scheme = url.scheme, let host = url.host(percentEncoded: false) else { return nil }
+            return "\(scheme)://\(host)/*"
+        })
+        let request = runtimeRequest(extensionContext, permissions: [], matchPatterns: Array(patterns))
+        Task {
+            completionHandler(await ask(request) ? urls : [], nil)
+        }
+    }
+
+    private func runtimeRequest(_ context: WKWebExtensionContext, permissions: [String], matchPatterns: [String],
+                                allHosts: Bool = false) -> ExtensionPermissionRequest {
+        ExtensionPermissionRequest(extensionID: context.uniqueIdentifier,
+                                   displayName: context.webExtension.displayName ?? context.uniqueIdentifier,
+                                   moment: .runtime, permissions: permissions, matchPatterns: matchPatterns,
+                                   hasAccessToAllHosts: allHosts,
+                                   icon: context.webExtension.icon(for: CGSize(width: 64, height: 64)))
+    }
+
+    private func ask(_ request: ExtensionPermissionRequest) async -> Bool {
+        guard let permissionRequests else { return false }
+        return await permissionRequests(request)
+    }
+
     /// Called once the popup's page has loaded, for a click and for `action.openPopup()` alike.
     public func webExtensionController(_ controller: WKWebExtensionController,
                                        presentActionPopup action: WKWebExtension.Action,
@@ -268,7 +365,7 @@ extension ExtensionHost: WKWebExtensionControllerDelegate {
     }
 }
 
-/// `loadUnpacked` takes a folder on disk only.
+/// An extension is read from a folder or a ZIP on disk only.
 struct ExtensionFolderUnreadable: LocalizedError {
     let folder: URL
     var errorDescription: String? { "\(folder.absoluteString) is not a folder on this Mac" }

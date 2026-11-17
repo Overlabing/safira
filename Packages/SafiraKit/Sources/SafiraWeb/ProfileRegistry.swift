@@ -42,6 +42,8 @@ public final class ProfileRegistry {
     @ObservationIgnored public var appLinkHandlers = AppLinkHandlers() {
         didSet { loadedContexts.forEach { $0.session.appLinks.handlers = appLinkHandlers } }
     }
+    /// The extensions installed for the app, which each Profile's host loads when the Profile's switch is on.
+    @ObservationIgnored public let extensionLibrary: ExtensionLibrary
     @ObservationIgnored private let appDatabase: AppDatabase?
     @ObservationIgnored private let layout: StoreLayout?
     @ObservationIgnored private let diagnostics: DiagnosticLogger?
@@ -93,9 +95,16 @@ public final class ProfileRegistry {
         }
         appDatabase = app
         self.layout = app == nil ? nil : layout
+        let extensionsDirectory = app == nil ? nil : layout?.extensionsDirectory
+        extensionLibrary = ExtensionLibrary(
+            database: app,
+            directory: extensionsDirectory ?? FileManager.default.temporaryDirectory
+                .appending(path: "safira-extensions-\(UUID().uuidString)", directoryHint: .isDirectory),
+            onError: onError)
         self.profiles = profiles
         isOnboardingPending = onboardingPending
         activeProfileID = active.flatMap { id in profiles.first { $0.id == id }?.id } ?? profiles[0].id
+        extensionLibrary.allProfiles = { [weak self] in self?.profiles.map(\.id) ?? [] }
         for id in pending {
             Task { try? await self.erase(id) }
         }
@@ -304,6 +313,7 @@ public final class ProfileRegistry {
         profiles.remove(at: index)
         savedSpaces[id] = nil
         loadedIDs.remove(id)
+        extensionLibrary.detach(profile: id)
         await contexts.removeValue(forKey: id)?.discard()
         try await erase(id)
     }
@@ -353,6 +363,9 @@ public final class ProfileRegistry {
         context.web.permissionPrompt = permissionPrompt
         context.web.pagePanels = pagePanels
         context.session.appLinks.handlers = appLinkHandlers
+        if let host = context.extensions {
+            Task { await extensionLibrary.attach(host, profile: id) }
+        }
         return context
     }
 

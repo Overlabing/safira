@@ -12,6 +12,7 @@ import WebKit
 /// and badge for the active Tab; a click performs the action, which may open its popup under the button.
 struct ExtensionActionButtons: View {
     let host: ExtensionHost
+    let library: ExtensionLibrary
     let popups: ExtensionPopups
 
     var body: some View {
@@ -30,7 +31,7 @@ struct ExtensionActionButtons: View {
         .onAppear { popups.serve(host) }
         .onChange(of: ObjectIdentifier(host)) { popups.serve(host) }
         #if DEBUG
-        .task { await ExtensionActionPreview.run(host: host) }
+        .task { await ExtensionActionPreview.run(host: host, library: library) }
         #endif
     }
 }
@@ -222,25 +223,33 @@ private struct PopupAnchor: NSViewRepresentable {
 }
 
 #if DEBUG
-/// Captures of the extension buttons and popups, which need an extension and a click: the launch argument
-/// `-SafiraExtensionPreview <folder>` loads that folder into the Active profile once, and
-/// `-SafiraExtensionPreviewPopup YES` then performs the first action, which opens its popup. Debug builds only; the
-/// folder must be one the sandbox can read, such as the app's own temporary folder.
+/// Captures of the extension buttons, popups and the Extensions pane, which need installed extensions and a click: the
+/// launch argument `-SafiraExtensionPreview <folder>[:<folder>…]` installs those folders once, allowing what they ask
+/// for, and `-SafiraExtensionPreviewPopup YES` then performs the first action, which opens its popup. Debug builds
+/// only, for a copy under a throwaway bundle id; the folders must be ones the sandbox can read, such as the app's own
+/// temporary folder.
 @MainActor
 private enum ExtensionActionPreview {
     private static var didRun = false
 
-    static func run(host: ExtensionHost) async {
-        guard !didRun, let path = UserDefaults.standard.string(forKey: "SafiraExtensionPreview") else { return }
+    static func run(host: ExtensionHost, library: ExtensionLibrary) async {
+        guard !didRun, let paths = UserDefaults.standard.string(forKey: "SafiraExtensionPreview") else { return }
         didRun = true
-        do {
-            let loaded = try await host.loadUnpacked(at: URL(filePath: path, directoryHint: .isDirectory))
-            guard UserDefaults.standard.bool(forKey: "SafiraExtensionPreviewPopup") else { return }
-            try? await Task.sleep(for: .seconds(2))
-            host.performAction(extensionID: loaded.identifier)
-        } catch {
-            NSLog("Extension preview: %@", String(describing: error))
+        var first: String?
+        for path in paths.split(separator: ":") {
+            do {
+                let installed = try await library.install(from: URL(filePath: String(path), directoryHint: .isDirectory),
+                                                          prompt: { _ in true })
+                first = first ?? installed?.id
+            } catch ExtensionInstallError.alreadyInstalled {
+                continue
+            } catch {
+                NSLog("Extension preview: %@", String(describing: error))
+            }
         }
+        guard let first, UserDefaults.standard.bool(forKey: "SafiraExtensionPreviewPopup") else { return }
+        try? await Task.sleep(for: .seconds(2))
+        host.performAction(extensionID: first)
     }
 
     /// With `-SafiraExtensionPreviewPopup YES`, also writes the popup's page as `extension-popup.png` in the app's
