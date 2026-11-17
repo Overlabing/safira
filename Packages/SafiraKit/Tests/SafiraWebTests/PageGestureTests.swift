@@ -8,7 +8,7 @@ import Testing
 
 /// #122: pinching zooms a page and a two-finger swipe goes back and forward, on every page Safira builds.
 @MainActor
-@Suite(.serialized) struct PageGestureTests {
+@Suite(.serialized, .oneWebKitTestAtATime) struct PageGestureTests {
     @Test func aTabOfAProfileAllowsPinchAndSwipe() async {
         let profile = ProfileID(rawValue: UUID())
         do {

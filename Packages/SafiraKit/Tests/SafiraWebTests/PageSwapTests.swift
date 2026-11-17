@@ -26,7 +26,7 @@ private final class NavigationCounter: NSObject, WKNavigationDelegate {
 }
 
 @MainActor
-@Suite struct PageSwapTests {
+@Suite(.oneWebKitTestAtATime) struct PageSwapTests {
     /// The one real-WebKit check of the walking skeleton: the facade tests prove the session never asks a page to
     /// reload on selection; this proves WebKit itself does not reload a view taken out of the window and put back.
     @Test func swappingTwentyRealWebViewsInAWindowReloadsNone() async throws {

@@ -16,7 +16,7 @@ import WebKit
 /// the page lays out at the card's width, so nothing of it hides past the card's edge. One window at a time: the other
 /// real-WebKit suites run alongside and time their page loads.
 @MainActor
-@Suite(.serialized) struct PageCardFitTests {
+@Suite(.serialized, .oneWebKitTestAtATime) struct PageCardFitTests {
     enum Layout: String, CaseIterable, CustomTestStringConvertible {
         case sidebarShown, compactHidden, compactRevealed, sidebarShownAfterCompact
 

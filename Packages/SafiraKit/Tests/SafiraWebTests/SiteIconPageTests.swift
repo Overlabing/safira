@@ -11,7 +11,7 @@ import WebKit
 /// A real page's side of site icons: the links it reads after a load, out of the page's reach, and the fetches it makes
 /// through its own Profile's data store, which carry that Profile's cookies and no other's.
 @MainActor
-@Suite(.serialized) struct SiteIconPageTests {
+@Suite(.serialized, .oneWebKitTestAtATime) struct SiteIconPageTests {
     @Test func aLoadedPageReportsItsLinksAsSafirasOwnScriptReadsThem() async throws {
         let profile = ProfileID(rawValue: UUID())
         do {

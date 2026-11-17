@@ -12,7 +12,7 @@ import WebKit
 /// (non-persistent data store and extension state) and no extension stores a `CryptoKey`, so nothing reaches the
 /// keychain; the list itself goes to a temporary `app.sqlite`. The extensions are written by the tests.
 @MainActor
-@Suite(.serialized) struct ExtensionLibraryTests {
+@Suite(.serialized, .oneWebKitTestAtATime) struct ExtensionLibraryTests {
     static let fixtureID = "pfikphmpnbnmihdgfbljkjgfnamcpjme"
 
     @Test func anInstallAsksOnceThenRunsInEveryProfileUnderItsKeyIdentifier() async throws {

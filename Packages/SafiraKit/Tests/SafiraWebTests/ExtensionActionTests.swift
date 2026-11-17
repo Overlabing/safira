@@ -11,7 +11,7 @@ import WebKit
 /// Extensions' action buttons and popups, on real WebKit with `.inMemory` Profiles: nothing reaches the disk or the
 /// keychain, and no extension here stores a `CryptoKey`.
 @MainActor
-@Suite(.serialized) struct ExtensionActionTests {
+@Suite(.serialized, .oneWebKitTestAtATime) struct ExtensionActionTests {
     @Test func moreThanTwoActionsGoIntoTheOverflow() {
         #expect(ExtensionActionLayout(identifiers: []) == .buttons([]))
         #expect(ExtensionActionLayout(identifiers: ["a", "b"]) == .buttons(["a", "b"]))

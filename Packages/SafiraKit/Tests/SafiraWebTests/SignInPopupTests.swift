@@ -11,7 +11,7 @@ import WebKit
 /// A popup sign-in through real WebKit against a loopback site and identity provider (`SignInSite`): the popup shares
 /// the opener's Profile data store and `window.opener`, ends when it closes itself, and another Profile sees none of it.
 @MainActor
-@Suite(.serialized) struct SignInPopupTests {
+@Suite(.serialized, .oneWebKitTestAtATime) struct SignInPopupTests {
     private func makeSession(_ profile: ProfileID) -> (ProfileSession, ProfileWebContext) {
         let context = ProfileWebContext(profileID: profile)
         let session = ProfileSession(profileID: profile) { context.makePage(for: $0) }

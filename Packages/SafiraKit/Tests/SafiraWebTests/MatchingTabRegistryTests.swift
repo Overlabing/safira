@@ -9,7 +9,7 @@ import Testing
 
 /// The Matching tab search across Profiles. The owners build real WebKit data stores; the pages are on loopback.
 @MainActor
-@Suite(.serialized) struct MatchingTabRegistryTests {
+@Suite(.serialized, .oneWebKitTestAtATime) struct MatchingTabRegistryTests {
     @Test func aProfileNotShownSinceLaunchIsSearchedByItsSavedTabsWithoutBeingLoadedThenFocused() async throws {
         let layout = StoreLayout(root: FileManager.default.temporaryDirectory
             .appending(path: "safira-\(UUID().uuidString)", directoryHint: .isDirectory))

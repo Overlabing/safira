@@ -66,7 +66,7 @@ private final class PageServer: @unchecked Sendable {
 /// Decision D1 and lazy restoration with real WebKit pages: what the session would write to disk, and how a saved
 /// Tab comes back.
 @MainActor
-@Suite(.serialized) struct NavigationStateTests {
+@Suite(.serialized, .oneWebKitTestAtATime) struct NavigationStateTests {
     private func makeSession(_ profile: ProfileID) -> (ProfileSession, ProfileWebContext) {
         let context = ProfileWebContext(profileID: profile)
         let session = ProfileSession(profileID: profile) { context.makePage(for: $0) }
@@ -94,7 +94,10 @@ private final class PageServer: @unchecked Sendable {
             let (session, context) = makeSession(profile)
             try await open(server.url("/plain"), in: session, context)
             try await open(server.url("/plain2"), in: session, context)
-            try await Task.sleep(for: .milliseconds(300))
+            try await waitUntil("the Tab's state is saved") {
+                session.savedSession().tabs.first.map { $0.address == server.url("/plain2") && $0.navigationState != nil }
+                    == true
+            }
 
             let saved = try savedTab(session)
             #expect(saved.address == server.url("/plain2"))
@@ -120,10 +123,11 @@ private final class PageServer: @unchecked Sendable {
         do {
             let (session, context) = makeSession(profile)
             try await open(server.url("/login"), in: session, context)
-            try await waitUntil("the password field is seen") { session.savedSession().tabs.first?.navigationState == nil }
+            // A new Tab has no navigation state yet either, so wait for the whole record, title included.
+            let expected = TabRecord(id: try #require(session.selectedTabID), address: server.url("/login"), title: "Login")
+            try await waitUntil("the Tab is saved by its address only") { session.savedSession().tabs.first == expected }
 
-            #expect(try savedTab(session) == TabRecord(id: try #require(session.selectedTabID),
-                                                       address: server.url("/login"), title: "Login"))
+            #expect(try savedTab(session) == expected)
             close(session)
         }
         await removeDataStoreWhenReleased(profile)

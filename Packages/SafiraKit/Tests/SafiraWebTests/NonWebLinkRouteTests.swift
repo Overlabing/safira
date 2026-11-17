@@ -13,7 +13,7 @@ import WebKit
 /// target, a popup, a ⌘-click) must end at the Profile's question and open nothing by itself. The scheme is one no app
 /// on this Mac takes, so a route that slipped past the question would fail quietly instead of opening an app.
 @MainActor
-@Suite(.serialized) struct NonWebLinkRouteTests {
+@Suite(.serialized, .oneWebKitTestAtATime) struct NonWebLinkRouteTests {
     private static let scheme = "safira-verify"
     private static let link = "safira-verify://open?x=1"
 
@@ -44,10 +44,12 @@ import WebKit
             return webView
         }
 
-        /// Waits for the first question, then long enough for a second one or a stray navigation to show up.
-        func settle() async throws {
+        /// Waits for the first question and for `pages` to end the navigation the answer cancelled, then long enough
+        /// for a second question or a stray navigation to show up.
+        func settle(_ pages: WKWebView...) async throws {
             try await waitUntil("the page reaches the question") { !asked.isEmpty }
             await session.appLinks.settled()
+            try await waitUntil("the cancelled navigation ends") { pages.allSatisfy { !$0.isLoading } }
             try await Task.sleep(for: .milliseconds(300))
         }
 
@@ -100,14 +102,17 @@ import WebKit
             let webView = try await harness.open(server.url("/home"))
 
             _ = try await webView.evaluateJavaScript("location = '/redirect'")
-            try await harness.settle()
+            try await harness.settle(webView)
+            // WebKit reports the link as the page's address until it has taken the cancelled redirect back.
+            try await waitUntil("the page is back at /home") { webView.url == server.url("/home") }
 
             let expected = try prompt(harness)
             #expect(harness.asked.map(\.scheme) == [expected.scheme])
             #expect(harness.asked.map(\.app) == [expected.app])
             // While the redirect is pending WebKit already reports the link as the page's address, so the question
-            // names the link's host ("open") instead of the page that asked.
-            withKnownIssue("the Tab's address during a pending redirect is the redirect target") {
+            // names the link's host ("open") instead of the page that asked. When WebKit is slow to report it, the
+            // question still names the page, hence intermittent.
+            withKnownIssue("the Tab's address during a pending redirect is the redirect target", isIntermittent: true) {
                 #expect(harness.asked.map(\.requestedBy) == ["127.0.0.1"])
             }
             #expect(harness.opened.isEmpty)
@@ -120,7 +125,7 @@ import WebKit
         try await run(["/page": .html("<iframe src='/redirect'></iframe>"), "/redirect": .redirect(to: Self.link)]) {
             harness, server in
             let webView = try await harness.open(server.url("/page"))
-            try await harness.settle()
+            try await harness.settle(webView)
 
             #expect(harness.asked == [try prompt(harness)])
             #expect(harness.opened.isEmpty)
@@ -152,7 +157,7 @@ import WebKit
             let webView = try await harness.open(server.url("/form"))
 
             _ = try await webView.evaluateJavaScript("document.getElementById('f').submit()")
-            try await harness.settle()
+            try await harness.settle(webView)
 
             #expect(harness.asked == [try prompt(harness)])
             #expect(harness.opened.isEmpty)
@@ -166,7 +171,7 @@ import WebKit
             let webView = try await harness.open(server.url("/page"))
 
             _ = try await webView.evaluateJavaScript("document.getElementById('l').click()")
-            try await harness.settle()
+            try await harness.settle(webView)
 
             #expect(harness.asked == [try prompt(harness)])
             #expect(harness.opened.isEmpty)
@@ -186,7 +191,7 @@ import WebKit
             }
 
             _ = try await webView.evaluateJavaScript("document.getElementById('frame').contentDocument.getElementById('l').click()")
-            try await harness.settle()
+            try await harness.settle(webView)
 
             #expect(harness.asked == [try prompt(harness)])
             #expect(harness.opened.isEmpty)
@@ -206,7 +211,7 @@ import WebKit
             try await waitUntil("the popup loads") { popup.url == server.url("/popup") && !popup.isLoading }
 
             _ = try await popup.evaluateJavaScript("document.getElementById('l').click()")
-            try await harness.settle()
+            try await harness.settle(popup, opener)
 
             #expect(harness.asked == [try prompt(harness)])
             #expect(harness.opened.isEmpty)
@@ -242,7 +247,7 @@ import WebKit
             try await waitUntil("the web link opens a background Tab") { harness.session.tabs.count == 2 }
 
             try await commandClick("mail")
-            try await harness.settle()
+            try await harness.settle(webView)
 
             #expect(harness.asked == [try prompt(harness, scheme: "mailto")])
             #expect(harness.opened.isEmpty)

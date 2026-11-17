@@ -27,7 +27,7 @@ private final class TemporaryRoot {
 
 /// The Profiles of the app, their owners, switching and deletion. The owners build real WebKit data stores.
 @MainActor
-@Suite(.serialized) struct ProfileRegistryTests {
+@Suite(.serialized, .oneWebKitTestAtATime) struct ProfileRegistryTests {
     /// Releases the registry's owners and removes every data store it made.
     private func cleanUp(_ ids: [ProfileID]) async {
         for id in ids { await removeDataStoreWhenReleased(id) }

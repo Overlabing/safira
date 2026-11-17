@@ -73,7 +73,7 @@ private final class Prompt: @unchecked Sendable {
 }
 
 @MainActor
-@Suite(.serialized) struct DownloadConsentTests {
+@Suite(.serialized, .oneWebKitTestAtATime) struct DownloadConsentTests {
     private func run(_ folders: Folders, _ body: (ProfileContext) async throws -> Void) async throws {
         var ids: [ProfileID] = []
         do {
@@ -366,7 +366,7 @@ private final class Prompt: @unchecked Sendable {
             #expect(folders.files(in: folders.downloads) == ["slow.bin.part"])
 
             server.release()
-            try await waitUntil("the download is saved", timeout: .seconds(20)) { isFinished(context) }
+            try await waitUntil("the download is saved") { isFinished(context) }
             #expect(folders.files(in: folders.downloads) == ["slow.bin"])
         }
     }

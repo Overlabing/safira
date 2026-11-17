@@ -83,7 +83,7 @@ import WebKit
 /// Download Image and Open Link in New Tab on a real page, through the real WebKit. The menu is built here with WebKit's
 /// identifiers, since a test cannot open the real one; the point is read from the page as a right-click reads it.
 @MainActor
-@Suite(.serialized) struct PageContextMenuTests {
+@Suite(.serialized, .oneWebKitTestAtATime) struct PageContextMenuTests {
     private func menu(_ action: PageMenuAction) -> NSMenu {
         let menu = NSMenu()
         let item = NSMenuItem(title: "WebKit's title", action: nil, keyEquivalent: "")

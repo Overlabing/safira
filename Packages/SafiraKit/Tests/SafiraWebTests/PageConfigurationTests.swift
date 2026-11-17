@@ -11,7 +11,7 @@ import WebKit
 /// Every page Safira builds (a Profile's Tab, a Private window's Tab, a popup) allows a page's full screen request and
 /// sends Safari's `Version/… Safari/605.1.15` tokens.
 @MainActor
-@Suite(.serialized) struct PageConfigurationTests {
+@Suite(.serialized, .oneWebKitTestAtATime) struct PageConfigurationTests {
     private func userAgent(of webView: WKWebView) async throws -> String {
         try #require(try await webView.evaluateJavaScript("navigator.userAgent") as? String)
     }

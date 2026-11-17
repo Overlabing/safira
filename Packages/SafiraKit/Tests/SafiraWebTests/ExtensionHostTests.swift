@@ -12,7 +12,7 @@ import WebKit
 /// Web extensions per Profile, on real WebKit. Every Profile here is `.inMemory`: its data store and its extensions'
 /// state are non-persistent, and no extension stores a `CryptoKey`, so nothing reaches the disk or the keychain.
 @MainActor
-@Suite(.serialized) struct ExtensionHostTests {
+@Suite(.serialized, .oneWebKitTestAtATime) struct ExtensionHostTests {
     /// Verrou's manifest `key` (a public key, published in its repository).
     static let verrouKey = """
         MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyQmZR1Ax8wCjoyiOOneDiobQiOu44TbZ5bBnOdjyweU+IwNo6RgeaM3AQ3wtHjF560eI/\
