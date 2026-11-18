@@ -189,6 +189,39 @@
         }
       }
     },
+    "Library › Extensions" : {
+      "comment" : "Defaults: where to change a default; the Settings window and its pane",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bibliothèque › Extensions"
+          }
+        }
+      }
+    },
+    "Library › Link Rules" : {
+      "comment" : "Defaults: where to change a default; the Settings window and its pane",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bibliothèque › Règles de lien"
+          }
+        }
+      }
+    },
+    "Library › Spaces" : {
+      "comment" : "Defaults: where to change a default; the Settings window and its pane",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bibliothèque › Spaces"
+          }
+        }
+      }
+    },
     "None" : {
       "comment" : "Defaults: value of Telemetry",
       "localizations" : {
@@ -398,17 +431,6 @@
         }
       }
     },
-    "Settings › Extensions" : {
-      "comment" : "Defaults: where to change a default; the Settings window and its pane",
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Réglages › Extensions"
-          }
-        }
-      }
-    },
     "Settings › General" : {
       "comment" : "Defaults: where to change a default; the Settings window and its pane",
       "localizations" : {
@@ -416,17 +438,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Réglages › Général"
-          }
-        }
-      }
-    },
-    "Settings › Link Rules" : {
-      "comment" : "Defaults: where to change a default; the Settings window and its pane",
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Réglages › Règles de lien"
           }
         }
       }
@@ -460,17 +471,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Réglages › Autorisations des sites"
-          }
-        }
-      }
-    },
-    "Settings › Spaces" : {
-      "comment" : "Defaults: where to change a default; the Settings window and its pane",
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Réglages › Spaces"
           }
         }
       }

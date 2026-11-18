@@ -75,6 +75,17 @@
         }
       }
     },
+    "Downloads" : {
+      "comment" : "Library: rail item",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Téléchargements"
+          }
+        }
+      }
+    },
     "Everything Safira decided for you, and where to change it." : {
       "comment" : "Settings: subtitle of the Defaults pane",
       "localizations" : {
@@ -87,7 +98,7 @@
       }
     },
     "Extensions" : {
-      "comment" : "Settings: pane title",
+      "comment" : "Library: rail item",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -108,13 +119,13 @@
         }
       }
     },
-    "Installed once for Safira: add, update and remove them." : {
-      "comment" : "Settings: subtitle of the Extensions pane of Safira",
+    "Installed once for Safira, switched on per Profile." : {
+      "comment" : "Library: subtitle of Extensions",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Installées une fois pour Safira : ajoutez-les, mettez-les à jour et supprimez-les."
+            "value" : "Installées une fois pour Safira, activées par profil."
           }
         }
       }
@@ -172,7 +183,7 @@
       }
     },
     "Link Rules" : {
-      "comment" : "Settings: pane title",
+      "comment" : "Library: rail item",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -226,6 +237,17 @@
         }
       }
     },
+    "Settings" : {
+      "comment" : "Library: rail item",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglages"
+          }
+        }
+      }
+    },
     "Shortcuts" : {
       "comment" : "Settings: pane title",
       "localizations" : {
@@ -271,7 +293,7 @@
       }
     },
     "Spaces" : {
-      "comment" : "Settings: pane title",
+      "comment" : "Library: rail item",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -315,12 +337,34 @@
       }
     },
     "This Profile’s Spaces, in the order of ⌃1 to ⌃9." : {
-      "comment" : "Settings: subtitle of the Spaces pane",
+      "comment" : "Library: subtitle of Spaces",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Les Spaces de ce profil, dans l’ordre de ⌃1 à ⌃9."
+          }
+        }
+      }
+    },
+    "This Profile’s settings, and Safira’s." : {
+      "comment" : "Library: subtitle of Settings",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les réglages de ce profil, et ceux de Safira."
+          }
+        }
+      }
+    },
+    "This window’s downloads, newest first." : {
+      "comment" : "Library: subtitle of Downloads",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les téléchargements de cette fenêtre, les plus récents d’abord."
           }
         }
       }
@@ -359,23 +403,12 @@
       }
     },
     "Where links from other apps open." : {
-      "comment" : "Settings: subtitle of the Link Rules pane",
+      "comment" : "Library: subtitle of Link Rules",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Où s’ouvrent les liens venus d’autres apps."
-          }
-        }
-      }
-    },
-    "Which installed extensions run in this Profile." : {
-      "comment" : "Settings: subtitle of the Extensions pane of This Profile",
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Les extensions installées qui tournent dans ce profil."
           }
         }
       }
