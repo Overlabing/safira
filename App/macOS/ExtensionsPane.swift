@@ -18,7 +18,7 @@ struct ExtensionsPane: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("An extension is installed once for Safira and runs in every Profile whose switch is on. A Profile created later starts with it on. Extensions never run in Private windows.",
+            Text("An extension is installed once for Safira and runs in every Profile whose switch is on. A Profile created later starts with it on. Extensions never run in Private windows. Turned off, an extension stops at once; pages already open keep what it added until they are reloaded.",
                  comment: "Settings, Extensions pane")
                 .font(.callout)
                 .foregroundStyle(.secondary)

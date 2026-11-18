@@ -343,13 +343,13 @@
         }
       }
     },
-    "An extension is installed once for Safira and runs in every Profile whose switch is on. A Profile created later starts with it on. Extensions never run in Private windows." : {
+    "An extension is installed once for Safira and runs in every Profile whose switch is on. A Profile created later starts with it on. Extensions never run in Private windows. Turned off, an extension stops at once; pages already open keep what it added until they are reloaded." : {
       "comment" : "Settings, Extensions pane",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Une extension s’installe une fois pour Safira et tourne dans chaque profil dont l’interrupteur est activé. Un profil créé plus tard la reçoit activée. Les extensions ne tournent jamais dans les fenêtres privées."
+            "value" : "Une extension s’installe une fois pour Safira et tourne dans chaque profil dont l’interrupteur est activé. Un profil créé plus tard la reçoit activée. Les extensions ne tournent jamais dans les fenêtres privées. Désactivée, une extension s’arrête aussitôt ; les pages déjà ouvertes gardent ce qu’elle y a ajouté jusqu’à ce qu’on les recharge."
           }
         }
       }
