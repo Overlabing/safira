@@ -18,7 +18,7 @@ struct ExtensionsPane: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("An extension is installed once for Safira and runs in every Profile whose switch is on. A Profile created later starts with it on. Extensions never run in Private windows.",
+            Text("An extension is installed once for Safira and runs in every Profile whose switch is on. A Profile created later starts with it on. Extensions never run in Private windows. Turned off, an extension stops at once; pages already open keep what it added until they are reloaded.",
                  comment: "Settings, Extensions pane")
                 .font(.callout)
                 .foregroundStyle(.secondary)
@@ -47,6 +47,7 @@ struct ExtensionsPane: View {
                                          },
                                          locate: { locate(item) },
                                          review: { Task { await library.allowPending(item.id) } },
+                                         reload: { Task { await library.reload(item.id) } },
                                          remove: { removing = item })
                         }
                     }
@@ -149,7 +150,8 @@ private enum ExtensionInstallPreview {
 
 /// One installed extension: its icon, name and version, what it may do, a switch per Profile, and Remove. A folder
 /// that cannot be found, or that now holds another extension, is said so, with Locate…; what an update asked for and
-/// the user did not allow is said so, with Review….
+/// the user did not allow is said so, with Review…; a service worker or background page that could not start is said
+/// so with WebKit's reason, with Reload.
 private struct ExtensionRow: View {
     let item: InstalledExtension
     let status: ExtensionStatus
@@ -157,6 +159,7 @@ private struct ExtensionRow: View {
     let setEnabled: (Bool, ProfileID) -> Void
     let locate: () -> Void
     let review: () -> Void
+    let reload: () -> Void
     let remove: () -> Void
 
     var body: some View {
@@ -173,6 +176,9 @@ private struct ExtensionRow: View {
                         .accessibilityLabel(Text("Remove \(item.displayName)", comment: "Settings, Extensions pane: VoiceOver label; the argument is an extension's name"))
                 }
                 availability
+                if let failure = status.backgroundFailure {
+                    backgroundFailure(failure)
+                }
                 if status.pendingRequest != nil {
                     HStack {
                         Label(String(localized: "This version asks for more than you allowed. It runs with what you allowed before.",
@@ -214,6 +220,32 @@ private struct ExtensionRow: View {
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .settingsGroup()
+    }
+
+    private func backgroundFailure(_ reason: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(alignment: .firstTextBaseline) {
+                Label {
+                    Text("Couldn’t start: \(reason)",
+                         comment: "Settings, Extensions pane: an extension whose service worker or background page failed to start; the argument is the error WebKit reports")
+                        .textSelection(.enabled)
+                } icon: {
+                    Image(systemName: "exclamationmark.triangle")
+                }
+                .foregroundStyle(.orange)
+                Spacer()
+                Button(String(localized: "Reload", comment: "Settings, Extensions pane: button that reads an extension's files again and starts it again"),
+                       action: reload)
+                    .accessibilityLabel(Text("Reload \(item.displayName)", comment: "Settings, Extensions pane: VoiceOver label; the argument is an extension's name"))
+            }
+            if status.startsAtNextLaunch {
+                Text("It still fails after Reload. Once its files are fixed, it starts the next time Safira opens.",
+                     comment: "Settings, Extensions pane: WebKit does not start an extension's service worker again in a run where it failed")
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .font(.callout)
     }
 
     private var icon: some View {

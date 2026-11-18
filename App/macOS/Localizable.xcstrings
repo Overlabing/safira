@@ -343,13 +343,13 @@
         }
       }
     },
-    "An extension is installed once for Safira and runs in every Profile whose switch is on. A Profile created later starts with it on. Extensions never run in Private windows." : {
+    "An extension is installed once for Safira and runs in every Profile whose switch is on. A Profile created later starts with it on. Extensions never run in Private windows. Turned off, an extension stops at once; pages already open keep what it added until they are reloaded." : {
       "comment" : "Settings, Extensions pane",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Une extension s’installe une fois pour Safira et tourne dans chaque profil dont l’interrupteur est activé. Un profil créé plus tard la reçoit activée. Les extensions ne tournent jamais dans les fenêtres privées."
+            "value" : "Une extension s’installe une fois pour Safira et tourne dans chaque profil dont l’interrupteur est activé. Un profil créé plus tard la reçoit activée. Les extensions ne tournent jamais dans les fenêtres privées. Désactivée, une extension s’arrête aussitôt ; les pages déjà ouvertes gardent ce qu’elle y a ajouté jusqu’à ce qu’on les recharge."
           }
         }
       }
@@ -882,6 +882,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Impossible de refuser le bandeau de cookies sur %@"
+          }
+        }
+      }
+    },
+    "Couldn’t start: %@" : {
+      "comment" : "Settings, Extensions pane: an extension whose service worker or background page failed to start; the argument is the error WebKit reports",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de démarrer : %@"
           }
         }
       }
@@ -1598,6 +1609,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Il ne contient aucun onglet."
+          }
+        }
+      }
+    },
+    "It still fails after Reload. Once its files are fixed, it starts the next time Safira opens." : {
+      "comment" : "Settings, Extensions pane: WebKit does not start an extension's service worker again in a run where it failed",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le rechargement n’a pas suffi. Une fois ses fichiers corrigés, elle démarrera à la prochaine ouverture de Safira."
           }
         }
       }
@@ -2676,6 +2698,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Recharger"
+          }
+        }
+      }
+    },
+    "Reload %@" : {
+      "comment" : "Settings, Extensions pane: VoiceOver label; the argument is an extension's name",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recharger %@"
           }
         }
       }

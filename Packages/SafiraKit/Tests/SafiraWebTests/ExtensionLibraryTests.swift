@@ -361,6 +361,64 @@ import WebKit
             == .folder(bookmark: FakeBookmarks.data(moved, generation: 3)))
     }
 
+    /// A service worker that throws while it starts (here an API WebKit does not have) says why in the extension's
+    /// status while it fails in any Profile. Fixed and reloaded, it still fails in this run, because WebKit does not
+    /// start a service worker again in a Profile where it failed (macOS 27), so the status says it starts at the next
+    /// launch; after a relaunch it runs.
+    @Test func aServiceWorkerThatCannotStartSaysWhyAndStartsAfterARelaunchOnceFixed() async throws {
+        let place = try Place()
+        defer { place.clean() }
+        let folder = place.root.appending(path: "Broken start", directoryHint: .isDirectory)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        try Data("""
+            {"manifest_version": 3, "name": "Broken start", "description": "Its worker throws.", "version": "1.0",
+             "key": "YnJva2VuLXN0YXJ0", "permissions": ["storage"],
+             "background": {"service_worker": "background.js", "type": "module"}}
+            """.utf8).write(to: folder.appending(path: "manifest.json"))
+        let worker = folder.appending(path: "background.js")
+        try Data("chrome.missingNamespace.onEvent.addListener(() => {});\n".utf8).write(to: worker)
+        let work = try ExtensionHostTests.profile()
+        let personal = try ExtensionHostTests.profile()
+        let library = place.library()
+        await library.attach(try #require(work.extensions), profile: work.id)
+        await library.attach(try #require(personal.extensions), profile: personal.id)
+
+        let id = try #require(try await library.install(from: folder) { _ in true }).id
+
+        try await waitUntil("the failure is reported in both Profiles") {
+            library.backgroundFailures[id]?.keys.sorted { $0.rawValue.uuidString < $1.rawValue.uuidString }
+                == [work.id, personal.id].sorted { $0.rawValue.uuidString < $1.rawValue.uuidString }
+        }
+        #expect(library.statuses[id]?.backgroundFailure
+            == "TypeError: undefined is not an object (evaluating 'chrome.missingNamespace.onEvent') (background.js:1:24)")
+        #expect(library.statuses[id]?.startsAtNextLaunch == false)
+        await library.setEnabled(false, extension: id, in: work.id)
+        #expect(library.statuses[id]?.backgroundFailure != nil, "it still fails in the other Profile")
+        await library.setEnabled(false, extension: id, in: personal.id)
+        #expect(library.statuses[id]?.backgroundFailure == nil, "it runs nowhere")
+        await library.setEnabled(true, extension: id, in: work.id)
+        await library.setEnabled(true, extension: id, in: personal.id)
+        try await waitUntil("the failure is reported again") { library.statuses[id]?.backgroundFailure != nil }
+
+        try Data("chrome.storage.local.set({ started: true });\n".utf8).write(to: worker)
+        await library.reload(id)
+
+        try await waitUntil("the failure is reported after Reload") { library.statuses[id]?.backgroundFailure != nil }
+        #expect(library.statuses[id]?.backgroundFailure == "TypeError: ReferenceError: Can't find variable: chrome")
+        #expect(library.statuses[id]?.startsAtNextLaunch == true)
+
+        let relaunched = place.library()
+        let later = try ExtensionHostTests.profile()
+        await relaunched.attach(try #require(later.extensions), profile: later.id)
+        // WebKit answers only when the worker started; it never does after a failure.
+        var started: Bool?
+        try #require(later.extensions?.controller.extensionContexts.first).loadBackgroundContent { started = $0 == nil }
+        try await waitUntil("the fixed service worker started after a relaunch") { started != nil }
+        #expect(started == true)
+        #expect(relaunched.statuses[id]?.backgroundFailure == nil)
+        #expect(relaunched.statuses[id]?.startsAtNextLaunch == false)
+    }
+
     @Test func anythingButAFolderZipOrCRXIsRefusedWithItsName() async throws {
         let place = try Place()
         defer { place.clean() }

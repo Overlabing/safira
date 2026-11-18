@@ -18,21 +18,47 @@ import SafiraWeb
 let mode = CommandLine.arguments.dropFirst().first ?? ""
 let profile = ProfileID(rawValue: UUID(uuidString: "6A7E0000-0000-4000-8000-00000000CA7E")!)
 
+/// The folders are in the app's own Resources, which the sandbox lets it read without a security-scoped bookmark.
+struct BundledFolders: ExtensionFolderBookmarks {
+    func bookmark(for folder: URL) throws -> Data { Data(folder.path(percentEncoded: false).utf8) }
+    func resolve(_ bookmark: Data) throws -> ResolvedFolder {
+        ResolvedFolder(url: URL(filePath: String(decoding: bookmark, as: UTF8.self), directoryHint: .isDirectory),
+                       isStale: false)
+    }
+    func startAccessing(_ folder: URL) -> Bool { true }
+    func stopAccessing(_ folder: URL) {}
+}
+
+/// Installs a folder the way Settings › Extensions does once the user allowed everything it asks for, and returns it
+/// as the Profile's host reports it. The list itself is kept for this run only.
+@MainActor
+func install(_ folder: URL, into host: ExtensionHost, _ library: ExtensionLibrary) async throws -> LoadedExtension {
+    guard let item = try await library.install(from: folder, prompt: { _ in true }),
+          let loaded = host.loadedExtensions.first(where: { $0.identifier == item.id }) else {
+        throw CocoaError(.featureUnsupported, userInfo: [NSLocalizedDescriptionKey: "\(folder.lastPathComponent) did not load"])
+    }
+    return loaded
+}
+
 @MainActor
 func gate() async -> String {
     guard ["write", "read", "load", "native"].contains(mode), let resources = Bundle.main.resourceURL else {
         return "usage: SafiraKeychainGate write|read|load|native"
     }
-    let web = ProfileWebContext(profileID: profile, storage: ["load", "native"].contains(mode) ? .inMemory : .onDisk)
+    let storage: WebsiteStorage = ["load", "native"].contains(mode) ? .inMemory : .onDisk
+    let web = ProfileWebContext(profileID: profile, storage: storage)
     guard let host = web.extensions else { return "the Profile has no extension host" }
     // The host refers to its Profile without keeping it.
     defer { withExtendedLifetime(web) {} }
-    if mode == "native" { return await native(host, resources) }
+    let library = ExtensionLibrary(database: nil, directory: FileManager.default.temporaryDirectory
+        .appending(path: "SafiraKeychainGate", directoryHint: .isDirectory), bookmarks: BundledFolders(), storage: storage)
+    await library.attach(host, profile: profile)
+    if mode == "native" { return await native(host, library, resources) }
     do {
-        let verrou = try await host.loadUnpacked(at: resources.appending(path: "verrou", directoryHint: .isDirectory))
+        let verrou = try await install(resources.appending(path: "verrou", directoryHint: .isDirectory), into: host, library)
         guard verrou.errors.isEmpty else { return "Verrou loaded with errors: \(verrou.errors)" }
         print("OK: Verrou \(verrou.version) loaded, id \(verrou.identifier)")
-        let probe = try await host.loadUnpacked(at: resources.appending(path: "probe", directoryHint: .isDirectory))
+        let probe = try await install(resources.appending(path: "probe", directoryHint: .isDirectory), into: host, library)
         guard probe.errors.isEmpty else { return "the probe loaded with errors: \(probe.errors)" }
         print("OK: the probe loaded, id \(probe.identifier)")
         if mode == "load" { return "loaded" }
@@ -70,11 +96,11 @@ func sandboxReads(_ url: URL) -> String {
 }
 
 @MainActor
-func native(_ host: ExtensionHost, _ resources: URL) async -> String {
+func native(_ host: ExtensionHost, _ library: ExtensionLibrary, _ resources: URL) async -> String {
     let hosts = NativeMessaging.hostsFolder
     print("OK: sandbox, \(hosts.path(percentEncoded: false)): \(sandboxReads(hosts))")
     do {
-        let probe = try await host.loadUnpacked(at: resources.appending(path: "probe", directoryHint: .isDirectory))
+        let probe = try await install(resources.appending(path: "probe", directoryHint: .isDirectory), into: host, library)
         print("OK: the probe loaded, id \(probe.identifier)")
         guard let answer = try await ask(host, probe, "native") else { return "no answer from the native host in 30 s" }
         return "native \(answer)"
