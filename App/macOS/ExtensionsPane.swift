@@ -7,12 +7,14 @@ import SafiraWeb
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// Settings › Extensions: the extensions installed for the app, each with a switch per Profile, what it may do, and
-/// Remove; and the two ways to install one. It reads the folders of extensions installed from a folder again whenever
-/// it appears, so an update shows at once.
+/// Library › Extensions: the extensions installed for the app, each with what it may do, Remove, and its switch for
+/// the Profile chosen in the menu at the top (the window's, at first); and the two ways to install one. It reads the
+/// folders of extensions installed from a folder again whenever it appears, so an update shows at once.
 struct ExtensionsPane: View {
     let registry: ProfileRegistry
     @State private var removing: InstalledExtension?
+    /// The Profile whose switches the rows show; nil for the window's.
+    @State private var chosenProfile: ProfileID?
 
     private var library: ExtensionLibrary { registry.extensionLibrary }
 
@@ -24,6 +26,14 @@ struct ExtensionsPane: View {
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
             HStack {
+                Picker(String(localized: "Switches for", comment: "Library, Extensions: label of the menu of the Profile whose switches the list shows"),
+                       selection: Binding(get: { profile.id }, set: { chosenProfile = $0 })) {
+                    ForEach(registry.profiles) { profile in
+                        Text(verbatim: "\(profile.symbol)  \(profile.name)").tag(profile.id)
+                    }
+                }
+                .pickerStyle(.menu)
+                .fixedSize()
                 Spacer()
                 Button(String(localized: "Add from Folder…", comment: "Settings, Extensions pane: button")) { addFromFolder() }
                 Button(String(localized: "Add from File…", comment: "Settings, Extensions pane: button")) { addFromFile() }
@@ -41,9 +51,9 @@ struct ExtensionsPane: View {
                     VStack(spacing: 10) {
                         ForEach(library.installed) { item in
                             ExtensionRow(item: item, status: library.statuses[item.id] ?? ExtensionStatus(),
-                                         profiles: registry.profiles,
-                                         setEnabled: { on, profile in
-                                             Task { await library.setEnabled(on, extension: item.id, in: profile) }
+                                         profile: profile,
+                                         setEnabled: { on in
+                                             Task { await library.setEnabled(on, extension: item.id, in: profile.id) }
                                          },
                                          locate: { locate(item) },
                                          review: { Task { await library.allowPending(item.id) } },
@@ -69,6 +79,11 @@ struct ExtensionsPane: View {
             Text("It stops in every Profile, and what it stored in each Profile is deleted. Its folder or file is not touched.",
                  comment: "Settings, Extensions pane: removal confirmation")
         }
+    }
+
+    /// The Profile whose switches the rows show: the one chosen, while it exists, else the window's.
+    private var profile: Profile {
+        registry.profiles.first { $0.id == chosenProfile } ?? registry.activeProfile
     }
 
     private var removalTitle: String {
@@ -147,14 +162,14 @@ private enum ExtensionInstallPreview {
 }
 #endif
 
-/// One installed extension: its icon, name and version, what it may do, a switch per Profile, and Remove. A folder
+/// One installed extension: its icon, name and version, what it may do, its switch for one Profile, and Remove. A folder
 /// that cannot be found, or that now holds another extension, is said so, with Locate…; what an update asked for and
 /// the user did not allow is said so, with Review….
 private struct ExtensionRow: View {
     let item: InstalledExtension
     let status: ExtensionStatus
-    let profiles: [Profile]
-    let setEnabled: (Bool, ProfileID) -> Void
+    let profile: Profile
+    let setEnabled: (Bool) -> Void
     let locate: () -> Void
     let review: () -> Void
     let remove: () -> Void
@@ -193,22 +208,13 @@ private struct ExtensionRow: View {
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
-                Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 6) {
-                    ForEach(profiles) { profile in
-                        GridRow {
-                            Text(verbatim: "\(profile.symbol)  \(profile.name)")
-                                .accessibilityHidden(true)
-                            Toggle(isOn: Binding(get: { item.isEnabled(in: profile.id) },
-                                                 set: { setEnabled($0, profile.id) })) {
-                                Text("\(item.displayName) in “\(profile.name)”",
-                                     comment: "Settings, Extensions pane: VoiceOver label of a Profile's switch; the arguments are an extension's and a Profile's names")
-                            }
-                            .labelsHidden()
-                            .toggleStyle(.switch)
-                            .controlSize(.small)
-                        }
-                    }
+                Toggle(isOn: Binding(get: { item.isEnabled(in: profile.id) }, set: setEnabled)) {
+                    Text("On in “\(profile.name)”", comment: "Library, Extensions: an extension's switch for a Profile; the argument is the Profile's name")
                 }
+                .toggleStyle(.switch)
+                .controlSize(.small)
+                .accessibilityLabel(Text("\(item.displayName) in “\(profile.name)”",
+                                         comment: "Settings, Extensions pane: VoiceOver label of a Profile's switch; the arguments are an extension's and a Profile's names"))
             }
         }
         .padding(12)

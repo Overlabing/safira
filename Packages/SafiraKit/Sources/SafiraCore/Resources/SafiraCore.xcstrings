@@ -189,6 +189,39 @@
         }
       }
     },
+    "Library › Extensions" : {
+      "comment" : "Defaults: where to change a default; the Settings window and its pane",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bibliothèque › Extensions"
+          }
+        }
+      }
+    },
+    "Library › Link Rules" : {
+      "comment" : "Defaults: where to change a default; the Settings window and its pane",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bibliothèque › Règles de lien"
+          }
+        }
+      }
+    },
+    "Library › Spaces" : {
+      "comment" : "Defaults: where to change a default; the Settings window and its pane",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bibliothèque › Spaces"
+          }
+        }
+      }
+    },
     "None" : {
       "comment" : "Defaults: value of Telemetry",
       "localizations" : {
@@ -365,6 +398,17 @@
         }
       }
     },
+    "Settings › Cookie Prompts" : {
+      "comment" : "Defaults: where to change a default; the Settings window and its pane",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglages › Bandeaux de cookies"
+          }
+        }
+      }
+    },
     "Settings › Debug" : {
       "comment" : "Defaults: where to change a default; the Settings window and its pane",
       "localizations" : {
@@ -387,17 +431,6 @@
         }
       }
     },
-    "Settings › Extensions" : {
-      "comment" : "Defaults: where to change a default; the Settings window and its pane",
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Réglages › Extensions"
-          }
-        }
-      }
-    },
     "Settings › General" : {
       "comment" : "Defaults: where to change a default; the Settings window and its pane",
       "localizations" : {
@@ -409,13 +442,13 @@
         }
       }
     },
-    "Settings › Link Rules" : {
+    "Settings › Search Engine" : {
       "comment" : "Defaults: where to change a default; the Settings window and its pane",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Réglages › Règles de lien"
+            "value" : "Réglages › Moteur de recherche"
           }
         }
       }
@@ -438,17 +471,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Réglages › Autorisations des sites"
-          }
-        }
-      }
-    },
-    "Settings › Spaces" : {
-      "comment" : "Defaults: where to change a default; the Settings window and its pane",
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Réglages › Spaces"
           }
         }
       }

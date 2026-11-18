@@ -39,6 +39,12 @@ public final class BrowserWindowLayout: NSViewController {
     private var fullScreenObservers: [any NSObjectProtocol] = []
     /// What the layout wants the column to be; a change the split makes on its own is reported to the window.
     private var wantsCollapsed = false
+    /// The Library's view, over the column and beside the pushed card while it is open; hidden, and kept, after.
+    private var library: NSView?
+    private var libraryLeading = NSLayoutConstraint()
+    private var libraryWidth = NSLayoutConstraint()
+    /// Whether the Library is open, or opening.
+    public private(set) var isLibraryShown = false
 
     /// `background` draws the Theme's gradient under the whole window; `column` is the sidebar's SwiftUI column, a `List`
     /// with `sidebarColumn(field:header:bottomBar:)`.
@@ -103,6 +109,100 @@ public final class BrowserWindowLayout: NSViewController {
     override public func viewDidLayout() {
         super.viewDidLayout()
         updateCardTop(animated: false)
+        if isLibraryShown {
+            let push = libraryPush
+            if libraryWidth.constant != push.libraryWidth { libraryWidth.constant = push.libraryWidth }
+            if canvas.push != push.detailOffset(1) { canvas.setPush(push.detailOffset(1), animated: false) }
+        }
+    }
+
+    // MARK: Library
+
+    /// Where the Library's views stand for the window's width now (ThemeKit's `LibraryPush`).
+    private var libraryPush: LibraryPush {
+        // The page's side starts after the column and the split's divider: measured, not the column's width alone.
+        LibraryPush(windowWidth: view.bounds.width, sidebarWidth: canvas.convert(canvas.bounds, to: view).minX,
+                    tokens: tokens)
+    }
+
+    /// Opens the Library, as Zen does: `library` slides in from the leading edge over the column, which fades out, and
+    /// the page's card is pushed toward the trailing edge at its own size, `Size.libraryPeek` of it left in sight. With
+    /// Reduce Motion nothing moves: the Library and the column cross-fade.
+    public func showLibrary(_ library: NSView, animated: Bool) {
+        let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        let push = libraryPush
+        let wasShown = isLibraryShown
+        if self.library !== library { install(library) }
+        isLibraryShown = true
+        library.isHidden = false
+        libraryWidth.constant = push.libraryWidth
+        if !wasShown {
+            libraryLeading.constant = animated && !reduceMotion ? push.libraryOffset(0) : 0
+            library.alphaValue = animated && reduceMotion ? 0 : 1
+            view.layoutSubtreeIfNeeded()
+        }
+        run(animated) { [self] in
+            (animated && !reduceMotion ? libraryLeading.animator() : libraryLeading).constant = 0
+            (animated ? library.animator() : library).alphaValue = 1
+            canvas.setPush(push.detailOffset(1), animated: animated && !reduceMotion)
+            (animated ? column.view.animator() : column.view).alphaValue = 0
+        } completion: { [weak self] in
+            if self?.isLibraryShown == true { self?.column.view.isHidden = true }
+        }
+    }
+
+    /// Closes the Library: the reverse of `showLibrary`, back to the column and the card where they were.
+    public func hideLibrary(animated: Bool) {
+        guard isLibraryShown, let library else { return }
+        let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        let push = libraryPush
+        isLibraryShown = false
+        column.view.isHidden = false
+        run(animated) { [self] in
+            if animated && !reduceMotion {
+                libraryLeading.animator().constant = push.libraryOffset(0)
+            } else {
+                (animated ? library.animator() : library).alphaValue = 0
+            }
+            canvas.setPush(0, animated: animated && !reduceMotion)
+            (animated ? column.view.animator() : column.view).alphaValue = 1
+        } completion: { [weak self] in
+            guard let self, !isLibraryShown else { return }
+            library.isHidden = true
+        }
+    }
+
+    private func install(_ library: NSView) {
+        self.library?.removeFromSuperview()
+        self.library = library
+        library.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(library, positioned: .below, relativeTo: edge)
+        libraryLeading = library.leadingAnchor.constraint(equalTo: view.leadingAnchor)
+        libraryWidth = library.widthAnchor.constraint(equalToConstant: libraryPush.libraryWidth)
+        NSLayoutConstraint.activate([
+            library.topAnchor.constraint(equalTo: view.topAnchor),
+            library.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            libraryLeading,
+            libraryWidth,
+        ])
+    }
+
+    /// Runs `changes` in the Library's motion (the curve and settling time of Zen's spring), or at once.
+    private func run(_ animated: Bool, _ changes: @escaping () -> Void, completion: @escaping @MainActor () -> Void) {
+        guard animated else {
+            changes()
+            completion()
+            return
+        }
+        NSAnimationContext.runAnimationGroup { context in
+            let points = LibraryPush.timingControlPoints
+            context.duration = LibraryPush.duration
+            context.timingFunction = CAMediaTimingFunction(controlPoints: points.0, points.1, points.2, points.3)
+            context.allowsImplicitAnimation = true
+            changes()
+        } completionHandler: {
+            MainActor.assumeIsolated { completion() }
+        }
     }
 
     override public func viewWillAppear() {
@@ -197,11 +297,18 @@ private final class SidebarSplitController: SeamlessSplitViewController {
 /// the window's top edge, under the transparent toolbar (under the title bar when the column is collapsed); on the plain
 /// background, rounded `Radius.canvas`, with a 1 pt `.separator` line on its edge. The page fills the card exactly.
 /// The banner floats over the top of the card, the find bar at its top right, and the Command bar over the whole page.
+/// While the Library is open the card is pushed toward the trailing edge at its own size (`setPush`), a strip of it in
+/// sight under a cover that says a click goes back; the page is never removed, so it comes back as it was.
 @MainActor
 public final class PageCanvasView: NSView {
     private let tokens = DesignTokens.standard
     private let clip = NSView()
+    /// The page and what floats over it: hidden as one while a pane is shown, each keeping its own hidden state.
+    private let content = NSView()
+    private let peek = PeekCover()
     private var top = NSLayoutConstraint()
+    private var leading = NSLayoutConstraint()
+    private var trailing = NSLayoutConstraint()
 
     public init(page: NSView, banner: NSView, findBar: NSView? = nil, commandBar: NSView) {
         super.init(frame: .zero)
@@ -214,37 +321,33 @@ public final class PageCanvasView: NSView {
         addSubview(clip)
         let inset = tokens.spacing.canvasInset
         top = clip.topAnchor.constraint(equalTo: topAnchor, constant: inset)
+        leading = clip.leadingAnchor.constraint(equalTo: leadingAnchor, constant: inset)
+        trailing = clip.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -inset)
         NSLayoutConstraint.activate([
-            clip.leadingAnchor.constraint(equalTo: leadingAnchor, constant: inset),
-            clip.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -inset),
+            leading,
+            trailing,
             top,
             clip.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -inset),
         ])
+        Self.fill(clip, with: content)
         for view in [page, commandBar] {
-            view.translatesAutoresizingMaskIntoConstraints = false
-            clip.addSubview(view)
-            NSLayoutConstraint.activate([
-                view.leadingAnchor.constraint(equalTo: clip.leadingAnchor),
-                view.trailingAnchor.constraint(equalTo: clip.trailingAnchor),
-                view.topAnchor.constraint(equalTo: clip.topAnchor),
-                view.bottomAnchor.constraint(equalTo: clip.bottomAnchor),
-            ])
+            Self.fill(content, with: view)
         }
         banner.translatesAutoresizingMaskIntoConstraints = false
-        clip.addSubview(banner, positioned: .below, relativeTo: commandBar)
+        content.addSubview(banner, positioned: .below, relativeTo: commandBar)
         let float = tokens.spacing.pillFloat
         NSLayoutConstraint.activate([
-            banner.leadingAnchor.constraint(equalTo: clip.leadingAnchor, constant: float),
-            banner.trailingAnchor.constraint(equalTo: clip.trailingAnchor, constant: -float),
-            banner.topAnchor.constraint(equalTo: clip.topAnchor, constant: float),
+            banner.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: float),
+            banner.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -float),
+            banner.topAnchor.constraint(equalTo: content.topAnchor, constant: float),
         ])
         if let findBar {
             findBar.translatesAutoresizingMaskIntoConstraints = false
-            clip.addSubview(findBar, positioned: .below, relativeTo: commandBar)
+            content.addSubview(findBar, positioned: .below, relativeTo: commandBar)
             NSLayoutConstraint.activate([
-                findBar.trailingAnchor.constraint(equalTo: clip.trailingAnchor, constant: -float),
-                findBar.topAnchor.constraint(equalTo: clip.topAnchor, constant: float),
-                findBar.leadingAnchor.constraint(greaterThanOrEqualTo: clip.leadingAnchor, constant: float),
+                findBar.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -float),
+                findBar.topAnchor.constraint(equalTo: content.topAnchor, constant: float),
+                findBar.leadingAnchor.constraint(greaterThanOrEqualTo: content.leadingAnchor, constant: float),
             ])
         }
         updateOutline()
@@ -260,6 +363,49 @@ public final class PageCanvasView: NSView {
 
     /// The card's frame in this view: what the page shows in.
     public var cardFrame: NSRect { clip.frame }
+
+    /// The card's distance from its place, toward the trailing edge.
+    public var push: CGFloat { leading.constant - tokens.spacing.canvasInset }
+
+    /// Moves the card `offset` toward the trailing edge, keeping its size; 0 puts it back. The window clips what goes
+    /// past its edge.
+    public func setPush(_ offset: CGFloat, animated: Bool) {
+        let inset = tokens.spacing.canvasInset
+        (animated ? leading.animator() : leading).constant = inset + offset
+        (animated ? trailing.animator() : trailing).constant = -inset + offset
+    }
+
+    /// While the Library is open: a cover over the card that dims it, says a click on it goes back, and calls
+    /// `onClick`; `label` is what VoiceOver says of it. Nil takes the cover away.
+    public func showPeek(label: String?, hint: String = "", onClick: (() -> Void)? = nil) {
+        peek.onClick = onClick
+        if let label {
+            peek.setAccessibilityLabel(label)
+            peek.hint.stringValue = hint
+            if peek.superview == nil { Self.fill(clip, with: peek) }
+        } else {
+            peek.removeFromSuperview()
+        }
+    }
+
+    /// Whether the peek cover is over the card.
+    public var showsPeek: Bool { peek.superview != nil }
+
+    /// Clicks the peek cover, as a test or VoiceOver's press would.
+    public func pressPeek() {
+        _ = peek.accessibilityPerformPress()
+    }
+
+    private static func fill(_ container: NSView, with view: NSView) {
+        view.translatesAutoresizingMaskIntoConstraints = false
+        container.addSubview(view)
+        NSLayoutConstraint.activate([
+            view.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            view.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            view.topAnchor.constraint(equalTo: container.topAnchor),
+            view.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+        ])
+    }
 
     override public func viewDidChangeEffectiveAppearance() {
         super.viewDidChangeEffectiveAppearance()
@@ -416,5 +562,54 @@ public final class TabHostView: NSView {
         if focusWasInPage, page != nil {
             window?.makeFirstResponder(next)
         }
+    }
+}
+
+/// The cover over the pushed page while the Library is open: the page dimmed, a hint in the strip left in sight, and a
+/// click anywhere on it goes back. For VoiceOver it is one button.
+@MainActor
+private final class PeekCover: NSView {
+    var onClick: (() -> Void)?
+    let hint = NSTextField(wrappingLabelWithString: "")
+    private let tokens = DesignTokens.standard
+
+    override init(frame: NSRect) {
+        super.init(frame: frame)
+        wantsLayer = true
+        layer?.backgroundColor = NSColor.black.withAlphaComponent(0.45).cgColor
+        hint.font = .systemFont(ofSize: NSFont.smallSystemFontSize, weight: .medium)
+        hint.textColor = .white.withAlphaComponent(0.85)
+        hint.alignment = .center
+        hint.maximumNumberOfLines = 4
+        hint.setAccessibilityElement(false)
+        hint.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(hint)
+        // The strip in sight is `Size.libraryPeek` less the card's inset: the hint sits in it.
+        let strip = tokens.size.libraryPeek - tokens.spacing.canvasInset
+        NSLayoutConstraint.activate([
+            hint.leadingAnchor.constraint(equalTo: leadingAnchor, constant: DesignTokens.Spacing.s),
+            hint.widthAnchor.constraint(equalToConstant: strip - 2 * DesignTokens.Spacing.s),
+            hint.centerYAnchor.constraint(equalTo: centerYAnchor),
+        ])
+        setAccessibilityElement(true)
+        setAccessibilityRole(.button)
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) is not used")
+    }
+
+    override func mouseDown(with event: NSEvent) {
+        onClick?()
+    }
+
+    override func accessibilityPerformPress() -> Bool {
+        onClick?()
+        return onClick != nil
+    }
+
+    override func resetCursorRects() {
+        addCursorRect(bounds, cursor: .pointingHand)
     }
 }

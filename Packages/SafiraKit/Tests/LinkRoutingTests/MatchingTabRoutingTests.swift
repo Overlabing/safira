@@ -242,7 +242,7 @@ private func decide(_ link: IncomingLink, profiles: [Profile] = [workProfile, ho
         #expect(entry.id == "linkMatching.focusOpenTab")
         #expect(entry.title == "Focus an Open Tab Instead of Opening a Duplicate")
         #expect(entry.value == "On")
-        #expect(entry.whereToChange == "Settings › Link Rules")
+        #expect(entry.whereToChange == "Library › Link Rules")
         #expect(MatchingTabSettings.defaultEntries.count == 1)
     }
 }

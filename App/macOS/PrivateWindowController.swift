@@ -9,6 +9,7 @@ import CommandKitAppKit
 import Commands
 import SafiraCore
 import SafiraSession
+import SafiraSettings
 import SafiraWeb
 import SwiftUI
 
@@ -34,7 +35,6 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSMen
     private var toolbar: SidebarToolbar?
     /// The sidebar button hides and shows this window's column; a Private window has no Compact mode and keeps nothing.
     private var presentation = SidebarPresentation()
-    private let downloads = DownloadsPresenter()
     private var searchEngineSheet: NSWindow?
     private var popupPanels: [PopupID: PopupPanelController] = [:]
     private var renderedTabID: TabID?
@@ -42,6 +42,14 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSMen
     private let externalApps = WorkspaceExternalApps()
     private lazy var permissionPrompter = PermissionPrompter(
         window: { [weak self] in self?.window }, profileName: { _ in "" }, isPrivate: true)
+    private var canvas: PageCanvasView?
+    /// The Library in this window: Downloads, Extensions and Safira's settings only, since the Profile's are not this
+    /// window's to change.
+    private lazy var settings = LibraryHost(
+        isPrivate: true,
+        downloads: LibraryDownloads(downloads: { [unowned self] in context.web.downloads }, web: { [unowned self] in context.web }),
+        theme: { SidebarComposition.privateTheme },
+        pageTitle: { [weak self] in self?.session.selectedTab?.state.title })
 
     init(context: PrivateContext, shortcuts: ShortcutController) {
         self.context = context
@@ -85,22 +93,55 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSMen
         announce(String(localized: "Private window. Nothing is saved. Attached to the Profile \(context.parent.name).", comment: "Private window"))
     }
 
+    // MARK: Library
+
+    func attachSettings(_ content: SettingsContent) {
+        guard let canvas, let layout else { return }
+        settings.didShow = { [weak self] in self?.libraryDidShow() }
+        settings.didHide = { [weak self] in self?.libraryDidHide() }
+        settings.attach(content, to: layout, canvas: canvas)
+        (window as? PrivateWindow)?.libraryBack = { [weak self] in self?.settings.isPresented == true }
+        (window as? PrivateWindow)?.closeLibrary = { [weak self] in self?.settings.close() }
+    }
+
+    @objc func openSettings(_ sender: Any?) {
+        settings.open(from: sender)
+    }
+
+    override func cancelOperation(_ sender: Any?) {
+        if settings.isPresented { settings.close() }
+    }
+
+    private func leaveSettings() {
+        if settings.isPresented { settings.close() }
+    }
+
+    private func libraryDidShow() {
+        if commandBar.isShown { commandBar.dismiss(returningFocus: false) }
+        closeFindBar()
+    }
+
+    private func libraryDidHide() {
+        if !showPage() { focusCommandBar(nil) }
+    }
+
     // MARK: Menu actions
 
-    /// ⌥⌘L: this window's downloads panel. A hidden sidebar is shown first, so the panel has its button to hang from.
+    /// ⌥⌘L: the Library on this window's downloads; again, it closes.
     @objc func showDownloads(_ sender: Any?) {
-        if presentation.isCompact {
-            presentation.toggleCompact()
-            layout?.apply(presentation, animated: true)
-        }
-        downloads.isPresented.toggle()
+        settings.toggle(.item(.downloads))
     }
 
     @objc func newTab(_ sender: Any?) {
+        leaveSettings()
         commandBar.open(for: .newTab, text: "")
     }
 
     @objc func closeTab(_ sender: Any?) {
+        if settings.isPresented {
+            settings.close()
+            return
+        }
         session.closeSelectedTab()
         render()
         if session.selectedTab?.address == nil { focusCommandBar(nil) }
@@ -112,15 +153,18 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSMen
     }
 
     @objc func focusCommandBar(_ sender: Any?) {
+        leaveSettings()
         commandBar.open(for: .selectedTab, text: session.selectedTab?.address?.absoluteString ?? "")
     }
 
     @objc func focusTabList(_ sender: Any?) {
+        leaveSettings()
         columnFocus.focusList()
     }
 
     @objc func showTabNumber(_ sender: Any?) {
         guard let number = (sender as? NSMenuItem)?.tag else { return }
+        leaveSettings()
         session.selectTab(number: number)
     }
 
@@ -133,6 +177,10 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSMen
     }
 
     @objc func goBack(_ sender: Any?) {
+        if settings.isPresented {
+            settings.close()
+            return
+        }
         session.goBack()
     }
 
@@ -145,10 +193,12 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSMen
     }
 
     @objc func showNextTab(_ sender: Any?) {
+        leaveSettings()
         session.selectTab(offset: 1)
     }
 
     @objc func showPreviousTab(_ sender: Any?) {
+        leaveSettings()
         session.selectTab(offset: -1)
     }
 
@@ -156,6 +206,7 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSMen
 
     /// ⌘F: the find bar over the page, its field focused with its text selected.
     @objc func findInPage(_ sender: Any?) {
+        leaveSettings()
         Task { await session.find.show() }
         findBarFocus.focusField()
     }
@@ -199,7 +250,7 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSMen
         case #selector(reopenClosedTab(_:)): return session.canReopenClosedTab
         case #selector(moveTabUp(_:)): return tab != nil && session.tabs.first?.id != tab?.id
         case #selector(moveTabDown(_:)): return tab != nil && session.tabs.last?.id != tab?.id
-        case #selector(goBack(_:)): return tab?.state.canGoBack == true
+        case #selector(goBack(_:)): return settings.isPresented || tab?.state.canGoBack == true
         case #selector(goForward(_:)): return tab?.state.canGoForward == true
         case #selector(reload(_:)): return tab?.address != nil
         case #selector(findInPage(_:)), #selector(printPage(_:)): return tab?.address != nil
@@ -353,6 +404,7 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSMen
             close: { [weak self] in self?.closeFindBar() }))
         findBarHost = findBar
         let canvas = PageCanvasView(page: pageArea, banner: NSView(), findBar: findBar, commandBar: commandBar.overlay)
+        self.canvas = canvas
         let pageActions = PageActions(
             editAddress: { [weak self] in self?.focusCommandBar(nil) },
             // As in the Main window: the Command bar opens once the click on the New Tab row is over.
@@ -360,7 +412,7 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSMen
             showPage: { [weak self] in self?.showPage() },
             allowCookiePrompts: { [weak self] site in self?.context.allowCookiePrompts(onSite: site) })
         let column = PrivateSidebar(session: session, parent: context.parent, focus: columnFocus, pageActions: pageActions,
-                                    web: context.web, downloads: downloads)
+                                    web: context.web, library: { [weak self] in self?.settings.open($0) })
         let theme: () -> Theme = { SidebarComposition.privateTheme }
         let layout = BrowserWindowLayout(background: NSHostingView(rootView: WindowBackdrop(theme: theme)),
                                          column: column, canvas: canvas)
@@ -377,6 +429,13 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSMen
 /// Offers the reserved browser-level shortcuts to the menu before a focused page sees them, as the Main window does.
 private final class PrivateWindow: NSWindow {
     var shortcuts: ShortcutController?
+    var libraryBack: (() -> Bool)?
+    var closeLibrary: (@MainActor () -> Void)?
+
+    override func sendEvent(_ event: NSEvent) {
+        if libraryBack?() == true, let closeLibrary, LibraryBackGesture.handle(event, back: closeLibrary) { return }
+        super.sendEvent(event)
+    }
 
     override func performKeyEquivalent(with event: NSEvent) -> Bool {
         if let shortcut = Shortcut(event: event), shortcuts?.takesKeyBeforeFocusedView(shortcut) == true,

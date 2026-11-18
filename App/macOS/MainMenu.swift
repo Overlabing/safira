@@ -12,18 +12,18 @@ import SafiraSettings
 @MainActor
 enum MainMenu {
     static func make(updates: UpdateController, diagnostics: DiagnosticsController, links: LinkController,
-                     shortcuts: ShortcutBindings<CommandID>, settings: SettingsWindowController, app: AppDelegate) -> NSMenu {
+                     shortcuts: ShortcutBindings<CommandID>, app: AppDelegate) -> NSMenu {
         var commandItems: [CommandID: NSMenuItem] = [:]
         func item(_ id: CommandID, _ action: Selector?) -> NSMenuItem {
             let made = commandItem(id, action, shortcuts)
             commandItems[id] = made
             return made
         }
-        /// An item that opens the Settings window; a command's item when the opener has a command.
+        /// An item that opens Settings in the key window (the Main window or a Private window, whichever answers it
+        /// first), or in the Main window when no window is key; a command's item when the opener has a command.
         func settingsItem(_ opener: SettingsOpener, title: String) -> NSMenuItem {
-            let action = #selector(SettingsWindowController.openSettings(_:))
+            let action = #selector(AppDelegate.openSettings(_:))
             let made = opener.command.map { item($0, action) } ?? NSMenuItem(title: title, action: action, keyEquivalent: "")
-            made.target = settings
             made.representedObject = opener.rawValue
             return made
         }

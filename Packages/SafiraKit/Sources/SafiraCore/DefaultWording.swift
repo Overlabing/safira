@@ -10,30 +10,36 @@ public enum DefaultWording {
             : String(localized: "Off", table: "SafiraCore", bundle: .module, comment: "Defaults: the value of a switch that is off")
     }
 
-    /// A pane of the Settings window, named as its sidebar names it (a test holds the two together).
+    /// Where a default can be changed: a pane of Settings, or (Spaces, Link Rules, Extensions) an item of the Library, named
+    /// as its list or rail names it (a test holds the two together).
     public enum SettingsPane: CaseIterable, Sendable {
         case general, spaces, shortcuts, defaults, linkRules, sitePermissions, extensions, debug
+        case searchEngine, cookiePrompts
     }
 
-    /// Where to change a default that has a place in the Settings window: “Settings › Link Rules”.
+    /// Where to change a default that has a place in Settings or the Library: “Settings › General”, “Library › Link Rules”.
     public static func settings(_ pane: SettingsPane) -> String {
         switch pane {
         case .general: String(localized: "Settings › General", table: "SafiraCore", bundle: .module,
                                comment: "Defaults: where to change a default; the Settings window and its pane")
-        case .spaces: String(localized: "Settings › Spaces", table: "SafiraCore", bundle: .module,
+        case .spaces: String(localized: "Library › Spaces", table: "SafiraCore", bundle: .module,
                               comment: "Defaults: where to change a default; the Settings window and its pane")
         case .shortcuts: String(localized: "Settings › Shortcuts", table: "SafiraCore", bundle: .module,
                                  comment: "Defaults: where to change a default; the Settings window and its pane")
         case .defaults: String(localized: "Settings › Defaults", table: "SafiraCore", bundle: .module,
                                 comment: "Defaults: where to change a default; the Settings window and its pane")
-        case .linkRules: String(localized: "Settings › Link Rules", table: "SafiraCore", bundle: .module,
+        case .linkRules: String(localized: "Library › Link Rules", table: "SafiraCore", bundle: .module,
                                  comment: "Defaults: where to change a default; the Settings window and its pane")
         case .sitePermissions: String(localized: "Settings › Site Permissions", table: "SafiraCore", bundle: .module,
                                        comment: "Defaults: where to change a default; the Settings window and its pane")
-        case .extensions: String(localized: "Settings › Extensions", table: "SafiraCore", bundle: .module,
+        case .extensions: String(localized: "Library › Extensions", table: "SafiraCore", bundle: .module,
                                   comment: "Defaults: where to change a default; the Settings window and its pane")
         case .debug: String(localized: "Settings › Debug", table: "SafiraCore", bundle: .module,
                              comment: "Defaults: where to change a default; the Settings window and its pane")
+        case .searchEngine: String(localized: "Settings › Search Engine", table: "SafiraCore", bundle: .module,
+                                    comment: "Defaults: where to change a default; the Settings window and its pane")
+        case .cookiePrompts: String(localized: "Settings › Cookie Prompts", table: "SafiraCore", bundle: .module,
+                                     comment: "Defaults: where to change a default; the Settings window and its pane")
         }
     }
 

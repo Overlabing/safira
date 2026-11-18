@@ -5,11 +5,12 @@ import AppKit
 import Commands
 import Onboarding
 import SafiraCore
+import SafiraSettings
 import SafiraWeb
 import SwiftUI
 
-/// Connects the registry of defaults to the settings that hold them, for onboarding and for the Settings window. A
-/// switch of the Settings window changes its setting at once; onboarding hands all of them over when it finishes.
+/// Connects the registry of defaults to the settings that hold them, for onboarding and for Settings. A
+/// switch of Settings changes its setting at once; onboarding hands all of them over when it finishes.
 @MainActor
 final class DefaultsController: NSObject {
     private let registry: ProfileRegistry
@@ -56,16 +57,18 @@ final class DefaultsController: NSObject {
         }
     }
 
-    /// The model of the Settings window's switches: at their present positions, applied as they move.
-    func makeSummaryModel() -> DefaultsSummaryModel {
-        let model = DefaultsSummaryModel(current: { [unowned self] in isOn($0) }, apply: { [unowned self] id, isOn in
-            set(id, isOn: isOn)
-        })
+    /// The model of Settings' switches: at their present positions, applied as they move.
+    /// In a Private window it leaves out what is stored with the Profile (`SafiraSettings.listsDefault`): changed there,
+    /// it would reach the Profile shown in the Main window, not the Private window.
+    func makeSummaryModel(isPrivate: Bool = false) -> DefaultsSummaryModel {
+        let entries = DefaultsRegistry.entries.userFacing.filter { SafiraSettings.listsDefault($0.id, isPrivate: isPrivate) }
+        let model = DefaultsSummaryModel(entries: entries, current: { [unowned self] in isOn($0) },
+                                         apply: { [unowned self] id, isOn in set(id, isOn: isOn) })
         refresh(model)
         return model
     }
 
-    /// Reads the switches and the shown values again: the Settings window stays open while the menu, or a switch to
+    /// Reads the switches and the shown values again: Settings stays open while the menu, or a switch to
     /// another Profile, changes them.
     func refresh(_ model: DefaultsSummaryModel) {
         model.refresh { [unowned self] in isOn($0) }

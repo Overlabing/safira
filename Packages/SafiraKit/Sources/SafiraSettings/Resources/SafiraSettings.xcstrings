@@ -42,6 +42,17 @@
         }
       }
     },
+    "Cookie Prompts" : {
+      "comment" : "Settings: pane title",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bandeaux de cookies"
+          }
+        }
+      }
+    },
     "Debug" : {
       "comment" : "Settings: pane title",
       "localizations" : {
@@ -64,6 +75,17 @@
         }
       }
     },
+    "Downloads" : {
+      "comment" : "Library: rail item",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Téléchargements"
+          }
+        }
+      }
+    },
     "Everything Safira decided for you, and where to change it." : {
       "comment" : "Settings: subtitle of the Defaults pane",
       "localizations" : {
@@ -76,7 +98,7 @@
       }
     },
     "Extensions" : {
-      "comment" : "Settings: pane title",
+      "comment" : "Library: rail item",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -97,13 +119,13 @@
         }
       }
     },
-    "Installed once, switched on per Profile." : {
-      "comment" : "Settings: subtitle of the Extensions pane",
+    "Installed once for Safira, switched on per Profile." : {
+      "comment" : "Library: subtitle of Extensions",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Installées une fois, activées par profil."
+            "value" : "Installées une fois pour Safira, activées par profil."
           }
         }
       }
@@ -161,7 +183,7 @@
       }
     },
     "Link Rules" : {
-      "comment" : "Settings: pane title",
+      "comment" : "Library: rail item",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -178,6 +200,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Des journaux locaux à joindre à un signalement."
+          }
+        }
+      }
+    },
+    "Rejected for you in this Profile, except on the sites you allow." : {
+      "comment" : "Settings: subtitle of the Cookie Prompts pane",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Refusés pour vous dans ce profil, sauf sur les sites que vous autorisez."
+          }
+        }
+      }
+    },
+    "Safira" : {
+      "comment" : "Settings: heading of the panes that apply to the app, in every Profile",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Safira"
+          }
+        }
+      }
+    },
+    "Search Engine" : {
+      "comment" : "Settings: pane title",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moteur de recherche"
+          }
+        }
+      }
+    },
+    "Settings" : {
+      "comment" : "Library: rail item",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglages"
           }
         }
       }
@@ -227,7 +293,7 @@
       }
     },
     "Spaces" : {
-      "comment" : "Settings: pane title",
+      "comment" : "Library: rail item",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -248,17 +314,6 @@
         }
       }
     },
-    "The current Profile’s Spaces, in the order of ⌃1 to ⌃9." : {
-      "comment" : "Settings: subtitle of the Spaces pane",
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Les Spaces du profil actuel, dans l’ordre de ⌃1 à ⌃9."
-          }
-        }
-      }
-    },
     "The preset, and the keys of every command." : {
       "comment" : "Settings: subtitle of the Shortcuts pane",
       "localizations" : {
@@ -266,6 +321,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Le préréglage, et les touches de chaque commande."
+          }
+        }
+      }
+    },
+    "This Profile" : {
+      "comment" : "Settings: heading of the panes that apply to the window's Profile",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce profil"
+          }
+        }
+      }
+    },
+    "This Profile’s Spaces, in the order of ⌃1 to ⌃9." : {
+      "comment" : "Library: subtitle of Spaces",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les Spaces de ce profil, dans l’ordre de ⌃1 à ⌃9."
+          }
+        }
+      }
+    },
+    "This Profile’s settings, and Safira’s." : {
+      "comment" : "Library: subtitle of Settings",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les réglages de ce profil, et ceux de Safira."
+          }
+        }
+      }
+    },
+    "This window’s downloads, newest first." : {
+      "comment" : "Library: subtitle of Downloads",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les téléchargements de cette fenêtre, les plus récents d’abord."
           }
         }
       }
@@ -281,19 +380,30 @@
         }
       }
     },
-    "What sites of the current Profile may use." : {
+    "What sites may use in this Profile." : {
       "comment" : "Settings: subtitle of the Site Permissions pane",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ce que les sites du profil actuel peuvent utiliser."
+            "value" : "Ce que les sites peuvent utiliser dans ce profil."
+          }
+        }
+      }
+    },
+    "What the Command bar searches with in this Profile." : {
+      "comment" : "Settings: subtitle of the Search Engine pane",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le moteur avec lequel la barre de commande cherche dans ce profil."
           }
         }
       }
     },
     "Where links from other apps open." : {
-      "comment" : "Settings: subtitle of the Link Rules pane",
+      "comment" : "Library: subtitle of Link Rules",
       "localizations" : {
         "fr" : {
           "stringUnit" : {

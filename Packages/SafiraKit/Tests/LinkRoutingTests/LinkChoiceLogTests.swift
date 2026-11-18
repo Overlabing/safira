@@ -23,7 +23,7 @@ private func logFile() -> URL {
             value: "Off",
             explanation: "Writes the host of each link you send to a Profile, and the Profile, to a file on this Mac, "
                 + "never the path or anything after it. The file stays on this Mac; Safira never sends it anywhere.",
-            whereToChange: "Settings › Link Rules",
+            whereToChange: "Library › Link Rules",
             control: .toggle(isOn: false)
         ),
     ])

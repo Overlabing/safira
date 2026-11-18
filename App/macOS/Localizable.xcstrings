@@ -398,6 +398,17 @@
         }
       }
     },
+    "Back to %@" : {
+      "comment" : "Library: the way back to the page, for VoiceOver; the argument is the page's title",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retour à %@"
+          }
+        }
+      }
+    },
     "Back to Pinned Address" : {
       "comment" : "Sidebar: tooltip of a Pinned tab's icon\nTab context menu\nVoiceOver action of a Pinned tab",
       "localizations" : {
@@ -405,6 +416,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Revenir à l’adresse épinglée"
+          }
+        }
+      }
+    },
+    "Back to browsing" : {
+      "comment" : "Library: the way back when no page is open",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retour à la navigation"
           }
         }
       }
@@ -719,6 +741,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cliquez sur un raccourci, puis appuyez sur les nouvelles touches. Supprimer retire le raccourci, Échap annule."
+          }
+        }
+      }
+    },
+    "Click the page to go back" : {
+      "comment" : "Library: the hint on the page pushed aside",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cliquez sur la page pour revenir"
           }
         }
       }
@@ -1710,6 +1743,39 @@
         }
       }
     },
+    "Library" : {
+      "comment" : "Library: VoiceOver name of the rail\nSidebar: the button that opens the Library",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bibliothèque"
+          }
+        }
+      }
+    },
+    "Library, %@" : {
+      "comment" : "Library: announced when it opens; the argument is the item shown",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bibliothèque, %@"
+          }
+        }
+      }
+    },
+    "Library: Downloads, Spaces, Link Rules, Extensions and Settings" : {
+      "comment" : "Sidebar: help tag of the Library button",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bibliothèque : téléchargements, Spaces, règles de lien, extensions et réglages"
+          }
+        }
+      }
+    },
     "Link" : {
       "localizations" : {
         "fr" : {
@@ -1865,6 +1931,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Localisation"
+          }
+        }
+      }
+    },
+    "Logs" : {
+      "comment" : "Settings, Debug pane: label of the export button",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Journaux"
           }
         }
       }
@@ -2219,6 +2296,17 @@
         }
       }
     },
+    "Nothing is sent without an action of yours. A Profile's own defaults (its search engine and web content switches) are changed from a window of that Profile." : {
+      "comment" : "Defaults pane of a Private window",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien n’est envoyé sans une action de votre part. Les choix propres à un profil (son moteur de recherche et ses réglages de contenu web) se modifient depuis une fenêtre de ce profil."
+          }
+        }
+      }
+    },
     "Nothing is sent without an action of yours. Web content switches apply to %@, and to pages opened from now on." : {
       "localizations" : {
         "fr" : {
@@ -2258,6 +2346,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
+          }
+        }
+      }
+    },
+    "On in “%@”" : {
+      "comment" : "Library, Extensions: an extension's switch for a Profile; the argument is the Profile's name",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activée dans « %@ »"
           }
         }
       }
@@ -2568,6 +2667,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Privée · %@ %@"
+          }
+        }
+      }
+    },
+    "Profile" : {
+      "comment" : "Settings: label of the menu of the window's Profile",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profil"
           }
         }
       }
@@ -3124,6 +3234,7 @@
       }
     },
     "Search engine" : {
+      "comment" : "Settings, Search Engine pane: label of the choice",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -3166,6 +3277,17 @@
         }
       }
     },
+    "Searches typed in the Command bar of “%@” go to this engine. Each Profile has its own." : {
+      "comment" : "Settings, Search Engine pane; the argument is a Profile's name",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les recherches tapées dans la barre de commande de « %@ » passent par ce moteur. Chaque profil a le sien."
+          }
+        }
+      }
+    },
     "Select All" : {
       "comment" : "Menu item",
       "localizations" : {
@@ -3173,6 +3295,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tout sélectionner"
+          }
+        }
+      }
+    },
+    "Settings" : {
+      "comment" : "Library: the title of Settings' list",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglages"
           }
         }
       }
@@ -3413,6 +3546,17 @@
         }
       }
     },
+    "Switches for" : {
+      "comment" : "Library, Extensions: label of the menu of the Profile whose switches the list shows",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Interrupteurs de"
+          }
+        }
+      }
+    },
     "Symbol" : {
       "localizations" : {
         "fr" : {
@@ -3643,6 +3787,17 @@
         }
       }
     },
+    "The panes under This Profile change this Profile's settings." : {
+      "comment" : "Settings: VoiceOver hint of the menu of the window's Profile",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les panneaux sous Ce profil modifient les réglages de ce profil."
+          }
+        }
+      }
+    },
     "The prompt had no way to reject, so Safira hid it. The site received no answer." : {
       "comment" : "Cookie popover",
       "localizations" : {
@@ -3792,6 +3947,17 @@
         }
       }
     },
+    "This switch applies to “%@”, and to pages opened from now on." : {
+      "comment" : "Settings, Cookie Prompts pane; the argument is a Profile's name",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce réglage s’applique à « %@ », et aux pages ouvertes à partir de maintenant."
+          }
+        }
+      }
+    },
     "This version asks for more than you allowed. It runs with what you allowed before." : {
       "comment" : "Settings, Extensions pane: an update whose permission sheet was cancelled",
       "localizations" : {
@@ -3852,6 +4018,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Désépingler l’onglet"
+          }
+        }
+      }
+    },
+    "Updates" : {
+      "comment" : "Settings, General pane: label of the update button",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mises à jour"
           }
         }
       }

@@ -67,7 +67,7 @@ extension SearchEngine {
                     Each Profile has its own search engine, and none is chosen for you. A Profile cannot be created \
                     without one; if you skip it, the Command bar asks at the first search.
                     """, table: "SafiraCore", bundle: .module, comment: "Defaults: explanation of Search engine"),
-                whereToChange: DefaultWording.settings(.defaults),
+                whereToChange: DefaultWording.settings(.searchEngine),
                 control: .choice
             ),
         ]

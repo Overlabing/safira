@@ -70,7 +70,7 @@ public struct WebContentSettings: Hashable, Sendable, Codable {
                              comment: "Defaults: value of cookie prompts")
                     : DefaultWording.onOff(false),
                 explanation: cookiePromptsExplanation,
-                whereToChange: DefaultWording.settings(.sitePermissions),
+                whereToChange: DefaultWording.settings(.cookiePrompts),
                 control: .toggle(isOn: defaults.cookiePrompts.isRejecting)
             ),
         ]

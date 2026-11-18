@@ -43,7 +43,6 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     private var folderSheet: NSWindow?
     private var profileSheet: NSWindow?
     private var clearSheet: NSWindow?
-    private let downloads = DownloadsPresenter()
     private var popupPanels: [PopupID: PopupPanelController] = [:]
     private var renderedTabID: TabID?
     private var dockIconThemeID: String?
@@ -55,6 +54,14 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     private let spaceDeletion = SpaceDeletionPrompt()
     private var bannerHost: MatchBannerHostingView?
     private var announcedBannerID: UUID?
+    private var canvas: PageCanvasView?
+    /// The Library in this window: its rail and items over the column, the page pushed aside.
+    private lazy var settings = LibraryHost(
+        isPrivate: false,
+        downloads: LibraryDownloads(downloads: { [unowned self] in registry.active.downloads },
+                                    web: { [unowned self] in registry.active.web }),
+        theme: { [weak self] in self?.spaceTheme ?? ThemeCatalog.first },
+        pageTitle: { [weak self] in self?.session.selectedTab?.state.title })
 
     init(registry: ProfileRegistry, shortcuts: ShortcutController, preferenceProblems: PreferenceProblems) {
         self.registry = registry
@@ -92,11 +99,57 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         fatalError("init(coder:) is not used")
     }
 
+    // MARK: Library
+
+    /// The controllers the Library draws, once the app has made them.
+    func attachSettings(_ content: SettingsContent) {
+        guard let canvas, let layout else { return }
+        settings.didShow = { [weak self] in self?.libraryDidShow() }
+        settings.didHide = { [weak self] in self?.libraryDidHide() }
+        settings.attach(content, to: layout, canvas: canvas)
+        (window as? MainWindow)?.libraryBack = { [weak self] in self?.settings.isPresented == true }
+        (window as? MainWindow)?.closeLibrary = { [weak self] in self?.settings.close() }
+    }
+
+    /// ⌘, and the menu's other Settings items: the Library on Settings or on the item asked for; the same item again
+    /// closes it.
+    @objc func openSettings(_ sender: Any?) {
+        settings.open(from: sender)
+    }
+
+    func openSettings(pane: SettingsPaneID) {
+        settings.open(pane.destination)
+    }
+
+    func openLibrary(_ destination: LibraryDestination) {
+        settings.open(destination)
+    }
+
+    /// Escape that no view in the Library took: back to the page.
+    override func cancelOperation(_ sender: Any?) {
+        if settings.isPresented { settings.close() }
+    }
+
+    /// A command about the page or the Tabs is about what the Library pushed aside: the Library goes first.
+    private func leaveSettings() {
+        if settings.isPresented { settings.close() }
+    }
+
+    private func libraryDidShow() {
+        if commandBar.isShown { commandBar.dismiss(returningFocus: false) }
+        closeFindBar()
+    }
+
+    private func libraryDidHide() {
+        if !showPage() { focusCommandBar(nil) }
+    }
+
     // MARK: Menu actions
 
     /// Opens the Command bar for a new Tab; the Tab is created only when the user presses Enter. Meanwhile the page
     /// stays and the sidebar shows the New Tab row as selected.
     @objc func newTab(_ sender: Any?) {
+        leaveSettings()
         commandBar.open(for: .newTab, text: "")
     }
 
@@ -106,7 +159,12 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         Task { @MainActor [weak self] in self?.newTab(nil) }
     }
 
+    /// ⌘W in Settings closes Settings, not the Tab hidden under it.
     @objc func closeTab(_ sender: Any?) {
+        if settings.isPresented {
+            settings.close()
+            return
+        }
         session.closeSelectedTab()
         render()
         if session.selectedTab?.address == nil {
@@ -115,6 +173,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     }
 
     @objc func reopenClosedTab(_ sender: Any?) {
+        leaveSettings()
         session.reopenClosedTab()
         render()
     }
@@ -135,6 +194,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     /// Opens the floating Command bar on the shown Tab, its whole address selected: the way to see and change the
     /// address in Compact mode too.
     @objc func focusCommandBar(_ sender: Any?) {
+        leaveSettings()
         commandBar.open(for: .selectedTab, text: session.selectedTab?.address?.absoluteString ?? "")
     }
 
@@ -147,6 +207,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     /// Moves the keyboard focus to the list of Tabs, where the arrow keys select a Tab. In Compact mode it shows the
     /// sidebar first.
     @objc func focusTabList(_ sender: Any?) {
+        leaveSettings()
         if presentation.isCompact, !presentation.isRevealed {
             presentation.reveal()
             layout?.apply(presentation, animated: true)
@@ -157,6 +218,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     /// ⌘1…⌘9: the menu item's tag is the Tab's place in the sidebar.
     @objc func showTabNumber(_ sender: Any?) {
         guard let number = (sender as? NSMenuItem)?.tag else { return }
+        leaveSettings()
         session.selectTab(number: number)
     }
 
@@ -194,6 +256,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
 
     /// ⌘F: the find bar over the page, its field focused with its text selected.
     @objc func findInPage(_ sender: Any?) {
+        leaveSettings()
         Task { await session.find.show() }
         findBarFocus.focusField()
     }
@@ -276,14 +339,9 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         confirmDeletion(ofProfile: registry.activeProfileID)
     }
 
-    /// ⌥⌘L: the Active profile's downloads panel, from the sidebar's button. In Compact mode it shows the sidebar
-    /// first, so that the panel has its button to hang from.
+    /// ⌥⌘L: the Library on the Active profile's downloads; again, it closes.
     @objc func showDownloads(_ sender: Any?) {
-        if presentation.isCompact, !presentation.isRevealed {
-            presentation.reveal()
-            layout?.apply(presentation, animated: true)
-        }
-        downloads.isPresented.toggle()
+        settings.toggle(.item(.downloads))
     }
 
     @objc func clearBrowsingData(_ sender: Any?) {
@@ -306,7 +364,12 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         session.selectedTabID.map { session.move($0, by: 1) }
     }
 
+    /// ⌘[ in the Library closes it, as its ← does.
     @objc func goBack(_ sender: Any?) {
+        if settings.isPresented {
+            settings.close()
+            return
+        }
         session.goBack()
     }
 
@@ -319,10 +382,12 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
     }
 
     @objc func showNextTab(_ sender: Any?) {
+        leaveSettings()
         session.selectTab(offset: 1)
     }
 
     @objc func showPreviousTab(_ sender: Any?) {
+        leaveSettings()
         session.selectTab(offset: -1)
     }
 
@@ -350,7 +415,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         case #selector(backToPinnedAddress(_:)): return tab?.isAwayFromPinnedAddress == true
         case #selector(moveTabUp(_:)): return tab.map { session.canMove($0.id, by: -1) } ?? false
         case #selector(moveTabDown(_:)): return tab.map { session.canMove($0.id, by: 1) } ?? false
-        case #selector(goBack(_:)): return tab?.state.canGoBack == true
+        case #selector(goBack(_:)): return settings.isPresented || tab?.state.canGoBack == true
         case #selector(goForward(_:)): return tab?.state.canGoForward == true
         case #selector(reload(_:)): return tab?.address != nil
         case #selector(findInPage(_:)), #selector(printPage(_:)): return tab?.address != nil
@@ -392,6 +457,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         if window?.isMiniaturized == true { window?.deminiaturize(nil) }
         showWindow(nil)
         NSApp.activate()
+        leaveSettings()
         commandBar.dismiss(returningFocus: false)
         render()
         announce(String(localized: "Profile: \(registry.activeProfile.name)", comment: "Main window"))
@@ -830,6 +896,7 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
             close: { [weak self] in self?.closeFindBar() }))
         findBarHost = findBar
         let canvas = PageCanvasView(page: pageArea, banner: banner, findBar: findBar, commandBar: commandBar.overlay)
+        self.canvas = canvas
 
         let pageActions = PageActions(
             editAddress: { [weak self] in self?.focusCommandBar(nil) },
@@ -853,7 +920,8 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
         let column = TabSidebar(
             registry: registry, focus: columnFocus, pageActions: pageActions, profileActions: profileActions,
             spaceActions: spaceActions, folderActions: folderActions, extensionPopups: extensionPopups,
-            downloads: downloads, shortcut: { [weak self] id in self?.shortcuts.bindings.shortcut(id)?.symbols })
+            library: { [weak self] in self?.openLibrary($0) },
+            shortcut: { [weak self] id in self?.shortcuts.bindings.shortcut(id)?.symbols })
         let theme: () -> Theme = { [weak self] in self?.spaceTheme ?? ThemeCatalog.first }
         let backdrop = WindowBackdrop(theme: theme).spaceDeletionPrompt(spaceDeletion)
         let layout = BrowserWindowLayout(background: NSHostingView(rootView: backdrop),
@@ -874,6 +942,14 @@ final class MainWindowController: NSWindowController, NSWindowDelegate, NSMenuIt
 /// does and could otherwise swallow them. Which keys those are is decided by `ShortcutController.takesKeyBeforeFocusedView`.
 private final class MainWindow: NSWindow {
     var shortcuts: ShortcutController?
+    /// Whether the Library is open, so that the mouse's back button and a swipe back close it.
+    var libraryBack: (() -> Bool)?
+    var closeLibrary: (@MainActor () -> Void)?
+
+    override func sendEvent(_ event: NSEvent) {
+        if libraryBack?() == true, let closeLibrary, LibraryBackGesture.handle(event, back: closeLibrary) { return }
+        super.sendEvent(event)
+    }
 
     override func performKeyEquivalent(with event: NSEvent) -> Bool {
         if let shortcut = Shortcut(event: event), shortcuts?.takesKeyBeforeFocusedView(shortcut) == true,

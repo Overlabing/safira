@@ -6,6 +6,7 @@ import ColorUI
 import DesignKit
 import SafiraCore
 import SafiraSession
+import SafiraSettings
 import SafiraWeb
 import SwiftUI
 
@@ -19,7 +20,7 @@ struct PrivateSidebar: View {
     let focus: ColumnFocus
     let pageActions: PageActions
     let web: ProfileWebContext
-    let downloads: DownloadsPresenter
+    let library: (LibraryDestination) -> Void
     @Environment(\.designTokens) private var tokens
 
     var body: some View {
@@ -48,7 +49,7 @@ struct PrivateSidebar: View {
             EmptyView()
         } bottomBar: {
             HStack(spacing: tokens.spacing.pillActionGap) {
-                SidebarDownloads(downloads: web.downloads, web: web, presenter: downloads)
+                SidebarLibraryButtons(downloads: web.downloads, open: library)
                 privateBand
             }
             .padding(.horizontal, tokens.spacing.listMargin)
