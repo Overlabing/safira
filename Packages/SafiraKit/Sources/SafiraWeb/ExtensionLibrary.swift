@@ -29,14 +29,22 @@ public struct ExtensionStatus: Sendable {
     /// What its current version asks for that the user has not allowed (the update's sheet was cancelled). It runs
     /// without it until the user allows it from the Extensions pane.
     public var pendingRequest: ExtensionPermissionRequest?
+    /// Why its service worker or background page could not start, in at least one Profile, as WebKit reports it (the
+    /// script's uncaught error and where it was thrown). Its pages and content scripts may still run, without it.
+    public var backgroundFailure: String?
+    /// It still fails after Reload in this run. WebKit does not start a service worker again in a Profile where it
+    /// failed, so files fixed since start it only the next time Safira opens.
+    public var startsAtNextLaunch = false
 
     public init(availability: Availability = .available, icon: NSImage? = nil, errors: [String] = [],
-                hasAccessToAllHosts: Bool = false, pendingRequest: ExtensionPermissionRequest? = nil) {
+                hasAccessToAllHosts: Bool = false, pendingRequest: ExtensionPermissionRequest? = nil,
+                backgroundFailure: String? = nil) {
         self.availability = availability
         self.icon = icon
         self.errors = errors
         self.hasAccessToAllHosts = hasAccessToAllHosts
         self.pendingRequest = pendingRequest
+        self.backgroundFailure = backgroundFailure
     }
 }
 
@@ -63,6 +71,11 @@ public final class ExtensionLibrary {
     @ObservationIgnored var allProfiles: @MainActor () -> [ProfileID] = { [] }
     /// The folders read through their bookmark, by extension, until the extension is removed.
     @ObservationIgnored private var accessedFolders: [String: URL] = [:]
+    /// Why each extension's background could not start, in each Profile where it failed.
+    @ObservationIgnored private var backgroundFailures: [String: [ProfileID: String]] = [:]
+    /// The extensions reloaded in this run after their background failed: WebKit does not start a service worker again
+    /// in a Profile where it failed, so a fixed one starts only at the next launch.
+    @ObservationIgnored private var reloadedAfterFailure: Set<String> = []
 
     /// - Parameters:
     ///   - database: where the list is saved; nil keeps it for this run only.
@@ -89,10 +102,13 @@ public final class ExtensionLibrary {
     // MARK: Profiles
 
     /// Loads into a Profile's host every extension whose switch is on for that Profile.
-    func attach(_ host: ExtensionHost, profile: ProfileID) async {
+    public func attach(_ host: ExtensionHost, profile: ProfileID) async {
         hosts[profile] = host
         host.permissionRequests = { [weak self] request in
             await self?.allowAtRuntime(request) ?? false
+        }
+        host.backgroundFailures = { [weak self] id, reason in
+            self?.backgroundFailed(id, in: profile, reason: reason)
         }
         for item in installed where item.isEnabled(in: profile) {
             await load(item, into: host)
@@ -101,6 +117,19 @@ public final class ExtensionLibrary {
 
     func detach(profile: ProfileID) {
         hosts[profile] = nil
+        for id in backgroundFailures.keys { backgroundFailed(id, in: profile, reason: nil) }
+    }
+
+    private func backgroundFailed(_ id: String, in profile: ProfileID, reason: String?) {
+        backgroundFailures[id, default: [:]][profile] = reason
+        // The same reason in each Profile, most often; any one names what to fix.
+        let reason = backgroundFailures[id]?.sorted { $0.key.rawValue.uuidString < $1.key.rawValue.uuidString }.first?.value
+        let startsAtNextLaunch = reason != nil && reloadedAfterFailure.contains(id)
+        if statuses[id]?.backgroundFailure != reason || statuses[id]?.startsAtNextLaunch != startsAtNextLaunch,
+           statuses[id] != nil || reason != nil {
+            statuses[id, default: ExtensionStatus()].backgroundFailure = reason
+            statuses[id, default: ExtensionStatus()].startsAtNextLaunch = startsAtNextLaunch
+        }
     }
 
     // MARK: Installing
@@ -177,6 +206,21 @@ public final class ExtensionLibrary {
             await load(item, into: host)
         } else {
             host.unload(id)
+            backgroundFailed(id, in: profile, reason: nil)
+        }
+    }
+
+    /// Reads an extension's files again and starts it again in every Profile where it is on; WebKit starts its service
+    /// worker or background page as it loads, and a failure shows in its status again.
+    public func reload(_ id: String) async {
+        guard let item = installed.first(where: { $0.id == id }) else { return }
+        let failedBefore = backgroundFailures[id]?.isEmpty == false
+        backgroundFailures[id] = nil
+        statuses[id]?.backgroundFailure = nil
+        if failedBefore { reloadedAfterFailure.insert(id) }
+        for (profile, host) in hosts where item.isEnabled(in: profile) {
+            host.unload(id)
+            await load(item, into: host)
         }
     }
 
@@ -212,6 +256,8 @@ public final class ExtensionLibrary {
             onError("The removed extension could not be forgotten", error)
         }
         installed.removeAll { $0.id == id }
+        backgroundFailures[id] = nil
+        reloadedAfterFailure.remove(id)
         statuses[id] = nil
     }
 
@@ -297,6 +343,9 @@ public final class ExtensionLibrary {
         guard let index = installed.firstIndex(where: { $0.id == id }) else { return }
         installed[index] = updated
         save(updated)
+        // It starts again below in every Profile, where a failure is reported again.
+        if backgroundFailures[id]?.isEmpty == false { reloadedAfterFailure.insert(id) }
+        backgroundFailures[id] = nil
         statuses[id] = ExtensionStatus(icon: webExtension.icon(for: CGSize(width: 64, height: 64)),
                                        hasAccessToAllHosts: Self.reachesAllHosts(updated), pendingRequest: pending)
         for (profile, host) in hosts where updated.isEnabled(in: profile) {

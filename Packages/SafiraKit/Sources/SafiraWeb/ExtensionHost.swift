@@ -50,6 +50,37 @@ public final class ExtensionHost: NSObject {
         controller = WKWebExtensionController(configuration: configuration)
         super.init()
         controller.delegate = self
+        errorObserver = NotificationCenter.default.addObserver(forName: WKWebExtensionContext.errorsDidUpdateNotification,
+                                                               object: nil, queue: .main) { [weak self] note in
+            let context = note.object as? WKWebExtensionContext
+            MainActor.assumeIsolated { self?.errorsChanged(in: context) }
+        }
+    }
+
+    isolated deinit {
+        if let errorObserver { NotificationCenter.default.removeObserver(errorObserver) }
+    }
+
+    private var errorObserver: (any NSObjectProtocol)?
+
+    /// Told why an extension's service worker or background page could not start in this Profile, or nil once it
+    /// reports no such failure; set by the app's extension library.
+    var backgroundFailures: (@MainActor (_ extensionID: String, _ reason: String?) -> Void)?
+
+    private func errorsChanged(in context: WKWebExtensionContext?) {
+        guard let context, context.webExtensionController === controller else { return }
+        backgroundFailures?(context.uniqueIdentifier, Self.backgroundFailure(in: context.errors))
+    }
+
+    /// Why the background failed to start, when WebKit reports that it did. The failure's own text names no cause:
+    /// WebKit records the worker's uncaught exception, with its source location, just before it, or, when the worker
+    /// could not even begin, a script error just after it.
+    static func backgroundFailure(in errors: [any Error]) -> String? {
+        let errors = errors.map { $0 as NSError }.filter { $0.domain == WKWebExtensionContext.errorDomain }
+        let failed = WKWebExtensionContext.Error.backgroundContentFailedToLoad.rawValue
+        guard let index = errors.firstIndex(where: { $0.code == failed }) else { return nil }
+        let cause = errors[..<index].last ?? errors[(index + 1)...].first { $0.code != failed }
+        return (cause ?? errors[index]).localizedDescription
     }
 
     /// The extensions loaded into this Profile.

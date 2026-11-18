@@ -886,6 +886,17 @@
         }
       }
     },
+    "Couldn’t start: %@" : {
+      "comment" : "Settings, Extensions pane: an extension whose service worker or background page failed to start; the argument is the error WebKit reports",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de démarrer : %@"
+          }
+        }
+      }
+    },
     "Create" : {
       "comment" : "Main window",
       "localizations" : {
@@ -1598,6 +1609,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Il ne contient aucun onglet."
+          }
+        }
+      }
+    },
+    "It still fails after Reload. Once its files are fixed, it starts the next time Safira opens." : {
+      "comment" : "Settings, Extensions pane: WebKit does not start an extension's service worker again in a run where it failed",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le rechargement n’a pas suffi. Une fois ses fichiers corrigés, elle démarrera à la prochaine ouverture de Safira."
           }
         }
       }
@@ -2676,6 +2698,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Recharger"
+          }
+        }
+      }
+    },
+    "Reload %@" : {
+      "comment" : "Settings, Extensions pane: VoiceOver label; the argument is an extension's name",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recharger %@"
           }
         }
       }
