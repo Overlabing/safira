@@ -44,9 +44,19 @@ public struct DownloadsPanel: View {
     private let folder: DownloadsFolder
     private let actions: DownloadsPanelActions
     private let now: () -> Date
+    private let layout: Layout
+
+    /// Where the panel is shown.
+    public enum Layout: Sendable {
+        /// In the sidebar's popover: titled, 360 pt wide, at most eight rows tall.
+        case popover
+        /// In the Library, whose item is titled already: as wide and as tall as the pane.
+        case library
+    }
 
     public init(downloads: ProfileDownloads, folder: DownloadsFolder, actions: DownloadsPanelActions = .workspace,
-                now: @escaping () -> Date = { Date() }) {
+                layout: Layout = .popover, now: @escaping () -> Date = { Date() }) {
+        self.layout = layout
         self.downloads = downloads
         self.folder = folder
         self.actions = actions
@@ -59,12 +69,14 @@ public struct DownloadsPanel: View {
         let spacing = tokens.spacing
         WithColorRoles { roles in
             VStack(alignment: .leading, spacing: 0) {
-                Text("Downloads", tableName: "DownloadsUI", bundle: .module, comment: "Downloads panel: its title")
-                    .role(tokens.type.sectionHeader)
-                    .accessibilityAddTraits(.isHeader)
-                    .padding(.horizontal, spacing.listMargin)
-                    .padding(.top, spacing.listMargin)
-                    .padding(.bottom, spacing.sectionHeaderBottom)
+                if layout == .popover {
+                    Text("Downloads", tableName: "DownloadsUI", bundle: .module, comment: "Downloads panel: its title")
+                        .role(tokens.type.sectionHeader)
+                        .accessibilityAddTraits(.isHeader)
+                        .padding(.horizontal, spacing.listMargin)
+                        .padding(.top, spacing.listMargin)
+                        .padding(.bottom, spacing.sectionHeaderBottom)
+                }
                 if downloads.all.isEmpty {
                     Text("No downloads yet. Files you download appear here.", tableName: "DownloadsUI", bundle: .module,
                          comment: "Downloads panel: an empty list")
@@ -80,13 +92,14 @@ public struct DownloadsPanel: View {
                         }
                         .padding(.horizontal, spacing.listMargin - spacing.rowInsetHorizontal)
                     }
-                    .frame(maxHeight: tokens.size.compactRow * 8)
-                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxHeight: layout == .popover ? tokens.size.compactRow * 8 : .infinity)
+                    .fixedSize(horizontal: false, vertical: layout == .popover)
                 }
                 Rectangle().fill(roles.columnEdge).frame(height: tokens.size.hairline)
                 footer(roles)
             }
-            .frame(width: Self.width)
+            .frame(width: layout == .popover ? Self.width : nil)
+            .frame(maxWidth: layout == .library ? .infinity : nil, alignment: .leading)
         }
         .onAppear { downloads.markFailuresSeen() }
     }

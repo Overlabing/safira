@@ -29,6 +29,8 @@ enum SafiraDesign {
     static let privateWindowSize = NSSize(width: 1100, height: 760)
     /// How far a new Private window sits from the one it was opened from.
     static let privateWindowCascade: CGFloat = 28
+    /// The list of Settings' panes in the Library, beside the pane shown.
+    static let settingsListWidth: CGFloat = 230
     /// How long the Matching tab banner stays before it goes by itself.
     static let matchBannerLifetime: Duration = .seconds(12)
 }

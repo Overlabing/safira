@@ -8,6 +8,7 @@ import Commands
 import DesignKit
 import SafiraCore
 import SafiraSession
+import SafiraSettings
 import SafiraWeb
 import SwiftUI
 
@@ -25,7 +26,8 @@ struct TabSidebar: View {
     let spaceActions: SpaceActions
     let folderActions: FolderActions
     let extensionPopups: ExtensionPopups
-    let downloads: DownloadsPresenter
+    /// Opens the window's Library, from the sidebar's bottom-left buttons.
+    let library: (LibraryDestination) -> Void
     /// The shortcut a menu item shows for a command, in the bindings in force ("⌘T", "⌃1").
     let shortcut: (CommandID) -> String?
 
@@ -56,7 +58,7 @@ struct TabSidebar: View {
             EmptyView()
         } bottomBar: {
             HStack(alignment: .top, spacing: 0) {
-                SidebarDownloads(downloads: registry.active.downloads, web: registry.active.web, presenter: downloads)
+                SidebarLibraryButtons(downloads: registry.active.downloads, open: library)
                     .padding(.leading, DesignTokens.standard.spacing.listMargin - DesignTokens.standard.spacing.rowInsetHorizontal)
                 SpaceRailBar(registry: registry, profileActions: profileActions, spaceActions: spaceActions,
                              shortcut: shortcut)

@@ -7,12 +7,14 @@ import SafiraWeb
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// Settings › Safira › Extensions: the extensions installed for the app, each with the Profiles it runs in, what it may
-/// do, and Remove; and the two ways to install one. The switch per Profile is in This Profile › Extensions. It reads the
+/// Library › Extensions: the extensions installed for the app, each with what it may do, Remove, and its switch for
+/// the Profile chosen in the menu at the top (the window's, at first); and the two ways to install one. It reads the
 /// folders of extensions installed from a folder again whenever it appears, so an update shows at once.
 struct ExtensionsPane: View {
     let registry: ProfileRegistry
     @State private var removing: InstalledExtension?
+    /// The Profile whose switches the rows show; nil for the window's.
+    @State private var chosenProfile: ProfileID?
 
     private var library: ExtensionLibrary { registry.extensionLibrary }
 
@@ -24,6 +26,14 @@ struct ExtensionsPane: View {
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
             HStack {
+                Picker(String(localized: "Switches for", comment: "Library, Extensions: label of the menu of the Profile whose switches the list shows"),
+                       selection: Binding(get: { profile.id }, set: { chosenProfile = $0 })) {
+                    ForEach(registry.profiles) { profile in
+                        Text(verbatim: "\(profile.symbol)  \(profile.name)").tag(profile.id)
+                    }
+                }
+                .pickerStyle(.menu)
+                .fixedSize()
                 Spacer()
                 Button(String(localized: "Add from Folder…", comment: "Settings, Extensions pane: button")) { addFromFolder() }
                 Button(String(localized: "Add from File…", comment: "Settings, Extensions pane: button")) { addFromFile() }
@@ -41,7 +51,10 @@ struct ExtensionsPane: View {
                     VStack(spacing: 10) {
                         ForEach(library.installed) { item in
                             ExtensionRow(item: item, status: library.statuses[item.id] ?? ExtensionStatus(),
-                                         profiles: registry.profiles,
+                                         profile: profile,
+                                         setEnabled: { on in
+                                             Task { await library.setEnabled(on, extension: item.id, in: profile.id) }
+                                         },
                                          locate: { locate(item) },
                                          review: { Task { await library.allowPending(item.id) } },
                                          remove: { removing = item })
@@ -66,6 +79,11 @@ struct ExtensionsPane: View {
             Text("It stops in every Profile, and what it stored in each Profile is deleted. Its folder or file is not touched.",
                  comment: "Settings, Extensions pane: removal confirmation")
         }
+    }
+
+    /// The Profile whose switches the rows show: the one chosen, while it exists, else the window's.
+    private var profile: Profile {
+        registry.profiles.first { $0.id == chosenProfile } ?? registry.activeProfile
     }
 
     private var removalTitle: String {
@@ -144,13 +162,14 @@ private enum ExtensionInstallPreview {
 }
 #endif
 
-/// One installed extension: its icon, name and version, what it may do, the Profiles it runs in, and Remove. A folder
+/// One installed extension: its icon, name and version, what it may do, its switch for one Profile, and Remove. A folder
 /// that cannot be found, or that now holds another extension, is said so, with Locate…; what an update asked for and
 /// the user did not allow is said so, with Review….
 private struct ExtensionRow: View {
     let item: InstalledExtension
     let status: ExtensionStatus
-    let profiles: [Profile]
+    let profile: Profile
+    let setEnabled: (Bool) -> Void
     let locate: () -> Void
     let review: () -> Void
     let remove: () -> Void
@@ -189,8 +208,13 @@ private struct ExtensionRow: View {
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
-                Text(verbatim: runsIn)
-                    .font(.callout)
+                Toggle(isOn: Binding(get: { item.isEnabled(in: profile.id) }, set: setEnabled)) {
+                    Text("On in “\(profile.name)”", comment: "Library, Extensions: an extension's switch for a Profile; the argument is the Profile's name")
+                }
+                .toggleStyle(.switch)
+                .controlSize(.small)
+                .accessibilityLabel(Text("\(item.displayName) in “\(profile.name)”",
+                                         comment: "Settings, Extensions pane: VoiceOver label of a Profile's switch; the arguments are an extension's and a Profile's names"))
             }
         }
         .padding(12)
@@ -250,16 +274,6 @@ private struct ExtensionRow: View {
                 .font(.callout)
                 .foregroundStyle(.orange)
         }
-    }
-
-    /// The Profiles whose switch is on, by name, in the registry's order.
-    private var runsIn: String {
-        let names = profiles.filter { item.isEnabled(in: $0.id) }.map(\.name)
-        guard !names.isEmpty else {
-            return String(localized: "Off in every Profile", comment: "Settings, Extensions pane: an extension switched off everywhere")
-        }
-        let list = names.formatted(.list(type: .and))
-        return String(localized: "Runs in \(list)", comment: "Settings, Extensions pane; the argument lists Profile names")
     }
 
     private var summary: [String] {
@@ -346,54 +360,5 @@ final class ExtensionPermissionPrompter {
         }
         stack.frame = NSRect(origin: .zero, size: stack.fittingSize)
         return stack
-    }
-}
-
-/// Settings › This Profile › Extensions: a switch per installed extension, for the window's Profile only. Installing and
-/// removing happen in Safira › Extensions, since an extension is installed once for the app.
-struct ProfileExtensionsPane: View {
-    let registry: ProfileRegistry
-    let showInstalled: () -> Void
-
-    private var library: ExtensionLibrary { registry.extensionLibrary }
-
-    var body: some View {
-        let profile = registry.activeProfile
-        VStack(alignment: .leading, spacing: 12) {
-            Text("The extensions that run in “\(profile.name)”. Extensions never run in Private windows.",
-                 comment: "Settings, This Profile's Extensions pane; the argument is a Profile's name")
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-            if library.installed.isEmpty {
-                VStack(spacing: 12) {
-                    Text("No extension is installed.", comment: "Settings, This Profile's Extensions pane: empty list")
-                        .foregroundStyle(.secondary)
-                    Button(String(localized: "Install Extensions…", comment: "Settings, This Profile's Extensions pane: button that shows Safira's Extensions pane"),
-                           action: showInstalled)
-                }
-                .padding()
-                .frame(maxWidth: .infinity, minHeight: 100)
-                .settingsGroup()
-            } else {
-                ScrollView {
-                    VStack(spacing: 10) {
-                        ForEach(library.installed) { item in
-                            Toggle(isOn: Binding(get: { item.isEnabled(in: profile.id) },
-                                                 set: { on in Task { await library.setEnabled(on, extension: item.id, in: profile.id) } })) {
-                                Text(verbatim: item.displayName)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                            }
-                            .toggleStyle(.switch)
-                            .accessibilityLabel(Text("\(item.displayName) in “\(profile.name)”",
-                                                     comment: "Settings, Extensions pane: VoiceOver label of a Profile's switch; the arguments are an extension's and a Profile's names"))
-                            .padding(12)
-                            .settingsGroup()
-                        }
-                    }
-                }
-                .settingsScrollEdges()
-            }
-        }
     }
 }

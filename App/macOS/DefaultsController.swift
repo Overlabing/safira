@@ -5,6 +5,7 @@ import AppKit
 import Commands
 import Onboarding
 import SafiraCore
+import SafiraSettings
 import SafiraWeb
 import SwiftUI
 
@@ -57,10 +58,12 @@ final class DefaultsController: NSObject {
     }
 
     /// The model of Settings' switches: at their present positions, applied as they move.
-    func makeSummaryModel() -> DefaultsSummaryModel {
-        let model = DefaultsSummaryModel(current: { [unowned self] in isOn($0) }, apply: { [unowned self] id, isOn in
-            set(id, isOn: isOn)
-        })
+    /// In a Private window it leaves out what is stored with the Profile (`SafiraSettings.listsDefault`): changed there,
+    /// it would reach the Profile shown in the Main window, not the Private window.
+    func makeSummaryModel(isPrivate: Bool = false) -> DefaultsSummaryModel {
+        let entries = DefaultsRegistry.entries.userFacing.filter { SafiraSettings.listsDefault($0.id, isPrivate: isPrivate) }
+        let model = DefaultsSummaryModel(entries: entries, current: { [unowned self] in isOn($0) },
+                                         apply: { [unowned self] id, isOn in set(id, isOn: isOn) })
         refresh(model)
         return model
     }

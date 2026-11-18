@@ -3,67 +3,74 @@
 
 import AppKit
 import Appearance
+import DesignKit
+import SwiftUI
 import Testing
 
-/// Settings takes the card's place over the page, and going back gives the same page back: the page view never leaves
-/// the window, so a web view in it does not reload.
+/// The Library pushes the page's card toward the trailing edge, at its own size, with a strip in sight that goes back
+/// when clicked; closing it gives the same page back. The page view never leaves the window, so a web view in it does
+/// not reload.
 @MainActor
 @Suite struct PageCanvasPaneTests {
     let page = NSView()
-    let banner = NSView()
-    let commandBar = NSView()
-    let pane = NSView()
 
     func canvas() -> PageCanvasView {
-        let canvas = PageCanvasView(page: page, banner: banner, commandBar: commandBar)
+        let canvas = PageCanvasView(page: page, banner: NSView(), commandBar: NSView())
         canvas.frame = NSRect(x: 0, y: 0, width: 800, height: 600)
         canvas.layoutSubtreeIfNeeded()
         return canvas
     }
 
-    @Test func aPaneFillsTheCardOverThePage() {
+    @Test func thePushMovesTheCardAtItsOwnSize() {
         let canvas = canvas()
-        canvas.showPane(pane)
+        let before = canvas.cardFrame
+        canvas.setPush(500, animated: false)
         canvas.layoutSubtreeIfNeeded()
-        #expect(canvas.shownPane === pane)
-        #expect(pane.isDescendant(of: canvas))
-        #expect(pane.convert(pane.bounds, to: canvas) == canvas.cardFrame)
-        #expect(!pane.isHiddenOrHasHiddenAncestor)
-        #expect(page.isHiddenOrHasHiddenAncestor)
-        #expect(banner.isHiddenOrHasHiddenAncestor)
-        #expect(commandBar.isHiddenOrHasHiddenAncestor)
+        #expect(canvas.push == 500)
+        #expect(canvas.cardFrame.minX == before.minX + 500)
+        #expect(canvas.cardFrame.width == before.width)
+        canvas.setPush(0, animated: false)
+        canvas.layoutSubtreeIfNeeded()
+        #expect(canvas.cardFrame == before)
     }
 
-    @Test func backKeepsThePage() {
+    @Test func thePeekCoverGoesBackWhenClicked() {
         let canvas = canvas()
-        let superview = page.superview
-        canvas.showPane(pane)
+        var clicks = 0
+        canvas.showPeek(label: "Back to Example", hint: "Click the page to go back") { clicks += 1 }
+        #expect(canvas.showsPeek)
+        canvas.pressPeek()
+        #expect(clicks == 1)
+        canvas.showPeek(label: nil)
+        #expect(!canvas.showsPeek)
         #expect(page.isDescendant(of: canvas))
-        #expect(page.superview === superview)
-        canvas.showPane(nil)
-        #expect(canvas.shownPane == nil)
-        #expect(pane.superview == nil)
-        #expect(page.superview === superview)
-        #expect(!page.isHiddenOrHasHiddenAncestor)
     }
 
-    /// The banner shows and hides itself while a pane is over it; going back leaves it as it set itself.
-    @Test func whatFloatsOverThePageKeepsItsOwnState() {
+    @Test func theLibraryCoversTheColumnAndClosingGivesThePageBack() {
         let canvas = canvas()
-        banner.isHidden = true
-        canvas.showPane(pane)
-        canvas.showPane(nil)
-        #expect(banner.isHidden)
-        #expect(!commandBar.isHiddenOrHasHiddenAncestor)
-    }
+        let layout = BrowserWindowLayout(background: NSView(), column: Color.clear, canvas: canvas)
+        layout.view.frame = NSRect(x: 0, y: 0, width: 1200, height: 700)
+        layout.view.layoutSubtreeIfNeeded()
+        let card = canvas.convert(canvas.cardFrame, to: layout.view)
+        let library = NSView()
 
-    @Test func anotherPaneReplacesTheFirst() {
-        let canvas = canvas()
-        let other = NSView()
-        canvas.showPane(pane)
-        canvas.showPane(other)
-        #expect(pane.superview == nil)
-        #expect(canvas.shownPane === other)
-        #expect(page.isHiddenOrHasHiddenAncestor)
+        layout.showLibrary(library, animated: false)
+        layout.view.layoutSubtreeIfNeeded()
+
+        #expect(layout.isLibraryShown)
+        #expect(library.frame.minX == 0)
+        #expect(library.frame.width == 1200 - DesignTokens.standard.size.libraryPeek)
+        let pushed = canvas.convert(canvas.cardFrame, to: layout.view)
+        #expect(pushed.width == card.width)
+        #expect(abs(pushed.minX - (library.frame.maxX + DesignTokens.standard.spacing.canvasInset)) < 0.5)
+        #expect(page.isDescendant(of: canvas))
+
+        layout.hideLibrary(animated: false)
+        layout.view.layoutSubtreeIfNeeded()
+
+        #expect(!layout.isLibraryShown)
+        #expect(library.isHidden)
+        #expect(canvas.convert(canvas.cardFrame, to: layout.view) == card)
+        #expect(page.isDescendant(of: canvas))
     }
 }

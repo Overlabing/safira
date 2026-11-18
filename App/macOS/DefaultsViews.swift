@@ -111,13 +111,22 @@ private extension DefaultEntry {
 struct DefaultsPaneView: View {
     let model: DefaultsSummaryModel
     let controller: DefaultsController
+    var isPrivate = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Nothing is sent without an action of yours. Web content switches apply to \(controller.activeProfileName), and to pages opened from now on.")
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+            if isPrivate {
+                Text("Nothing is sent without an action of yours. A Profile's own defaults (its search engine and web content switches) are changed from a window of that Profile.",
+                     comment: "Defaults pane of a Private window")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else {
+                Text("Nothing is sent without an action of yours. Web content switches apply to \(controller.activeProfileName), and to pages opened from now on.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             DefaultsListView(model: model, actions: DefaultsChoiceActions(
                 profileName: controller.activeProfileName,
                 engine: Binding(get: { controller.searchEngine }, set: { controller.searchEngine = $0 }),
