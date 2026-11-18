@@ -62,7 +62,9 @@ import Testing
         #expect(library.frame.width == 1200 - DesignTokens.standard.size.libraryPeek)
         let pushed = canvas.convert(canvas.cardFrame, to: layout.view)
         #expect(pushed.width == card.width)
-        #expect(abs(pushed.minX - (library.frame.maxX + DesignTokens.standard.spacing.canvasInset)) < 0.5)
+        // The card starts the canvas inset past the Library, so the peek is `Size.libraryPeek` less that inset. Within
+        // 1 pt: the split's thin divider (1 pt) sits between the column and the page and is not part of either.
+        #expect(abs(pushed.minX - (library.frame.maxX + DesignTokens.standard.spacing.canvasInset)) <= 1)
         #expect(page.isDescendant(of: canvas))
 
         layout.hideLibrary(animated: false)

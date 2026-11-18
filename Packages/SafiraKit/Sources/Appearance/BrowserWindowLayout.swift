@@ -120,7 +120,8 @@ public final class BrowserWindowLayout: NSViewController {
 
     /// Where the Library's views stand for the window's width now (ThemeKit's `LibraryPush`).
     private var libraryPush: LibraryPush {
-        LibraryPush(windowWidth: view.bounds.width, sidebarWidth: columnItem.isCollapsed ? 0 : column.view.frame.width,
+        // The page's side starts after the column and the split's divider: measured, not the column's width alone.
+        LibraryPush(windowWidth: view.bounds.width, sidebarWidth: canvas.convert(canvas.bounds, to: view).minX,
                     tokens: tokens)
     }
 
