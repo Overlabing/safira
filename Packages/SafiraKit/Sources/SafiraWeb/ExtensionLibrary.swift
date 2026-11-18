@@ -72,7 +72,7 @@ public final class ExtensionLibrary {
     /// The folders read through their bookmark, by extension, until the extension is removed.
     @ObservationIgnored private var accessedFolders: [String: URL] = [:]
     /// Why each extension's background could not start, in each Profile where it failed.
-    @ObservationIgnored private var backgroundFailures: [String: [ProfileID: String]] = [:]
+    @ObservationIgnored private(set) var backgroundFailures: [String: [ProfileID: String]] = [:]
     /// The extensions reloaded in this run after their background failed: WebKit does not start a service worker again
     /// in a Profile where it failed, so a fixed one starts only at the next launch.
     @ObservationIgnored private var reloadedAfterFailure: Set<String> = []

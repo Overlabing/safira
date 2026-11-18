@@ -386,9 +386,8 @@ import WebKit
         let id = try #require(try await library.install(from: folder) { _ in true }).id
 
         try await waitUntil("the failure is reported in both Profiles") {
-            [work, personal].allSatisfy { profile in
-                ExtensionHost.backgroundFailure(in: profile.extensions?.controller.extensionContexts.first?.errors ?? []) != nil
-            }
+            library.backgroundFailures[id]?.keys.sorted { $0.rawValue.uuidString < $1.rawValue.uuidString }
+                == [work.id, personal.id].sorted { $0.rawValue.uuidString < $1.rawValue.uuidString }
         }
         #expect(library.statuses[id]?.backgroundFailure
             == "TypeError: undefined is not an object (evaluating 'chrome.missingNamespace.onEvent') (background.js:1:24)")
