@@ -944,7 +944,7 @@ private final class MainWindow: NSWindow {
     var shortcuts: ShortcutController?
     /// Whether the Library is open, so that the mouse's back button and a swipe back close it.
     var libraryBack: (() -> Bool)?
-    var closeLibrary: (() -> Void)?
+    var closeLibrary: (@MainActor () -> Void)?
 
     override func sendEvent(_ event: NSEvent) {
         if libraryBack?() == true, let closeLibrary, LibraryBackGesture.handle(event, back: closeLibrary) { return }

@@ -267,7 +267,7 @@ private struct SettingsList: View {
     var body: some View {
         let selection = Binding<SettingsPaneID?>(get: { navigation.settingsPane },
                                                  set: { if let pane = $0 { navigation.select(pane: pane) } })
-        VStack(alignment: .leading, spacing: tokens.spacing.s) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.s) {
             Text("Settings", comment: "Library: the title of Settings' list")
                 .font(.title2.bold())
                 .accessibilityAddTraits(.isHeader)
@@ -290,7 +290,7 @@ private struct SettingsList: View {
             .scrollContentBackground(.hidden)
             .accessibilityLabel(Text("Settings", comment: "Library: the title of Settings' list"))
         }
-        .padding(.top, tokens.size.sidebarTitleBar + tokens.spacing.s)
+        .padding(.top, tokens.size.sidebarTitleBar + DesignTokens.Spacing.s)
         .onExitCommand { navigation.close() }
     }
 }

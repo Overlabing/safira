@@ -430,7 +430,7 @@ final class PrivateWindowController: NSWindowController, NSWindowDelegate, NSMen
 private final class PrivateWindow: NSWindow {
     var shortcuts: ShortcutController?
     var libraryBack: (() -> Bool)?
-    var closeLibrary: (() -> Void)?
+    var closeLibrary: (@MainActor () -> Void)?
 
     override func sendEvent(_ event: NSEvent) {
         if libraryBack?() == true, let closeLibrary, LibraryBackGesture.handle(event, back: closeLibrary) { return }
